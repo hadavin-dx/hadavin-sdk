@@ -460,11 +460,20 @@
   {
    "item": "E-round-2",
    "what": "step E result review ROUND 2 of 3: fresh egm:egm-codebase-details (the fixes F2 to F9 and what they introduced) and egm:egm-zoom-out (the helper grew 212 to 298 lines and tests 738 to 1065: is each new capability needed by a named caller)",
+   "state": "RESOLVED; fix pass G1 to G4 running",
+   "percent": 60,
+   "evidence file": "reviews/E-result-review-2.md",
+   "tries": 1,
+   "reason": "both fresh reviewers done: no Blocker, 4 Major. CHURN: round 2 asks to delete what round 1 added (latch, claim, flag_taken); decision: delete (reversible), simplify the flag write, trim tests to about 600 lines. Evidence hashes compared by me: equal. Question for the owner: keep the helper small or keep the opt-ins"
+  },
+  {
+   "item": "E-fix-2",
+   "what": "step E fix pass G1 to G4 from round 2: delete the four unused opt-ins and their tests, plain flag write with an unlink retry, trim the test file, docstring facts",
    "state": "RUNNING",
    "percent": 5,
-   "evidence file": "reviews/E-result-review-2.md (not yet)",
+   "evidence file": "raw/E-fix2-tests.log (not yet)",
    "tries": 1,
-   "reason": "zoom-out reviewer done: 2 Major, and it recommends deleting what round 1's F4 and F5 added (churn by the egm rule); waiting for the codebase reviewer of round 2, then resolve"
+   "reason": "EGM sequence: fix by a builder who is not author or reviewer"
   }
  ],
  "agents": [
@@ -1095,15 +1104,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:55",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 2 of 3",
    "retries so far": 0,
    "id": "egm-E2-codebase",
    "role": "reviewer (egm:egm-codebase-details, fresh)",
    "what exactly it is doing": "round 2: checks the fixes and what they introduced, the evidence against the current file hashes",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, 80k tokens: 2 Major (latch does less than documented; Windows atomic write), 5 Nit"
   },
   {
    "model": "sonnet",
@@ -1117,6 +1126,19 @@
    "what exactly it is doing": "round 2: is every new capability needed by a named caller, what can be deleted",
    "expected end": "ended",
    "reason": "finished, report in hand: 2 Majors (four opt-ins without a caller; test file 1065 lines against about 190 planned), recommends deleting latch, require_claim/expect_fired, flag_taken and trimming tests; this is CHURN against round 1 (F4, F5 added what round 2 asks to delete)"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:59",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 2 of 3 (fix pass)",
+   "retries so far": 0,
+   "id": "e-fix2",
+   "role": "builder",
+   "what exactly it is doing": "deletes the unused opt-ins, simplifies the flag write, trims tests",
+   "expected end": "about 20 min",
+   "reason": "round 2 resolve"
   }
  ],
  "tests": [
@@ -1471,6 +1493,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "STEP E, CHURN QUESTION for the owner (not blocking, reversible): after two review rounds the crash helper grew from 212 to 298 lines and its tests from 738 to 1065; round 2 says four additions from round 1 (latch, claim check, flag_taken) have no caller. I am deleting them and trimming the tests (to about 600 lines). If you want them kept, say so and I restore them from git history",
   "EGM-SEQUENCE: honest ledger in EGM-LEDGER.md: nothing I built has had the full sequence; missing for all code and tests: fresh result review, resolve, repeat, drift report; for ticket E also the plan review; no brainstorm or draft for anything (the lead's draft was the input). Running the result review of step E now, the rest after the three builders end",
   "MODELS REVERTED 06:41Z on the owner's own words in this session: egm plugin lines 6 opus + 66 sonnet + 0 fable (REPORT.md top block has the grep). Every Agent call sets sonnet, haiku or opus explicitly. No fable agent runs",
   "DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop",

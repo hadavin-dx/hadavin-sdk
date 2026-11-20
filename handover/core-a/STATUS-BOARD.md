@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:57:15Z
+UPDATED_UTC: 2026-11-20T06:59:06Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 51
-ITEMS_OPEN: 9
+ITEMS_TOTAL: 52
+ITEMS_OPEN: 10
 PERCENT: 88
 AGENTS_RUNNING: 2
-CAPACITY: load 0.34 of 4 cores (1-minute average), mem 1.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.73 of 4 cores (1-minute average), mem 1.1/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 535M /home/user/hadavin-sdk; 393M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T06:57:03Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:57:18Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -70,7 +70,8 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | FU-3 | follow-ups: Retry-After 1 on 503, rename trigger_resolve to trigger_secret in 2 test helpers and delete the old-name fallback in worker.py | DONE | 100 | raw/DR3-followups-tests.log, raw/endpoint-mutants-run-9.log | 1 | Retry-After: 1 on every 503 (empty body); old reader keyword removed from worker.py and from the two test helpers; 421 passed, 2 skipped; 30 of 30 mutants. GAPS: the new Retry-After test was not run without the change (it reads a constant that would not exist); NO test pins that the old keyword is refused (to add); the concurrent fuzz file still used the old keyword (told its writer) |
 | E-fix-1 | step E fixes F2 to F9 from the result review (tests that kill the surviving mutants, opt-in latch and claim, wrap refuses async and dunder, atomic flag write, stale flag check, docstring facts) | DONE (builder's run); evidence runner and round 2 next | 100 | raw/E-fix1-tests.log | 1 | F2 to F9 applied by a builder who is not the author or reviewer: 472 passed in 38 s, ruff and bandit clean; the 9 mutants the builder applied were each killed by the matching test (restored, cmp-checked); F5, F6, F9 tests call new names so they fail on old code by construction. BEHAVIOUR CHANGE not asked for: the crash marker is now written with os.write instead of print (a flushed print also flushed pending text: required by F3). One test edit: it reads the marker with capfd. Note: this shell has PYTHONUNBUFFERED=1, the F3 test strips it from the child |
 | E-evidence-2 | EVIDENCE RUNNER for step E: identity (hashes, database version), tests with ids, guards and users, 14 formal hand mutants in a scratch copy, hostile inputs; no verdicts | DONE | 100 | raw/E-evidence-2-identity.log, -tests.log, -guards.log, -mutants.log, -hostile.log | 1 | by a separate evidence runner, recorded without verdicts: crash.py 298 lines, test file 1065 lines, python 3.13.18, PostgreSQL 16.15; tests 96 passed (with the database); guard files 292 passed; the crash matrix and worker tests 149 passed (74 s); 14 formal hand mutants in a scratch copy: ALL KILLED (the baseline there ran without the database: 94 passed, 2 skipped); hostile inputs: refused as designed, 20 of 20 flag races gave exactly one crash. Not deterministic: the first failing test per mutant (run with -x -n 3) |
-| E-round-2 | step E result review ROUND 2 of 3: fresh egm:egm-codebase-details (the fixes F2 to F9 and what they introduced) and egm:egm-zoom-out (the helper grew 212 to 298 lines and tests 738 to 1065: is each new capability needed by a named caller) | RUNNING | 5 | reviews/E-result-review-2.md (not yet) | 1 | zoom-out reviewer done: 2 Major, and it recommends deleting what round 1's F4 and F5 added (churn by the egm rule); waiting for the codebase reviewer of round 2, then resolve |
+| E-round-2 | step E result review ROUND 2 of 3: fresh egm:egm-codebase-details (the fixes F2 to F9 and what they introduced) and egm:egm-zoom-out (the helper grew 212 to 298 lines and tests 738 to 1065: is each new capability needed by a named caller) | RESOLVED; fix pass G1 to G4 running | 60 | reviews/E-result-review-2.md | 1 | both fresh reviewers done: no Blocker, 4 Major. CHURN: round 2 asks to delete what round 1 added (latch, claim, flag_taken); decision: delete (reversible), simplify the flag write, trim tests to about 600 lines. Evidence hashes compared by me: equal. Question for the owner: keep the helper small or keep the opt-ins |
+| E-fix-2 | step E fix pass G1 to G4 from round 2: delete the four unused opt-ins and their tests, plain flag write with an unlink retry, trim the test file, docstring facts | RUNNING | 5 | raw/E-fix2-tests.log (not yet) | 1 | EGM sequence: fix by a builder who is not author or reviewer |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -123,22 +124,23 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | sn-fu3 | builder | sonnet | Retry-After header, reader rename, fallback removal, one test run and one mutant run | 06:46 | ended | 100 | done | n/a | 0 | finished, 81k tokens |
 | e-fix1 | builder | sonnet | applies F2 to F9 to crash.py and test_testing_crash.py | 06:48 | ended | 100 | done | step E round 1 of 3 (fix pass) | 0 | finished |
 | e-evidence2 | evidence runner (records, never judges) | sonnet | runs tests, guards, 14 mutants in a scratch copy and hostile inputs on the fixed crash helper | 06:52 | ended | 100 | done | step E round 1 of 3, evidence | 0 | finished, 84k tokens |
-| egm-E2-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | round 2: checks the fixes and what they introduced, the evidence against the current file hashes | 06:55 | about 15 min | 5 | running | step E round 2 of 3 | 0 | EGM sequence |
+| egm-E2-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | round 2: checks the fixes and what they introduced, the evidence against the current file hashes | 06:55 | ended | 100 | done | step E round 2 of 3 | 0 | finished, 80k tokens: 2 Major (latch does less than documented; Windows atomic write), 5 Nit |
 | egm-E2-zoomout | reviewer (egm:egm-zoom-out, fresh) | sonnet | round 2: is every new capability needed by a named caller, what can be deleted | 06:55 | ended | 100 | done | step E round 2 of 3 | 0 | finished, report in hand: 2 Majors (four opt-ins without a caller; test file 1065 lines against about 190 planned), recommends deleting latch, require_claim/expect_fired, flag_taken and trimming tests; this is CHURN against round 1 (F4, F5 added what round 2 asks to delete) |
+| e-fix2 | builder | sonnet | deletes the unused opt-ins, simplifies the flag write, trims tests | 06:59 | about 20 min | 5 | running | step E round 2 of 3 (fix pass) | 0 | round 2 resolve |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 1023 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 602s ago | running | matched by name in ps |
-| 1026 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 602s ago | running | matched by name in ps |
-| 1051 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 602s ago | running | matched by name in ps |
-| 1057 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 602s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 2565s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 2565s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 2565s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 2565s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 2565s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 2565s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 2677s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 2677s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 2677s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 2677s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 2677s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 2677s ago | running | matched by name in ps |
+| 15150 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 66s ago | running | matched by name in ps |
+| 15152 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 66s ago | running | matched by name in ps |
+| 15161 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 66s ago | running | matched by name in ps |
+| 16288 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -198,6 +200,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- STEP E, CHURN QUESTION for the owner (not blocking, reversible): after two review rounds the crash helper grew from 212 to 298 lines and its tests from 738 to 1065; round 2 says four additions from round 1 (latch, claim check, flag_taken) have no caller. I am deleting them and trimming the tests (to about 600 lines). If you want them kept, say so and I restore them from git history
 - EGM-SEQUENCE: honest ledger in EGM-LEDGER.md: nothing I built has had the full sequence; missing for all code and tests: fresh result review, resolve, repeat, drift report; for ticket E also the plan review; no brainstorm or draft for anything (the lead's draft was the input). Running the result review of step E now, the rest after the three builders end
 - MODELS REVERTED 06:41Z on the owner's own words in this session: egm plugin lines 6 opus + 66 sonnet + 0 fable (REPORT.md top block has the grep). Every Agent call sets sonnet, haiku or opus explicitly. No fable agent runs
 - DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop
