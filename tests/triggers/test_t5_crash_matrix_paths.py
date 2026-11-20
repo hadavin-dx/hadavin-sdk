@@ -77,6 +77,7 @@ from tests.triggers.crash_launcher import (
 )
 from tests.triggers.test_t5_crash_matrix import (
     FIRE_WAIT_S,
+    SECRET,  # the fake secret of part 1 (`_wsgi_post` signs with it)
     _backends_gone,
     _memory_rows,
     _tag,
@@ -88,7 +89,6 @@ if os.environ.get("HADAVIN_TEST_PG_DSN"):  # set: the driver must be there, neve
     from psycopg.conninfo import make_conninfo
 
 SENDER, KEY = "sender-a", "key-1"
-SECRET = "pp" * 4 + "p" * 32  # a fake secret, built from parts (40 characters)
 ONE = {SENDER: SECRET}
 OK = (200, 202)
 IN_PROGRESS = ("RECEIVED", "WORKING")
