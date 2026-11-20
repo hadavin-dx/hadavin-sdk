@@ -723,8 +723,8 @@ M = [
     mutant(
         "G17a a 503 carries no Retry-After header",
         ENDPOINT,
-        "        if status == 503:\n",
-        "        if False:\n",
+        "        if status == 503:\n            response_headers.append(",
+        "        if False:\n            response_headers.append(",
         TE,
         "test_503_carries_retry_after_and_no_other_answer_does",
         "assert None == '1'",
@@ -1066,7 +1066,7 @@ M = [
         READ_AND_PARSE
         + "        if len(document) > max_body:\n            return 413, sender, None\n",
         TE,
-        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[controls-document3]",
+        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[nul-document0]",
         "assert 202 == 413",
     ),
     mutant(

@@ -63,14 +63,21 @@ from typing import Any, Final, Self
 from wsgiref.simple_server import WSGIServer
 
 from hadavin_sdk.errors import ConfigError as AnyConfigError
-from hadavin_sdk.models import Run, RunState, now
+from hadavin_sdk.models import AuditEvent, Run, RunState, now
 from hadavin_sdk.store.protocol import (
     NotFound,
     StaleState,
     StoreUnavailable,
     is_connectivity_error,
 )
-from hadavin_sdk.triggers.endpoint import PATH, Accepted, check_secrets, make_wsgi, sender_map
+from hadavin_sdk.triggers.endpoint import (
+    PATH,
+    Accepted,
+    check_secrets,
+    health_only_app,
+    make_wsgi,
+    sender_map,
+)
 from hadavin_sdk.triggers.server import (
     MAX_CONNECTIONS,
     READ_DEADLINE_S,
@@ -104,7 +111,22 @@ TICK_MAX_AGE_S: Final[float] = 600.0  # a good "stuck" tick older than this is w
 IN_PROGRESS: Final[frozenset[RunState]] = frozenset({RunState.RECEIVED, RunState.WORKING})
 NO_ACK: Final[tuple[int, dict[str, str]]] = (503, {})
 CONFLICT: Final[tuple[int, dict[str, str]]] = (409, {})
-EXIT_OK, EXIT_CONFIG, EXIT_FAILED, EXIT_STORE = 0, 2, 3, 4
+EXIT_OK, EXIT_CONFIG, EXIT_FAILED = (
+    0,
+    2,
+    3,
+)  # no exit code 4: a store that is down is /health 503 (d-fix6)
+# A signed 409 is written to the audit as `trigger.conflict` (domain "trigger", operation "conflict"; the chain
+# audit stores `domain.operation` as the entry kind). At most this many per sender per minute: the 409 is still
+# answered, the extra events are only counted. Core-b's config field is proposed in requests/005.
+CONFLICT_EVENTS_PER_MINUTE: Final[int] = 10
+CONFLICT_WINDOW_S: Final[float] = 60.0
+CONFLICT_DOMAIN: Final[str] = "trigger"
+CONFLICT_OPERATION: Final[str] = "conflict"
+HASH_RE: Final = re.compile(r"[0-9a-f]{64}")
+PING_RUN_ID: Final[str] = (
+    "run-" + "0" * 32
+)  # a run id that is never stored: the cheapest store call is get_run
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
 
@@ -139,6 +161,9 @@ class Runner:
         *,
         poll_s: float = POLL_S,
         max_waiting: int = MAX_WAITING,
+        audit: Any = None,
+        conflict_events_per_minute: int = CONFLICT_EVENTS_PER_MINUTE,
+        rate_clock: Callable[[], float] = time.monotonic,
     ) -> None:
         if isinstance(max_running, bool) or not isinstance(max_running, int):
             raise ValueError("max_running must be a whole number")  # noqa: TRY004 - `make_app` turns it into a config error
@@ -156,7 +181,21 @@ class Runner:
             raise ValueError(f"poll_s must be between {POLL_S_MIN:g} and {POLL_S_MAX:g}")
         if isinstance(max_waiting, bool) or not isinstance(max_waiting, int) or max_waiting < 1:
             raise ValueError("max_waiting must be a whole number above zero")
+        if (
+            isinstance(conflict_events_per_minute, bool)
+            or not isinstance(conflict_events_per_minute, int)
+            or conflict_events_per_minute < 1
+        ):
+            raise ValueError("conflict_events_per_minute must be a whole number above zero")
         self._runtime, self._store = runtime, store
+        self._audit, self._cap, self._rate_clock = audit, conflict_events_per_minute, rate_clock
+        self._stats_lock = threading.Lock()  # guards the counters and the conflict windows
+        self._store_failures = 0
+        self._conflict_windows: dict[
+            str, tuple[float, int]
+        ] = {}  # sender -> (window start, events seen)
+        self._conflicts_dropped = 0
+        self._last_drop_warning: float | None = None
         self._ack_wait_s, self._poll_s = float(ack_wait_s), float(poll_s)
         self._slots = threading.BoundedSemaphore(max_running)
         self._waiting = threading.BoundedSemaphore(max_waiting)  # requests inside `start`
@@ -169,6 +208,35 @@ class Runner:
     def ack_wait_s(self) -> float:
         """The wait for a row, in seconds, as checked and stored at construction (read-only)."""
         return self._ack_wait_s
+
+    @property
+    def store_failures(self) -> int:
+        """Store errors seen on request paths and by the /health ping since start."""
+        with self._stats_lock:
+            return self._store_failures
+
+    @property
+    def conflict_events_dropped(self) -> int:
+        """409 events over the per-sender cap: answered, not written to the audit, only counted."""
+        with self._stats_lock:
+            return self._conflicts_dropped
+
+    def health(self) -> tuple[bool, int]:
+        """(store is up, store failures since start) for ``GET /health``. The ping is `get_run` of an id that is
+        never stored: NotFound is the store answering; any other error is a failure and is counted."""
+        try:
+            self._store.get_run(PING_RUN_ID)
+        except NotFound:
+            pass
+        except Exception as exc:  # noqa: BLE001 - down in every case; the class name only
+            self._count_store_failure()
+            _LOG.debug("trigger health: store ping failed (%s)", type(exc).__name__)
+            return False, self.store_failures
+        return True, self.store_failures
+
+    def _count_store_failure(self) -> None:
+        with self._stats_lock:
+            self._store_failures += 1
 
     @property
     def running(self) -> int:
@@ -219,7 +287,7 @@ class Runner:
         try:
             found = self._row(req.run_id)
             if found is not None:
-                return _answer(found, req)
+                return self._answered(found, req)
             job, closed = self._submit(req)
             if closed:
                 return NO_ACK
@@ -231,7 +299,7 @@ class Runner:
                 ended = job is not None and job.done()
                 found = self._row(req.run_id)
                 if found is not None:
-                    return _answer(found, req)
+                    return self._answered(found, req)
                 left = deadline - time.monotonic()
                 if ended or left <= 0:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
@@ -243,11 +311,52 @@ class Runner:
                 time.sleep(min(pause, left))
         except Exception as exc:  # noqa: BLE001 - no ack in every case, the sender retries
             if is_store_error(exc):
+                self._count_store_failure()
                 what = "store unreachable" if is_connectivity_error(exc) else "store error"
                 _LOG.warning("trigger start: %s (%s)", what, type(exc).__name__)
             else:  # a bug, not the store: a retry will not help, so it must stand out in the log
                 _LOG.error("trigger start: internal error (%s)", type(exc).__name__)
             return NO_ACK
+
+    def _answered(self, found: Run, req: Accepted) -> tuple[int, dict[str, str]]:
+        reply = _answer(found, req)
+        if reply is CONFLICT:
+            self._conflict(found, req)
+        return reply
+
+    def _conflict(self, found: Run, req: Accepted) -> None:
+        """A signed 409 is a forensic fact: one audit event, hashes only, at most `cap` per sender per minute.
+        Beyond the cap the event is only counted, with one WARNING per minute. Never raises."""
+        at = self._rate_clock()
+        warn = False
+        with self._stats_lock:
+            start, seen = self._conflict_windows.get(req.sender, (at, 0))
+            if at - start >= CONFLICT_WINDOW_S or at < start:
+                start, seen = at, 0
+            seen += 1
+            self._conflict_windows[req.sender] = (start, seen)
+            if seen > self._cap:
+                self._conflicts_dropped += 1
+                last = self._last_drop_warning
+                if last is None or at - last >= CONFLICT_WINDOW_S or at < last:
+                    self._last_drop_warning, warn = at, True
+                dropped = self._conflicts_dropped
+        if seen > self._cap:
+            if warn:
+                _LOG.warning(
+                    "trigger conflict events over the cap of %d per minute for sender %s: %d not written so far"
+                    " (the 409 is still answered)",
+                    self._cap,
+                    req.sender,
+                    dropped,
+                )
+            return
+        if self._audit is None:
+            return
+        try:
+            self._audit.write_outcome(_conflict_event(found, req))
+        except Exception as exc:  # noqa: BLE001 - the 409 stands whatever the audit does
+            _LOG.warning("trigger conflict: audit write failed (%s)", type(exc).__name__)
 
     def _row(self, run_id: str) -> Run | None:
         try:
@@ -295,6 +404,31 @@ class Runner:
             )
         except Exception as exc:  # noqa: BLE001 - never takes the process down; the tick ends a cut-off run
             _LOG.warning("trigger run %s: loop raised %s", req.run_id, type(exc).__name__)
+
+
+def _hash_of(ref: object) -> str:
+    """The payload hash of a trigger_ref (`sender/key#sha256`), or `-` when the text is not that shape."""
+    tail = str(ref).rpartition("#")[2]
+    return tail if HASH_RE.fullmatch(tail) else "-"
+
+
+def _conflict_event(found: Run, req: Accepted) -> AuditEvent:
+    """Hashes and ids only: the sender (in `source`), the key (`object_ref`), the new request's payload hash
+    (`inputs_hash`) and the stored one (`output_hash`). Never the payload and never the signature (this module
+    never sees it: it is not on `Accepted`)."""
+    ref = req.trigger_ref
+    key = ref.partition("/")[2].rpartition("#")[0]
+    return AuditEvent(
+        run_id=req.run_id,
+        domain=CONFLICT_DOMAIN,
+        operation=CONFLICT_OPERATION,
+        principal=req.principal_id,
+        source=f"trigger:{req.sender}",
+        object_ref=key,
+        inputs_hash=_hash_of(ref),
+        output_hash=_hash_of(found.trigger_ref),
+        result="conflict",
+    )
 
 
 def _answer(found: Run, req: Accepted) -> tuple[int, dict[str, str]]:
@@ -437,6 +571,8 @@ def make_app(
     clock: Callable[[], float] = time.time,
     poll_s: float = POLL_S,
     max_waiting: int = MAX_WAITING,
+    conflict_events_per_minute: int = CONFLICT_EVENTS_PER_MINUTE,
+    rate_clock: Callable[[], float] = time.monotonic,
 ) -> tuple[Any, Runner]:
     """The WSGI callable and its Runner from a built App (for `main`, or for a WSGI server of the client's
     choice). The caller closes the Runner."""
@@ -450,14 +586,24 @@ def make_app(
     try:
         check_secrets(secrets)
         runner = Runner(
-            app.runtime, app.store, max_running, ack_wait_s, poll_s=poll_s, max_waiting=max_waiting
+            app.runtime,
+            app.store,
+            max_running,
+            ack_wait_s,
+            poll_s=poll_s,
+            max_waiting=max_waiting,
+            audit=getattr(
+                app, "audit", None
+            ),  # an App stand-in without one: conflicts are counted only
+            conflict_events_per_minute=conflict_events_per_minute,
+            rate_clock=rate_clock,
         )
     except ValueError as exc:  # these messages name senders and bounds, never a value
         raise ConfigError(str(exc)) from None
     check_durable(app.store)
     check_spend(app.runtime, max_running)
     try:
-        return make_wsgi(settings, secrets, runner.start, clock), runner
+        return make_wsgi(settings, secrets, runner.start, clock, runner.health), runner
     except ValueError as exc:
         runner.close(0)
         raise ConfigError(str(exc)) from None
@@ -617,6 +763,48 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
         raise
 
 
+class _StoreDown:
+    """What the degraded worker serves in place of a Runner: `/health` says store_down; `serve` closes it."""
+
+    running = 0
+
+    def __init__(self) -> None:
+        self.failures = 1  # the failed start-up
+
+    def health(self) -> tuple[bool, int]:
+        return False, self.failures
+
+    def close(self) -> None:
+        return None
+
+
+def _serve_degraded(args: argparse.Namespace, exc: BaseException) -> int:
+    """The store was not reachable at start: log one WARNING (class name only) and serve `/health` 503 and
+    an empty 503 for every other path, until stopped. A supervisor sees the 503 and restarts the worker."""
+    _LOG.warning(
+        "trigger worker: store unreachable at start (%s): starting anyway; GET /health answers 503 until the"
+        " store is back and the worker is restarted",
+        type(exc).__name__,
+    )
+    down = _StoreDown()
+    try:
+        port = args.port if args.port is not None else PORT
+        check_port(port)
+        check_bind(args.host, args.allow_non_loopback)
+        server = make_server(
+            args.host, port, health_only_app(down.health), ACK_WAIT_S + SOCKET_SLACK_S
+        )
+    except ConfigError as err:
+        print(f"trigger worker: config error: {err}", file=sys.stderr)
+        return EXIT_CONFIG
+    _LOG.info(
+        "trigger worker: listening on http://%s:%d (store down: /health only)",
+        server.server_address[0],
+        server.server_port,
+    )
+    return serve(server, down)
+
+
 def _log_to_stderr() -> logging.Handler:
     """INFO lines of the `hadavin_sdk.triggers` logger on stderr; returns the handler (the one already there on a
     second call). Only that logger is set: the root logger, the rest of `hadavin_sdk` and with them the logging
@@ -680,7 +868,8 @@ def _fields(exc: BaseException, limit: int = 10) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 4 store not reachable at start, 3 anything else."""
+    """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 3 anything else. A store that is not
+    reachable at start is no exit: one WARNING, then the worker serves ``/health`` 503 only (`_serve_degraded`)."""
     parser = argparse.ArgumentParser(prog="python -m hadavin_sdk.triggers.worker")
     parser.add_argument("--config-dir", type=Path, default=None)
     parser.add_argument("--host", default=LOOPBACK, help=f"default: {LOOPBACK}")
@@ -693,8 +882,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         server, runner = _prepare(args)
     except StoreUnavailable as exc:  # a config error subclass: must come first
-        print(f"trigger worker: store unreachable: {type(exc).__name__}", file=sys.stderr)
-        return EXIT_STORE
+        return _serve_degraded(args, exc)
     except ConfigError as exc:  # written in this file: ids and bounds only
         print(f"trigger worker: config error: {exc}", file=sys.stderr)
         return EXIT_CONFIG
@@ -703,8 +891,7 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_CONFIG
     except Exception as exc:  # noqa: BLE001 - class name only: the text could hold a value
         if is_connectivity_error(exc):
-            print(f"trigger worker: store unreachable: {type(exc).__name__}", file=sys.stderr)
-            return EXIT_STORE
+            return _serve_degraded(args, exc)
         print(f"trigger worker: start failed: {type(exc).__name__}", file=sys.stderr)
         return EXIT_FAILED
     _LOG.info(
