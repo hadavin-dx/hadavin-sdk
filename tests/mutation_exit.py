@@ -30,7 +30,7 @@ def exit_guard(main: Callable[[], object]) -> int:
         return 1
     except KeyboardInterrupt:
         return 130
-    except BaseException:
+    except BaseException:  # noqa: BLE001  # any failure, a bug included, must be a nonzero exit
         traceback.print_exc()
         return 1
     return 0

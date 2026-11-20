@@ -110,9 +110,10 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parents[1])
 )  # the repo root: tools.* is not installed
 
-from tests.mutation_exit import check_test_files, exit_guard
 from tools import mutation_runner
 from tools.mutation_runner import Mutant, run_mutants
+
+from tests.mutation_exit import check_test_files, exit_guard
 
 ROOT = Path(__file__).resolve().parents[1]
 TE = "tests/triggers/test_endpoint.py"
@@ -1337,6 +1338,10 @@ def main():
     if only and not any(o in m.name for m in M for o in only):
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
+    missing = check_test_files(M, TESTS)
+    if missing:
+        print("\n".join(missing), file=sys.stderr)
+        sys.exit(2)  # nothing runs: the runner would raise before the first mutant
     header()
     problems = check_anchors(M)
     if problems:

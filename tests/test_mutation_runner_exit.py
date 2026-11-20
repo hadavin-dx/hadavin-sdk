@@ -17,9 +17,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def drive(body: str):
-    code = "import sys\nfrom tests.mutation_exit import check_test_files, exit_guard\n" + textwrap.dedent(body)
+    code = (
+        "import sys\nfrom tests.mutation_exit import check_test_files, exit_guard\n"
+        + textwrap.dedent(body)
+    )
     return subprocess.run(  # noqa: S603  # our own interpreter and a text of this file, no shell
-        [sys.executable, "-c", code], capture_output=True, text=True, check=False, timeout=120, cwd=ROOT
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+        cwd=ROOT,
     )
 
 
@@ -32,7 +40,10 @@ def test_every_mutant_killer_file_is_in_tests():
 
 
 def test_the_check_names_the_mutant_and_the_file():
-    fake = [SimpleNamespace(name="GX fake", test_file="tests/x.py"), SimpleNamespace(name="GY", test_file="")]
+    fake = [
+        SimpleNamespace(name="GX fake", test_file="tests/x.py"),
+        SimpleNamespace(name="GY", test_file=""),
+    ]
     (msg,) = check_test_files(fake, ["tests/other.py"])
     assert "GX fake" in msg and "tests/x.py" in msg and "missing from TESTS" in msg
 

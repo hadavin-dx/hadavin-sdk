@@ -187,19 +187,47 @@ def _normal(raw: bytes) -> bytes:
 
 NAMES = list(_cases())
 
+# The stdlib, not this server, decides these two (see the d-fix15 note in the ticket):
+# - `400-garbage` is a two-word line whose command is not GET, so `parse_request` calls `send_error` while
+#   `request_version` is still the default HTTP/0.9. CPython 3.12 and 3.13.12 write nothing for an HTTP/0.9
+#   answer (no status line, no headers) and close; 3.13.18 sets `request_version = ''` first and answers 400.
+#   Both are legitimate for an unparseable line; what must hold on every Python is: no write at all, or the
+#   whole answer in exactly one write, never a split one.
+# - `414-long-line` is answered by our own `send_error`, but the reason phrase comes from `http.HTTPStatus`,
+#   which CPython renamed in 3.13 ("Request-URI Too Long" became "URI Too Long"): the phrase is not compared.
+MAY_BE_SILENT = {"400-garbage"}
+PHRASE_VARIES = {"414-long-line"}
+
+
+def _silent(name, raw, writes):
+    """True when this case may stay unanswered and did (nothing written, nothing read)."""
+    if name in MAY_BE_SILENT and not writes:
+        assert raw == b""
+        return True
+    return False
+
+
+def _no_phrase(raw: bytes) -> bytes:
+    return re.sub(rb"^(HTTP/1\.\d \d{3})[^\r]*", rb"\1", raw)
+
 
 @pytest.mark.parametrize("name", NAMES)
 def test_every_answer_is_one_write(name):
     raw, writes = _exchange(name)
+    if _silent(name, raw, writes):
+        return
     assert len(writes) == 1, [w[:40] for w in writes]
     assert writes[0] == raw  # nothing else reached the client
 
 
 @pytest.mark.parametrize("name", NAMES)
 def test_the_one_write_holds_status_line_headers_and_the_whole_body(name):
-    """A kill between writes is impossible when the first and only write is the complete answer."""
+    """A kill between writes is impossible when the first and only write is the complete answer.
+    A case in MAY_BE_SILENT may instead write nothing (stdlib HTTP/0.9 handling, older CPython): never a part."""
     _app, _data, status, body = _cases()[name]
-    _raw, writes = _exchange(name)
+    raw, writes = _exchange(name)
+    if _silent(name, raw, writes):
+        return
     first = writes[0]
     _head, sep, tail = first.partition(b"\r\n\r\n")
     assert sep and first.startswith(b"HTTP/1.")
@@ -213,8 +241,13 @@ def test_the_one_write_holds_status_line_headers_and_the_whole_body(name):
 @pytest.mark.parametrize("name", NAMES)
 def test_the_bytes_on_the_wire_are_those_of_the_stdlib_writes(name):
     """Byte for byte what the four-write server sent (taken before the change; Date replaced)."""
-    raw, _writes = _exchange(name)
-    assert _normal(raw) == GOLDEN[name]
+    raw, writes = _exchange(name)
+    if _silent(name, raw, writes):
+        return
+    got, want = _normal(raw), GOLDEN[name]
+    if name in PHRASE_VARIES:
+        got, want = _no_phrase(got), _no_phrase(want)
+    assert got == want
 
 
 def test_a_failure_after_the_headers_still_sends_what_the_stdlib_would_have_sent():
