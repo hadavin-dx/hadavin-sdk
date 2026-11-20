@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:27:48Z
+UPDATED_UTC: 2026-11-20T15:34:03Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:28Z load 1.4. Agents 3: G9b (E23), rec (g2/g3 leftovers into one head), grants (8 grant tests vs core-b 0006/0007: running since 15:24, no result yet). cloud/core-c head ca1534140. F-install: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead.
+STATE: 15:37Z BLOCKS: nothing; I was running tests (my last push was slow). load 0.8, agents alive 0. cloud/core-c head 3510ba666 = G9b (E23 M1-M3, redact_mutants 130/130 by builder) + REC PU1 re-pin (p1d_a rows 99 passed) + G4c + G13c + G12c + gate mutant fixes. g2/g3: 4 leftover commits checked, all SUPERSEDED in head (REC-notes.md), so ONE head = cloud/core-c. 8 grant tests: re-pinned against core-b head 133803834 (28 failed, not 8: head is past 0007, to 0011), 117 passed on real Postgres 16; branch wip/cloud-core-c/grants b55d21865 (needs core-b head; lead/core-b to merge). Open finding: redaction_maps is read-write incl. UPDATE while comment says no UPDATE. F-install: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 3
-CAPACITY: load 1.4 of 4 cores, mem 2/15 GB, disk 54G free, 23% used, light agents 3, heavy agents 0
+AGENTS_RUNNING: 0
+CAPACITY: load 0.8 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: Collect G9b and rec, then idle full-suite run; docs root pass; grant tests vs core-b head.
-PUSHED_UTC: 2026-11-20T15:24:02+00:00
+NEXT: Idle full-suite run on head; docs root pass (SECURITY/CHANGELOG/README from v7 drafts); G11 waits E16.
+PUSHED_UTC: 2026-11-20T15:30:44+00:00
 
-(20:57 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:04 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -27,10 +27,10 @@ PUSHED_UTC: 2026-11-20T15:24:02+00:00
 | ae6dab72 | reviewer | claude-sonnet-5-5 | G9 RESULT review round 2 (design) at bf7af9358 | 14:50 | 15:05 | 2 | done | 2 | 0 | EGM |
 | a447ecd1 | reviewer | claude-sonnet-5-5 | E9 RESULT review round 3 (codebase) at bf7af9358 | 14:50 | 15:05 | 3 | done | 3 | 0 | EGM |
 | a0194822 | builder | claude-sonnet-5-5 | BUILDS G4c (G4 Phase 4/5 host patterns: a start rule that closes the 19+6 open host rows and keeps the p1d property: the earlier build stopped on a STOP guard); worktree /tmp/core-c-g4c wip-g4c | 14:50 | 15:30 | 1 | done | 1 | 0 | owns HOSTNAME/HOSTKEY patterns in redact.py + host tests/mutants |
-| a0385760 | builder | claude-sonnet-5-5 | BUILDS G9b (E23: _overlaps charge-as-you-go, union kind downgrade, weight calibration); /tmp/core-c-g9b | 15:00 | 15:40 | 1 | running | 1 | 0 |  |
+| a0385760 | builder | claude-sonnet-5-5 | BUILDS G9b (E23: _overlaps charge-as-you-go, union kind downgrade, weight calibration); /tmp/core-c-g9b | 15:00 | 15:40 | 1 | done | 1 | 0 |  |
 | aadbf6c1 | builder | claude-sonnet-5-5 | FIXES gate mutants G13d/G13e/E19g/E19i; /tmp/core-c-gm | 15:01 | 15:20 | 1 | done | 1 | 0 |  |
-| rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | running | 1 | 0 |  |
-| grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | running | 1 | 0 | light, 1 pytest |
+| rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | done | 1 | 0 |  |
+| grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | done | 1 | 0 | light, 1 pytest |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
