@@ -22,6 +22,8 @@ prototype; the code path it measured is unchanged in v4, said per row), BY GREP 
   (sha256 `e7a93738f10e7ea66e164c929d20c0405a0730d41852e0ff88856720ea6cdbee`, equal to tests/fixtures/textnorm_manifest.json:4),
   `guard/injection.py`, `tests/textnorm_mutants.py`, `tests/test_textnorm.py`, `_fixbatch`, `_callers`, `_order137`, the manifest.
 - Line numbers: every "HEAD :n" below is BY GREP on f91f56a04 unless it says "proto" (the v4 prototype, section 14) or BY CONTENT.
+- CHANGED in v4: checked again at b61804542 (11:19Z, after the drafting): only approvals/gate.py, guard/redact.py (3 lines; the cites :1299,
+  :1340, :1375 still hold) and two redact tests changed since f91f56a04; both G10 diffs still pass `git apply --check` there.
 - Read for v4 (in addition to v3's list): the two round-2 reviews; v3's prototype scripts and test file; HEAD's textnorm.py 555-620, 1350-1380,
   1440-1540; injection.py 20-240; redact.py 1295-1380; k1b/loop.py 130-210; the six call sites; tests/test_textnorm_meta.py 85-380;
   tests/textnorm_mutants.py 960-1000 (`__main__`); evidence/G1-false-hits-and-cost.md 100-166 (Round 2).
