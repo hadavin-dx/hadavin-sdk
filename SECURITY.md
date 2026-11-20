@@ -8,20 +8,20 @@ Reports are answered within 5 working days.
 
 ## 1. Stated limits of redaction (reviewed, not bugs)
 
-The words in capitals (TESTED, MEASURED, FIXED and the others) and the technical terms are defined in the appendix, [Words used here](#words-used-here). The redactor and the secret finder are the same code. This file says "secret finder"; the README and the CHANGELOG say "redactor".
+The words in capitals (TESTED, MEASURED, FIXED and the others) and the technical terms are defined in the appendix, [Words used here](#words-used-here). The redactor and the secret finder are the same code. This file says "secret finder"; the README and the CHANGELOG say "redactor". The text of this note is the only place that explains both words.
 
-Redaction is pattern based and treats the end of a value the way the redactor's own value pattern does. Two consequences are known and stated:
+Redaction is pattern based and treats the end of a value the way the secret finder's own value pattern does. Two consequences are known and stated:
 
-- An unquoted secret value that itself contains a plain (not encoded) space or `;` is masked only up to that character in pass one. Example: `password=my secret phrase`. Its tail is shown, because by the redactor's definition the value ended there.
+- An unquoted secret value that itself contains a plain (not encoded) space or `;` is masked only up to that character in pass one. Example: `password=my secret phrase`. Its tail is shown, because by the secret finder's definition the value ended there.
   - A quoted value with spaces (`password="my secret phrase"`) is masked whole.
   - A `,` or `&` inside a `key=value` value does not end it either. Then the plain copy of that value elsewhere in the text can stay readable (see the entry on punctuation inside a stored secret below).
   - Put a secret that holds a space in quotes handled by the pattern, or do not hand it to a tool.
 - A form-encoded `;` or `&` inside a value is ambiguous. `password%3Dab%3Bzq9` can be one secret, or a key and a value followed by more text.
-  - The redactor decodes it and masks what its value pattern reaches.
+  - The secret finder decodes it and masks what its value pattern reaches.
   - It keeps what pass one masked whole when the decoded view would mask less.
   - It cannot know which reading the sender meant.
 
-Status: STATED (the published SECURITY.md on the main line, since 2026-11-04; the same limits are K46 and K84). Evidence: MEASURED here for the unquoted example (K46); UNVERIFIED (read in the code) for the form-encoded case. Who acts: nobody.
+Status: STATED (the published SECURITY.md on the main line, since 2026-11-04). K46 and K84 hold the same limits with their own status; K84 is OPEN. Evidence: MEASURED here for the unquoted example (K46); UNVERIFIED (read in the code) for the form-encoded case. Who acts: nobody.
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege). UNVERIFIED: this is the design rule; no test shows it for every tool.
 
@@ -34,12 +34,12 @@ As of 2026-11-20 15:44 UTC (commit 2552bcc95). The words TESTED, MEASURED and th
 ### 2.0 State of the work
 
 - WAITING: the gate is not installed. No point in the code that calls a model goes through it yet. The connector and store team must install it.
-- NONE (the project's written order of 2026-11-20 06:30 UTC): the connector and store team will not install the gate before the model connectors can say "refused before any answer".
+- STATED (the project's written order of 2026-11-20 06:30 UTC): the connector and store team will not install the gate before the model connectors can say "refused before any answer".
 - TESTED: a batch of the whole test suite, without the slow-timing and live tests, gave 15,955 passed, 561 skipped, 74 expected failures and 10 failures. It ran on the merged code from 14:06 to 14:17 UTC on 2026-11-20.
 - TESTED (the notes of that batch): 6 of the 10 failures were a fault of a secret finder change. It was fixed, and its 4 test files then passed (297 passed). Two were approval-message rows, re-recorded twice since, from the measured output. One is a project file that names a vendor. One failed on the older code too.
-- TESTED (a line on the project's status board): a later batch of the same kind gave 16,071 passed and 2 failed. The 2 failures were the vendor-string test and a recording that was re-keyed since. UNVERIFIED: the commit of that batch (the board names 2552bcc95 only for the next batch).
-- TESTED (the same board line): the slow-timing tests on a quiet machine at commit 2552bcc95 gave 96 passed, 1 skipped and 0 failed in 427 seconds.
-- The vendor-string test is a repository rule, not a security finding. It checks every file of the project for a vendor's brand string, and one working note outside the code holds one. MEASURED here: in a run of the documentation and brand tests on this head, it is the only one of 72 that fails.
+- TESTED (a progress line of 2026-11-20 kept by the team): a later batch of the same kind gave 16,071 passed and 2 failed. The 2 failures were the vendor-string test and a recording that was re-keyed since. UNVERIFIED: the commit of that batch (that line names 2552bcc95 only for the next batch).
+- TESTED (the same progress line): the slow-timing tests on a quiet machine at commit 2552bcc95 gave 96 passed, 1 skipped and 0 failed in 427 seconds.
+- The vendor-string test is a repository rule, not a security finding. It checks every file of the project for a vendor's brand string, and one team note outside the code holds one. MEASURED here: in a run of the documentation and brand tests on this head, it is the only one of 72 that fails.
 - Since the first batch, these changed: the gate's safety net, the secret finder's punctuation, overlap and host-name rules, and four of the gate's deliberate code breaks. 2.10 lists the builders' own batches. The last row of 2.10 has no result line, so what it covers is UNVERIFIED.
 - NOT RUN: a batch of the whole test suite whose commit is named and is the code this file describes.
 - UNVERIFIED (read in the test file): five install tests are marked as strict expected failures until the gate is installed. Once it is installed, they pass, and that pass fails the batch. Then the connector and store team removes the five marks.
@@ -57,7 +57,7 @@ Shown by tests. TESTED here means that test_model_gate.py and test_runmap_enforc
 - TESTED: the gate does not change the calling code's messages, documents or run map.
 - TESTED: the calling code must name its run map or state "no map". Leaving it out is an error, and so is a plain dict or a copy of the map. Only the test and replay command lines may state "no map" (K9).
 - TESTED: the safety net refuses a call when a known secret of 4 or more characters is still readable. Since the latest change it also reads a piece of a secret beside a placeholder, and decoded spellings (K78, K3).
-- NOT RUN: the whole file of deliberate code breaks for the gate on this code (140 breaks; one is known to survive as equivalent). Single breaks were run by hand (2.9).
+- NOT RUN: the whole file of deliberate code breaks for the gate on this code (140 breaks; one is known to survive as equivalent). No result line is on file for single breaks run by hand.
 
 Known gaps and fixed findings:
 
@@ -105,7 +105,7 @@ Known gaps and fixed findings:
   - Status: FIXED. Evidence: TESTED. Who acts: nobody.
 - **K12. Changed, not shown fixed:** a secret at a held-back value's edge could leave its tail beside a placeholder.
   - Example: known `S3cr3t` and `>abcdef`. A reviewer read that `S3cr3t>abcdef` becomes `<SECRET_1>abcdef`. A run gave `<SECRET_1><SECRET_2>`, with no leak.
-  - UNVERIFIED (a working note names the test and no result line exists; see 2.10): the safety net now refuses a call whose text holds `<SECRET_1>abcdef`. That is a piece of 4 or more characters of a known secret beside a placeholder. The note says that test failed before the change.
+  - UNVERIFIED (a team note names the test and no result line exists; see 2.10): the safety net now refuses a call whose text holds `<SECRET_1>abcdef`. That is a piece of 4 or more characters of a known secret beside a placeholder. The note says that test failed before the change.
   - Status: OPEN (the code is changed; FIXED needs a recorded batch of that test). Evidence: UNVERIFIED. Who acts: the text and masking team records a batch.
 - **K13. Not fully limited:** the time the gate spends on one model call. One budget per call covers the characters, the steps and two time limits of 6.0 seconds each. The first is processor time, read inside the masking step. The second is wall-clock time, read only between values and after each sweep.
   - TESTED: a deadline that passes inside the masking step refuses the call with the code `mask_budget_exceeded`.
@@ -179,10 +179,10 @@ Known gaps and fixed findings:
   - Status: OPEN (the code is changed; FIXED needs a recorded batch of its test). Evidence: MEASURED here (the example); UNVERIFIED (the test; no result line, see 2.10). Who acts: the text and masking team records a batch.
 - **K80b. Not read as a piece, in any letter case:** the public words that start an authorization value. They are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`, `AWS4-HMAC-SHA256`, `Bot` and `Key`.
   - The same word plus one more character of the secret is read.
-  - Status: OPEN (a working note names a test for it, but no result line exists; PINNED is not claimed). Evidence: UNVERIFIED (see 2.10). Who acts: the text and masking team records a batch.
+  - Status: OPEN (a team note names a test for it, but no result line exists; PINNED is not claimed). Evidence: UNVERIFIED (see 2.10). Who acts: the text and masking team records a batch.
 - **K85. Refused more than needed:** the safety net can refuse ordinary text beside a placeholder. One planted value can make every later call of a run refuse.
   - Example: a known secret `the quick brown fox` makes the text `the <HOST_1>` look like a leak (MEASURED here: the net answers "leak"). The gate reports that as the code `held_value_left`, the same code as a real leak. The message stays in the run's history, so each later call refuses.
-  - UNVERIFIED (a working note names the tests and no result line exists; see 2.10): the refusal is pinned as it is. A strict expected failure records the wanted behaviour (ordinary words beside a placeholder sent).
+  - UNVERIFIED (a team note names the tests and no result line exists; see 2.10): the refusal is held as built, not PINNED. A strict expected failure records the wanted behaviour (ordinary words beside a placeholder sent).
   - UNVERIFIED (same note): a bare web address start (`https://`) beside a placeholder is not read as a piece. So are the public authorization words, in any letter case (K80b).
   - UNVERIFIED (same note): one key of the map reads at most 4,096 hits of its first characters (both sides together).
     - A dense hostile text is refused with `mask_budget_exceeded` after about 4,096 lookups, in 0.02 s.
@@ -241,7 +241,7 @@ Known gaps:
 
 ### 2.3 Stop switch
 
-Shown by tests:
+Shown by tests, and what is not:
 
 - TESTED (the gate's tests): a refused reservation, including the stop switch's refusal, means no model call.
 - UNVERIFIED: that the store refuses every reservation while the switch is on. This is in the connector and store team's code. No test of it ran on this branch.
@@ -295,11 +295,11 @@ Known gaps and fixed findings:
   - Status: STATED (the published README, section "Limits and trust", since 2026-11-04). Evidence: NONE. Who acts: nobody.
 - **K35. Not masked:** a bare number with no label.
   - Example: `ref 55556666 paid` stays as written (MEASURED here). On the main line, 24 of 43 such test lines were not masked (MEASURED).
-  - An evidence file and a ticket of the text and masking team (2026-11-20) call this accepted. The written order they cite as the acceptance was not found. So the acceptance is UNVERIFIED.
+  - The text and masking team calls this accepted (team notes of 2026-11-20). No written order for that acceptance was found. So the acceptance is UNVERIFIED.
   - Status: OPEN. Evidence: MEASURED (the gap); UNVERIFIED (the acceptance). Who acts: the owner confirms the acceptance, or the text and masking team finds the order.
 - **K36. Fixed:** host names with no "host" word in front. A name under a private suffix is now masked whole. So is a label after the word `host` or `hostname` that ends in two digits or in a hyphen and a digit. The private suffixes are `.corp`, `.lan`, `.intranet`, `.intra`, `.localdomain`, `.home.arpa`, and `.internal` or `.local` when no label or call follows.
   - Example: `db01.corp.example` becomes `<HOSTNAME_1>` (before: `<HOSTNAME_1>.example`); `host db01 is down` becomes `host <HOSTNAME_1> is down`; `hostname=db01 state=down` becomes `hostname=<HOSTNAME_1> state=down` (MEASURED here).
-  - On the main line, 28 of 44 test lines left a label of the name readable (MEASURED). On this branch 7 of the same 44 do (MEASURED here: the 44 lines through `redact_text`); 19 lines are pinned as closed.
+  - On the main line, 28 of 44 test lines left a label of the name readable (MEASURED). On this branch 7 of the same 44 do (MEASURED here: the 44 lines through `redact_text`); 19 is the number of host-name rows that an earlier test file marked as strict expected failures (a recorded team note of 2026-11-20). It is not 28 minus 7 (21): the two-row difference is UNVERIFIED.
   - Names that stay readable, each pinned by a test:
     - a name with a public-looking ending and no private suffix (`db01.acme.example`, `db01.acme.test`);
     - the short in-cluster forms (`billing.payments.svc`, `billing.payments.svc.cluster.local`);
@@ -311,7 +311,8 @@ Known gaps and fixed findings:
     - a build triple after `host` (`host x86_64-w64-mingw32 build`) is masked;
     - a name glued after a non-Latin letter is masked from its first Latin letter, digit, `_` or `-`; up to two characters before it can go into the placeholder.
   - A list of CPU and platform names after `host` (`host x86_64`, `host arm64 runner`) is kept.
-  - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody. Whether to send clients a note on host names is OPEN (the owner decides).
+  - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
+  - OPEN (separate from the status): whether to send clients a note on host names. The owner decides.
 - **K37. Fixed:** base64 text under 40 characters was not masked. Now the secret finder decodes base64 text of 12 or more characters. It masks the whole text as `<ENCODED_n>` when the decoded text holds a value it knows. It decodes to a depth of 3 levels (`defaults.B64_MAX_DEPTH`).
   - Example: `secret is cGFzc3dvcmQ9aHVudGVyMnp6` (base64 of `password=hunter2zz`) becomes `secret is <ENCODED_1>` (MEASURED here).
   - On the main line, 41 of 41 such test lines leaked (MEASURED). The limits that stay are in K82.
@@ -367,7 +368,7 @@ Known gaps and fixed findings:
   - A phone number with a country code and spaced groups before a full stop and a letter or digit is masked only in part. `call +44 20 7946 0958.Thanks` becomes `call <PHONE_1> 0958.Thanks`, and `call 0044 20 5550 1234.5` becomes `call <PHONE_1> 1234.5` (MEASURED here). A strict expected failure pins each (the earlier code did the same).
   - Masked more than before (as built): `tok 4155550132.-Ab9 x` becomes `tok <PHONE_1>.-Ab9 x` (MEASURED here); the earlier code left it. A test pins this output and a strict expected failure records the wanted one.
   - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody.
-  - Open question, apart from the status: these defaults are as built. The owner has not decided them in writing, so no decision is on file (OPEN).
+  - OPEN (separate from the status above): whether these defaults, as built, are accepted. The owner has not decided them in writing.
 - **K71. Readable remainder of a long token:** a UUID or a number of 10 or 11 digits is cut out of a long token. It must be set off by `_` or a letter. The rest of the token stays readable when it is under 40 characters. Before the change, the whole token was masked as one value.
   - Example (MEASURED here): `tok_<uuid>_` followed by 32 characters becomes `tok_<UUID_1>_` and the same 32 characters, readable. A remainder of 40 characters or more is masked too.
   - A letter does the same: `tok_<uuid>x` followed by the same 32 characters becomes `tok_<UUID_1>x` and the 32 characters (MEASURED here).
@@ -395,7 +396,7 @@ Known gaps and fixed findings:
   - TESTED: the eight-value shape above is now refused.
   - Not bounded: the pattern passes before the build, finders kept from earlier builds, and the extra spellings of values that are not plain ASCII.
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
-  - Open question, apart from the status: the two limits are the plan's defaults. The owner has not approved them, so no decision is on file (OPEN).
+  - OPEN (separate from the status above): whether the two limits, which are the plan's defaults, are approved. The owner has not approved them.
 - **K75. Extra map entry, not prevented, pinned:** a tool's error text read twice can make one extra map entry for each distinct token of another kind written after a key. The model sees a secret placeholder instead of the kind. Nothing real is stored in that entry.
   - Example: `password=‹EMAIL_1› host` becomes `password=<SECRET_1> host`, and `<SECRET_1>` stands for `‹EMAIL_1›` (MEASURED here).
   - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody. The alternative (exempt the escaped tokens of other kinds on the tool-error path only) is not built.
@@ -407,7 +408,7 @@ Known gaps and fixed findings:
 - **K77. Fixed:** a password stored with punctuation, a wrapper or an escaped edge at its ends left its plain copy readable.
   - Example: `password=hunter22, hunter22` used to leave the second `hunter22` readable. It now becomes `password=<SECRET_1> <SECRET_2>` (MEASURED here).
   - The same holds for a leading bracket (`password=(hunter22), hunter22`) and a wrapper such as `**hunter22**`.
-  - It also holds for an escaped or encoded edge, at the start or the end: `%0A`, `%XX`, a backslash-u or backslash-x code, `&quot;`, `&#10;`, a tag such as `<br/>` or `</b>` (`hunter22%0A then hunter22`, `<br/>hunter22 then hunter22`). At the end only, a cut-short form from a closed list (`<br`, `&quot`) is read too.
+  - It also holds for an escaped or encoded edge, at the start or the end. Examples are `%0A`, `%XX`, a backslash-u or backslash-x code, `&quot;`, `&#10;`, and a tag such as `<br/>` or `</b>` (`hunter22%0A then hunter22`, `<br/>hunter22 then hunter22`). At the end only, a cut-short form from a closed list (`<br`, `&quot`) is read too.
   - An all-capital value of the shape `ADMIN_1` or `DB_PASS_2` now gets its plain copy too (`password=ADMIN_1, ADMIN_1` becomes `password=<SECRET_1> <SECRET_2>`, MEASURED here). A value that holds one stray `‹` or `›` keeps its plain copy as well (`password=hunter22!› then hunter22`, MEASURED here).
   - One secret then has two placeholders. Both restore to their own text.
   - No plain copy is made when the value is a "no value" word with punctuation (`none!`).
@@ -429,7 +430,7 @@ Known gaps and fixed findings:
   - A decoded text in which 10 percent or more of the characters are not printable, such as a blob padded with blank-looking characters.
   - A blob of capital letters, digits and `_` written between angle brackets.
   - Base64 whose decoded text holds no shape the secret finder knows (`aHVudGVyMnp6IQ==`, MEASURED here).
-  - Status: PINNED. Evidence: TESTED (strict expected failures for five of them); UNVERIFIED (the bracket and no-shape cases, read in the code). Who acts: nobody.
+  - Status: PINNED for the five cases that have strict expected failures (TESTED). The bracket and no-shape cases are not PINNED: UNVERIFIED (read in the code). Who acts: nobody.
 - **K84. Not masked:** the plain copy of a password stored with punctuation inside it, or with an escape that is not on the list.
   - Example: `password=hunter22,x and hunter22` leaves the second `hunter22` readable (MEASURED here). The same holds for `hunter22.x` and `hunter22&x=1`.
   - A double-encoded edge stays: `password=hunter22%250A then hunter22` leaves the second `hunter22` readable (MEASURED here).
@@ -438,7 +439,7 @@ Known gaps and fixed findings:
     - a mixed-case cut-short entity (`&QUOT`);
     - a tag longer than 16 characters at an edge.
   - Closed since the last version (see K77): `%0A`, `&quot;` and `<br/>` at an edge, an all-capital value such as `ADMIN_1`, and a value with one stray `‹` or `›`. Still open by design of the fix: a password wrapped in a look-alike token (`‹SECRET_x›`) gets no second entry.
-  - Status: OPEN. Evidence: MEASURED; UNVERIFIED (the not-done list). Who acts: the text and masking team; no fix for interior punctuation is built, and whether to accept it as a stated limit is the owner's to decide (OPEN).
+  - Status: OPEN. Evidence: MEASURED; UNVERIFIED (the not-done list). Who acts: the text and masking team; no fix for interior punctuation is built, and whether to accept it as a stated limit is the owner's to decide.
 
 ### 2.6 Text folding (look-alike and hidden characters)
 
@@ -469,7 +470,7 @@ Known gaps and fixed findings:
   - Share of the hits that mask a fragment of a word: 94 % (4 letters), 63.4 % (5 letters), 99 % (ids), 9 % (6-letter names).
   - These shares are not false-hit rates.
   - Hit rates on real interface text: Russian values of 4 to 8 letters 7.6 %; Chinese values of 2 characters 5.2 %. Arabic and Devanagari: synthetic text only, unknown.
-  - Status: STATED (source: the text and masking team's measurement note of 2026-11-20, a working note that is not shipped with the kit). Evidence: MEASURED. Who acts: nobody (the first user of this scan measures again).
+  - Status: STATED (source: the text and masking team's measurement note of 2026-11-20, a team note of that date). Evidence: MEASURED. Who acts: nobody (the first user of this scan measures again).
 - **K51. Limited by two time budgets:** the planted-instruction check stops at 30 seconds of processor time per check, or at 60 seconds of wall-clock time. It then flags the run as "guard unavailable" (fail closed).
   - The processor time is that of the thread that runs the check. The wall-clock limit is 2 times the processor budget.
   - From the second step of one check on, the processor time still needed may not pass half the wall-clock time left. This is stricter than 2 times: it can flag a check early, not late.
@@ -512,7 +513,7 @@ Known gaps and fixed findings:
 
 ### 2.7 Approval messages
 
-Shown by tests:
+Not shown by recorded tests:
 
 - UNVERIFIED (a batch on the branch where the change was built is reported; no result line for it is in 2.10): the secret finder runs first on each free-text path found that writes an approval message.
 - That batch ran before the change joined the shared branch.
@@ -561,7 +562,7 @@ MEASURED slowdown of approval-message masking on the joined code (median, on the
 
 ### 2.10 Builders' batches on file
 
-Each row is a batch a builder ran on the builder's own copy. The result lines are in the text and masking team's working notes, which are not shipped with the kit. None of these is a batch of the whole suite.
+Each row is a batch a builder ran on the builder's own copy. The result lines are in the text and masking team's own notes of 2026-11-20. None of these is a batch of the whole suite.
 
 | Change | Tests in the batch | Result | Result line on file |
 |---|---|---|---|

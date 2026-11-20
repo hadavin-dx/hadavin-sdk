@@ -16,18 +16,18 @@ Rules:
 
 **Production and pilot must run Python 3.13.x (Unicode 15.1.0). Python 3.12 (Unicode 15.0.0) is for demos only.**
 
-The text fold in `guard/textnorm.py` depends on the interpreter's Unicode data. Its look-alike table is the Unicode 15.1.0 table. On another Python the fold still runs, but every check name starts with a tag and never equals one made on 3.13.
+UNVERIFIED (read in the code): the text fold in `guard/textnorm.py` depends on the interpreter's Unicode data. Its look-alike table is the Unicode 15.1.0 table. On another Python the fold still runs, but every check name starts with a tag and never equals one made on 3.13.
 
 UNVERIFIED (read in the code): `app.build` calls `textnorm.require_pinned_unidata()` when the stage is pilot or prod. On any other Unicode data (Python 3.12.3 carries 15.0.0) it raises `UnidataMismatch` and nothing runs. The check is not loosened. A demo may still run on 3.12.
 
-Moving the pin to a later Python (for example 3.14) is a data migration, not a version bump. The CHANGELOG entry that starts "Pin", in the section on text folding, lists what changes together.
+UNVERIFIED (read in the code and the CHANGELOG): moving the pin to a later Python (for example 3.14) is a data migration, not a version bump. The CHANGELOG entry that starts "Pin", in the section on text folding, lists what changes together.
 
 ### Checking your Python, and what other versions do
 
 The labels TESTED, MEASURED, UNVERIFIED and NOT RUN are defined once, in [SECURITY.md](SECURITY.md#words-used-here).
 
 - To check, run `python3 --version`, or use the Python you install the kit with. To see its Unicode edition, run `python3 -c "import unicodedata; print(unicodedata.unidata_version)"`. Pilot and prod need `15.1.0`.
-- Why: text folding uses the Unicode character data built into Python. The folding tables are built for edition 15.1.0, which Python 3.13 carries. MEASURED: a run on Python 3.12 printed edition 15.0.0.
+- Why (UNVERIFIED, read in the code): text folding uses the Unicode character data built into Python. The folding tables are built for edition 15.1.0, which Python 3.13 carries. MEASURED: a run on Python 3.12 printed edition 15.0.0.
 - Pilot and prod on Python 3.12: NOT RUN (no pilot or prod start on 3.12 was tried). By design, the program refuses to start and prints `UnidataMismatch`. The fix is to install Python 3.13.
 - TESTED: one test on Python 3.13, with the version number faked, shows that refusal. The refusal comes before the program connects to the secrets vault. NOT RUN: a check of other outside services.
 - UNVERIFIED (read from the project file): the project file allows installing on 3.12 (`requires-python = ">=3.12"`). So the install succeeds, and the failure shows only when the program starts.
