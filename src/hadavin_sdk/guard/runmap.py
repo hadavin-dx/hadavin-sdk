@@ -317,9 +317,15 @@ def canonical(text: str) -> str:
 _ASCII_OR_ONE = re.compile(r"[\x00-\x7f]+|[^\x00-\x7f]")  # a run of ASCII, or one other character
 
 
-def _canonical_view(text: str) -> tuple[str, list[int]]:
-    """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
-    character, the index of the original character it came from."""
+_INVISIBLE = frozenset({"Cf"})
+# G13 (E19 N3): what the result-marker search also drops. `canonical` composes nothing, so a combining mark after `<` (U+0338)
+# stays between the two `<` of a marker look-alike and `_MARKER` did not match it.
+_INVISIBLE_OR_MARK = frozenset({"Cf", "Mn", "Me"})
+
+
+def _canonical_view(text: str, drop: frozenset[str] = _INVISIBLE) -> tuple[str, list[int]]:
+    """The canonical form of `text` (NFKC, characters of a category in `drop` removed: by default the invisible format
+    characters) and, for each canonical character, the index of the original character it came from."""
     chars: list[str] = []
     index: list[int] = []
     for run in _ASCII_OR_ONE.finditer(text):
@@ -329,14 +335,17 @@ def _canonical_view(text: str) -> tuple[str, list[int]]:
             index.extend(range(run.start(), run.end()))
             continue
         for d in unicodedata.normalize("NFKC", piece):
-            if unicodedata.category(d) != "Cf":
+            if unicodedata.category(d) not in drop:
                 chars.append(d)
                 index.append(run.start())
     return "".join(chars), index
 
 
 def replace_canonical(
-    text: str, pattern: re.Pattern[str], repl: Callable[[re.Match[str]], str]
+    text: str,
+    pattern: re.Pattern[str],
+    repl: Callable[[re.Match[str]], str],
+    drop: frozenset[str] = _INVISIBLE,
 ) -> str:
     """Find `pattern` in the canonical view of `text` and replace only the matched stretches IN THE ORIGINAL.
     The model keeps seeing the text as it was written (accents, CJK, emoji, joiners untouched); only a stretch
@@ -344,7 +353,7 @@ def replace_canonical(
     is its own canonical form."""
     if text.isascii():
         return pattern.sub(repl, text)
-    canon, index = _canonical_view(text)
+    canon, index = _canonical_view(text, drop)
     out: list[str] = []
     last = 0
     for m in pattern.finditer(canon):
@@ -362,8 +371,10 @@ def replace_canonical(
 def escape_placeholders(text: str) -> str:
     """Untrusted text may contain a literal `<IPV4_2>` in any case (`<ipv4_2>`, `<Ipv4_2>`). Left as typed it
     would look like the placeholder the redactor later issues to a different value, and restore or the grounding
-    check would treat it as that value. Every placeholder-shaped literal becomes a non-placeholder. Call it on
-    `canonical(text)`, so Unicode look-alikes are already ASCII."""
+    check would treat it as that value. Every placeholder-shaped literal becomes a non-placeholder. It is found in the canonical
+    view (NFKC one character at a time, invisible format characters removed), so a COMPATIBILITY spelling (full-width
+    `\uff1c\uff29\uff30\uff36\uff14\uff3f\uff12\uff1e`, a zero-width space inside) is caught; a confusable from another script that NFKC keeps (Cyrillic `\u0410` for
+    `A`, UTS #39 look-alikes) is not folded and is not escaped (G13, E19 N2)."""
     return replace_canonical(text, _LOOKALIKE, lambda m: f"\u2039{m.group(1)}_{m.group(2)}\u203a")
 
 
@@ -373,8 +384,9 @@ _MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
 def escape_markers(text: str) -> str:
     """Neutralise anything shaped like our result markers, in any case and spacing, including full-width and
     zero-width spellings (found in the canonical form, rewritten in the original; the rest of the text is left
-    as it was written)."""
-    return replace_canonical(text, _MARKER, lambda m: "[[")
+    as it was written). Combining marks are dropped for this search too (G13, E19 N3): `<<` + U+0338 + `TOOL RESULT` is a
+    marker look-alike."""
+    return replace_canonical(text, _MARKER, lambda m: "[[", _INVISIBLE_OR_MARK)
 
 
 def neutralise_untrusted(text: str) -> str:
@@ -996,6 +1008,7 @@ ENFORCE_MAX_HELD = 4096
 ENFORCE_MAX_ENTRIES = 5 * ENFORCE_MAX_HELD
 # 32,768: one per text, one per held-back value that occurs in a text (per round)
 ENFORCE_MAX_STEPS = 8 * ENFORCE_MAX_HELD
+# Above defaults.MAX_MAP_ENTRIES on purpose: the run cap is checked after a producer call; these bound the call before it.
 
 
 class EnforceBudget:
@@ -1082,7 +1095,7 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       space or an escape is NOT found here: finding those is the pattern redactor's work (`redact_text`),
       and returning a decoded view from here could turn a look-alike into a real placeholder. The text is
       not cleaned either: a copy split by NUL characters (a UTF-16 document read as UTF-8 has one after
-      every character) is not found.
+      every character) is not found. The gate's net reads those forms of a SECRET value (`held_in_views`, G13).
     - A value that itself holds a placeholder-shaped token (`ab<X_1>cd`) is never replaced: the sweep
       sets every token aside first, so the value never lies in one stretch of text.
     - A known value written inside angle brackets so that it reads as a token (the value `ABC_1` written
@@ -1095,7 +1108,8 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       Where one value is held under both an identifier and a secret kind, since G4 the secret's placeholder is the one used.
     - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
       on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the
-      text it is not replaced (the `>` belongs to that placeholder) and its tail stays readable.
+      text it is not replaced (the `>` belongs to that placeholder) and its tail stays readable (4 or more characters
+      of a SECRET value there: the net refuses the call, `_touching_piece`, G13).
     - A map key that is not a genuine placeholder (`<host_1>`: lower case) is not set aside by any sweep,
       so a known value that is a piece of it (`host`) is replaced inside it, held back or not: a damaged
       placeholder, no raw value. The redactor only writes genuine keys.
@@ -1148,6 +1162,8 @@ class MapSnapshot(dict):
     budget: EnforceBudget
     secret_values: frozenset[str]  # originals swept in every copy (a secret kind of 4+ characters)
     checker: Any  # a redactor over exactly those secret values, for `held_value_left`
+    # `_piece_index` of the secret values (G13)
+    pieces: tuple[list[str], list[str], frozenset[str], frozenset[str], int]
 
 
 def _rules_conflict(known: Mapping[str, str]) -> bool:
@@ -1287,11 +1303,106 @@ def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) ->
         secrets = {ph: o for ph, o in known.items() if _sweep(ph, o) is _EVERY_COPY}
         known.secret_values = frozenset(secrets.values())
         known.checker = _built(secrets, cache, "check", deadline) if secrets else None
+        known.pieces = _piece_index(known.secret_values)
     except RedactionError:
         raise
     except Exception as exc:  # noqa: BLE001 - fail closed
         raise RedactionError(type(exc).__name__) from None
     return known
+
+
+# G13 (E19 M1): the shortest piece of a secret value that the net reads as a leak where it touches a placeholder.
+NET_MIN_PIECE = 4
+
+
+def _piece_index(
+    values: frozenset[str],
+) -> tuple[list[str], list[str], frozenset[str], frozenset[str], int]:
+    """G13: the secret values longer than `NET_MIN_PIECE`, sorted; their reversals, sorted; the first and the last
+    `NET_MIN_PIECE` characters of each; the longest length. `_touching_piece` looks a piece up by bisection."""
+    fwd = sorted(v for v in values if len(v) > NET_MIN_PIECE)
+    rev = sorted(v[::-1] for v in fwd)
+    heads = frozenset(v[:NET_MIN_PIECE] for v in fwd)
+    tails = frozenset(v[-NET_MIN_PIECE:] for v in fwd)
+    return fwd, rev, heads, tails, max(map(len, fwd), default=0)
+
+
+def _starts_one(ordered: list[str], piece: str) -> bool:
+    """True when some string of the sorted list `ordered` starts with `piece`."""
+    i = bisect.bisect_left(ordered, piece)
+    return i < len(ordered) and ordered[i].startswith(piece)
+
+
+def _touching_piece(text: str, snap: MapSnapshot) -> bool:
+    """G13 (E19 M1): True when a KEY of the map has, right before it, a piece of `NET_MIN_PIECE` or more characters
+    that is the START of a secret value (shorter than the value), or right after it a piece that is the END of one:
+    `hunter2-<SECRET_2>`, `<SECRET_1>-ZZZZ`. Such a piece is what is left when two known values overlap and one was
+    masked across the other, whatever the placeholder holds. Only the text between the key and the next (or previous)
+    key is read, at most the longest value's length minus one. A piece is looked up only where its
+    first (left) or last (right) `NET_MIN_PIECE` characters are those of a value; each lookup's characters are spent
+    from the call's budget (`InputTooLarge` past it)."""
+    fwd, rev, heads, tails, longest = snap.pieces
+    if not fwd:
+        return False
+    budget, k = snap.budget, NET_MIN_PIECE
+    tokens = [m.span() for m in _PLACEHOLDER.finditer(text) if m.group() in snap]
+    for n, (start, end) in enumerate(tokens):
+        if not n % 256:
+            budget.check()
+        before = tokens[n - 1][1] if n else 0
+        after = tokens[n + 1][0] if n + 1 < len(tokens) else len(text)
+        left = text[max(before, start - longest + 1) : start]
+        for i in range(len(left) - k, -1, -1):  # the piece left[i:] ends at the key
+            if left[i : i + k] in heads:
+                budget.spend_chars(len(left) - i)
+                if _starts_one(fwd, left[i:]):
+                    return True
+        right = text[end : min(after, end + longest - 1)]
+        for j in range(k, len(right) + 1):  # the piece right[:j] starts at the key
+            if right[j - k : j] in tails:
+                budget.spend_chars(j)
+                if _starts_one(rev, right[:j][::-1]):
+                    return True
+    return False
+
+
+def held_in_views(text: str, snap: MapSnapshot) -> bool:
+    """G13 (E19 M2): the net over the forms of `text` a reader (or the model) may decode: the text without NUL and lone
+    surrogates (a UTF-16 document read as UTF-8) and, when it holds a non-ASCII character or `\\`, `%` or `&`, every
+    `_views` form of that. True when `held_value_left` finds a secret value in any of them. Each view's characters are
+    spent from the call's budget; a text whose views would pass `defaults.MAX_REDACT_CHARS` is read in overlapping
+    windows. `_views` can raise `InputTooLarge` or `TooDeep`: the caller refuses the call."""
+    if not snap.secret_values:
+        return False
+    cleaned = _clean(text)
+    views = [cleaned] if cleaned != text else []
+    if not cleaned.isascii() or any(c in cleaned for c in "\\%&"):
+        for window in _windows(cleaned, max(map(len, snap.secret_values))):
+            views += _views(window)
+    for view in views:
+        snap.budget.spend_chars(len(view))
+        snap.budget.check()
+        if held_value_left(view, snap):
+            return True
+    return False
+
+
+# G13: a text longer than this is read by `held_in_views` in windows of this size (`_views` refuses a form past
+# `defaults.MAX_REDACT_CHARS`, and NFKC can triple a text; the gate holds texts up to 8 times that cap).
+VIEW_WINDOW = defaults.MAX_REDACT_CHARS // 4
+
+
+def _windows(text: str, longest: int) -> list[str]:
+    """`text` whole when it fits one window, else windows of `VIEW_WINDOW` characters that overlap by ten times the
+    longest secret value plus 16 (an escaped spelling is at most ten characters a character: `&#1114111;`). An overlap of
+    half a window or more is `InputTooLarge`."""
+    if len(text) <= VIEW_WINDOW:
+        return [text]
+    overlap = 10 * longest + 16
+    if overlap * 2 >= VIEW_WINDOW:
+        raise InputTooLarge("InputTooLarge")
+    step = VIEW_WINDOW - overlap
+    return [text[i : i + VIEW_WINDOW] for i in range(0, len(text) - overlap, step)]
 
 
 def held_value_left(text: str, snap: MapSnapshot) -> bool:
@@ -1309,7 +1420,9 @@ def held_value_left(text: str, snap: MapSnapshot) -> bool:
     opened = _NOT_RAW.sub(
         lambda m: m.group() if m.group() in snap else m.group().replace("<", "<\0"), text
     )
-    return snap.checker.sweep(opened, snap.budget.cpu_deadline) != opened
+    if snap.checker.sweep(opened, snap.budget.cpu_deadline) != opened:
+        return True
+    return _touching_piece(text, snap)  # G13 (E19 M1)
 
 
 SAFE_HEAD_NOTE = "(details withheld)"

@@ -841,3 +841,119 @@ def test_r3_n7_stated_limit_digits_of_any_script_count_as_digits_and_as_placehol
     assert (
         _enforce(f"see {shaped}", mapping) == f"see {shaped}"
     )  # the sweep sets it aside (the gate's net refuses)
+
+
+# --- G13 (E19 M1, N3): the gate net reads a piece of a secret value beside a key; the marker look-alike with a mark -------
+M1_A, M1_B = (
+    "hunter2-" + "ABCDEFGH",
+    "ABCDEFGH" + "-ZZZZZZZZ",
+)  # the review's two overlapping secret values
+M1_TEXT = "x hunter2-ABCDEFGH-ZZZZZZZZ y"
+
+
+def _g13_snap(extra=None):
+    entries = {"<SECRET_1>": M1_A, "<SECRET_2>": M1_B, "<HOST_1>": "db1.corp.example.org"}
+    return runmap.snapshot(runmap.RunMap({**entries, **(extra or {})}))
+
+
+def test_g13_1_the_review_input_leaves_no_piece_in_either_map_order():
+    """G13-1 (E19 M1, review input; green since G9, kept as the pin): enforce plus the net never send `hunter2-` or `-ZZZZZZZZ`."""
+    for entries in (
+        {"<SECRET_1>": M1_A, "<SECRET_2>": M1_B},
+        {"<SECRET_1>": M1_B, "<SECRET_2>": M1_A},
+    ):
+        snap = runmap.snapshot(runmap.RunMap(entries))
+        out = runmap.enforce_map(M1_TEXT, snap)
+        sent = not runmap.held_value_left(out, snap)
+        assert not (sent and ("hunter2-" in out or "-ZZZZZZZZ" in out)), (
+            "G13-1 a piece of an overlapping secret was sent"
+        )
+
+
+def test_g13_2_a_secret_prefix_beside_a_key_is_held():
+    """G13-2 (E19 M1): `hunter2-` (the first 8 characters of a secret value) right before a placeholder of the map."""
+    assert runmap.held_value_left("x hunter2-<HOST_1> y", _g13_snap()), (
+        "G13-2 the prefix beside a key was not seen"
+    )
+
+
+def test_g13_3_a_secret_suffix_beside_a_key_is_held():
+    """G13-3 (E19 M1): `-ZZZZZZZZ` (the last 9 characters of a secret value) right after a placeholder of the map."""
+    assert runmap.held_value_left("x <HOST_1>-ZZZZZZZZ y", _g13_snap()), (
+        "G13-3 the suffix beside a key was not seen"
+    )
+
+
+def test_g13_4_boundaries_of_the_piece_rule():
+    """G13-4: 4 characters touching a key are a piece; 3 are not; a space between, a token that is not a key of the map
+    and a piece from the middle of a value are not read (stated limits)."""
+    snap = _g13_snap()
+    assert runmap.held_value_left("x hunt<HOST_1> y", snap), (
+        "G13-4 four characters before a key were not seen"
+    )
+    assert runmap.held_value_left("x <HOST_1>ZZZZ y", snap), (
+        "G13-4 four characters after a key were not seen"
+    )
+    assert not runmap.held_value_left("x hun<HOST_1> zzz y", snap), (
+        "G13-4 three characters were read as a piece"
+    )
+    assert not runmap.held_value_left("x hunt <HOST_1> y", snap), (
+        "G13-4 a piece one space away was read"
+    )
+    assert not runmap.held_value_left("x hunt<FAKE_1> y", snap), (
+        "G13-4 a token that is not a key was read"
+    )
+    assert not runmap.held_value_left("x <HOST_1>ter2-AB<HOST_1> y", snap), (
+        "G13-4 a middle piece was read"
+    )
+
+
+def test_g13_5_a_held_back_value_beside_a_placeholder_written_before_is_refused_not_sent():
+    """G13-5 (E19 M1; was the r2-M2 pin `<SECRET_1>abcdef` sent): the tail of `>abcdef` beside a placeholder is 6 of its 7
+    characters; the net refuses it now."""
+    snap = runmap.snapshot(
+        runmap.RunMap({"<SECRET_1>": "S3cr" + "3t", "<SECRET_2>": ">abc" + "def"})
+    )
+    assert runmap.held_value_left("<SECRET_1>abcdef", snap), (
+        "G13-5 the tail of a held-back value was not seen"
+    )
+    assert not runmap.held_value_left("<SECRET_1> abc", snap), (
+        "G13-5 three characters after a space were read"
+    )
+
+
+def test_g13_6_the_piece_check_spends_the_call_budget():
+    """G13-6: each piece looked up spends its characters from the call's budget; past it, InputTooLarge (fail closed)."""
+    snap = _g13_snap()
+    snap.budget.chars = 1_000  # 150 lookups of 8 characters
+    try:
+        runmap.held_value_left("q huntXXXX<HOST_1> " * 150, snap)
+    except runmap.InputTooLarge:
+        return
+    raise AssertionError("G13-6 the piece lookups spent nothing")
+
+
+def test_g13_8_the_views_spend_the_call_budget():
+    """G13-8 (E19 M2): each decoded form the net reads spends its characters from the call's budget."""
+    snap = _g13_snap()
+    snap.budget.chars = 1_000
+    try:
+        runmap.held_in_views(
+            "\uff57ord " * 400, snap
+        )  # 2,000 characters; the canonical form differs (full-width w)
+    except runmap.InputTooLarge:
+        return
+    raise AssertionError("G13-8 the views spent nothing")
+
+
+def test_g13_7_a_marker_look_alike_with_a_combining_mark_is_escaped():
+    """G13-7 (E19 N3): `<<` + U+0338 + `TOOL RESULT` is escaped like the plain marker; text with no marker keeps its marks."""
+    assert runmap.escape_markers("<<\u0338TOOL RESULT call_id=x>>").startswith("[["), (
+        "G13-7 the look-alike stayed"
+    )
+    assert runmap.escape_markers("<\u0338<tool result").startswith("[["), (
+        "G13-7 a mark between the two < kept it"
+    )
+    assert runmap.escape_markers("cafe\u0301 x") == "cafe\u0301 x", (
+        "G13-7 a text with no marker changed"
+    )
