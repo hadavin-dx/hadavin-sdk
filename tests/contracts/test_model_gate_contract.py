@@ -1411,7 +1411,25 @@ def test_m1_the_module_keeps_no_state_between_calls():
                     and isinstance(value.func, ast.Attribute)
                     and getattr(value.func.value, "id", "") == "re"
                 )
-                assert name == "frozenset" or is_compile, (
+                # the NO_MAP sentinel (ORDER 017 item 1): one instance of a class that has `__slots__ = ()` and
+                # only methods, so it can hold no state
+                stateless = [
+                    c
+                    for c in tree.body
+                    if isinstance(c, ast.ClassDef)
+                    and c.name == name
+                    and any(
+                        isinstance(b, ast.Assign)
+                        and [getattr(t, "id", "") for t in b.targets] == ["__slots__"]
+                        and isinstance(b.value, ast.Tuple)
+                        and not b.value.elts
+                        for b in c.body
+                    )
+                    and all(
+                        isinstance(b, ast.FunctionDef | ast.Assign | ast.Expr) for b in c.body
+                    )
+                ]
+                assert name == "frozenset" or is_compile or stateless, (
                     f"line {node.lineno}: module-level call of {name}"
                 )
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}

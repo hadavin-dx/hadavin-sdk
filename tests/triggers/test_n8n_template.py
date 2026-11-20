@@ -839,7 +839,7 @@ def test_the_new_stated_limits_and_verify_items_are_in_the_readme():
     for phrase in (
         "15. The caller's 202 is given before anything is stored in Hadavin",
         "If n8n stops, restarts or is updated",
-        "not the safer choice for durability",
+        "keep 60 s; do not restart n8n while events are in flight",
         "16. WAITING_FOR_APPROVAL ends the workflow as a success",
         "`approval_missing`",
         "17. n8n keeps the document.",

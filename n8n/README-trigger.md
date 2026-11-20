@@ -29,6 +29,13 @@ of this page is done.
 - tick: a second, scheduled Hadavin job that looks for runs that stopped moving and ends them.
 - worker: the Hadavin process that receives the signed request and does the run.
 - execution: one pass of an n8n workflow. credential: n8n's own encrypted store for a secret.
+- tenant: the client, as Hadavin's configuration names it; the run id is built from it, the sender and the key.
+- agent: the Hadavin agent (a record in its registry) that does the work for one sender; the sender's entry names it.
+- principal: the identity the run acts as, taken from the sender's entry in Hadavin's configuration, never from the request.
+- ack_wait_s: how many seconds the worker waits for a stored run before it answers 503 (no acknowledgement).
+- max_running: how many runs the worker does at the same time (default 1); a request above that gets 503.
+- max_steps: the most steps one run of the agent may take; it is a field of the agent's record.
+- registry: Hadavin's list of agents and their settings.
 
 ## Before you start: what you need from the Hadavin operator
 
@@ -60,9 +67,10 @@ Hadavin), in the order of the record:
    assignments; 3.4 builds the fields) and the webhook address (no `webhookId`, so `/webhook/<path>` answered 404).
 3. The HMAC of the Crypto node against Python's: equal for plain, non-ASCII and JSON-escaped bodies.
 4. The bytes sent by the HTTP Request node: equal to the bytes signed in 26 of the 27 requests the receiver recorded
-   (the 27th was the outline as written, with Set typeVersion 3, which signed the wrong text; that is the fault that
-   led to 3.4), one of the 26 a 300 KB document; always with a `Content-Length` header, never in chunks. Those runs
-   signed with a Crypto node of typeVersion 1 and a secret from an environment setting, not with the typeVersion 2
+   (26 of the 27 requests were signed by a Crypto node of typeVersion 1; one (`lead-evidence-n8n-1.md` line 273) by a
+   Code node. The request whose signature did not match was the outline as written, with Set typeVersion 3, which
+   signed the wrong text; that is the fault that led to 3.4), one of the 26 a 300 KB document; always with a `Content-Length` header, never in chunks. Those runs
+   signed with a secret from an environment setting, not with the typeVersion 2
    node and the credential that the files use now (that one was run only in a small test workflow).
 5. A receiver that answers 503: the workflow's own loop (cut to 3 rounds and 2 seconds for the run) signed again
    with a new timestamp in every round and ended in the error workflow; n8n's own Retry On Fail was measured.
@@ -115,13 +123,15 @@ These steps are for the Hadavin operator together with the client's automation b
 2. Create the credential that holds the trigger secret (see "Where the secret lives"), write its id and name into the node
    "Sign" in the JSON, import the files (step 4), and after the import open "Sign" and check that it shows the
    credential; do the same with the webhook header credential and the node "Trigger placeholder" (see "Webhook
-   authentication"). Create both credentials BEFORE the import, so that the ids you write exist.
+   authentication"). Create both credentials BEFORE the import, so that the ids you write exist. The recipes are under "Webhook authentication" (Header Auth) and "Where the secret lives" (Crypto); the id of
+   a credential you made is in the address of its page in the n8n editor, after `/credentials/` (UNVERIFIED: not run).
 3. In `hadavin-trigger.json`, replace the `webhookId` of "Trigger placeholder" with a fresh UUID and the `path` with a long
    random value (see "The webhook address").
 4. Import both files. In the lead's run this was done by command line: `n8n import:workflow --input=<file>`, once
    for each file; `n8n list:workflow` then printed the id and the name of each workflow (seen). The editor's menu for
    importing a file was not run (UNVERIFIED).
-5. In the error workflow, replace "Notify placeholder" with your chat or e-mail node.
+5. In the error workflow, replace "Notify placeholder" with your chat or e-mail node. The message to send is
+   `{{ $json.message }}`.
 6. The error workflow must be PUBLISHED (active). An error workflow that is only imported does nothing: in the
    lead's run n8n logged that it "is not active and cannot be executed", the main workflow failed, and nobody was
    told. In the run it was published by command line (`n8n publish:workflow --id=<id from n8n list:workflow>`) and
@@ -212,6 +222,13 @@ workflow. So one of these is a REQUIRED set-up step (step 8):
   UNVERIFIED: that shape. It was written from memory of the n8n documentation and never imported; what the import does
   with the placeholder credential id is not known either. Open the node after the import and check it shows the
   credential.
+  How to create it without a browser (the same file form as the Crypto credential under "Where the secret lives"; the
+  record of the lead's run shows `n8n import:credentials` only for the Crypto type): write a file with
+  `[{"id": "<AN-ID-YOU-CHOOSE>", "name": "<A-NAME-YOU-CHOOSE>", "type": "httpHeaderAuth", "data": {"name": "<HEADER-NAME>",
+  "value": "<LONG-RANDOM-VALUE>"}}]`, run `n8n import:credentials --input=<that file>`, and DELETE the file.
+  UNVERIFIED: the field names `name` and `value` are from memory of n8n's documentation and appear in no evidence file;
+  the import of this type was not run. In the editor, a credential's id is in the address of its page (the part after
+  `/credentials/`); UNVERIFIED: the editor was not run. `n8n export:credentials` also lists the ids.
 - If you cannot use that setting: an unguessable path. Replace `replace-with-your-path` with a random value of at least 32
   characters, treat the whole address as a secret (it can show up in logs of proxies and callers), and do not post it
   in tickets. This is weaker than a header: it protects only as long as nobody sees the address.
@@ -263,7 +280,7 @@ Ways the template does NOT use:
 Rules for the value:
 
 - At least 32 characters; the worker refuses to start with a shorter one. When you write it into the credential file
-  below, it is a JSON text: a quote or a backslash in it must be escaped, so use only letters, digits, `-` and `_`.
+  above, it is a JSON text: a quote or a backslash in it must be escaped, so use only letters, digits, `-` and `_`.
   Do not type it on a command line that your shell keeps in its history.
 - Not shared with any other sender; the worker refuses to start when two senders hold the same value.
 - NEVER the same value as the approvals secret (the secret that signs approve and reject clicks). Both use the same
@@ -435,7 +452,11 @@ the process supervisor waited a shorter time than the run needed.
   well?" decides: a success ends at "Done: finished or waits for approval"; everything else fails the execution at
   "Stop: run did not end well", with a message that names the state and the run id. The answer holds no reason,
   so the message cannot name one: NEEDS_PERSON after a crash ("interrupted") looks the same from here as
-  NEEDS_PERSON for any other reason. A person reads the reason in Hadavin's stored run.
+  NEEDS_PERSON for any other reason. The reason is in Hadavin's stored run, but no lookup tool exists yet in this tree
+  (the command line has no command that shows a run): ask the Hadavin operator, giving the run id from the message. The
+  message holds the run id, not the key. The key text is the field `key` in the output of "Hash business id" in the
+  failed execution (the message has the execution link). The operator can check it: the run id is `run-` and the first 32
+  hex characters of the SHA-256 of tenant, a NUL byte, sender, a NUL byte and key.
 - When the checks are used up and the run still shows as going, the execution fails at "Stop: still running"
   ("still shown as running after 45 checks, about 45 minutes").
 - A check that is answered 502, 503, 504 or 520 to 524, or not answered, goes the busy way like any other send (wait,
@@ -488,8 +509,8 @@ at. If the workflow took them as an end, the gap described above would stay open
 - The rule for each client: checks times wait must be LONGER than that client's stuck limit plus one tick gap.
   With the 60 second wait and the default model settings: `max_steps` 6 needs more than 20 checks, `max_steps` 12
   more than 38, `max_steps` 20 more than 62. When you change the number in "Checks left?", change the text of
-  "Stop: still running" too. Keep the wait at or under 60 seconds until a longer wait has been run in n8n (but see stated limit 15: a short wait is
-  not the safer choice when n8n restarts).
+  "Stop: still running" too. Keep the 60 second wait until a longer wait has been run in n8n, and do not restart n8n while events are in flight
+  (stated limit 15).
 - Where to find `max_steps`: it is a field of the agent's record in Hadavin's registry (the list of agents), so the
   operator can read it for the agent this sender starts. Ask for it before you set any number here.
 - The two numbers to set sit in two expressions: the busy rounds, in the node "Busy and rounds left?" (the part
@@ -598,7 +619,8 @@ What the client sees and does:
 - The same key now answers 200 with state NEEDS_PERSON, every time, forever. The run is never started again
   automatically, and sending the same key again does nothing.
 - The answer does not hold the reason. NEEDS_PERSON has many possible reasons (for example a document that is too
-  large); "interrupted" is only one of them. The reason is in Hadavin's stored run and in its audit record.
+  large); "interrupted" is only one of them. The reason is in Hadavin's stored run and in its audit record; no lookup tool exists yet in this tree, so ask the Hadavin
+  operator with the run id (see "A 202 is not the end").
 - A person decides what to do. If the event should be worked on again, it must be sent with a NEW key (the caller sends the same
   call with a new `rerun` value such as `rerun-1`, see "The key rule"). A new key is a new run from the start. If the
   reason is "outcome_unknown", an action may already have been carried out: a person checks the target system
@@ -607,8 +629,8 @@ What the client sees and does:
   record; it does not post a chat card at that moment. (A run that ends in NEEDS_PERSON by itself, without a
   crash, does post a card for people when a chat channel is set up.) So do not count on a card for an interrupted
   run: the main workflow's state check is what tells a person (it fails at "Stop: run did not end well" and the
-  error workflow runs; see "A 202 is not the end"). For events that did not come through this template, look at
-  the stored runs.
+  error workflow runs; see "A 202 is not the end"). For events that did not come through this template, the operator
+  has to look at the stored runs directly: no lookup tool exists yet in this tree.
 
 ## Size limits
 
@@ -692,8 +714,8 @@ These are known limits of this version. They are written down so that nobody ass
     lost. UNVERIFIED: whether an execution in a short wait (60 seconds, which n8n is said to keep in memory) or in a
     longer wait (above about 65 seconds, said to be saved in n8n's database) survives a restart; nobody has run either.
     If it is lost, this template tells nobody (an error workflow runs for an execution that fails inside a running n8n;
-    UNVERIFIED for a crash of n8n itself). The wait of 60 seconds was kept only because it is the one that was run; it is
-    not the safer choice for durability. The rule: do not restart n8n while events are being sent; after any n8n
+    UNVERIFIED for a crash of n8n itself). The wait of 60 seconds is kept because it is the one that was run (nobody
+    has shown that a longer wait survives a restart better). The rule: keep 60 s; do not restart n8n while events are in flight; after any n8n
     restart the operator compares what the client sent with the runs Hadavin holds, and an event with no run is sent
     again with the SAME key.
 16. WAITING_FOR_APPROVAL ends the workflow as a success, but the tick can later turn a run in that state into NEEDS_PERSON
