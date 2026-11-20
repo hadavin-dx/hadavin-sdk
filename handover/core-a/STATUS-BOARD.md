@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:18:06Z
+UPDATED_UTC: 2026-11-20T16:18:57Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 3
-CAPACITY: load 3.86 of 4 cores (1-minute average), mem 1.4/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 4
+CAPACITY: load 2.25 of 4 cores (1-minute average), mem 1.4/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 56G 20%; 653M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: 16:30 T1-merge (wip/core-a-t1-merge) and N3 docs table running; integ-pg finishing; mutant script run 19 running; N1 repeat the dry-run + update INTEGRATION-DRYRUN-2.md the minute core-b pushes the fixes for the 3 Majors; N2 fresh review of core-b's fix when it lands; branch core/integration-dryrun is on origin (6c89f0495)
-PUSHED_UTC: 2026-11-20T16:17:57Z (the push before this board)
+NEXT: 16:55 cfix (my stale contract tests) + doorm (144 door failures on the merged tree) + docfix24 + rev-t1 running; then fresh reviews of cfix/doorm diffs; N1 repeat the dry-run + N2 review when core-b pushes the 3-Major fixes
+PUSHED_UTC: 2026-11-20T16:18:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,22 +106,23 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| integ-pg | evidence runner (never judges) | sonnet | strict-PG run on the MERGED scratch tree (PG16 at :55433): tests/triggers (my 10 by-design failures should pass), t5/contracts/grants, the three T1 files -> evidence/integ-pg-run.md | 15:58 | 25 min | 5 | running | - | 0 | the dry-run agent looked at the wrong socket |
 | docfix24 | builder (cloud/core-a) | sonnet | my own drifts from DOCS-CONSISTENCY-1: wire triggers.conflict_events_per_minute (dead setting) + tests, worker docstring truth, post-merge README patch file | 16:38 | 20 min | 5 | running | - | 0 | N3 findings owned by core-a |
 | rev-t1 | fresh independent reviewer (codebase-details), read-only | sonnet | review that the merged T1 file is not weaker than the originals (ported cases, duplicates, concurrency barriers, direct-statement refusals) | 16:48 | 12 min | 5 | running | 1 | 0 | fresh review of each diff |
+| cfix | builder (own worktree, nothing pushed by it) | sonnet | fix MY stale contract tests (test_meter.py, test_store_spend_reservations.py) to core-b's current API (settle agent_id, caps from hadavin_caps, no right on spend_reservations) on the merged tree | 16:55 | 35 min | 5 | running | - | 0 | integ-pg findings: my tests break on the combined tree |
+| doorm | builder (own worktree, nothing pushed by it) | sonnet | root cause of the 144 trigger-door failures on the merged tree (crash-matrix children never end: suspected missing hadavin_caps seed in the child schema) + fix in test support only | 16:55 | 35 min | 5 | running | - | 0 | integ-pg findings: my tests break on the combined tree |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36219s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 36219s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 36219s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 36219s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36219s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36219s ago | running | matched by name in ps |
-| 13194 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 59s ago | running | matched by name in ps |
-| 13224 | .venv/bin/python -m pytest tests/triggers tests/test_mutants_anchors.p | core-a session or its agent | 59s ago | running | matched by name in ps |
-| 17891 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36270s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 36270s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 36270s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 36270s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36270s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36270s ago | running | matched by name in ps |
+| 17970 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 43s ago | running | matched by name in ps |
+| 17973 | .venv/bin/python -m pytest tests/triggers -q -n 2 -p no:cacheprovider | core-a session or its agent | 43s ago | running | matched by name in ps |
+| 19115 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -183,6 +184,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 16:55 INTEGRATION FINDING (integ-pg on the merged tree 6c89f0495, PG16.15, HADAVIN_REQUIRE_PG=1): MY tests break on the combined tree, so the dry-run is NOT clean: (1) tests/triggers 144 failed / 1218 passed: crash matrix 22 + 120 and t5_postgres 2, first error 'the child did not end within 20 s' (83) / 30 s (8) and `assert () == ('store.add_spend:before',)`: the crash-point children never reach their points; suspected cause: since core-b's live loop reserves before the call, the child's schema has no hadavin_caps rows (core-b seeds them through a conftest wrapper a child process does not get): agent doorm diagnoses with evidence and fixes the TEST SUPPORT (patch for the lead: handover/core-a/pr/door-merged-support.patch); (2) test_meter.py 152 and test_store_spend_reservations.py 156 failures = MY contract tests still use the old `settle` without agent_id (TypeError) and direct rights on spend_reservations (InsufficientPrivilege): agent cfix re-expresses them on core-b's API; (3) test_t1_reserve_cap_core_c 19 + _core_a 6 failures: same causes, SUPERSEDED by the merged T1 (wip/core-a-t1-merge): delete the two copies; (4) test_grants_negative_roles.py 17: core-c's file: take mine (wip/core-a-for-grant-tests, 88 passed on core-b). Also: the lead's literal command `pytest tests/test_t5*.py` matches no file (the t5 tests live in tests/triggers/). Details: handover/core-a/evidence/integ-pg-run.md. AGENTS 4 (cfix, doorm, docfix24, rev-t1).
 - 16:48 DECISION T1 DONE: branch wip/core-a-t1-merge pushed (on core-b fbebb390f; only tests/contracts/test_t1_reserve_cap.py changed): core-b's file is the base, 13 functions / 18 cases of core-a's and core-c's T1 ported (marked 'from core-a T1'/'from core-c T1'), 7 duplicates skipped, 7 -> 25 passed on PG16 (25 skipped without a DSN), ruff clean, mutation sanity on 3 cases (sweep no-op, settle always applied); two stale core-a role cases replaced by the stronger fact (no login has any right on spend_reservations after 0011; purge only via purge_spend_reservations). Text for core-b/core-c appended to handover/core-b/requests/xr-from-core-a-reviews.md and in handover/core-a/T1-MERGE.md: copy the file, delete the _core_a/_core_c copies in the integration. Fresh review rev-t1 running (weakening check).
 - 16:46 MUTANT RUN 19 DONE: `120 of 120 run are as expected; problems: []`, EXIT 0 on cloud/core-a head 5a8c83fd3 (evidence/mutants-run19.md, raw/mutants-run19.log). Run on my own box (no edit needed: your G33d anchor fix is in). Load overlapped (peak 8.6): the verdicts are assertion-based, not timing-based; re-run when load < 4 only if you want a timing-clean figure.
 - 16:42 LOAD NOTE (your 16:16): heavy at once = 2 (full mutant script run 19 + integ-pg -n 3 strict-PG run); the other 2 agents (T1-merge, docfix24) run small pytest sets (-n 2 / -n 0). Any timing-sensitive result recorded while load > 4 is marked INVALID-LOAD in its evidence file (integ-pg and the mutant log record uptime start/end; I will list those that start above 4). I start NO new heavy run until load < 4.
