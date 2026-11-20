@@ -16,6 +16,8 @@ Rules:
 
 **Production and pilot must run Python 3.13.x (Unicode 15.1.0). Python 3.12 (Unicode 15.0.0) is for demos only.**
 
+The labels for this rule are in the lines below. The start-up refusal is UNVERIFIED (read in the code); one test (TESTED) shows it with the version faked.
+
 UNVERIFIED (read in the code): the text fold in `guard/textnorm.py` depends on the interpreter's Unicode data. Its look-alike table is the Unicode 15.1.0 table. On another Python the fold still runs, but every check name starts with a tag and never equals one made on 3.13.
 
 UNVERIFIED (read in the code): `app.build` calls `textnorm.require_pinned_unidata()` when the stage is pilot or prod. On any other Unicode data (Python 3.12.3 carries 15.0.0) it raises `UnidataMismatch` and nothing runs. The check is not loosened. A demo may still run on 3.12.
@@ -53,7 +55,7 @@ results into `OUT/score/score-report.md`. Neither gives a verdict, and a replay 
 `replay` refuses a non-empty `OUT`. If a replay dies half-way it leaves `FAILED.txt` in `OUT`: delete the folder to
 re-run. `score` refuses an `OUT` holding `FAILED.txt`, and a non-empty `OUT/score/`. A `score_run` audit event does not prove a report file exists (events are written first).
 
-## Limits and trust (read tools, redaction, database roles, caps)
+## Limits and trust (read tools, egress, redaction, database roles, caps, grounding)
 
 What this release does and does not promise, in one place. The labels are defined in [SECURITY.md](SECURITY.md#words-used-here). A statement with no label describes how the code is built, as read in the code: UNVERIFIED unless a label says otherwise.
 
@@ -98,7 +100,9 @@ What this release does and does not promise, in one place. The labels are define
   - **Base64 is decoded and read.** A run of 12 or more base64 characters whose decoded text holds a value the redactor finds is masked whole as `<ENCODED_n>`. The depth is 3 levels (`defaults.B64_MAX_DEPTH`). TESTED (see SECURITY.md, the finding on base64 text).
     - Not covered: a direct `redact()` call, a blob glued to other base64 characters, a blob split across fields, or one wrapped with a log prefix on each line.
     - Hex, base32, base85, compressed data and quoted-printable are not decoded.
-  - **What `redact_text` decodes, and what it does not.** UNVERIFIED (read in `guard/runmap.py`; no test was run for this README line): it undoes percent codes, HTML entities, `\u` and `\u{..}` and `%u` escapes, `\x` and `\U` escapes, three-digit octal escapes and NFKC, to a fixed point, to a depth of 8 layers. A deeper text is refused.
+  - **What `redact_text` decodes, and what it does not.** UNVERIFIED (read in `guard/runmap.py`; no test was run for this README line).
+    - It undoes percent codes, HTML entities, `\u` and `\u{..}` and `%u` escapes, `\x` and `\U` escapes, three-digit octal escapes and NFKC.
+    - It repeats this to a fixed point, to a depth of 8 layers. A deeper text is refused.
     - Not decoded: one- and two-digit octal escapes, named escapes, a secret split across two results, and hex, base32 or ROT13 text.
     - A bare `redact()` call decodes only the JSON `\u` layer.
     - Only a secret that was handed out to a tool is also found in base32 and hex, and in base64 up to three layers. That scrub is separate from the redactor.
@@ -108,7 +112,7 @@ What this release does and does not promise, in one place. The labels are define
   - The runtime role appends and reads evidence and has no DELETE. Only the purge role deletes it (`migrate --purge-role`, `backends.store.purge_dsn_secret_name`, required in pilot and prod on Postgres). Its SELECT is limited to the columns its DELETE needs.
   - `migrate` asserts the roles' EFFECTIVE privileges (inherited, PUBLIC, default privileges, relations outside the grant map, ownership, CREATE on the schema, superuser). It rolls the grants back on any excess.
   - The runtime process holds both DSNs and tool bodies run in-process. So the split defends against bugs and mistakes, not a compromised process. Run `purge_evidence` as its own job holding only the purge secret if that matters.
-  - **Waiver:** the runtime role also holds the approver-recording and kill-switch write rights (UPDATE `kill_switch`, UPDATE `approval_requests`, INSERT `approval_decisions`). The agent runtime and the approvals recorder are one process today. Separating them is later work. OPEN: the owner decides whether to tighten these rights (SECURITY.md, the findings on the spend counters and the stop switch). If no answer arrives by 2026-11-23 12:00 UTC, the default there is that they are tightened. Until then this is a waiver whose acceptance is not on file.
+  - **Waiver:** the runtime role also holds the approver-recording and kill-switch write rights (UPDATE `kill_switch`, UPDATE `approval_requests`, INSERT `approval_decisions`). The agent runtime and the approvals recorder are one process today. Separating them is later work. OPEN: the owner decides whether to tighten these rights (SECURITY.md, the findings "Not enforced by the database" and "Not narrowed by the database"). Default that applies until the owner decides: they are tightened. Until then this is a waiver whose acceptance is not on file.
 - **Caps are per process, not per run.** `max_concurrent_tool_calls` and `max_tool_calls_per_minute` (and the abandoned-body ceiling) protect the client's systems from the agent.
   - One run making many slow calls, or eight stuck bodies, can refuse tools to every run in the process until they end.
   - A body that never returns holds its slot until restart.
