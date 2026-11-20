@@ -61,12 +61,17 @@ def test_t2_the_boundary_is_the_constant(monkeypatch):
 
 def test_t3_nodes_not_characters(monkeypatch):
     p = v("p", 500)
-    rules = {"<SECRET_1>": p + "x" * 300, "<SECRET_2>": p + "y" * 300}  # 1,100 nodes, 1,600 characters
+    rules = {
+        "<SECRET_1>": p + "x" * 300,
+        "<SECRET_2>": p + "y" * 300,
+    }  # 1,100 nodes, 1,600 characters
     monkeypatch.setattr(defaults, "MAX_FINDER_CHARS", 1100, raising=False)
     try:
         R._Redactor(dict(rules)).sweep("x")
     except runmap.InputTooLarge:
-        pytest.fail("E14-T3 a build of 1,100 nodes at cap 1,100 was refused (characters counted, not nodes)")
+        pytest.fail(
+            "E14-T3 a build of 1,100 nodes at cap 1,100 was refused (characters counted, not nodes)"
+        )
     monkeypatch.setattr(defaults, "MAX_FINDER_CHARS", 1099, raising=False)
     with pytest.raises(runmap.InputTooLarge, match="FinderMemoryTooMuch"):
         R._Redactor(dict(rules)).sweep("x")
@@ -82,7 +87,9 @@ def test_t4_refuse_never_skip(monkeypatch):
     with pytest.raises(runmap.InputTooLarge, match="FinderMemoryTooMuch"):
         runmap.redact_untrusted("password=" + vb + " and " + va, m)
     assert dict(m) == before, "E14-T4 the refused call changed the run's map"
-    assert {k: id(x) for k, x in m.redact_cache.items()} == cache, "E14-T4 the refused call changed the cache"
+    assert {k: id(x) for k, x in m.redact_cache.items()} == cache, (
+        "E14-T4 the refused call changed the cache"
+    )
     mine = dict(before)
     with pytest.raises(runmap.InputTooLarge, match="FinderMemoryTooMuch"):
         R.redact_many(["password=" + va, "password=" + vb], mine)
@@ -112,31 +119,44 @@ def test_t6_document_path_boundary(tmp_path):
             assert all(e.caught_by is None for e in rt.audit.events(run.run_id)), (
                 "E14-T6 a refusal must not be a catch"
             )
-    assert outcomes[72] == (S.NO_ACTION, outcomes[72][1]), f"E14-T6 cap 72 must accept: {outcomes[72]}"
-    assert outcomes[71] == (S.NEEDS_PERSON, "document_too_complex"), f"E14-T6 cap 71 must stop: {outcomes[71]}"
+    assert outcomes[72] == (S.NO_ACTION, outcomes[72][1]), (
+        f"E14-T6 cap 72 must accept: {outcomes[72]}"
+    )
+    assert outcomes[71] == (S.NEEDS_PERSON, "document_too_complex"), (
+        f"E14-T6 cap 71 must stop: {outcomes[71]}"
+    )
 
 
 def test_t7_tool_path_boundary(tmp_path):
     k5_tools.RESULTS["app"] = " ".join(f"10.2.2.{i}" for i in range(1, 10))
-    cfg = k5_cfg(tmp_path / "base", config={"evidence": {"max_map_chars": defaults.MAX_FINDER_CHARS}})
+    cfg = k5_cfg(
+        tmp_path / "base", config={"evidence": {"max_map_chars": defaults.MAX_FINDER_CHARS}}
+    )
     rt, _ = build_runtime(cfg, ScriptLLM([{"noaction": True}]))
     run = handle(rt)
-    held = sum(map(len, set(rt.store.get_redaction_map(run.run_id).values())))  # the default document alone
+    held = sum(
+        map(len, set(rt.store.get_redaction_map(run.run_id).values()))
+    )  # the default document alone
     results = {}
     for name, cap in (("tight", held + 71), ("loose", held + 200)):
         cfg = k5_cfg(tmp_path / name, config={"evidence": {"max_map_chars": cap}})
         rt, _ = build_runtime(cfg, ScriptLLM([{"tool": "app"}, {"noaction": True}]))
         run = handle(rt)
         results[name] = (run.state, run.reason_code)
-    assert results["tight"] == (S.NEEDS_PERSON, "document_too_complex"), f"E14-T7 tool path at the cap: {results}"
-    assert results["loose"][1] != "document_too_complex", f"E14-T7 tool path under the cap stopped: {results}"
+    assert results["tight"] == (S.NEEDS_PERSON, "document_too_complex"), (
+        f"E14-T7 tool path at the cap: {results}"
+    )
+    assert results["loose"][1] != "document_too_complex", (
+        f"E14-T7 tool path under the cap stopped: {results}"
+    )
 
 
 def test_t8_config():
     assert EvidenceSettings().max_map_chars == defaults.MAX_MAP_CHARS, "E14-T8 default"
-    assert EvidenceSettings(max_map_chars=defaults.MAX_FINDER_CHARS).max_map_chars == defaults.MAX_FINDER_CHARS, (
-        "E14-T8 the build cap itself must be accepted"
-    )
+    assert (
+        EvidenceSettings(max_map_chars=defaults.MAX_FINDER_CHARS).max_map_chars
+        == defaults.MAX_FINDER_CHARS
+    ), "E14-T8 the build cap itself must be accepted"
     for bad in (0, defaults.MAX_FINDER_CHARS + 1):
         try:
             EvidenceSettings(max_map_chars=bad)
@@ -146,10 +166,12 @@ def test_t8_config():
 
 
 def test_t9_derivation_pin():
-    assert defaults.MAX_MAP_CHARS == 2 * defaults.MAX_REDACT_CHARS == 524_288, "E14-T9 MAX_MAP_CHARS"
-    assert defaults.MAX_FINDER_CHARS == defaults.MAX_MAP_CHARS + defaults.MAX_REDACT_CHARS == 786_432, (
-        "E14-T9 MAX_FINDER_CHARS"
+    assert defaults.MAX_MAP_CHARS == 2 * defaults.MAX_REDACT_CHARS == 524_288, (
+        "E14-T9 MAX_MAP_CHARS"
     )
+    assert (
+        defaults.MAX_FINDER_CHARS == defaults.MAX_MAP_CHARS + defaults.MAX_REDACT_CHARS == 786_432
+    ), "E14-T9 MAX_FINDER_CHARS"
 
 
 @pytest.mark.perf
@@ -174,7 +196,9 @@ def test_t11_the_real_constant():
         red.sweep("x")
     except runmap.InputTooLarge:
         pytest.fail("E14-T11 exactly 786,432 nodes was refused at the real constant")
-    red = R._Redactor({f"<SECRET_{i}>": x for i, x in enumerate([vals[0] + "z", vals[1], vals[2]], 1)})
+    red = R._Redactor(
+        {f"<SECRET_{i}>": x for i, x in enumerate([vals[0] + "z", vals[1], vals[2]], 1)}
+    )
     with pytest.raises(runmap.InputTooLarge, match="FinderMemoryTooMuch"):
         red.sweep("x")
 
@@ -185,5 +209,9 @@ def test_t12_honest_sizes_stay_far_under():
     for i in range(40):
         runmap.redact_value({f"k{j}": f"value {i} {j} 10.9.9.{j}" for j in range(5)}, m)
     held = sum(map(len, set(m.values())))
-    assert held < defaults.MAX_MAP_CHARS // 30, f"E14-T12 an honest k5-size run holds {held} characters"
-    assert 8_571 < defaults.MAX_MAP_CHARS // 30, "E14-T12 the property corpus' worst build is not far under"
+    assert held < defaults.MAX_MAP_CHARS // 30, (
+        f"E14-T12 an honest k5-size run holds {held} characters"
+    )
+    assert 8_571 < defaults.MAX_MAP_CHARS // 30, (
+        "E14-T12 the property corpus' worst build is not far under"
+    )
