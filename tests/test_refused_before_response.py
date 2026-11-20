@@ -38,7 +38,7 @@ def _timeout():
     return urllib.error.URLError(TimeoutError("timed out"))
 
 
-def _run(errors, max_attempts=ATTEMPTS):
+def _run(errors, max_attempts=ATTEMPTS, **kw):
     """Run `with_retry` over a call that raises `errors` in order; return (the error, calls made, sleeps)."""
     left, sleeps, calls = list(errors), [], []
 
@@ -47,7 +47,7 @@ def _run(errors, max_attempts=ATTEMPTS):
         raise left.pop(0)
 
     with pytest.raises(ProviderError) as caught:
-        with_retry(call, label="t", max_attempts=max_attempts, sleep=sleeps.append)
+        with_retry(call, label="t", max_attempts=max_attempts, sleep=sleeps.append, **kw)
     assert not left, "the table row lists more errors than attempts were made"
     return caught.value, len(calls), sleeps
 
@@ -250,10 +250,9 @@ def _chat(llm):
     [
         ([_http(401)], ProviderError),
         ([_refused(), _http(403)], ProviderError),
-        ([_http(429), _http(429), _http(429)], ProviderExhausted),
         ([_refused(), _refused(), _refused()], ProviderExhausted),
     ],
-    ids=["401", "refused then 403", "429 every time", "refused every time"],
+    ids=["401", "refused then 403", "refused every time"],
 )
 def test_openai_compat_first_request_keeps_the_mark(monkeypatch, script, final):
     llm, sent = _openai(monkeypatch, script)
@@ -708,3 +707,112 @@ def test_make_wide_list_only_for_the_exact_api_platform(monkeypatch, platform, d
     settings = SimpleNamespace(platform=platform, api_key_secret_name="k", max_attempts=1)  # noqa: S106
     llm = mod.make(settings, SimpleNamespace(routes={}, resolve=lambda n: "x"))
     assert (llm.refused_statuses == REFUSED_STATUSES) is direct
+
+
+# throttled_unbilled (M1 of D-config-and-mark-rereview-1): a router's / gateway's 429 can follow upstream work, so
+# the gate must not settle it at 0 ----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        [_http(429)] * 3,
+        [_refused(), _http(429), _http(429)],
+        [_http(429), _refused(), _http(429)],
+    ],
+    ids=["429 x3", "refused, 429, 429", "429, refused, 429"],
+)
+def test_openai_compat_429_exhausted_is_not_marked(monkeypatch, script):
+    assert openai_compat.OpenAICompatLLM.throttled_unbilled is False
+    llm, sent = _openai(monkeypatch, script)
+    with pytest.raises(ProviderExhausted) as caught:
+        _chat(llm)
+    assert caught.value.refused_before_response is False
+    assert len(sent) == len(script)
+
+
+def test_openai_compat_never_sent_every_time_is_still_marked(monkeypatch):
+    llm, _ = _openai(monkeypatch, [_refused(), _no_name(), _refused()])
+    with pytest.raises(ProviderExhausted) as caught:
+        _chat(llm)
+    assert caught.value.refused_before_response is True
+
+
+@pytest.mark.parametrize("combo", list(itertools.product("RTSX", repeat=3)), ids="".join)
+def test_exhausted_without_throttled_unbilled_is_marked_iff_every_attempt_was_never_sent(combo):
+    make = {"R": _refused, "T": lambda: _Status(429), "S": lambda: _Status(500), "X": _timeout}
+    error, calls, _ = _run([make[c]() for c in combo], throttled_unbilled=False)
+    assert type(error) is ProviderExhausted and calls == ATTEMPTS
+    assert error.refused_before_response is all(c == "R" for c in combo)
+
+
+def test_a_single_429_attempt_is_unmarked_without_throttled_unbilled():
+    error, _, _ = _run([_Status(429)], max_attempts=1, throttled_unbilled=False)
+    assert type(error) is ProviderExhausted
+    assert error.refused_before_response is False
+    error, _, _ = _run([_Status(429)], max_attempts=1)  # default: the direct API case
+    assert error.refused_before_response is True
+
+
+def _anthropic_exhausted(code, direct_api):
+    pytest.importorskip("anthropic")
+    from hadavin_sdk.llm.anthropic import AnthropicLLM
+
+    llm = AnthropicLLM(
+        _AnthropicClient(code), {"r": ROUTE}, ATTEMPTS, sleep=lambda s: None, direct_api=direct_api
+    )
+    with pytest.raises(ProviderExhausted) as caught:
+        llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
+    return caught.value
+
+
+@pytest.mark.parametrize("platform", ["vertex", "foundry", "bedrock", "API", "", "unknown", None])
+def test_anthropic_other_platform_429_is_not_marked(monkeypatch, platform):
+    pytest.importorskip("anthropic")
+    from hadavin_sdk.llm import anthropic as mod
+
+    monkeypatch.setattr(mod, "client", lambda settings, key: object())
+    settings = SimpleNamespace(platform=platform, api_key_secret_name="k", max_attempts=3)  # noqa: S106
+    llm = mod.make(settings, SimpleNamespace(routes={}, resolve=lambda n: "x"))
+    assert llm.throttled_unbilled is False
+    assert _anthropic_exhausted(429, direct_api=False).refused_before_response is False
+
+
+def test_anthropic_direct_api_429_exhausted_is_marked(monkeypatch):
+    pytest.importorskip("anthropic")
+    from hadavin_sdk.llm import anthropic as mod
+
+    monkeypatch.setattr(mod, "client", lambda settings, key: object())
+    settings = SimpleNamespace(platform="api", api_key_secret_name="k", max_attempts=3)  # noqa: S106
+    llm = mod.make(settings, SimpleNamespace(routes={}, resolve=lambda n: "x"))
+    assert llm.throttled_unbilled is True
+    assert _anthropic_exhausted(429, direct_api=True).refused_before_response is True
+
+
+@pytest.mark.parametrize("code", [401, 403, 404])
+def test_anthropic_direct_api_refused_statuses_stay_marked(code):
+    assert _anthropic_error(code, direct_api=True).refused_before_response is True
+
+
+class _Scripted:
+    def __init__(self, errors):
+        self.errors, self.messages = errors, self
+
+    def create(self, **_):
+        raise self.errors.pop(0)
+
+
+def test_anthropic_direct_api_mixed_attempts():
+    pytest.importorskip("anthropic")
+    from hadavin_sdk.llm.anthropic import AnthropicLLM
+
+    for script, marked in (
+        ([429, 429, 401], False),
+        ([429, 500, 429], False),
+        ([429, 429, 429], True),
+    ):
+        client = _Scripted([_Status(c) for c in script])
+        llm = AnthropicLLM(client, {"r": ROUTE}, 3, sleep=lambda s: None, direct_api=True)
+        with pytest.raises(ProviderError) as caught:
+            llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
+        assert caught.value.refused_before_response is marked, script
