@@ -46,8 +46,17 @@ def m(name, file, old, new, killer, expect=None):
 S = "sanitise_text"
 M = [
     m("A1", CH, "sanitise_text(text, defang=False)", "sanitise_text(text)", "test_row_H26_card"),
-    m("A2", CH, "return defang_text(out)", "return out", "test_row_L1_card"),
-    m("A11", CH, "return defang_text(alt)", "return alt", "test_row_T1_card"),
+    # G2 fix round: `clean` returns through `_settled` (the re-read); the two mutants keep their meaning.
+    m("A2", CH, "return _settled(defang_text(out))", "return out", "test_row_L1_card"),
+    m("A11", CH, "return _settled(defang_text(alt))", "return alt", "test_row_T1_card"),
+    # G2 fix round: the re-read writes `[.]` last too.
+    m(
+        "A2s",
+        CH,
+        "again = defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))",
+        "again = runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise)",
+        "test_row_L1_card",
+    ),
     m(
         "A3",
         SL,
@@ -72,8 +81,8 @@ M = [
     m(
         "A3d",
         GATE,
-        'return _outside_code(text, lambda part: _LEGACY_DOT.sub(".", part))',
-        'return _LEGACY_DOT.sub(".", text)',
+        "return _outside_code(text, _undefang_prose)",
+        "return _undefang_prose(text)",
         "test_row_L10_slack",
     ),
     m("A3e", GATE, 'r"(?<=[\\w-])\\[\\.\\](?=[\\w-])"', 'r"\\[\\.\\]"', "test_row_L12_slack"),
