@@ -299,8 +299,9 @@ def test_n7_kill_mode_still_exits_with_the_crash_code_when_the_marker_cannot_be_
     assert "survived" not in done.stderr and "finally ran" not in done.stderr
 
 
-def test_the_module_text_tells_a_test_author_the_three_facts():
-    """The module text names `cp.fired`, the marker line and the exit code (short stable phrases)."""
+def test_the_module_text_holds_the_phrases_cp_fired_marker_and_exit_code():
+    """Checks that the module text contains the phrases `cp.fired`, `marker` and `exit code`; it does not judge the
+    sentences around them."""
     text = " ".join((crash_mod.__doc__ or "").split())
     assert "cp.fired" in text
     assert "marker" in text
@@ -419,8 +420,9 @@ def test_e3_two_child_threads_and_one_flag_give_one_kill(tmp_path):
     assert not flag.exists()
 
 
-def test_e3_a_flag_taken_by_someone_else_means_no_crash(tmp_path, no_real_exit, monkeypatch):
-    """E3 / invariant 5: if the flag cannot be deleted (another process took it), nothing fires."""
+def test_e3_a_simulated_flag_taken_by_someone_else_means_no_crash(tmp_path, no_real_exit, monkeypatch):
+    """E3 / invariant 5: if the flag cannot be deleted (another process took it), nothing fires. The race is
+    simulated: `Path.unlink` is patched to raise FileNotFoundError."""
     flag = tmp_path / "flag"
     cp = CrashPoints(mode="exit", flag_path=flag)
     thing = cp.wrap(Thing(), "thing", ["step"])
@@ -974,3 +976,53 @@ def test_p1_kill_mode_on_a_real_database(tmp_path, edge, row_is_there):
                     store.get_run(RID)
         finally:
             conn.close()
+
+
+def test_e41_an_error_while_asking_if_the_flag_is_still_there_counts_as_still_there(
+    tmp_path, no_real_exit, monkeypatch
+):
+    """E4-1 (Python 3.12 on Windows can raise PermissionError there): after a refused delete the error does not
+    reach the code under test; the flag counts as still there, so nothing fires at this call."""
+    flag = tmp_path / "flag"
+    cp = CrashPoints(mode="exit", flag_path=flag)
+    thing = cp.wrap(Thing(), "thing", ["step"])
+    cp.arm(POINT)
+    calls, _, restore = stub_unlink(monkeypatch, tmp_path, None)
+    real_exists = os.path.exists
+
+    def refuses(path):
+        if os.fspath(path) == str(flag):
+            raise PermissionError("not allowed to look")
+        return real_exists(path)
+
+    monkeypatch.setattr(os.path, "exists", refuses)
+    assert crash_mod._still_there(flag) is True
+    assert thing.step() == 1 and cp.fired == ()
+    monkeypatch.setattr(os.path, "exists", real_exists)
+    restore()
+    assert len(calls) == crash_mod._UNLINK_TRIES and flag.exists()
+    assert crash_mod._still_there(tmp_path / "nothing") is False
+    flag.unlink()
+
+
+def test_e41_leaving_the_block_with_a_refused_delete_and_a_failing_look_names_the_flag(
+    tmp_path, monkeypatch
+):
+    flag = tmp_path / "flag"
+    _, _, restore = stub_unlink(monkeypatch, tmp_path, None)
+    real_exists = os.path.exists
+
+    def refuses(path):
+        if os.fspath(path) == str(flag):
+            raise PermissionError("not allowed to look")
+        return real_exists(path)
+
+    with (
+        pytest.raises(RuntimeError, match="could not be deleted"),
+        CrashPoints(mode="exit", flag_path=flag) as cp,
+    ):
+        cp.arm(POINT)
+        monkeypatch.setattr(os.path, "exists", refuses)
+    monkeypatch.setattr(os.path, "exists", real_exists)
+    restore()
+    flag.unlink()

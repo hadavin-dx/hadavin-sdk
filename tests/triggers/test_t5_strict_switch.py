@@ -104,7 +104,7 @@ def test_r42_an_unknown_value_stops_the_session_at_start(tmp_path):
     out = done.stdout + done.stderr
     assert done.returncode != 0, out[-2000:]
     assert f"{STRICT_VARIABLE}='maybe' is not understood" in out, out[-2000:]
-    assert "passed" not in out and "skipped" not in out, out[-2000:]
+    assert "test_child.py" not in out and " passed" not in out, out[-2000:]  # no test was reached
 
 
 def test_r42_test_worker_and_conftest_use_the_one_function():

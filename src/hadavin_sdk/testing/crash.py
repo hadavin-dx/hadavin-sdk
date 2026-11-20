@@ -11,7 +11,7 @@ tries again.
 
 Flag file: one line of text, `<point>` or `<point>#<nth>`, written by `arm`. A missing, unreadable
 or malformed file means "not armed". A read error (a sharing violation on Windows) means "not armed
-this time". Arm before the child starts, one child per case. Counts are never reset in a child: it
+this time", and the `nth` count does not advance for that call. Arm before the child starts, one child per case. Counts are never reset in a child: it
 counts the matching calls for as long as it lives. On leaving the `with` block a flag that never
 fired is deleted; if the delete is refused (Windows can refuse while a reader holds the file open)
 it is tried again, 20 times at 20 ms apart, then `RuntimeError` names the path. With an error
@@ -42,6 +42,8 @@ What a test must know, or the helper misleads it:
 - Only references that go through the proxy are covered. Wrap EVERY reference the code under test
   uses: the runtime keeps its own store reference, so wrapping the test's reference is not enough.
   Two wraps with the same name and method share one point and one nth counter.
+- A misspelled point never matches, so in mode "exit" the child simply runs on and a test that only waits for
+  the end passes without a crash: an exit-mode test must assert the marker line and the exit code.
 - Mode "raise" behind a thread: the test thread sees nothing; poll `cp.fired`.
 - `hit` is an extension hook: a caller may subclass `CrashPoints` and override it.
 - Mode "raise" behind a worker pool: the crash is stored in the Future and the process lives on.
@@ -101,6 +103,16 @@ class _Proxy:
         return getattr(self._crash_target, attr)
 
 
+def _still_there(path: Path) -> bool:
+    """Whether the file is still on disk after a delete was refused. An error while asking (Python 3.12 on
+    Windows can raise PermissionError) counts as "still there": the delete is refused, and the error must not
+    reach the code under test."""
+    try:
+        return os.path.exists(path)
+    except OSError:
+        return True
+
+
 class CrashPoints:
     """The set of crash points of one test. Use it in a `with` block: a point still armed at the
     end is an error."""
@@ -139,7 +151,7 @@ class CrashPoints:
             left = self._current()
             if left is not None:
                 self._disarm()
-            stuck = left is not None and self._flag is not None and self._flag.exists()
+            stuck = left is not None and self._flag is not None and _still_there(self._flag)
         if exc_type is not None:
             return
         if stuck:
@@ -279,5 +291,5 @@ class CrashPoints:
         except FileNotFoundError:
             return "gone"
         except OSError:
-            return "refused" if self._flag.exists() else "gone"
+            return "refused" if _still_there(self._flag) else "gone"
         return "taken"
