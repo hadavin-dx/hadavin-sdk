@@ -73,6 +73,10 @@ byte-identical). If `patch -p1 --fuzz=0` fails on the tree of the day, apply BY 
    starts `ARN_CHAR = ` and before `PATTERNS: list[tuple[str, re.Pattern[str]]] = [`.
 3. `class _Redactor`, method `find`: its final `return out` (the line after the `for label, pattern in PATTERNS:` loop) becomes the
    `return _PH_RUN.sub(...)` line; the method `_remask_run` goes right after `find` and before `settle`.
+Tests BY NAME: MEASURED at the end of drafting on HEAD `15a7b5502` (G7-F3 landed after `4ea3a9d99`: `E7` and the full-stop tests
+of the G8 files changed): A applies (offset +6), B's tests/g8_mutants.py hunk 2 FAILS on its context; put its `OPR`, `G11G`, `G11N`
+lines right after the `UNT = ` line by hand (the other hunks apply with offsets). There: G8 file `-m "not perf"` 459 passed, 14
+deselected, 41 xfailed before, 476 passed, 18 deselected, 35 xfailed after (+17, -6, as section 5); 57 mutants, every `old` once.
 STOP if `find` no longer ends with that loop and `return out` (a step was added after the loop by G4 Phase 4 or another change):
 ask core-c where the pass goes (the drafter's answer is "after every pattern step of find", but that needs a re-read). `_PLACEHOLDER`
 (module level, defined further down) is used only at call time: fine. Then RE-MEASURE every figure of sections 5-8 on the merged
