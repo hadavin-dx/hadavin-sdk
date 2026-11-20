@@ -353,3 +353,16 @@ Waiting for the lead's 'clean': wip/lead-b-migrate (merge prepared as wip/cloud-
 16:55Z LOAD 0.46 0.76 1.22 (ps pytest count 6). Lead order 16:55Z: P1 F-install (merge core-c 0e33c0641), P2 B5 = AB5 (branch pushed: wip/cloud-core-b/audit-rights fdf4b214e; left: its review's M1 texts, M2 quarantine collision, minors; then fresh reviewer), P3 F-store hostile fixes, P4 re-reviews, P5 hard ConfigError, P6 batch 3 after P1: all started or queued per the AGENTS table above. Each package ends with a fresh egm:* reviewer in sequence.
 
 17:02Z LOAD 2.68 2.16 1.67 (ps pytest 8). MERGED on cloud/core-b since 17:00Z: P3 (F-store hostile review status: 13 already fixed, 6 residual, 1 needs migrate.py -> lead-build-4 item 7), P7 router-429 under-count fix b6ab3d31e (+ round 2 minors running), re-review reports (D-config + provider mark, P7 review 2). WIP BRANCHES (not on cloud/core-b): wip/cloud-core-b/audit-rights tip 477cdb037 (B5 round 3 fixes: docs overclaim, close-on-failure, quarantine rename/dup counts, FOR UPDATE, runbook step 6; reviews 1-2 had no Blocker); wip/cloud-core-b/draft-upgrade b2cdc2941 (P5: hard ConfigError on a changed 0010/0011 checksum with roles named, unmapped-overload message, --reset-draft drops unmapped hadavin_* functions; 403 passed; fresh reviewer RP5 running); wip/cloud-core-b/merge-migrate 55df54150 (laptop's migrate branch merged). RUNNING: P1 (F-install + Limits.for_agent adapter + core-c F1-F3), P7 round 2, RP5 reviewer. Waiting for the lead: clean on wip/lead-b-migrate and wip/lead-b-ts-watermark.
+
+17:13Z LOAD 3.30 2.28 1.87, pytest procs (ps) 6. P1 (MP1) last commits (uncommitted files: 0):
+9dbe9b14f code F-install: mapping=NO_MAP at the eval and k1b sites, the run map to the judge (bind chain); drop core-c's T1 copy (it writes spend_reservations as the runtime login, which the grants flip refuses; core-b's test_t1_reserve_cap.py covers the cap)
+4bde120db docs F-install: ii-meter point 15 (Limits.for_agent), request to core-c on F1/F2/F3
+ce9af83bb code F-install: tests for Limits.for_agent / Budget.for_agent; core-c's P3 gate-store e2e test file (F1 passes with the adapter, F2 stays a strict xfail)
+bdb0c9cd4 code F-install: merge core-c f065c628e (SECURITY.md and CHANGELOG.md combined)
+adf11f7a6 code F-install: gate owns the one reserve/settle; Limits.for_agent / Budget.for_agent meter adapter; loop keeps its settle-failure rule via _RunMeter
+P5 (MP5) last commits (uncommitted files: 7):
+b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook)
+4f6ba2103 code F-store: migrate refuses a changed 0010/0011 draft when roles are named; actionable unmapped-function refusal; --reset-draft drops unmapped hadavin_* functions
+8296038d3 Merge origin/cloud/core-b into merge-migrate (keep caps role + M6/H3 round 2)
+8273ff1d0 docs core-b: audit rights build review 1
+wip/lead-b-ts-watermark 5c4d1faf8: NOT merged by me; assigned to P5 as the ONE builder (after its review fixes: strict NULL checksum, idempotent 0011 tables, quoting, dependent-object error, docs); I tell P5 the later commit when the lead says. P6 batch 3: waits for P1.
