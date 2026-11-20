@@ -595,11 +595,11 @@
   {
    "item": "RERUN-heads",
    "what": "re-run my non-builder tests on the NEWEST heads of core-b and core-c; list findings that now look fixed",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "TRIAL-RERUN.md, raw/RERUN-core-*.log (not yet)",
+   "state": "DONE; test maintenance started",
+   "percent": 100,
+   "evidence file": "TRIAL-RERUN.md, raw/RERUN-core-b.log, raw/RERUN-core-c.log",
    "tries": 1,
-   "reason": "both sessions pushed since my last runs"
+   "reason": "newest heads core-b dba4463a5 and core-c 49013c787. Findings that now look FIXED (their strict expected-failure now passes, so my marker must come off): config T1 (4), store F1 (3 memory ids) and F2 (1), meter M1 (3); STILL OPEN: G7-F3 and G7-F4. NEW failures on core-b: a secret name with a slash is now refused; settle('') raises ValueError instead of NotFound. NEW on core-c: ModelGate.bind() now needs a required keyword-only 'mapping' argument (161 of my gate tests fail with TypeError), two no-map cases, two static tests. Not findings: 29 redaction XPASS (a marker flipped when core-c removed a constant)"
   },
   {
    "item": "O19",
@@ -618,6 +618,15 @@
    "evidence file": "inputs/review-code-D-3.md (lead), then raw/D-fix2-tests.log",
    "tries": 0,
    "reason": "no two agents on one file: D-fix-1 is editing them now; the README items wait for the n8n builder too"
+  },
+  {
+   "item": "MAINT-1",
+   "what": "update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet)",
+   "tries": 1,
+   "reason": "found by the rerun"
   }
  ],
  "agents": [
@@ -1469,15 +1478,28 @@
   {
    "model": "sonnet",
    "started UTC": "07:15",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "rerun-heads",
    "role": "evidence runner (records)",
    "what exactly it is doing": "re-runs six of my non-builder test files on the newest core-b and core-c heads",
-   "expected end": "about 25 min",
-   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+   "expected end": "ended",
+   "reason": "finished"
+  },
+  {
+   "id": "maint1",
+   "role": "builder (tests, non-builder)",
+   "model": "sonnet",
+   "what exactly it is doing": "adapts the six test files to the newest core-b and core-c heads without bending assertions",
+   "started UTC": "07:17",
+   "expected end": "about 30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "rerun result"
   }
  ],
  "tests": [
@@ -1850,6 +1872,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "For core-c: ModelGate.bind() now requires a keyword-only 'mapping' argument (161 of my gate contract tests fail with TypeError on core-c 49013c787): I treat it as an interface change if their ticket says so; the maintenance agent decides by reading it. For core-b: settle('') now raises ValueError instead of NotFound (3c033b209), and a secret name with a slash is refused: same decision. Findings fixed since my last run (4 groups): see TRIAL-RERUN.md",
   "ORDER 020 read at 07:17Z (your ledger rows D-R3-1, D-R3-2). Two points I decide the way I read them, say CHANGE if wrong: (a) core-b's settings have NO host, port, allow_non_loopback, poll_s or max_waiting: those become worker command-line options and named constants, not settings read with getattr; the fields core-b has (tenant, senders, max_body_bytes, max_running, ack_wait_s) are read directly; (b) with HADAVIN_REQUIRE_PG=1 the main-start tests FAIL on my own branch (core-b's config is not here), so my evidence batch runs them on the combined scratch tree. The cap on connections: I had declined it (README only) in my own review; your Major 2 overrules it and I build it",
   "ESCALATIONS E6: three n8n behaviours need your next real n8n run: a wait above 65 s and an n8n restart during a wait; a Respond-to-Webhook node followed by Stop-and-Error; the Respond node passing its item on. Also from the n8n review: the webhook had no authentication (anyone could start runs): fixed in the pack, shape unverified",
   "ESCALATIONS E5: step E review reached the cap of 3 rounds with 2 Majors in round 3; fixes are being applied; NO fresh reviewer will look at them unless you grant one more pass (recommended: yes, small diff)",
