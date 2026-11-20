@@ -345,7 +345,8 @@ def test_f3_text_still_buffered_in_the_child_is_lost_but_the_marker_is_there(tmp
     """F3 / invariant 7: nothing buffered is written by the crash; the marker still is."""
     flag = tmp_path / "flag"
     CrashPoints(mode="exit", flag_path=flag).arm(POINT)
-    done = start_child(tmp_path, CHILD_BUFFERED, flag)
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONUNBUFFERED"}  # stdout must buffer
+    done = start_child(tmp_path, CHILD_BUFFERED, flag, env=env)
     assert done.returncode == CRASH_EXIT_CODE, done.stderr
     assert "buffered" not in done.stdout
     assert done.stdout.splitlines() == ["start", CRASH_MARKER]
@@ -796,11 +797,11 @@ def test_f2_many_threads_released_together_give_exactly_one_crash_each_time():
     sys.setswitchinterval(1e-6)  # make a thread switch inside the helper likely
     try:
         with CrashPoints() as cp:
-            target = Thing()
+            target = Counted()
             thing = cp.wrap(target, "thing", ["step"])
             for burst in range(bursts):
                 gate, crashed = threading.Barrier(threads_per_burst), []
-                before = target.calls
+                before = len(target.log)
 
                 def go(gate=gate, crashed=crashed):
                     gate.wait(timeout=20)
@@ -817,7 +818,7 @@ def test_f2_many_threads_released_together_give_exactly_one_crash_each_time():
                     t.join(timeout=30)
                 assert not any(t.is_alive() for t in threads)
                 assert crashed == [POINT], (burst, crashed)
-                assert target.calls - before == threads_per_burst - 1, burst
+                assert len(target.log) - before == threads_per_burst - 1, burst
             assert len(cp.fired) == bursts
     finally:
         sys.setswitchinterval(old)
@@ -878,12 +879,14 @@ def test_f5_expect_fired_claims_a_point_that_fired_and_names_one_that_did_not():
 def test_f5_require_claim_refuses_a_fired_point_nobody_claimed():
     """F5: with require_claim=True, leaving the block raises, naming the point that fired and was
     never claimed; claimed, or an error in flight, or the default: no error."""
-    with pytest.raises(RuntimeError, match="never claimed: thing.step:before"):
-        with CrashPoints(require_claim=True) as cp:
-            thing = cp.wrap(Thing(), "thing", ["step"])
-            cp.arm(POINT)
-            with pytest.raises(SimulatedCrash):
-                thing.step()
+    with (
+        pytest.raises(RuntimeError, match="never claimed: thing.step:before"),
+        CrashPoints(require_claim=True) as cp,
+    ):
+        thing = cp.wrap(Thing(), "thing", ["step"])
+        cp.arm(POINT)
+        with pytest.raises(SimulatedCrash):
+            thing.step()
     with CrashPoints(require_claim=True) as cp:
         thing = cp.wrap(Thing(), "thing", ["step"])
         cp.arm(POINT)
@@ -916,6 +919,17 @@ def test_f5_flag_taken_tells_the_parent_that_a_child_took_the_flag(tmp_path):
     assert parent.flag_taken() is True
     with pytest.raises(RuntimeError, match="exit"):
         CrashPoints().flag_taken()
+
+
+class Counted:
+    """A target whose call count is safe to read after a burst of threads (list append is atomic)."""
+
+    def __init__(self) -> None:
+        self.log: list[int] = []
+
+    def step(self) -> int:
+        self.log.append(1)
+        return len(self.log)
 
 
 class Gen:
@@ -954,7 +968,7 @@ def test_f8_a_reader_never_sees_half_a_flag(tmp_path):
     the file is missing), never an empty or cut text."""
     flag = tmp_path / "flag"
     cp = CrashPoints(mode="exit", flag_path=flag)
-    whole = {POINT, POINT + "#123456789"[:7]}
+    whole = {POINT, f"{POINT}#1234567"}
     stop, bad = threading.Event(), []
 
     def read():
@@ -975,7 +989,7 @@ def test_f8_a_reader_never_sees_half_a_flag(tmp_path):
     finally:
         stop.set()
         reader.join(timeout=30)
-    assert POINT + "#1234567" in whole and bad == []
+    assert bad == []
     assert not list(tmp_path.glob("*.tmp"))
 
 
@@ -1007,10 +1021,13 @@ def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, 
     naming the path (not the flag text); with an error in flight the error is not replaced."""
     flag = tmp_path / "flag"
     monkeypatch.setattr(Path, "unlink", lambda self, *a, **k: None)
-    with pytest.raises(RuntimeError, match="could not be deleted") as caught:
-        with CrashPoints(mode="exit", flag_path=flag) as cp:
-            cp.arm(POINT)
+    with (
+        pytest.raises(RuntimeError, match="could not be deleted") as caught,
+        CrashPoints(mode="exit", flag_path=flag) as cp,
+    ):
+        cp.arm(POINT)
     assert str(flag) in str(caught.value) and POINT not in str(caught.value)
+    os.unlink(flag)  # the patched Path.unlink does nothing
     with pytest.raises(KeyError), CrashPoints(mode="exit", flag_path=flag) as cp:
         cp.arm(POINT)
         raise KeyError("in flight")
