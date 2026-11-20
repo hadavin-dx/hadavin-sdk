@@ -20,6 +20,7 @@ from hadavin_sdk.config import ConfigError
 from hadavin_sdk.models import new_id
 from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState
 from tests.money_caps_seed import seed_caps
+from tests.money_days import today_utc
 from tests.test_spend_reservations_pg import (  # noqa: F401  (the "w" fixture)
     AGENT,
     DAY,
@@ -53,7 +54,7 @@ def _raw(store, query, params):
 
 def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
     rt = w.store(w.runtime)
-    args = (new_id("res"), AGENT, DAY, D("1.00"), None)
+    args = (new_id("res"), AGENT, today_utc(), D("1.00"), None)
     _seed(w, AGENT, "0", "100")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
         _raw(rt, rt._reserve_call(), args)
@@ -61,7 +62,7 @@ def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
     assert caught.value.diag.message_primary == "day"
     _seed(w, AGENT, "100", "0")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
-        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1.00"), None))
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, today_utc(), D("1.00"), None))
     assert (caught.value.sqlstate, caught.value.diag.message_primary) == ("HD001", "month")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
         _raw(
@@ -157,5 +158,5 @@ def test_an_unmapped_hd_code_is_not_mistaken_for_a_lost_connection(w):
     with pytest.raises(
         psycopg.OperationalError
     ) as caught:  # the premise: psycopg's class for the family
-        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1"), None))
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, today_utc(), D("1"), None))
     assert caught.value.sqlstate == "HD001"
