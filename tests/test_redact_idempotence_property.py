@@ -52,7 +52,9 @@ import pytest
 
 from hadavin_sdk.guard import runmap
 
-R = importlib.import_module("hadavin_sdk.guard.redact")  # the package re-exports a function of this name
+R = importlib.import_module(
+    "hadavin_sdk.guard.redact"
+)  # the package re-exports a function of this name
 
 HAS_G7 = hasattr(R, "_CONTEXT_PATTERNS") and hasattr(R._Redactor, "settle")
 HAS_OWN_OUTPUT_RULE = hasattr(R, "_ESCAPED_LOOKALIKE")
@@ -203,7 +205,9 @@ def test_the_corpora_are_loaded():
     sizes = collections.Counter(name.split("-")[0] for name in _corpus())
     assert sizes["privacy"] >= 60 and sizes["askdata"] >= 300 and sizes["k1b"] >= 40, sizes
     if not TEXTNORM.exists():
-        pytest.skip("tests/fixtures/textnorm_corpus.json is not on this branch: that corpus is not run here")
+        pytest.skip(
+            "tests/fixtures/textnorm_corpus.json is not on this branch: that corpus is not run here"
+        )
     assert sizes["textnorm"] >= 300, sizes
 
 
@@ -231,7 +235,9 @@ def test_P1_corpus_a_second_pass_with_a_fresh_map_changes_nothing():
 
 
 def test_P2_P3_corpus_the_map_only_grows_and_no_placeholder_is_redacted_again():
-    failures = [(n, probs, p.o1) for n, p in _corpus_passes().items() if (probs := _map_problems(p))]
+    failures = [
+        (n, probs, p.o1) for n, p in _corpus_passes().items() if (probs := _map_problems(p))
+    ]
     _no_failures(failures, len(_corpus()))
 
 
@@ -286,7 +292,10 @@ def _readable(value: str, redacted: str) -> int:
 
 @pytest.mark.parametrize(
     "sep",
-    [pytest.param(s, marks=pytest.mark.xfail(strict=True, reason=F3)) if s == ". " else s for s in PAIR_SEPARATORS],
+    [
+        pytest.param(s, marks=pytest.mark.xfail(strict=True, reason=F3)) if s == ". " else s
+        for s in PAIR_SEPARATORS
+    ],
     ids=repr,
 )
 def test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b(sep):
@@ -307,7 +316,9 @@ def test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b(sep):
         mapping = runmap.RunMap()
         joined = runmap.redact_text(corpus[a] + sep + corpus[b], mapping)
         for value in {*alone[a].h1.values(), *alone[b].h1.values()}:
-            if _readable(value, joined) > _readable(value, alone[a].o1) + _readable(value, alone[b].o1):
+            if _readable(value, joined) > _readable(value, alone[a].o1) + _readable(
+                value, alone[b].o1
+            ):
                 failures.append((a, b, value, joined))
     _no_failures(failures, len(pairs))
 
@@ -340,7 +351,9 @@ UNCLAIMED_LINKS = (":", "\n", "/\n", "")
 
 
 def _ticket_texts(link: str):
-    for (keyword, code), line, layout in itertools.product(CODE_KEYWORDS.items(), LINE_SEPARATORS, LAYOUTS):
+    for (keyword, code), line, layout in itertools.product(
+        CODE_KEYWORDS.items(), LINE_SEPARATORS, LAYOUTS
+    ):
         context, paying = keyword + code, "paid " + code + link + ACCOUNT
         yield {
             "code-line-first": context + line + paying,
@@ -366,8 +379,12 @@ def test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass(link):
             failures.append(("redact", text, R.redact(text).text))
         mapping = runmap.RunMap()
         out = runmap.redact_text(text, mapping)
-        if ACCOUNT in out or _plain(out, mapping) != text:  # masked, and held by the map (as an account, or
-            failures.append(("redact_text", text, out))  # inside a longer number: code + account as a phone)
+        if (
+            ACCOUNT in out or _plain(out, mapping) != text
+        ):  # masked, and held by the map (as an account, or
+            failures.append(
+                ("redact_text", text, out)
+            )  # inside a longer number: code + account as a phone)
     for keyword, code in CODE_KEYWORDS.items():
         for items in (
             [keyword + code, "paid " + code + link + ACCOUNT],
@@ -453,9 +470,32 @@ LOW, UP, DIG = string.ascii_lowercase, string.ascii_uppercase, string.digits
 HEX = "0123456789abcdef"
 # Filler: plain lower-case words no detector keys on. They must all survive redaction.
 WORDS = (
-    "checkout timeout retry upstream latency queue worker deploy rollback cache probe shard replica gateway "
-    "handler drained slow warm green stale batch cursor window signal paused"
-).split()
+    "checkout",
+    "timeout",
+    "retry",
+    "upstream",
+    "latency",
+    "queue",
+    "worker",
+    "deploy",
+    "rollback",
+    "cache",
+    "probe",
+    "shard",
+    "replica",
+    "gateway",
+    "handler",
+    "drained",
+    "slow",
+    "warm",
+    "green",
+    "stale",
+    "batch",
+    "cursor",
+    "window",
+    "signal",
+    "paused",
+)
 FIRST = ("Asha", "Ravi", "Meera", "Tomas", "Ines", "Kofi")
 LAST = ("Verma", "Okoro", "Lindqvist", "Sato", "Moreau", "Haddad")
 
@@ -520,10 +560,14 @@ def _one(prefix, make):
 # One planter per detector kind of the pattern table (`test_P6_there_is_a_planter_for_every_detector_kind`).
 PLANTERS = {
     "PRIVKEY": _plant_privkey,
-    "ARN": _one("role ", lambda r: f"arn:aws:iam::{_pick(r, DIG, 12)}:role/{r.choice(WORDS)}-admin"),
+    "ARN": _one(
+        "role ", lambda r: f"arn:aws:iam::{_pick(r, DIG, 12)}:role/{r.choice(WORDS)}-admin"
+    ),
     "GCPRESOURCE": _one(
         "at ",
-        lambda r: f"projects/{_pick(r, LOW, 6)}-{_pick(r, DIG, 4)}/zones/z1/instances/vm{_pick(r, DIG, 3)}",
+        lambda r: (
+            f"projects/{_pick(r, LOW, 6)}-{_pick(r, DIG, 4)}/zones/z1/instances/vm{_pick(r, DIG, 3)}"
+        ),
     ),
     "AZURERESOURCE": _one(
         "scope ", lambda r: f"/subscriptions/{_uuid(r)}/resourceGroups/rg{_pick(r, DIG, 3)}"
@@ -536,8 +580,10 @@ PLANTERS = {
     "AZURESAS": _one("sv=2020&sig=", lambda r: _mixed(r, 24)),
     "WEBHOOK": _one(
         "post ",
-        lambda r: "https://hooks.slack.com/services/T"
-        + f"{_pick(r, UP + DIG, 8)}/B{_pick(r, UP + DIG, 8)}/{_mixed(r, 20)}",
+        lambda r: (
+            "https://hooks.slack.com/services/T"
+            + f"{_pick(r, UP + DIG, 8)}/B{_pick(r, UP + DIG, 8)}/{_mixed(r, 20)}"
+        ),
     ),
     "URLCRED": _plant_urlcred,
     "EMAIL": _one("mail ", lambda r: f"{r.choice(WORDS)}{_pick(r, DIG, 3)}@corp.example"),
@@ -559,10 +605,13 @@ PLANTERS = {
     ),
     "AADHAAR": _one(
         "aadhaar ",
-        lambda r: f"{_pick(r, '23456789', 1)}{_pick(r, DIG, 3)} {_pick(r, DIG, 4)} {_pick(r, DIG, 4)}",
+        lambda r: (
+            f"{_pick(r, '23456789', 1)}{_pick(r, DIG, 3)} {_pick(r, DIG, 4)} {_pick(r, DIG, 4)}"
+        ),
     ),
     "PAN": _one(
-        "pan ", lambda r: _pick(r, UP, 3) + "P" + _pick(r, UP, 1) + _pick(r, DIG, 4) + _pick(r, UP, 1)
+        "pan ",
+        lambda r: _pick(r, UP, 3) + "P" + _pick(r, UP, 1) + _pick(r, DIG, 4) + _pick(r, UP, 1),
     ),
     "ADDRESS": _one("ships to ", lambda r: f"{r.randrange(1, 300)} {r.choice(LAST)} Street"),
     "NAME": _one(
@@ -683,7 +732,9 @@ def test_P6_there_is_a_planter_for_every_detector_kind_and_each_plants_its_kind(
             assert label in result.kinds, (label, planted, result.text)
             assert not any(v in result.text for v in values), (label, planted, result.text)
     planted_kinds = collections.Counter(label for case in _generated() for label in case.labels)
-    assert set(planted_kinds) == set(LABELS) and min(planted_kinds.values()) >= GENERATED_CASES // 32
+    assert (
+        set(planted_kinds) == set(LABELS) and min(planted_kinds.values()) >= GENERATED_CASES // 32
+    )
 
 
 def test_P6_P1_P2_P3_generated_every_planted_value_is_gone_and_one_pass_is_a_fixed_point():
@@ -719,7 +770,11 @@ def test_P6_P1_generated_a_value_in_a_look_alike_spelling_and_again_plainly():
     _no_failures(failures, len(pairs))
 
 
-_JWT = ("eyJ" + "VK3ULlyZQHRKcjIcCa", "eyJ" + "BS6Z963kPUhLKicK", "jORUp4pQRb" + "DeFRu7q24mZqU1wf86tB")
+_JWT = (
+    "eyJ" + "VK3ULlyZQHRKcjIcCa",
+    "eyJ" + "BS6Z963kPUhLKicK",
+    "jORUp4pQRb" + "DeFRu7q24mZqU1wf86tB",
+)
 
 
 @pytest.mark.xfail(strict=True, reason=F4)
@@ -823,7 +878,9 @@ def _bank_fuzz() -> tuple[tuple[str, object, object], ...]:
 def test_I4_bank_fuzz_the_redactor_never_gives_up_at_the_round_bound():
     """The ticket: one round does the work and the bound of four is slack. No text of the fuzz reaches it (a raise
     would be fail-closed and allowed by I4, but it would mean a text nobody can send)."""
-    raised = [(text, repr(first)) for text, first, _ in _bank_fuzz() if isinstance(first, Exception)]
+    raised = [
+        (text, repr(first)) for text, first, _ in _bank_fuzz() if isinstance(first, Exception)
+    ]
     _no_failures(raised, BANK_FUZZ_CASES)
 
 
@@ -843,17 +900,16 @@ def test_P1_I2_I4_bank_fuzz_a_second_pass_finds_no_account_the_first_pass_left()
 
 
 @needs_g7
-def test_P1_bank_fuzz_whatever_else_a_second_pass_changes_is_not_an_account():
-    """The full fixed point over the same fuzz, kept apart from the account property above so a finding in
-    another kind cannot hide an account regression: every case whose second pass changes anything is listed,
-    and the only kinds a second pass may add are the ones finding G7-F2 names (a digit run glued to a swept
-    phone number read as AADHAAR, and the like), never BANKACCT or BANKCODE."""
-    stray = []
-    for text, first, second in _bank_fuzz():
-        added = {R.kind_of(k) for k in second.mapping if k not in first.mapping}
-        if added & {"BANKACCT", "BANKCODE"}:
-            stray.append((text, first.text, second.text))
-    _no_failures(stray, BANK_FUZZ_CASES)
+def test_P1_I2_bank_fuzz_one_pass_is_a_fixed_point():
+    """The whole text and the whole map, every kind, same map. (With this seed every case holds. A scratch run of
+    the same fuzz with another seed met one case of finding G7-F2: a digit run glued to a swept phone number,
+    read as AADHAAR by a second pass. That class has its own tests below.)"""
+    failures = [
+        (text, first.text, second.text)
+        for text, first, second in _bank_fuzz()
+        if (second.text, second.mapping) != (first.text, first.mapping)
+    ]
+    _no_failures(failures, BANK_FUZZ_CASES)
 
 
 # --- P6: glued values (finding G7-F2) ----------------------------------------------------------------------------
@@ -874,7 +930,9 @@ def _glue_fuzz() -> tuple[tuple[str, object, object], ...]:
         for _ in range(rng.randrange(2, 7)):
             planted, values = rng.choice(pool)
             k = rng.random()
-            parts.append(planted if k < 0.5 else rng.choice(values) if k < 0.9 else rng.choice(WORDS))
+            parts.append(
+                planted if k < 0.5 else rng.choice(values) if k < 0.9 else rng.choice(WORDS)
+            )
             parts.append(rng.choice(_GLUE))
         text = "".join(parts)
         first = R.redact(text)
@@ -942,7 +1000,9 @@ def test_P1_a_tenant_id_after_a_glued_copy_of_a_known_secret_is_masked_in_one_pa
 
 
 @pytest.mark.xfail(strict=True, reason=F1)
-@pytest.mark.parametrize(("scheme", "length"), [("Bearer ", 8), ("Basic ", 4), ("authorization: ", 4)])
+@pytest.mark.parametrize(
+    ("scheme", "length"), [("Bearer ", 8), ("Basic ", 4), ("authorization: ", 4)]
+)
 def test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point(scheme, length):
     """The ticket lists this as RELATED, NOT FIXED: `password=V` then `Bearer V+xy` gives `Bearer <SECRET_1>+xy`
     after one pass (the two-character tail readable) and one placeholder after two. The token must be shorter
@@ -954,7 +1014,9 @@ def test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point(schem
 
 
 @pytest.mark.xfail(strict=True, reason=F3)
-@pytest.mark.parametrize("text", ["call {}.", "call {}. Thanks", "phone={}.", "rang {}.\nno answer"])
+@pytest.mark.parametrize(
+    "text", ["call {}.", "call {}. Thanks", "phone={}.", "rang {}.\nno answer"]
+)
 def test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked(text):
     """Found by the concatenation property (separator `. `). The same number followed by a comma, a space or
     the end of the text is masked."""
@@ -1057,7 +1119,10 @@ def test_P7_a_typed_placeholder_never_takes_the_place_of_a_real_one_issued_later
     """A document types `<EMAIL_1>` before the run has issued any placeholder; a later text of the same run holds
     a real address. The typed token was escaped, so the real `<EMAIL_1>` is the only one, in both orders, and a
     second pass over either output adds nothing to the map."""
-    for texts in (("quote <EMAIL_1> end", f"mail {_EMAIL}"), (f"mail {_EMAIL}", "quote <EMAIL_1> end")):
+    for texts in (
+        ("quote <EMAIL_1> end", f"mail {_EMAIL}"),
+        (f"mail {_EMAIL}", "quote <EMAIL_1> end"),
+    ):
         mapping = runmap.RunMap()
         outs = [runmap.redact_untrusted(t, mapping) for t in texts]
         assert dict(mapping) == {"<EMAIL_1>": _EMAIL}

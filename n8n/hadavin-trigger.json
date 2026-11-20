@@ -88,7 +88,7 @@
           "responseCode": 202
         }
       },
-      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode), and that n8n runs this branch BEFORE the long branch that starts at 'Hash business id' (it is placed above that branch for this reason). It was NOT part of the run in n8n 2.47.7. Purpose: with the webhook node's response mode 'responseNode' the caller waits for an answer node; without this node the caller would wait until the whole workflow ends, which can be many minutes when Hadavin is busy. The 202 answered here means only: n8n took the event and will try to send it. It does NOT mean that Hadavin accepted it. Nothing is connected after this node."
+      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode), and that n8n runs this branch BEFORE the long branch that starts at 'Hash business id' (it is placed above that branch for this reason). It was NOT part of the run in n8n 2.47.7. Purpose: with the webhook node's response mode 'responseNode' the caller waits for an answer node; without this node the caller would wait until the whole workflow ends, which can be many minutes when Hadavin is busy. The 202 answered here means only: n8n took the event and will try to send it. It does NOT mean that Hadavin accepted it, and it does NOT mean that the work is done: taken by the workflow, not done. How the run ends is found out later by the state check ('Run still going?'), and a run that ends badly reaches a person through the error workflow, never the caller. Nothing is connected after this node."
     },
     {
       "name": "Hash business id",
@@ -213,7 +213,7 @@
           "timeout": 30000
         }
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. UNVERIFIED: the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); an answer 502 or 504 (the stub never sent one); no answer at all (refused connection, timeout, reset): whether the item then also leaves through the second output and what it holds; the real Hadavin endpoint. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. Keep Never Error off. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. UNVERIFIED: the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); an answer 502 or 504 (the stub never sent one); no answer at all (refused connection, timeout, reset): whether the item then also leaves through the second output and what it holds; the real Hadavin endpoint. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. An answer 202 or 200 leaves through the first output to 'Run still going?', the REQUIRED state check: a 2xx is not the end, and this output must never be connected to anything else. Keep Never Error off. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
     },
     {
       "name": "Busy and rounds left?",
@@ -239,7 +239,7 @@
           ]
         }
       },
-      "notes": "UNVERIFIED: this exact expression, in three parts. (1) The list of three statuses: the run had only 503 in it; 502 and 504 were never sent by the stub. (2) The part that counts a MISSING status as busy (the test with [1-5][0-9][0-9]): what the failed item holds when there is no HTTP answer at all (refused connection, timeout, reset) is NOT known, nobody has run that case; this part assumes that error.status is then missing or is not a three-digit HTTP status. The lead runs one more n8n evidence step for it. (3) The number 30 (the run used 3 rounds). SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. What the expression is meant to do: BUSY (true, try again) = an answer 502, 503 or 504, or no HTTP status at all, while fewer than 30 rounds were used. These are what a sender sees while the worker is busy, restarting or draining, directly or behind a proxy. STOP (false) = every other status: 400, 401, 409, 413 and any other 4xx are never tried again; the execution stops and the error workflow tells a person. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README)."
+      "notes": "UNVERIFIED: this exact expression, in three parts. (1) The list of three statuses: the run had only 503 in it; 502 and 504 were never sent by the stub. (2) The part that counts a MISSING status as busy (the test with [1-5][0-9][0-9]): what the failed item holds when there is no HTTP answer at all (refused connection, timeout, reset) is NOT known, nobody has run that case; this part assumes that error.status is then missing or is not a three-digit HTTP status. The lead runs one more n8n evidence step for it. (3) The number 30 (the run used 3 rounds). SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. What the expression is meant to do: BUSY (true, try again) = an answer 502, 503 or 504, or no HTTP status at all, while fewer than 30 rounds were used. These are what a sender sees while the worker is busy, restarting or draining, directly or behind a proxy. STOP (false) = every other status: 400, 401, 409, 413 and any other 4xx are never tried again; the execution stops and the error workflow tells a person. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README). The 30 rounds are counted over the whole execution: a busy answer to one of the later state checks uses up a round too."
     },
     {
       "name": "Next round",
@@ -261,12 +261,17 @@
               "name": "round",
               "type": "number",
               "value": "={{ $('Stamp time').last().json.round + 1 }}"
+            },
+            {
+              "name": "checks",
+              "type": "number",
+              "value": "={{ $('Stamp time').last().json.checks ?? 0 }}"
             }
           ]
         },
         "includeOtherFields": false
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: in every round the receiver got the same body with a new timestamp and a new signature, and the loop ended after the set number of rounds. Keep typeVersion 3.4. Takes the SAME body as the first send (never a rebuilt one, so the key and the document cannot change between rounds) and adds one to round. The old ts and signature are dropped here; 'Stamp time' and the sign node make new ones."
+      "notes": "UNVERIFIED: the third field, checks, which was added after the run (it carries the number of state checks made so far over a busy round, so that a busy round cannot set that count back to zero), and the '?? 0' in it for the time before the first check. SEEN IN n8n 2.47.7: the node with its first two fields, body and round, with typeVersion 3.4: in every round the receiver got the same body with a new timestamp and a new signature, and the loop ended after the set number of rounds. Keep typeVersion 3.4. Takes the SAME body as the first send (never a rebuilt one, so the key and the document cannot change between rounds) and adds one to round. The old ts and signature are dropped here; 'Stamp time' and the sign node make new ones."
     },
     {
       "name": "Wait before next round",
@@ -281,7 +286,7 @@
         "amount": 60,
         "unit": "seconds"
       },
-      "notes": "UNVERIFIED: a wait of 60 seconds (the run used 2 seconds, and the requests came about 2.0 to 2.1 seconds apart), and any wait above 65 seconds, which n8n is said to handle in another way (saved to its database). SEEN IN n8n 2.47.7: typeVersion, the parameter names resume, amount and unit; the item passed through after the wait; the connection back to 'Stamp time' ran as a loop. 60 seconds is a placeholder. After the wait the flow goes back to 'Stamp time', so the request is signed again with a new timestamp."
+      "notes": "UNVERIFIED: a wait of 60 seconds (the run used 2 seconds, and the requests came about 2.0 to 2.1 seconds apart), and any wait above 65 seconds, which n8n is said to handle in another way (saved to its database). SEEN IN n8n 2.47.7: typeVersion, the parameter names resume, amount and unit; the item passed through after the wait; the connection back to 'Stamp time' ran as a loop. 60 seconds is a placeholder. This ONE wait node serves both loops: it is entered from 'Next round' (the request was not acknowledged) and from 'Next check' (the run is still going), and the second entry was NOT run in n8n. After the wait the flow goes back to 'Stamp time', so the request is signed again with a new timestamp. The number of checks in 'Checks left?' times this wait must be LONGER than the worker's stuck limit plus one tick gap (see the README, 'A 202 is not the end')."
     },
     {
       "name": "Stop: refused or gave up",
@@ -298,7 +303,7 @@
       "notes": "UNVERIFIED: the message text as it stands now (it was reworded after the run; nothing else in the node changed), and that this node is reached after rounds of 502, 504 or no answer. SEEN IN n8n 2.47.7: the node with the earlier message text failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. The message must never hold the body, a header value or the signing value."
     },
     {
-      "name": "Check state (optional)",
+      "name": "Run still going?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -310,17 +315,141 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ $json.state }}",
-              "rightValue": "NEEDS_PERSON",
+              "leftValue": "={{ ['RECEIVED', 'WORKING', 'PLAN_READY', 'EXECUTING', 'VERIFYING'].includes(String($json.state ?? '')) }}",
+              "rightValue": "",
               "operator": {
-                "type": "string",
-                "operation": "equals"
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
               }
             }
           ]
         }
       },
-      "notes": "UNVERIFIED: the true branch (an answer whose state is NEEDS_PERSON was never sent by the stub). SEEN IN n8n 2.47.7: after an answer 202 the item held run_id and state, and this node put it on output 1 (false). Optional. The answer of a 202 or 200 holds only run_id and state, never a reason. NEEDS_PERSON means the run stopped and waits for a person; see the README for what to do then. A 202 state is still in progress, so this branch is useful mainly on a repeat (200)."
+      "notes": "UNVERIFIED: this whole node in this place and its expression; it was added after the run and nobody has run it. SEEN IN n8n 2.47.7: an IF node of typeVersion 2 with the boolean 'true' operator sent a true result to output 0 and a false result to output 1, and after an answer 202 the item on the first output of 'Send to Hadavin' held run_id and state (the stub's state was a made-up word, never one of Hadavin's). This is the state check and it is REQUIRED: it is the only node after the first output of 'Send to Hadavin'. Why: Hadavin answers 202 as soon as a stored run exists for the key, also when the process that did the work has died; the workflow would end as a success although no work is going on anywhere and nobody is told. So a 2xx is not the end. TRUE (output 0) = the state is one of the five that mean 'work is still going': RECEIVED, WORKING, PLAN_READY, EXECUTING, VERIFYING. These are exactly the states that Hadavin's clean-up job (the tick) ends as cut off when a run stops moving. The workflow then asks again with the same key. FALSE (output 1) = any other state, or no state at all: 'Run ended well?' decides. The state names are Hadavin's own (src/hadavin_sdk/models.py); a test compares them with the code."
+    },
+    {
+      "name": "Checks left?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        -200
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ ($('Stamp time').last().json.checks ?? 0) < 45 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "notes": "UNVERIFIED: this whole node and its expression, the reading of $('Stamp time').last() on this branch, and the number 45; it was added after the run and nobody has run it. SEEN IN n8n 2.47.7: the same form in 'Busy and rounds left?', where $('Stamp time').last() gave the item of the latest round. TRUE (output 0) = fewer than 45 state checks were made: wait and ask again. FALSE (output 1) = the checks are used up while the run still shows as going: the execution fails at 'Stop: still running' and the error workflow tells a person. 45 is a placeholder. With the wait of 60 seconds it gives about 45 minutes. The rule: checks times wait must be LONGER than the worker's stuck limit plus one tick gap, because a run that died keeps showing RECEIVED or WORKING until the tick has ended it. The 45 fits an agent with 12 steps on the default model settings: stuck limit 12 x 60 x 3 + 60 = 2220 seconds, tick gap 60 seconds, together 2280 seconds = 38 minutes (see the README for the formula). 'checks' is missing on the item before the first check, so '?? 0' reads it as 0."
+    },
+    {
+      "name": "Next check",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        -200
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "body",
+              "type": "string",
+              "value": "={{ $('Build request').first().json.body }}"
+            },
+            {
+              "name": "round",
+              "type": "number",
+              "value": "={{ $('Stamp time').last().json.round }}"
+            },
+            {
+              "name": "checks",
+              "type": "number",
+              "value": "={{ ($('Stamp time').last().json.checks ?? 0) + 1 }}"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      },
+      "notes": "UNVERIFIED: this whole node in this place; it was added after the run and nobody has run it. SEEN IN n8n 2.47.7: a Set node of typeVersion 3.4 of the same form ('Next round'), and $('Build request').first() and $('Stamp time').last() gave values in every round. Keep typeVersion 3.4 (with 3 n8n ignored 'assignments' without any error). Builds the item for the next question about the same run: the SAME body as the first send (so the same key and the same document: for Hadavin this is the way to ask for the state, there is no other address for it), round carried over unchanged, and checks plus one. The run_id and the state of the last answer are dropped here, and no ts or signature is carried: after the wait, 'Stamp time' and the sign node make new ones."
+    },
+    {
+      "name": "Run ended well?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ ['NO_ACTION', 'SUCCEEDED', 'WAITING_FOR_APPROVAL'].includes(String($json.state ?? '')) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "notes": "UNVERIFIED: this whole node in this place and its expression; it was added after the run and nobody has run it. SEEN IN n8n 2.47.7: an IF node of typeVersion 2 with the boolean 'true' operator. TRUE (output 0) = the state is one of three: NO_ACTION (the run finished and found nothing to do), SUCCEEDED (the action was carried out and checked), WAITING_FOR_APPROVAL (the plan waits for a person to approve it; Hadavin has asked the approvers itself). The workflow ends as a success. FALSE (output 1) = every other state, an unknown state, or an answer without a state: the execution fails at 'Stop: run did not end well'. Anything not on the list of three fails on purpose, so a state added to Hadavin later cannot pass as a success. WAITING_FOR_APPROVAL ends this workflow: what happens after the approval (carried out, rejected, expired) is NOT watched from here."
+    },
+    {
+      "name": "Done: finished or waits for approval",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {},
+      "notes": "UNVERIFIED: this node in this place; it was added after the run. SEEN IN n8n 2.47.7: a node of this type and version in the error workflow (it does nothing). The one good end of the workflow: reached only through 'Run still going?' (false) and 'Run ended well?' (true). Connect the client's own follow-up steps after this node, never straight after 'Send to Hadavin'. The item holds run_id and state."
+    },
+    {
+      "name": "Stop: run did not end well",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1980,
+        200
+      ],
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "={{ 'Hadavin trigger: ' + (['NEEDS_PERSON', 'DENIED', 'REJECTED', 'EXPIRED', 'ROLLED_BACK', 'STOPPED'].includes(String($json.state ?? '')) ? 'the run ended in state ' + String($json.state ?? '') + '. The work was not done or not completed. The answer holds no reason: a person reads it in the stored run in Hadavin.' : 'the answer held no state that this workflow knows. Treat the work as not done.') + ' Run id: ' + String($json.run_id ?? 'not in the answer') + '. This key is never run again: after a person has looked, send the event with a NEW key to redo it.' }}"
+      },
+      "notes": "UNVERIFIED: this whole node in this place, and that the errorMessage field takes an expression (in the run the message was a fixed text); it was added after the run and nobody has run it. SEEN IN n8n 2.47.7: a Stop and Error node of this version with a fixed message failed the execution and the error workflow ran. The message names the state and the run id and nothing else from the answer. It cannot name a reason: Hadavin's answer holds only run_id and state. The six states named in the expression are the ends that are not a success: NEEDS_PERSON (the run stopped and waits for a person; a run cut off by a crash or a forced kill ends here with the reason 'interrupted', and from this workflow it looks like every other NEEDS_PERSON), DENIED (a rule refused the plan), REJECTED (a person said no), EXPIRED (nobody answered the approval in time), ROLLED_BACK (the action was carried out, the check failed, it was undone), STOPPED (the stop switch ended it). The message must never hold the body, a header value or the signing value."
+    },
+    {
+      "name": "Stop: still running",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        -400
+      ],
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "Hadavin trigger: the run was still shown as running after 45 checks, about 45 minutes. Either it runs very long, or it was cut off and Hadavin's clean-up job (the tick) has not ended it: check that the tick runs. A person must look at the run in Hadavin. Do not send the event with a new key before the state of this run is known."
+      },
+      "notes": "UNVERIFIED: this node in this place; it was added after the run. SEEN IN n8n 2.47.7: a Stop and Error node of this version with a fixed message failed the execution and the error workflow ran. The numbers in the message (45 checks, about 45 minutes) are the placeholders of 'Checks left?' and 'Wait before next round': change the text when you change them. The message must never hold the body, a header value or the signing value."
     }
   ],
   "connections": {
@@ -417,7 +546,7 @@
       "main": [
         [
           {
-            "node": "Check state (optional)",
+            "node": "Run still going?",
             "type": "main",
             "index": 0
           }
@@ -470,11 +599,76 @@
           }
         ]
       ]
+    },
+    "Run still going?": {
+      "main": [
+        [
+          {
+            "node": "Checks left?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run ended well?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checks left?": {
+      "main": [
+        [
+          {
+            "node": "Next check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop: still running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Next check": {
+      "main": [
+        [
+          {
+            "node": "Wait before next round",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run ended well?": {
+      "main": [
+        [
+          {
+            "node": "Done: finished or waits for approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop: run did not end well",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "errorWorkflow": "REPLACE-WITH-THE-ID-OF-hadavin-trigger-error"
   },
-  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run and has not been imported into any n8n since. SEEN IN n8n 2.47.7, on the version before the changes: the import by command line accepted the top-level shape (name, active, nodes, connections, settings) and the settings keys, changed no node, parameter or connection, added an id to every node, and dropped this top-level notes key; a connection back to an earlier node ran as a loop; settings.errorWorkflow set to the id of the imported error workflow started that workflow. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
+  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run and has not been imported into any n8n since. SEEN IN n8n 2.47.7, on the version before the changes: the import by command line accepted the top-level shape (name, active, nodes, connections, settings) and the settings keys, changed no node, parameter or connection, added an id to every node, and dropped this top-level notes key; a connection back to an earlier node ran as a loop; settings.errorWorkflow set to the id of the imported error workflow started that workflow. The state check after a 2xx answer (the seven nodes from 'Run still going?' on, and the field checks) was added after the run and was never run. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
 }
