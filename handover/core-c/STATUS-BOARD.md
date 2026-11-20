@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:34:53Z
+UPDATED_UTC: 2026-11-20T10:37:06Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,26 +6,25 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 5
-CAPACITY: load 1.5 of 4 cores, mem 0/15 GB, disk 57G free, 18% used, light agents 5, heavy agents 0
+AGENTS_RUNNING: 4
+CAPACITY: load 3.4 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 4, heavy agents 0
 DISK: / 57G free, 18% used; git worktrees 22; 1.6G	/tmp/claude-0;304M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: 10:45Z: G4 v6 plan review round 6: readiness done (0 Blocker, 1 Major: G8 mutant count 30 vs 32; cites +3 nits), design reviewer pending; v7 text pass follows. G9 v2 file on disk, drafter finishing; plan review round 2 commit 10:45Z. 10:38Z: batch 7 (Q9 files, merged tree) 175 passed, 1 skipped, 4 xfailed (MEASURED). G10 v3 written (prototype run by drafter: 1,234 passed), plan review round 2 running (commit 10:50Z kept). G4 v6 plan review round 6 running. 10:45Z: Q9 review fixes landed 1bf4f11ba (E13 RESOLVED; redact_mutants 94 of 94 good by builder run; builder batch 7715 passed). Merged-tree check of Q9 files running. ORDER 023 STATUS (10:28Z): E9 (1) DONE (a4b2ce2), E9 (2) DONE merged (e8ff6de2b + c4d68c6ef), E9 (3) DONE (is_masked: no consumer, promises withdrawn); E9 fresh result review round 2: starts 10:40Z. E10 fixed point: ticket G9 v1 plan review round 1 done (NOT READY, 3 Blocker + 13 Major); v2 drafting (agent a6219c90); plan review ROUND 2 commit 10:45Z, ROUND 3 (last) 11:15Z, build after clean review, result review until clean. E11 deadline in text fold: ticket G10 v2 plan review round 1 done (5 Blocker); v3 drafting (agent a9111b4b); plan review ROUND 2 commit 10:50Z, build after clean review. False-hit numbers published (G1-false-hits-and-cost.md, dated 2026-11-20). Merged-tree batch 6 (16 files, -n 3) after G7 round 7 + E9 fix + Q9: 2772 passed, 1 skipped, 5 xfailed in 136 s (MEASURED 10:27Z). Running: Q9 review-fix builder, G9 v2, G10 v3, G4 v6, G8 v4 drafters. No test batch running now.
-PUSHED_UTC: 2026-11-20T10:34:46+00:00
+NEXT: 10:48Z: G4 v6 round 6 done (readiness 1 Major, design 3 Major) -> v7 drafting; G10 v3 round 2 design done (4 Major, 0 Blocker), codebase/readiness reviewer pending -> v4 after. 10:45Z: G4 v6 plan review round 6: readiness done (0 Blocker, 1 Major: G8 mutant count 30 vs 32; cites +3 nits), design reviewer pending; v7 text pass follows. G9 v2 file on disk, drafter finishing; plan review round 2 commit 10:45Z. 10:38Z: batch 7 (Q9 files, merged tree) 175 passed, 1 skipped, 4 xfailed (MEASURED). G10 v3 written (prototype run by drafter: 1,234 passed), plan review round 2 running (commit 10:50Z kept). G4 v6 plan review round 6 running. 10:45Z: Q9 review fixes landed 1bf4f11ba (E13 RESOLVED; redact_mutants 94 of 94 good by builder run; builder batch 7715 passed). Merged-tree check of Q9 files running. ORDER 023 STATUS (10:28Z): E9 (1) DONE (a4b2ce2), E9 (2) DONE merged (e8ff6de2b + c4d68c6ef), E9 (3) DONE (is_masked: no consumer, promises withdrawn); E9 fresh result review round 2: starts 10:40Z. E10 fixed point: ticket G9 v1 plan review round 1 done (NOT READY, 3 Blocker + 13 Major); v2 drafting (agent a6219c90); plan review ROUND 2 commit 10:45Z, ROUND 3 (last) 11:15Z, build after clean review, result review until clean. E11 deadline in text fold: ticket G10 v2 plan review round 1 done (5 Blocker); v3 drafting (agent a9111b4b); plan review ROUND 2 commit 10:50Z, build after clean review. False-hit numbers published (G1-false-hits-and-cost.md, dated 2026-11-20). Merged-tree batch 6 (16 files, -n 3) after G7 round 7 + E9 fix + Q9: 2772 passed, 1 skipped, 5 xfailed in 136 s (MEASURED 10:27Z). Running: Q9 review-fix builder, G9 v2, G10 v3, G4 v6, G8 v4 drafters. No test batch running now.
+PUSHED_UTC: 2026-11-20T10:37:00+00:00
 
-(16:04 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(16:07 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | a6219c90 | drafter | claude-opus-5-5 | G9 v2 ticket (plan review round 1: read-back = exact map keys, no pieces for unions, union kind, gate masks the span, hostile 3/5-pass) | plan review round 2 next | 10:07 | 10:40 | 1 | running | 2 | 0 | EGM draft step (max 3 rounds) |
 | a41e66e1 | drafter | claude-opus-5-5 | G8 v4 ticket (plan review round 3: 5 Major, 6 Nit) | 10:24 | 10:50 | 1 | running | 6 | 0 | EGM draft step; then plan review round 4 |
-| ae8e79a4 | reviewer | claude-sonnet-5-5 | G4 v6 PLAN review round 6 (design) | 10:33 | 10:50 | 1 | running | 6 | 0 | EGM review step |
 | a0be08e0 | reviewer | claude-sonnet-5-5 | G10 v3 PLAN review round 2 (readiness) | 10:38 | 10:55 | 2 | running | 3 | 0 | EGM review step |
-| a817e990 | reviewer | claude-sonnet-5-5 | G10 v3 PLAN review round 2 (design) | 10:38 | 10:55 | 2 | running | 3 | 0 | EGM review step |
+| ac8f7e2e | drafter | claude-opus-5-5 | G4 v7 ticket (plan review round 6: 1+3 Major, 9 Nit) | 10:48 | 11:10 | 1 | running | 7 | 0 | EGM draft step; then plan review round 7 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
