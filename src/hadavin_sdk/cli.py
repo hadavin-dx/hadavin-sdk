@@ -4,7 +4,8 @@
                                                          --k K runs each item K times (pass^k), default 1
   hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
-                                                         audit checkpoint; exit 0 ok, 1 a step failed,
+                                                         audit checkpoint, evidence purge, source re-probe,
+                                                         audit drain; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P]  apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable

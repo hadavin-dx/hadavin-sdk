@@ -1,8 +1,8 @@
 """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
 Contract (design v5 kernel, section 4):
-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily). Later PRs only
-  **append** a ``TickStep``.
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily),
+  reprobe_sources, audit_drain. Later PRs only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -240,6 +240,14 @@ def reprobe_sources(ctx: TickContext) -> None:
         raise RuntimeError("source scope: " + "; ".join(found))
 
 
+def audit_drain(ctx: TickContext) -> None:
+    """Write parked audit events (the audit kind's outbox) to the audit; kinds without `reconcile` have nothing
+    to do. A failure (unreadable rows kept, a missing grant) fails the step."""
+    fn = getattr(ctx.app.audit, "reconcile", None)
+    if fn is not None:
+        _LOG.info("audit_drain drained=%s", fn())
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -263,6 +271,7 @@ STEPS: list[TickStep] = [
         reprobe_sources,
         interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
     ),
+    TickStep("audit_drain", 0, audit_drain),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

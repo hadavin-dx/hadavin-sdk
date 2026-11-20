@@ -40,6 +40,7 @@ from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import AuditEvent
+from hadavin_sdk.store.protocol import is_connectivity_error
 
 GENESIS = "0" * 64
 _LOG = logging.getLogger("hadavin_sdk.audit.chain")
@@ -169,8 +170,10 @@ class ChainAudit:
                 "audit anchor put() takes no alg/key_label: its objects will not verify offline"
             )
         self.checkpoint_every = checkpoint_every
-        # Last resort when even the outbox table cannot be written (the database is down): drained by reconcile.
+        # Last resort when even the outbox table cannot be written (the database is down): drained by the next
+        # successful write of this process and by reconcile. In-process only: lost if the process exits first.
         self._pending: list[AuditEvent] = []
+        self._flush_lock = threading.Lock()  # one drainer of _pending at a time
         # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
         # restart drops the list and `verify` then reports "never anchored", which is the truth).
         self._unanchored: dict[int, tuple[str, str]] = {}
@@ -206,16 +209,19 @@ class ChainAudit:
 
     def write_intent(self, event: AuditEvent) -> str:
         try:
-            return self._append(event)
+            key = self._append(event)
         except DuplicateEvent:
             raise
         except Exception as exc:
             raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
+        if self._pending:  # the chain just answered: write what this process parked in memory
+            self._flush_pending()
+        return key
 
     def write_outcome(self, event: AuditEvent) -> str | None:
         """Never raises: the chain, then the outbox table, then memory (all drained by reconcile)."""
         try:
-            return self._append(event)
+            key = self._append(event)
         except DuplicateEvent:
             return event.event_id
         except Exception:  # noqa: BLE001 - the contract is "never raises"
@@ -228,21 +234,53 @@ class ChainAudit:
             except Exception:  # noqa: BLE001
                 self._pending.append(event)
             return None
+        if self._pending:  # only after a successful append, never after a failed one
+            self._flush_pending()
+        return key
+
+    def _flush_pending(self) -> int:
+        """Write the events parked in memory, oldest first; stop at the first one that cannot be written (it
+        and the ones after it stay, in order). Returns how many were written. Never raises."""
+        done = 0
+        try:
+            with self._flush_lock:
+                while self._pending:
+                    if not self._drain(self._pending[0]):
+                        break
+                    del self._pending[0]  # only the lock holder removes; other threads only append
+                    done += 1
+        except Exception as exc:  # noqa: BLE001 - a flush failure is never the caller's error
+            _LOG.warning("audit pending flush stopped (%s); retried next time", type(exc).__name__)
+        return done
 
     def reconcile(self) -> int:
-        done = 0
-        for event in list(self._pending):
-            if self._drain(event):
-                self._pending.remove(event)
-                done += 1
+        """Write every parked event (memory, then the outbox table) to the chain; returns how many. An outbox
+        row is deleted only after its event is in the chain. An unreadable row is kept and skipped, and the
+        call then raises with the count only. A connectivity error reading the outbox is a quiet return (retried
+        next time); any other error there (a missing grant or table) is raised."""
+        done = self._flush_pending()
         try:
             queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
-        except Exception:  # noqa: BLE001 - the database is still down: retried next time
-            return done
+        except Exception as exc:
+            if not is_connectivity_error(exc):
+                raise
+            return done  # the database is still down: retried next time
+        unreadable = 0
         for event_id, body in queued:
-            if self._drain(AuditEvent.model_validate_json(body)):
+            try:
+                event = AuditEvent.model_validate_json(body)
+            except ValueError:
+                unreadable += 1
+                continue
+            if event.event_id != event_id:
+                unreadable += 1
+                continue
+            if self._drain(event):
                 self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
                 done += 1
+        if unreadable:
+            _LOG.warning("audit outbox: drained=%d unreadable=%d (kept)", done, unreadable)
+            raise RuntimeError(f"audit outbox: {unreadable} unreadable rows kept")
         return done
 
     def _drain(self, event: AuditEvent) -> bool:
