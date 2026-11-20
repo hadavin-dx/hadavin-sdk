@@ -428,7 +428,7 @@ def check_hostile_arguments(w):
                 (1, D(10**9)),
             ],
         ),
-        ("settle", ("r", D(1), "ag"), "p_agent", [(2, ""), (2, "a" * 201), (2, "a\nb")]),
+        ("settle", ("r", D(1), "ag"), "p_agent", [(2, None), (2, ""), (2, "a" * 201), (2, "a\nb")]),
         ("expire", (0,), "p_age_s", [(0, None), (0, -1), (0, 10**7 + 1), (0, 2**31 - 1)]),
         (
             "purge",
@@ -822,7 +822,7 @@ def test_month_cap_refuses_and_rolls_the_day_back(w):
 
 def test_duplicate_reservation_id_is_23505_and_books_nothing_twice(w):
     reserve(w, "dup", usd="1")
-    assert refused(w, "reserve", "dup", "ag", DAY, D(1), BIG, BIG, None)[0] == "23505"
+    assert refused(w, "reserve", "dup", "ag", DAY, D(2), BIG, BIG, None)[0] == "23505"
     assert refused(w, "reserve", "dup", "other", DAY, D(1), BIG, BIG, None)[0] == "23505"
     assert counters(w) == (1, 1) and w.count("spend_reservations") == 1
 
@@ -860,11 +860,15 @@ def test_settle_by_another_agent_and_by_an_unknown_id_is_the_same_hd002(w):
     assert w.run("SELECT status FROM spend_reservations") == [("open",)]
 
 
-def test_settle_with_a_null_agent_settles_any_agents_hold_the_documented_residual(w):
-    """HONEST RESIDUAL named in 0011's header: p_agent NULL means any agent. Do not 'fix' this silently."""
+def test_settle_with_a_null_agent_is_refused_and_settles_nothing(w):
+    """M2 (lead): p_agent is required; there is no agent-less settle that could close any agent's hold."""
     reserve(w, "o1", agent="victim", usd="5")
-    row = call(w, "settle", "o1", D(0), None)[0]
-    assert (row[1], row[9]) == ("victim", True) and counters(w, "victim") == (0, 0)
+    state, message = refused(w, "settle", "o1", D(0), None)
+    assert state == "22023" and "p_agent" in message
+    assert counters(w, "victim") == (5, 5) and w.run("SELECT status FROM spend_reservations") == [
+        ("open",)
+    ]
+    assert refused(w, "settle", "o1", D(0), "other")[0] == "HD002"  # another agent's id: not found
 
 
 def test_the_runtime_can_lower_only_by_settling_a_named_open_hold_once(w):
@@ -875,7 +879,7 @@ def test_the_runtime_can_lower_only_by_settling_a_named_open_hold_once(w):
     for _ in range(3):
         assert settle(w, "h", "0")[9] is False
     assert counters(w) == (90, 90)
-    assert refused(w, "settle", "unknown-guess", D(0), None)[0] == "HD002"
+    assert refused(w, "settle", "unknown-guess", D(0), "ag")[0] == "HD002"
 
 
 def test_missing_counter_row_is_hd003_and_the_claim_rolls_back(w):
@@ -1026,9 +1030,7 @@ def _script(seed, n):
                 )
             )
         elif kind == "settle":
-            ops.append(
-                ("settle", rnd.choice(IDS), D(rnd.choice(AMOUNTS)), rnd.choice((*AGENTS, None)))
-            )
+            ops.append(("settle", rnd.choice(IDS), D(rnd.choice(AMOUNTS)), rnd.choice(AGENTS)))
         elif kind == "add":
             ops.append(("add", rnd.choice(AGENTS), rnd.choice(DAYS), D(rnd.choice(AMOUNTS))))
         else:

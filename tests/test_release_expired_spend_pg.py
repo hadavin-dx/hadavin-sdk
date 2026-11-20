@@ -167,7 +167,7 @@ def test_a_counter_below_the_released_sum_stops_at_zero_not_below(w):
 def test_a_late_settle_after_the_release_changes_nothing(w):
     ids = _world_with_holds(w)
     _release(w)
-    row, applied = w.store(w.runtime).settle_spend(ids.a, D("0.50"))
+    row, applied = w.store(w.runtime).settle_spend(ids.a, D("0.50"), agent_id=AGENT)
     assert applied is False and row.status == "settled" and row.settled_usd == 0
     assert _counters(w) == (D("4.00"), D("12.00"))
 
