@@ -169,14 +169,26 @@ runtime and not the reset login):
    is not hidden. The outcome row and the command output carry `requested_usd` (the sum of the expired holds) and
    `applied_usd` (what the day counter really fell by); applied lower than requested is drift to look into.
    The function runs as the migration owner with its search path pinned to `pg_catalog, <schema>, pg_temp` by
-   `migrate` (so a temp table of the release login cannot stand in for a money table). Consider
-   Money guard (migration 0010, E11 M4): a BEFORE UPDATE trigger on `spend`, `spend_month` and `spend_reservations`
-   refuses, for every login but the function's owner, an UPDATE that lowers a booked amount. A runtime login can
-   still raise amounts and settle an open hold below its reserved amount (the counters fall by exactly that
-   difference in the same transaction, never below the booked holds). Inside the release function `current_user` is
-   its owner, which no login can imitate (a setting is not used: a login can set it itself). Known limit: charges
-   that are no hold (add_spend) can be lowered by a runtime login by the amount of a real settle in the same
-   transaction and no more. A superuser owner is not stopped. `migrate` pins the trigger function's search path too.
+   `migrate` (so a temp table of the release login cannot stand in for a money table).
+   Money guard (migration 0010, E11 M4) is a TRIPWIRE, not a wall: a BEFORE UPDATE trigger on `spend`, `spend_month` and
+   `spend_reservations` refuses, for every login but the function's owner, an UPDATE that lowers a booked amount. It
+   stops a plain lowering UPDATE and a naive plant. It does NOT stop a runtime login that writes its own SQL: (1) it
+   settles a hold (legal) and then lowers the counter with plain UPDATEs in the same transaction (the allowed fall is
+   not consumed, so any `add_spend` charge of the day can be erased); (2) it forges a settled hold (INSERT of a row
+   already settled, or raising `reserved_usd` of a settled row) and lowers the counter by the difference; (3) it shares
+   a login with the migration owner (or is a member of the owner role): then there is no guard at all. All three were
+   reproduced in review. Do not rely on the guard against a hostile runtime login; the evidence is the audit chain and
+   the release outcome rows. The real fix is a planned redesign: the runtime gets no UPDATE/INSERT on the money tables,
+   and reserve/settle/expire become SECURITY DEFINER functions. Until then keep the runtime login separate from the
+   migration owner. A superuser owner is not stopped. `migrate` pins the trigger function's search path too.
+   Drift: when a counter is already below the booked holds, a legal settle that lowers it is refused (fail closed) until
+   the counter is repaired; `applied_usd` of a release shows such drift.
+   Emergency switch-off (the OWNER only; the guards then do nothing until switched back on): `ALTER TABLE spend
+   DISABLE TRIGGER spend_money_guard;` and the same for `spend_month` (`spend_month_money_guard`) and `spend_reservations`
+   (`spend_reservations_money_guard`); afterwards `ALTER TABLE spend
+   ENABLE TRIGGER spend_money_guard;` and so on. The
+   audit guards of 0009 work the same way: `audit_entries_seq_guard` on `audit_entries`, `audit_checkpoints_seq_guard`
+   on `audit_checkpoints`. Write the switch-off and switch-on into the incident log.
    Purge (E11 M3): the purge deletes only settled rows (also the rows a release settled at 0); an expired hold
    nobody settled stays, so a late settle still counts its real cost.
    A hand-run `CREATE OR REPLACE` of the function (for example the 0008 file) resets the pin to the placeholder
@@ -193,6 +205,16 @@ runtime and not the reset login):
    sees names the runtime config reads; the policy is what keeps the secret out of reach).
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.
+
+## After the upgrade to 0009: validate the stop-year constraints
+0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` as NOT VALID: every new row is checked, rows
+already there are not, so the upgrade cannot fail on a database holding a planted `ts` (the stop tables are
+append-only, such a row cannot be deleted below a superuser). Later, once you have looked for such rows (`SELECT id, ts
+FROM kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), run as
+the owner `ALTER TABLE kill_switch_stops VALIDATE CONSTRAINT kill_switch_stops_ts_range;` and `ALTER TABLE
+kill_switch_clears VALIDATE CONSTRAINT kill_switch_clears_ts_range;`. VALIDATE fails naming the constraint while a bad
+row exists. The migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the
+index build.
 
 ## Going back to the release before the stop state
 The change of meaning cannot be undone by code alone: old code does not read `kill_switch_stops`, and its stop needs

@@ -8,8 +8,22 @@
 -- hadavin_release_expired_spend passes: that function is SECURITY DEFINER, so inside its body current_user is its owner
 -- and no login can imitate it (a setting such as `SET hadavin.release = on` is a switch the runtime throws itself, so
 -- none is used; SET ROLE needs membership in the owner role). A superuser owner is not stopped: this guards the logins.
--- Known limit: a counter also holds charges that are no hold (add_spend); those are not tied to a row, so a runtime
--- login can lower them by the amount of a real settle of the same transaction, and no further.
+-- THIS IS A TRIPWIRE, NOT A WALL (E13, tickets/migrations-0009-0010-review-1.md, every item reproduced). It stops a plain
+-- lowering UPDATE and a naive plant, and an accident of the store. It does NOT stop a runtime login that writes its own
+-- SQL: (H1) a legal settle plus repeated lowering UPDATEs in one transaction (the allowed fall is not consumed, so any
+-- plain add_spend charge of the day can be erased); (H2) a forged settled hold (INSERT of a row already settled, or
+-- raising reserved_usd of a settled row in the same transaction); (L2) a login that is the owner of the release function
+-- (migrate and runtime sharing one login, or a member of the owner role) has no guard at all. A counter also holds
+-- charges that are no hold (add_spend); those are tied to no row. The real fix is a redesign, queued as its own ticket:
+-- the runtime gets no UPDATE/INSERT on spend, spend_month and spend_reservations, and reserve/settle/expire become
+-- SECURITY DEFINER functions (owner = the migration owner, search path pinned) that are the only writers. Until then
+-- the promise is "accidents and naive attacks are refused", and the audit chain and the release function's own record
+-- are the evidence. Drift: when a counter is already below the booked holds (applied_usd of the release shows it) a
+-- legal settle that lowers it is refused (fail closed) until an operator repairs the counter.
+-- Emergency switch-off (the OWNER, then switch it back on): ALTER TABLE spend DISABLE TRIGGER spend_money_guard; the
+-- same for spend_month (spend_month_money_guard) and spend_reservations (spend_reservations_money_guard), later
+-- ENABLE TRIGGER. The audit seq and checkpoint guards of 0009 are switched off the same way (audit_entries_seq_guard,
+-- audit_checkpoints_seq_guard).
 -- The trigger function is SECURITY INVOKER, finds the owner in the schema of the table (not through the search path),
 -- and carries a placeholder pin that `migrate` re-pins to pg_catalog, <this schema>, pg_temp on every run.
 CREATE OR REPLACE FUNCTION hadavin_money_guard() RETURNS trigger
@@ -69,3 +83,5 @@ CREATE TRIGGER spend_month_money_guard BEFORE UPDATE ON spend_month
     FOR EACH ROW EXECUTE FUNCTION hadavin_money_guard();
 CREATE TRIGGER spend_reservations_money_guard BEFORE UPDATE ON spend_reservations
     FOR EACH ROW EXECUTE FUNCTION hadavin_money_guard();
+-- the two aggregates of the guard (per agent and day, per agent and month range) filter on these columns
+CREATE INDEX IF NOT EXISTS spend_reservations_agent_day ON spend_reservations (agent_id, day);

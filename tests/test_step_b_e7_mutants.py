@@ -39,8 +39,8 @@ def no_seq_guard(t):
 
 
 def no_ts_check(t):
-    return _cut(t, "ALTER TABLE kill_switch_stops ADD CONSTRAINT", "'2100-01-01');").replace(
-        "ALTER TABLE kill_switch_clears ADD CONSTRAINT kill_switch_clears_ts_range\n    CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01');",
+    return _cut(t, "ALTER TABLE kill_switch_stops ADD CONSTRAINT", "NOT VALID;").replace(
+        "ALTER TABLE kill_switch_clears ADD CONSTRAINT kill_switch_clears_ts_range\n    CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID;",
         "",
     )
 

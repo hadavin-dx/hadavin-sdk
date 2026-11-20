@@ -443,14 +443,9 @@ from `reply()`/FakeLLM, which are now valid by construction.
   trigger `hadavin_money_guard()` (SECURITY INVOKER, search path pinned by migrate) on spend, spend_month,
   spend_reservations; only the owner of the release function may lower. Design correction found by test: settle of an
   OPEN hold below its reserved amount lowers the counters legitimately, so the counters may fall by the holds settled
-  in the same transaction and never below the booked holds. Known limit: non-hold charges can be lowered by that
-  amount. Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.
-
-### Update (F8): model-layer validators
-`Reply.cost_usd` (None allowed = unknown cost) and `Verdict.cost_usd` now carry a `field_validator` (mode "before") that applies
-`check_spend_amount` (moved into models.py with MAX_SPEND_*; store/protocol.py re-exports it, no import cycle). With the
-validators the call sites can no longer see an invalid cost from a Reply/Verdict built by a custom LLM or Detector: it is a
-ValueError at construction (inside the provider boundary / `injection_check`'s fail-closed except). The try/except ValueError
-above remains a safety net and should still be part of the install commit. Caveat: a Reply with `cost_usd=None` now exists;
-agent_loop.py:513 must treat None as 0 (or abstain) before `Limits.charge`, and guard/judge.py:86,96 copies `reply.cost_usd`
-into a Verdict (None would be refused there: fail-closed, owner core-c should use `or Decimal(0)`).
+  in the same transaction and never below the booked holds. Known limit (review round 2, E13, corrected): the guard is a TRIPWIRE. It stops a plain lowering UPDATE and a naive plant;
+  it does NOT stop a runtime login that composes a settle with repeated lowering UPDATEs in one transaction (H1), forges a settled
+  hold by INSERT or by raising reserved_usd (H2), or shares a login with the migration owner (L2); all reproduced, pinned as
+  xfail(strict) in tests/test_migrations_0009_0010_round2.py. The real fix is the queued redesign: the runtime without UPDATE/INSERT
+  on the money tables, reserve/settle/expire as SECURITY DEFINER (definer) functions. Index on spend_reservations (agent_id, day) added (M3).
+  Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.

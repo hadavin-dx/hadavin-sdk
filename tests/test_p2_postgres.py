@@ -296,6 +296,13 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
             (1, None, None)
         ]
+        # 0009: a checkpoint must name an existing audit row and its hash, so the chain rows come first
+        for seq in (1, 2, 3):
+            db.execute(
+                "INSERT INTO audit_entries (seq, at, run_id, kind, body, prev, hash, event_id) "
+                "VALUES (%s, 'a', 'r', 'k', 'b', 'p', 'h', %s)",
+                (seq, f"ev-{seq}"),
+            )
         db.execute(
             "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (2, 'h', 's')"
         )  # an old runtime

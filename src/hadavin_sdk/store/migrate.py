@@ -93,6 +93,12 @@ RELEASE_FUNCTION = "hadavin_release_expired_spend(text, date)"
 # The trigger function of 0010 (SECURITY INVOKER) on spend, spend_month and spend_reservations: it refuses an UPDATE
 # that lowers a booked amount unless current_user owns the release function, which only that function's body has.
 MONEY_GUARD_FUNCTION = "hadavin_money_guard()"
+# 0009: the audit seq guards; 0010: the money guard. Each is re-pinned (when it exists) on every migrate run.
+TRIPWIRE_FUNCTIONS = (
+    "hadavin_audit_seq_guard()",
+    "hadavin_audit_checkpoint_guard()",
+    MONEY_GUARD_FUNCTION,
+)
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # Names PostgreSQL reads as a keyword in a GRANT (everyone, nobody, the caller), not as one role.
@@ -622,10 +628,11 @@ def _pin_search_path(db, signature: str) -> None:
 
 
 def _pin_money_guard(db) -> None:
-    """0010: the trigger function that refuses a lowered booked amount. Its search path is pinned like the release
-    function's; a database from before 0010 has none and nothing is done."""
-    if db.execute("SELECT to_regprocedure(%s)", (MONEY_GUARD_FUNCTION,)).fetchone()[0] is not None:
-        _pin_search_path(db, MONEY_GUARD_FUNCTION)
+    """The trigger functions of 0009 (audit seq, checkpoint) and 0010 (money guard): each is pinned like the release
+    function's. A database from before the migration that creates one has none, and nothing is done for it."""
+    for signature in TRIPWIRE_FUNCTIONS:
+        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
+            _pin_search_path(db, signature)
 
 
 def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
