@@ -392,6 +392,11 @@ def _money_error(
         )
     if code == "23505":  # duplicate reservation id
         return StaleState(f"spend reservation exists: {reservation_id}")
+    if code is not None and code.startswith(
+        "HD"
+    ):  # a code of this family nobody mapped: psycopg raises it as an
+        # OperationalError (looks like a lost connection), so it is named here and fails closed
+        return ConfigError(f"store postgres: unexpected money function error ({code})")
     if code == "22023":  # the function refused an argument the Python check let through
         return ValueError("spend argument refused by the database")
     return exc

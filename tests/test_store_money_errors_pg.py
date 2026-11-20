@@ -127,3 +127,22 @@ def test_an_argument_the_python_check_lets_through_is_a_value_error_from_the_fun
             "bad\x01agent", date(2024, 1, 31), D("1.00")
         )  # add_spend checks the amount only
     assert w.count("spend") == 0
+
+
+def test_an_unmapped_hd_code_is_not_mistaken_for_a_lost_connection(w):
+    """psycopg raises an unknown HD code as OperationalError, the class `is_connectivity_error` reads as "store
+    unreachable": the store names the whole family and fails closed with a ConfigError."""
+    from types import SimpleNamespace
+
+    from hadavin_sdk.store.postgres import _money_error
+    from hadavin_sdk.store.protocol import is_connectivity_error
+
+    mapped = _money_error(SimpleNamespace(sqlstate="HD999"))
+    assert isinstance(mapped, ConfigError) and "HD999" in str(mapped)
+    assert not is_connectivity_error(mapped)
+    rt = w.store(w.runtime)
+    with pytest.raises(
+        psycopg.OperationalError
+    ) as caught:  # the premise: psycopg's class for the family
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1"), D("0"), D("100"), None))
+    assert caught.value.sqlstate == "HD001"

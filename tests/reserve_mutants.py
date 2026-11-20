@@ -349,7 +349,7 @@ HAND = [
         f"{CONTRACT}::{DUP_ID}{PGP}", "UniqueViolation"),
     Hand("H25 a cap refusal is not mapped to SpendCapExceeded", PG, 'if code == "HD001":',
         'if code == "00000":',
-        f"{CONTRACT}::{REFUSED}{PGP}", "HD001"),
+        f"{CONTRACT}::{REFUSED}{PGP}", "OperationalError"),
 ]  # fmt: skip
 
 # Forms of a ticket mutant that change nothing in the built code: (name, why).
