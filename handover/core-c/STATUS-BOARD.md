@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:21:26Z
+UPDATED_UTC: 2026-11-20T07:22:09Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,16 +7,16 @@ ITEMS_TOTAL: 40
 ITEMS_OPEN: 25
 PERCENT: 70
 AGENTS_RUNNING: 6
-CAPACITY: load 3.5 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 6, heavy agents 0
+CAPACITY: load 3.2 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 6, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 70M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: tests/test_gate_mutants_picked_up.py fails on purpose (24 mutants out of sync, re-sync by the gate fix agent); producers registry (core-b patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:21:16+00:00
+PUSHED_UTC: 2026-11-20T07:21:26+00:00
 
-(12:51 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:52 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -178,4 +178,4 @@ PUSHED_UTC: 2026-11-20T07:21:16+00:00
 | (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-ORDER 020 read: MJ-A/D/minors with the gate fix agent; MJ-B (capped fixed-point loop in the redactor) queued behind the pick; MJ-C/m-4/mutants pickup with a test-writer. CONTESTED in DECISIONS.md: m-2 (refuse an empty map): an empty live map is legitimate at a run start; we mark `map_enforced_empty` instead. 8 agents running; load measured 0.2-1 of 4 cores, memory 0 of 15 GB (idle).
+SESSION MODEL PROOF (REPORT.md top and here): configured and last served model are claude-sonnet-5-5. ORDER 020 read: MJ-A/D/minors with the gate fix agent; MJ-B (capped fixed-point loop in the redactor) queued behind the pick; MJ-C/m-4/mutants pickup with a test-writer. CONTESTED in DECISIONS.md: m-2 (refuse an empty map): an empty live map is legitimate at a run start; we mark `map_enforced_empty` instead. 8 agents running; load measured 0.2-1 of 4 cores, memory 0 of 15 GB (idle).

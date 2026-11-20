@@ -33,3 +33,9 @@ A reply whose `cost_usd` is absent, None, not a Decimal, NaN, infinite or negati
 
 ## 5. Tests and mutants
 tests/test_model_gate.py (`test_o17_*`, `test_bind_has_the_published_signature`) and tests/gate_mutants.py (O1 to O7) pin all of the above; run `uv run python tests/gate_mutants.py` after any change to the gate.
+
+## 6. Review round 2 additions (contract sentences)
+- The `refused_before_response` mark (settle 0) must be set ONLY if NO attempt of a retried call was answered by the provider. A retry layer that re-raises the LAST attempt's marked error after an earlier attempt was answered would have the gate settle 0 for a billed call. Mark on the error the retry layer finally raises only when every attempt was refused before any response.
+- `system`, `tools` and `output_schema` are forwarded untouched (only message `content` and documents are enforced). The install-time check that `system` comes ONLY from the prompt registry (never from run text) belongs to core-b ("For core-b (install)" in the ticket).
+- Audit `decision`: `map_enforced` (module default enforce, map with entries), `map_enforced_empty`, `enforce_custom`, `map_failed` (enforce step refused), `no_map`. New row codes: `call_interrupted` (also for `worst_case`), `reserve_interrupted`, `held_value_left`.
+- `framing_refused` now only for a value of a secret kind (4+ characters) that EQUALS a tool name or a call id. `models.Reply.cost_usd` default and the `GateRefused` / `SpendRefused` catch sites (agent_loop.py:477, evals.py:73, extract.py:47, guard/injection.py:217-227 catches Exception and would report a kill_switch as guard_unavailable) stay core-b's.

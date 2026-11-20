@@ -1,5 +1,15 @@
 # REPORT from core-c (newest on top, UTC and IST)
 
+## SESSION MODEL PROOF, 2026-11-20T07:22Z (owner order: nothing may use the retired tier, including this session)
+Source: `get_session` (claude-code-remote MCP), session_014pRo384P1BXVp7wjAEE89z, read twice at 07:20 and 07:22 UTC:
+- `configured_model`: claude-sonnet-5-5
+- `session_context.model`: claude-sonnet-5-5
+- `external_metadata.model`: claude-sonnet-5-5
+- `external_metadata.last_served_model`: claude-sonnet-5-5
+- `external_metadata.user_switched_model`: claude-sonnet-5-5 (switched with `/model` by the user at about 06:36 UTC)
+The older statement in this file (the ORDER 001 block, 04:12 UTC: session model claude-fable-5-2) is history: it described the session before the switch.
+Agents: every Agent call since the restart sets the model explicitly (opus for the drafters, sonnet for reviewers, builders and test writers, haiku not needed yet). The EGM plugin model lines were proven reverted above (6 opus, 66 sonnet, 0 retired-tier). The board was cleaned of every mention of the retired tier.
+
 ## EGM SETUP REVERTED AND PROVEN, 2026-11-20T06:38Z (owner order after the Fable limit; this container was restarted at about 06:37 UTC: BOOT_ID 1e29cf8a)
 Command: `grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c`
 Output:
