@@ -787,30 +787,30 @@
    "reason": "lead 13:0x order: PR package, doc review, drift, cross reviews"
   },
   {
-   "id": "xr-b2",
+   "id": "xr-b2-retry",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "cross review of core-b new fixes since 785871401 (H2 ABC findings, N3 audit outbox, role audit) + whether earlier M1-M6 are fixed",
+   "what exactly it is doing": "cross review (retry with unpacked tree and diff on disk)",
    "started UTC": "12:59",
    "expected end": "15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 13:0x order: PR package, doc review, drift, cross reviews"
+   "review round n of cap": "1 (retry 1)",
+   "retries so far": 1,
+   "reason": "first attempt had no tree"
   },
   {
-   "id": "xr-c2",
+   "id": "xr-c2-retry",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "cross review of core-c E14 caps and run-level check (+G4/G9 if landed)",
+   "what exactly it is doing": "cross review (retry with unpacked tree and diff on disk)",
    "started UTC": "12:59",
    "expected end": "15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 13:0x order: PR package, doc review, drift, cross reviews"
+   "review round n of cap": "1 (retry 1)",
+   "retries so far": 1,
+   "reason": "first attempt had no tree"
   }
  ],
  "tests": [
@@ -1183,6 +1183,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:59 NOTE: first attempts of xr-b2 and xr-c2 produced NO verdict (reviewers have no shell; my fault, I had not unpacked the trees). Restarted with trees + diffs on disk. pr-pkg, rev-docs, drift2 running.",
   "12:59 Answer to your 5 points: (1) pr-pkg started (handover/core-a/pr/, new files); (2) rev-docs started (CRASH-MATRIX + n8n README vs code); (3) xr-b2 (core-b commits since 785871401) and xr-c2 (core-c E14 and G4/G9 if landed) started; (4) drift2 started (DRIFT-REPORT-2.md, report only); (5) NOTHING blocks 'D and E done' except your run 6 result and the G33d patch in your copy. Load now: 5 light agents.",
   "12:58 dfix19 DONE: nits of the d-fix18 review fixed (boundary tests at the 16382-byte limit, 431 write-timeout now logs like the stdlib path, wording, silent asserts); mutants G36i/G36j KILLED; tests 1244 passed 312 skipped 1 xfailed (G33d only). Door set D+E is ready for YOUR full mutant run: patch G33d line ~1255 (now -> at) and drop the strict xfail in your copy, run tests/endpoint_mutants.py with .venv/bin/python (~4 min). Head on the next board line. I hold no agents now.",
   "12:52 rev-dfix18-server DONE: no Blocker, no Major (M1 closed: buffer ~130 KB worst case instead of 6.4 MB; all 8 G36 mutants killed by named tests). 4 nits (cap boundary tests, 431 write-timeout log path, exact wording, silent asserts) -> dfix19 running. After dfix19: push head, then your mutant run (G33d patch needed).",
@@ -3200,6 +3201,32 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "d-fix19: boundary tests (16381/16382 pass; 16383-16385 431), 431-write-timeout path, wording, silent asserts; G36i/G36j killed; 1244 passed 312 skipped 1 xfailed (G33d)"
+  },
+  {
+   "id": "xr-b2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "cross review of core-b new fixes since 785871401 (H2 ABC findings, N3 audit outbox, role audit) + whether earlier M1-M6 are fixed",
+   "started UTC": "12:59",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "FAILED, my fault: reviewer has no shell and I had not unpacked the tree; no verdict; restarted with the trees and diffs on disk"
+  },
+  {
+   "id": "xr-c2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "cross review of core-c E14 caps and run-level check (+G4/G9 if landed)",
+   "started UTC": "12:59",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "FAILED, my fault: reviewer has no shell and I had not unpacked the tree; no verdict; restarted with the trees and diffs on disk"
   }
  ]
 }
