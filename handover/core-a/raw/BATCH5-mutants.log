@@ -35,3 +35,8 @@ ok  KILLED       G11b a waiting request never takes a freed slot  [test_a_waitin
 ok  KILLED       G12a check_bind accepts a non-loopback address without the switch  [test_non_loopback_host_needs_the_switch]
 ok  KILLED       G12b check_bind accepts the IPv6 loopback address  [test_ipv6_hosts_are_refused_the_loopback_one_too]
 ok  KILLED       G12c the 409 log line carries trigger_ref  [test_409_writes_one_log_line_with_status_sender_and_run_id_only]
+ok  KILLED       G12d the SIGTERM handler does not stop the server  [test_d3_sigterm_stops_a_serving_worker_cleanly]
+ok  KILLED       G13a verify_any stops after the first secret that verifies  [test_verify_any_tries_every_secret_with_no_early_stop]
+BAD WRONG_REASON G13b verify_any accepts two matching senders (exactly one is not required)  [test_verify_any_refuses_when_two_senders_match]
+      first line: E       assert 'sender-b' is None
+ok  KILLED       G13c check_secrets accepts more than eight senders  [test_check_secrets_refuses_and_names_the_sender_not_the_value[secrets7]
