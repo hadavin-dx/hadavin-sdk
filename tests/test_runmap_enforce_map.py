@@ -550,14 +550,30 @@ def test_e1_a_sweep_that_grows_past_the_output_bound_is_refused(monkeypatch):
 
 def test_e5_one_original_under_two_placeholders_follows_the_stronger_rule():
     """E5. The redactor keeps the first placeholder's rule for an original held twice. An identifier kind
-    listed first made the copy glued to a letter pass although the same value is a secret kind below it."""
+    listed first made the copy glued to a letter pass although the same value is a secret kind below it.
+    Since G4 the redactor's own sweep keeps the secret kind's rule (the `_build` tie-break)."""
     value = "Zq9x" + "Lm4w"
     mapping = {"<TENANT_1>": value, "<SECRET_1>": value}
-    assert _one_sweep(f"a{value}b", mapping) == f"a{value}b"  # FAIL-BEFORE: the weaker rule won
+    assert (
+        _one_sweep(f"a{value}b", mapping) == "a<SECRET_1>b"
+    )  # since G4 the redactor's own sweep follows the stronger rule (tie-break in _build)
     out = _enforce(f"a{value}b {value}", mapping)
     assert out == "a<SECRET_1>b <SECRET_1>" and value not in out, "the weaker rule won"
     swapped = {"<SECRET_1>": value, "<TENANT_1>": value}
     assert _enforce(f"a{value}b", swapped) == "a<SECRET_1>b"
+
+
+def test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals():
+    """TB-2.11 (G4). One original held twice (E5) makes `snapshot` put every every-copy entry first, so two DIFFERENT originals that
+    overlap follow the secret one as well. The redactor's own `_build` tie-break does not do that (it works per original), so gate
+    mutant R8 (no re-sort) is not equivalent: it leaves the identifier's order and `ab-cd` stays readable after `<TENANT_1>`."""
+    v = "Zq9x" + "Lm4w"
+    mapping = {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": v, "<SECRET_2>": v}
+    try:
+        outcome = _enforce("x ab-cd-ef y", mapping)
+    except runmap.RedactionError as exc:  # the outcome string keeps the id on the failure line
+        outcome = f"{type(exc).__name__}({exc})"
+    assert outcome == "x <SECRET_1>-ef y", "TB-2.11 E5b the secret entries were not put first"
 
 
 # --- lead review round 1, M4: redact_text never empties the live map ----------------------------------------------

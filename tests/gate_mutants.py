@@ -189,7 +189,7 @@ M = [
         file=RUNMAP, test=MAP_TEST),
     mutant("R8 one original under two placeholders keeps the weaker rule (E5)",
         "        if _rules_conflict(known):\n", "        if False:\n",
-        "test_e5_one_original_under_two_placeholders_follows_the_stronger_rule", "the weaker rule won",
+        "test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals", "TB-2.11 ",
         file=RUNMAP, test=MAP_TEST),
     mutant("R9 enforce_map has no time budget",
         "            budget.check()  # a hostile text or map: fail closed\n",

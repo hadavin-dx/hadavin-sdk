@@ -734,6 +734,7 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       readable rest by the EXISTING placeholder of a value that covers it, a secret's where one does, else the
       identifier's (`<SECRET_1><SECRET_2>`); the map is not written. A held-back value is not in this sweep's
       map: its rest stays here and the net (`held_value_left`) refuses the call.
+      Where one value is held under both an identifier and a secret kind, since G4 the secret's placeholder is the one used.
     - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
       on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the
       text it is not replaced (the `>` belongs to that placeholder) and its tail stays readable.
@@ -907,8 +908,9 @@ def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) ->
         if len(late) > ENFORCE_MAX_HELD:
             raise InputTooLarge("InputTooLarge")
         if _rules_conflict(known):
-            # One original under two placeholders (E5): the redactor keeps the FIRST placeholder's rule, so
-            # the stronger rule (every copy, a secret kind) goes first. Built fresh: the run's cache holds
+            # One original under two placeholders (E5). Since G4 the redactor itself keeps the secret kind's rule for that
+            # original (the `_build` tie-break); this re-sort is kept because it also puts every every-copy entry before the others,
+            # which decides the order of DIFFERENT overlapping originals at the gate (test_e5b). Built fresh: the run's cache holds
             # the map's own order.
             ordered = dict(sorted(known.items(), key=lambda kv: _sweep(*kv) is not _EVERY_COPY))
             first = _built(
