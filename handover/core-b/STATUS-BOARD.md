@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:46:26Z
+UPDATED_UTC: 2026-11-20T05:47:55Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
 PERCENT: 80
 AGENTS_RUNNING: 1
-CAPACITY: load 0.95 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, agents light 1 heavy 0
-DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 591M
+CAPACITY: load 0.60 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, agents light 1 heavy 0
+DISK: / 60G free, 15% used; worktrees /tmp/core-b-wt 591M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: F-store ticket review NOT clean (2 Blockers, 19 Majors), answered in text, not re-reviewed (ESCALATIONS E2); step B needed a fix round (done); E1 cron refused (accepted by lead)
 NEXT: EGM round on ticket B now; then C; land B and C test commits; ONE batch full-suite run
-PUSHED_UTC: 2026-11-20T05:45:30Z (previous push; this board is pushed right after writing)
-IST: 11:16 IST
+PUSHED_UTC: 2026-11-20T05:46:26Z (previous push; this board is pushed right after writing)
+IST: 11:17 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |

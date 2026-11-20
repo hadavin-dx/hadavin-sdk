@@ -1,0 +1,21 @@
+# step B mutants (--hand) on 2110ab3, code after fix round 2, 2026-11-20T05:46:45Z
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+KILLED   | grants: the runtime may append to kill_switch_clears | src/hadavin_sdk/store/migrate.py | test_runtime_login_is_denied_and_the_switch_stays_on
+KILLED   | grants: the runtime is read-write on kill_switch again | src/hadavin_sdk/store/migrate.py | test_runtime_login_is_denied_and_the_switch_stays_on
+KILLED   | grants: the reset role may not append to audit_entries | src/hadavin_sdk/store/migrate.py | test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset
+KILLED   | migrate: the reset block is skipped | src/hadavin_sdk/store/migrate.py | test_n2_a_reset_by_the_reset_login_reads_off
+KILLED   | migrate: effective_problems is not run for the reset role | src/hadavin_sdk/store/migrate.py | test_migrate_refuses_a_public_right_the_reset_role_would_inherit
+KILLED   | migrate: reset_role is left out of the named roles | src/hadavin_sdk/store/migrate.py | test_migrate_refuses_a_reset_role_that_is_the_runtime_role
+KILLED   | migrate: the forbidden role names are not checked | src/hadavin_sdk/store/migrate.py | test_h4_a_role_name_that_is_not_one_plain_role_is_refused_before_any_connection
+KILLED   | read: the NOT EXISTS is dropped (a cleared stop still counts) | src/hadavin_sdk/store/postgres.py | test_n2_a_reset_by_the_reset_login_reads_off
+KILLED   | read: open stops are ignored | src/hadavin_sdk/store/postgres.py | test_n1_a_stop_by_the_runtime_login_reads_on_from_a_second_connection
+KILLED   | read: a flag that is ON reads OFF | src/hadavin_sdk/store/postgres.py | test_e5_a_flag_set_on_by_the_owner_reads_on_and_a_reset_turns_it_off
+KILLED   | read: a missing flag row reads OFF | src/hadavin_sdk/store/postgres.py | test_e6_a_deleted_flag_row_reads_on_and_stays_on_after_a_reset
+SURVIVED | reset: ON CONFLICT is removed | src/hadavin_sdk/store/postgres.py | test_e2_a_reset_that_overlaps_an_uncommitted_reset_succeeds
+KILLED   | reset: the flag update and the clears are not one transaction | src/hadavin_sdk/store/postgres.py | test_e8_a_refused_clear_leaves_the_flag_on
+KILLED   | limits: the reset clears before the intent is written | src/hadavin_sdk/limits.py | test_e8_cli_reset_with_the_audit_down_exits_3_and_clears_nothing
+KILLED   | limits: reset_failed is not written | src/hadavin_sdk/limits.py | test_cli_reset_on_the_runtime_dsn_exits_2_stays_on_and_audits_reset_failed
+KILLED   | migration 0006: the append-only triggers are removed | src/hadavin_sdk/store/migrations/0006_stop_state.sql | test_the_owner_is_refused_by_the_append_only_trigger
+KILLED   | cli: the reset ignores reset_credential_ref | src/hadavin_sdk/cli.py | test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset
+KILLED   | cli: the pilot and prod refusal is removed | src/hadavin_sdk/cli.py | test_e10_reset_without_the_ref_is_refused_before_any_connection
+[exit 1] 2026-11-20T05:47:27Z
