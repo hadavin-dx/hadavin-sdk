@@ -785,19 +785,6 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "lead 13:59: result reviews of core-b landed work"
-  },
-  {
-   "id": "rev-b-F6I1",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-b F6 check_caps/caps table + I1 idempotent reserve, settle needs agent, memory parity",
-   "started UTC": "14:03",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 13:59: result reviews of core-b landed work"
   }
  ],
  "tests": [
@@ -1170,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:08 rev-b-F6I1 DONE (reviews/rev-b-F6I1.md): core-b F6 caps + I1: NO Blocker, ONE Major: M5 is store-only: Limits.reserve (limits.py:186-196) creates a new reservation id on every call and never retries, so a lost reply still orphans the booking on the real path (needs a caller-supplied id/idempotency key, or say 'store-only' in the notes). Verified: caps from table (HD005), F2 closed, settle needs an agent everywhere, memory parity. Nits: 131073-digit cap passes memory not PG; retry across UTC midnight refused; 0011 is UNRELEASED so DBs with the earlier 0011 need reset_draft. Three reviewers still running: G, H1, H2.",
   "14:03 lead order 13:59: four fresh sonnet reviewers on core-b head a25f6858d (G, H1/B3, H2, F6+I1), trees and per-merge diffs unpacked in scratch (they have no shell). Reports go to handover/core-a/reviews/rev-b-<item>.md + summary handover/core-b/requests/xr-from-core-a-reviews.md when they return. Already done from your list: (3) wip branches reviewed (c, ci x3 rounds, b, e14, grant; e19 is docstring+xfail only, not reviewed), (4) strict_switch passes 22/22 on 3.12/3.13.12/3.13.18, (2) runs 1-4 delivered (evidence/c-run-1..4). Harness trailer: 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>' (the attribution reminder I receive now); the Fable one came from my board.py string (fixed).",
   "14:12 core-c item 2 (E19 N2/N3) DONE on wip/core-a-for-c-e19: N3 has NO small safe fix in _canonical_view (per-character NFKC is deliberate: offset map): '<<'+U+0338+'TOOL RESULT', '<'+U+0338+'<TOOL RESULT', '<<T'+U+0338+'OOL RESULT' and precomposed U+226E all survive escape_markers/neutralise_untrusted (model-visible spoof only, never a run-map key); a real fix belongs in replace_canonical/escape_markers (held by core-c): decision for core-c. Pushed: docstrings (+9/-2 in runmap.py) + tests/test_runmap_e19_combining_marker.py (8 strict xfails + control). The builder's broader run found 6 failures at baseline too (3 seen: test_p1d_a_rows PU1_card/PU1_model, test_k5_tools keyed-by-redacted-document, test_runmap_enforce_map e5b = the known TB-2.11): not caused by this change, 3 not named. No agents running now; waiting for the lead.",
   "14:10 grant tests reviewed fresh: NO Blocker/Major; nothing weakened; one nit (a relaxed exact call-list equality in the limits-reset test) restored and pushed (wip/core-a-for-grant-tests). NOTE: the SECURITY DEFINER / PUBLIC-EXECUTE pins need a PG DSN (skip without one: no proof on a box without Postgres); trigger functions (EXCLUDED_FUNCTIONS) and definer search_path are not pinned in that file. Running: c-e19 only.",
@@ -3637,6 +3625,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "wip/core-a-for-c-e19 pushed: N3 has NO small safe fix inside _canonical_view (per-character NFKC by design; U+0338/0301/precomposed U+226E spoofs of '<<TOOL RESULT' survive): behaviour unchanged, docstrings state the limit, 4 spoofs x 2 functions as strict xfail + control test (1 passed, 8 xfailed); a real fix needs replace_canonical/escape_markers (held)"
+  },
+  {
+   "id": "rev-b-F6I1",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b F6 check_caps/caps table + I1 idempotent reserve, settle needs agent, memory parity",
+   "started UTC": "14:03",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-b F6+I1: NO Blocker; ONE Major: Limits.reserve (limits.py:186-196) makes a new reservation id per call and never retries, so M5 idempotence is store-only (lost reply still orphans the booking on the real path); caps from table, F2, M2, M6 verified; reviews/rev-b-F6I1.md"
   }
  ]
 }
