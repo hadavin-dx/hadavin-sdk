@@ -3,6 +3,45 @@
 ## Unreleased
 
 ### Upgrade steps
+- **Changed behaviour: every model call is booked before it is made (the model gate is installed; step F-install).**
+  - **What changed.** The run loop, the `llm_judge` detector inside a run, the judge's screen of a shadow card
+    (not charged before), `hadavin-sdk gate` and `hadavin-sdk replay` call the model through one gate
+    (`guard/model_gate.py`): reserve the worst case, replace the run map's known values by their placeholders in
+    every message and document, call, settle the real cost, write one audit row (`llm` / `chat`, source `gate`).
+    The lines that charged after the call, `Limits.charge` and the k1b `Budget.charge` are gone. The settled cost
+    is added to the run's cost by the store.
+  - **A call that could cross a budget is refused before it is made.** Before, the call was made and the next
+    step was stopped. The worst case of one call is the system prompt, messages, documents, tool definitions and
+    output schema (counted twice) in bytes plus `defaults.WORST_CASE_OVERHEAD_BYTES` (4096) at the input price,
+    plus the route's `max_tokens` at the output price, times the client's `max_attempts` (times 2 with an output
+    schema). A daily budget smaller than one worst case refuses every call.
+  - **A failed call can hold budget.** When a provider call fails and the provider did not clearly refuse it
+    before doing any work, the most that call could have cost stays counted against the day and month budget for
+    about an hour (the tick's `expire_reservations` step closes it; at least 3600 seconds). Before, a failed call
+    cost nothing. A wrong API key or throttling can therefore use up a small daily budget without real spend. The
+    run's cost moves only when a call is settled, so day spend and run cost can differ for failed calls, and a
+    reply whose cost is unusable does not count toward the run cap (`max_run_usd`).
+  - **How a run ends on a refusal** (no provider contact): `STOPPED` `kill_switch`; `NEEDS_PERSON`
+    `limits.daily_budget` or `limits.monthly_budget`; `NEEDS_PERSON` `limits_unavailable` (store unreachable, or
+    an amount the meter cannot book); `NEEDS_PERSON` `redaction_error` (the run map could not be enforced);
+    `NEEDS_PERSON` `gate_error` (no gate could be built). A refusal inside the judge ends the run this way; it is
+    no longer turned into an injection flag (`injection_check` raises `limits.SpendRefused` and
+    `model_gate.GateRefused` again).
+  - **Audit.** The loop's own `llm` / `chat` `failed` row (source `runtime`, principal the caller) is removed: the
+    gate writes that row (source `gate`, principal the agent id, error code `provider_error` or
+    `provider_exhausted`).
+  - **`hadavin-sdk gate` has `--max-usd X`.** Without it the cap is the agent's daily budget in demo; in pilot
+    and prod the command is refused (exit 2). When the cap is reached it prints `gate stopped: usd_cap` and exits
+    2. `evals.gate(..., max_usd=...)` raises `limits.SpendRefused`.
+  - **`hadavin-sdk replay`.** Each call is reserved on `--max-usd` before it is made, so the cap is no longer
+    passed by one reply; a cap below one worst case makes every case `capped` with no call. A call that timed out
+    or failed with its cost unknown is counted at its worst case in `run.json` `usd`. A cost a detector only
+    reports on its verdict is no longer counted (a judge's call is booked by the gate). The eval and replay
+    command lines are metered in memory per process and their calls are not audited one by one.
+    `--i-know-data-is-already-masked` is refused in pilot and prod.
+  - **Removed: `hadavin_sdk.extract`** (no caller), with its tests and fixtures. `k1b.loop.run_case` takes the
+    unbound gate and no `route_prices`; `k1b.loop.worst_case_usd` moved to `llm.common.worst_case_usd`; `Budget`
+    moved to `hadavin_sdk.limits` (`k1b.loop.Budget` still resolves).
 - **Breaking: the stop switch can no longer be cleared by the runtime's database login (migration `0006_stop_state.sql`).**
   - **What changed.** A stop is now a row added to the new table `kill_switch_stops`; a reset adds a row to
     `kill_switch_clears`. Both tables are append-only for everyone. The runtime login may add a stop and read the state;
