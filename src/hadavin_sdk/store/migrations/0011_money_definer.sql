@@ -45,7 +45,9 @@
 -- function (the pin is re-applied by the next migrate run).
 
 -- The limits the functions read. Rows (names are the interface): max_amount (exclusive upper bound of one amount),
--- max_decimals (scale), max_id_chars, max_expiry_age. Written by `migrate` as the owner; no other role has any right.
+-- max_decimals (scale), max_id_chars, max_expiry_age, min_expiry_age (youngest age a hold may be expired at, and how long
+-- an expired hold is kept before the release function may lower it), max_day_skew (days a booking day may be from the
+-- database's UTC date). Written by `migrate` as the owner; no other role has any right.
 CREATE TABLE hadavin_limits (
     name TEXT PRIMARY KEY,
     value NUMERIC NOT NULL
@@ -238,11 +240,16 @@ AS $fn$
 #variable_conflict use_column
 DECLARE
     v_max_age NUMERIC;
+    v_min_age NUMERIC;
     n BIGINT;
 BEGIN
     SELECT l.value INTO v_max_age FROM hadavin_limits l WHERE l.name = 'max_expiry_age';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
-    IF p_age_s IS NULL OR p_age_s < 0 OR p_age_s > v_max_age THEN
+    SELECT l.value INTO v_min_age FROM hadavin_limits l WHERE l.name = 'min_expiry_age';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit min_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
+    -- a hold younger than min_expiry_age cannot be expired (review M1): the runtime login runs this function, and a
+    -- live hold expired at age 0 can be released by the operator, after which the real cost of its late settle is lost
+    IF p_age_s IS NULL OR p_age_s < v_min_age OR p_age_s > v_max_age THEN
         RAISE EXCEPTION 'invalid argument: p_age_s' USING ERRCODE = '22023';
     END IF;
     UPDATE spend_reservations r
@@ -254,6 +261,65 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION hadavin_expire_spend_reservations(INTEGER) FROM PUBLIC;
+
+-- hadavin_release_expired_spend (replaces the 0008 body, same signature, owner and pin; `migrate` re-pins it): the one
+-- supported way the booked amount of an expired hold goes down. Review M1: only holds that were expired more than
+-- min_expiry_age seconds ago (closed_at is the moment of the expiry) are released, so a late settle of a hold that was
+-- just expired still finds it and books the real cost. Everything else is as in 0008.
+CREATE OR REPLACE FUNCTION hadavin_release_expired_spend(p_agent TEXT, p_day DATE)
+RETURNS TABLE (
+    reservations BIGINT, released_usd NUMERIC, day_usd NUMERIC, month_usd NUMERIC, applied_usd NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE
+    n BIGINT;
+    total NUMERIC;
+    old_day NUMERIC;
+    v_min_age NUMERIC;
+BEGIN
+    SELECT l.value INTO v_min_age FROM hadavin_limits l WHERE l.name = 'min_expiry_age';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit min_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
+    WITH claimed AS (
+        UPDATE spend_reservations
+           SET status = 'settled', settled_usd = 0
+         WHERE agent_id = p_agent AND day = p_day AND status = 'expired'
+           AND closed_at <= pg_catalog.clock_timestamp()
+                            - pg_catalog.make_interval(secs => v_min_age::double precision)
+        RETURNING reserved_usd
+    )
+    SELECT count(*), COALESCE(sum(reserved_usd), 0) INTO n, total FROM claimed;
+    reservations := n;
+    released_usd := total;
+    IF n = 0 THEN
+        SELECT s.usd INTO day_usd FROM spend s WHERE s.agent_id = p_agent AND s.day = p_day;
+        SELECT m.usd INTO month_usd FROM spend_month m
+         WHERE m.agent_id = p_agent AND m.month = pg_catalog.date_trunc('month', p_day)::date;
+        applied_usd := 0;
+        RETURN NEXT;
+        RETURN;
+    END IF;
+    SELECT s.usd INTO old_day FROM spend s WHERE s.agent_id = p_agent AND s.day = p_day FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'spend counter row missing';
+    END IF;
+    UPDATE spend s SET usd = GREATEST(s.usd - total, 0)
+     WHERE s.agent_id = p_agent AND s.day = p_day RETURNING s.usd INTO day_usd;
+    applied_usd := old_day - day_usd;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'spend counter row missing';
+    END IF;
+    UPDATE spend_month m SET usd = GREATEST(m.usd - total, 0)
+     WHERE m.agent_id = p_agent AND m.month = pg_catalog.date_trunc('month', p_day)::date RETURNING m.usd INTO month_usd;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'spend month counter row missing';
+    END IF;
+    RETURN NEXT;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_release_expired_spend(TEXT, DATE) FROM PUBLIC;
 
 -- hadavin_purge_spend_reservations: delete the SETTLED rows closed before p_before (a settled row, or one released by
 -- 0008: settled at 0). An expired hold nobody settled is KEPT: it is still booked and a late settle must find it.

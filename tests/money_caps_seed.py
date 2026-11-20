@@ -41,7 +41,8 @@ WIDE_SKEW_DAYS = 100_000
 
 def widen_day_window(dsn: str, schema: str | None) -> None:
     """Raise `max_day_skew` of `hadavin_limits` as the OWNER, once per schema. `hadavin_reserve_spend` refuses a day more
-    than `max_day_skew` days from the database's UTC date (review B3); the contract and money tests reserve on fixed past
+    than `max_day_skew` days from the database's UTC date (review B3), and `hadavin_expire_spend_reservations` refuses an
+    age below `min_expiry_age` (review M1: also set to 0 here); the contract and money tests reserve on fixed past
     days (month rollovers, a settle on another day) that the store contracts need, so the test-only wrapper below widens
     the window. Never in `src`. The tests of the window itself carry `no_cap_seed` and keep the real value."""
     import psycopg
@@ -57,6 +58,8 @@ def widen_day_window(dsn: str, schema: str | None) -> None:
             sql.SQL("UPDATE {} SET value = %s WHERE name = 'max_day_skew'").format(table),
             (WIDE_SKEW_DAYS,),
         )
+        # the tests expire a hold at age 0 and release it at once (review M1: the real minimum is 3600 s)
+        db.execute(sql.SQL("UPDATE {} SET value = 0 WHERE name = 'min_expiry_age'").format(table))
     _WIDENED.add(key)
 
 

@@ -21,6 +21,7 @@ from hadavin_sdk.store.protocol import SpendCapExceeded
 from tests.test_money_caps_reserve_pg import caps_battery
 from tests.test_money_h1_pg import (
     check_b3_day_window,
+    check_m1_min_expiry_age,
 )
 from tests.test_stop_state_roles import World
 
@@ -192,6 +193,35 @@ H1_MUTANTS = {
     "M-B3e the window is wide (a literal 100000 days)": (
         lambda t: t.replace("v_skew::integer", "100000"),
         check_b3_day_window,
+        True,
+    ),
+    "M-M1a expire takes any age (no minimum)": (
+        lambda t: t.replace("p_age_s < v_min_age OR ", ""),
+        check_m1_min_expiry_age,
+        True,
+    ),
+    "M-M1b the minimum is a literal 0": (
+        lambda t: t.replace("p_age_s < v_min_age OR ", "p_age_s < 0 OR "),
+        check_m1_min_expiry_age,
+        True,
+    ),
+    "M-M1c release lowers a hold expired just now": (
+        lambda t: t.replace(
+            "AND closed_at <= pg_catalog.clock_timestamp()\n"
+            "                            - pg_catalog.make_interval(secs => v_min_age::double precision)",
+            "",
+        ),
+        check_m1_min_expiry_age,
+        True,
+    ),
+    "M-M1d release measures the age from creation, not from the expiry": (
+        lambda t: t.replace(
+            "AND closed_at <= pg_catalog.clock_timestamp()\n"
+            "                            - pg_catalog.make_interval",
+            "AND created_at <= pg_catalog.clock_timestamp()\n"
+            "                            - pg_catalog.make_interval",
+        ),
+        check_m1_min_expiry_age,
         True,
     ),
 }
