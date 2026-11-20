@@ -46,7 +46,7 @@ def _enforce(text: str, mapping) -> str:
         assert mapping.redact_cache == cache and all(
             mapping.redact_cache[k] is cache[k] for k in cache
         )
-    assert runmap.enforce_map(out, mapping) == out  # doing it twice changes nothing more
+    assert runmap.enforce_map(out, mapping) == out, "enforce_map is not idempotent"
     return out
 
 
@@ -426,7 +426,9 @@ def test_e2_a_value_straddling_the_edge_of_a_placeholder_written_in_the_same_pas
         _one_sweep(first + "abc " + second, mapping) == "<SECRET_1<SECRET_2> <SECRET_2>"
     )  # FAIL-BEFORE
     out = _enforce(first + "abc " + second, mapping)
-    assert out == "<SECRET_1>abc <SECRET_2>" and "<SECRET_1<" not in out
+    assert out == "<SECRET_1>abc <SECRET_2>" and "<SECRET_1<" not in out, (
+        "a placeholder was cut open"
+    )
     # mirror: a value ending with the head of a placeholder
     tail = "xyz<"
     mirror = {"<SECRET_1>": first, "<SECRET_2>": tail}
@@ -473,7 +475,11 @@ def test_e1_a_document_near_the_cap_of_short_values_is_not_refused_after_masking
     )  # masking made it longer than the redaction cap
     with pytest.raises(runmap.InputTooLarge):
         runmap._within_cap(produced)  # what the gate did before: a false refusal
-    assert runmap.enforce_map(produced, mapping) == produced  # byte-identical, nothing refused
+    try:
+        enforced = runmap.enforce_map(produced, mapping)
+    except runmap.InputTooLarge:
+        raise AssertionError("a document near the cap was refused after masking") from None
+    assert enforced == produced  # byte-identical, nothing refused
     # raw copies in a text of that size are replaced too
     raw = "peer 1.1.1.1 " * (n // 13)
     out = _enforce(raw, mapping)
@@ -505,7 +511,7 @@ def test_e5_one_original_under_two_placeholders_follows_the_stronger_rule():
     mapping = {"<TENANT_1>": value, "<SECRET_1>": value}
     assert _one_sweep(f"a{value}b", mapping) == f"a{value}b"  # FAIL-BEFORE: the weaker rule won
     out = _enforce(f"a{value}b {value}", mapping)
-    assert out == "a<SECRET_1>b <SECRET_1>" and value not in out
+    assert out == "a<SECRET_1>b <SECRET_1>" and value not in out, "the weaker rule won"
     swapped = {"<SECRET_1>": value, "<TENANT_1>": value}
     assert _enforce(f"a{value}b", swapped) == "a<SECRET_1>b"
 

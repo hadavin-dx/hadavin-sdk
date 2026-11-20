@@ -25,8 +25,9 @@ GATE = "src/hadavin_sdk/guard/model_gate.py"
 RUNMAP = "src/hadavin_sdk/guard/runmap.py"
 
 
-def mutant(name, old, new, killer, expect, file=GATE, test=TEST):
-    pin = test.removesuffix(".py") + "::" + killer
+def mutant(name, old, new, killer, expect, file=GATE, test=TEST, param=""):
+    """`param`: the id of the first parameter of a parametrized killer, as junit writes it (`[none]`)."""
+    pin = test.removesuffix(".py") + "::" + killer + param
     return Mutant(name, file, old, new, expect, test_file=test, only_test=killer, pinned=pin)
 
 
@@ -129,7 +130,7 @@ M = [
         I9, I9_SAYS),
     mutant("G7e a free field in the audit row",
         "                    error_code=error_code,\n",
-        "                    error_code=error_code,\n                    decision=self._agent_id,\n",
+        "                    error_code=error_code,\n                    rule_id=self._agent_id,\n",
         I9, I9_SAYS),
     # --- minors m2, m3, m4 ---
     mutant("G8a a paid call whose settle failed is written as failed",
@@ -160,21 +161,21 @@ M = [
         "    mapping.update(current)\n    return out\n",
         '    mapping.update({**current, **dict.fromkeys(list(mapping)[:1], "")})\n    return out\n',
         "test_a_write_never_removes_or_changes_an_earlier_entry_by_any_route", "an earlier entry was dropped or changed",
-        file=RUNMAP, test=WRITE_TEST),
+        file=RUNMAP, test=WRITE_TEST, param="[redact_text]"),
     mutant("R3c redact_text removes entries with pop before it writes",
         "    mapping.update(current)\n    return out\n",
         "    for key in list(mapping):\n        mapping.pop(key)\n    mapping.update(current)\n    return out\n",
         "test_a_write_never_removes_or_changes_an_earlier_entry_by_any_route", "an entry was removed during a write",
-        file=RUNMAP, test=WRITE_TEST),
+        file=RUNMAP, test=WRITE_TEST, param="[redact_text]"),
     mutant("R4 enforce_map stops after one sweep: not a fixed point (MJ2)",
         "            if out == before:\n                return out\n",
         "            return out\n",
-        "test_mj2_an_identifier_glued_to_a_shorter_secret_is_replaced_too", "a known identifier was left raw",
+        "test_mj2_an_identifier_glued_to_a_shorter_secret_is_replaced_too", "enforce_map is not idempotent",
         file=RUNMAP, test=MAP_TEST),
     mutant("R5 the sweep cap is dropped: a chain that never settles is returned half done",
         '    raise RedactionError("NotSettled")',
         "    return out",
-        "test_mj2_a_chain_settles_within_the_cap_and_is_refused_past_it", "a text that was still changing was returned",
+        "test_mj2_a_chain_settles_within_the_cap_and_is_refused_past_it", "DID NOT RAISE",
         file=RUNMAP, test=MAP_TEST),
     mutant("R6 enforce_map applies the redaction cap, not its own (E1)",
         "        if len(text) > ENFORCE_MAX_CHARS:\n",
@@ -184,16 +185,16 @@ M = [
     mutant("R7 a value at the edge of a placeholder is not held back (E2)",
         "            if (original in tokens or _is_edge_value(original)) and _sweep(ph, original) is not None\n",
         "            if original in tokens and _sweep(ph, original) is not None\n",
-        "test_e2_a_value_straddling_the_edge_of_a_placeholder_written_in_the_same_pass", "was cut open",
+        "test_e2_a_value_straddling_the_edge_of_a_placeholder_written_in_the_same_pass", "a placeholder was cut open",
         file=RUNMAP, test=MAP_TEST),
     mutant("R8 one original under two placeholders keeps the weaker rule (E5)",
         "        if _rules_conflict(known):\n", "        if False:\n",
-        "test_e5_one_original_under_two_placeholders_follows_the_stronger_rule", "the weaker rule",
+        "test_e5_one_original_under_two_placeholders_follows_the_stronger_rule", "the weaker rule won",
         file=RUNMAP, test=MAP_TEST),
     mutant("R9 enforce_map has no time budget",
         "            if time.monotonic() - started > defaults.REDACT_BUDGET_S:\n                raise InputTooLarge",
         "            if False:\n                raise InputTooLarge",
-        "test_m_new_1_enforce_map_has_the_redactors_time_budget", "the time budget was not checked",
+        "test_m_new_1_enforce_map_has_the_redactors_time_budget", "DID NOT RAISE",
         file=RUNMAP, test=MAP_TEST),
     mutant("R10 a value the sweep never replaces is held back (m-new-1)",
         " and _sweep(ph, original) is not None\n        }\n", "\n        }\n",
@@ -227,25 +228,25 @@ M = [
         "test_pin_a_document_that_is_not_bytes_means_no_call", "a document that is not bytes"),
     mutant("G15 the audit code allowlist is not enforced in _note",
         "            error_code = CODE_GATE_REFUSED  # AUDIT_CODES is enforced here, not only listed\n", "            pass\n",
-        "test_e4_note_enforces_the_allowlist_a_code_outside_it_is_never_written", "gate_refused"),
+        "test_e4_note_enforces_the_allowlist_a_code_outside_it_is_never_written", "a code outside the allowlist"),
     mutant("G16 a worst case that is not a finite Decimal >= 0 reaches reserve",
         "        if not usable_amount(reserved):\n", "        if False:\n",
-        "test_d2_a_worst_case_that_is_not_a_finite_decimal_of_zero_or_more_is_refused_before_reserve", "DID NOT RAISE"),
+        "test_d2_a_worst_case_that_is_not_a_finite_decimal_of_zero_or_more_is_refused_before_reserve", "DID NOT RAISE", param="[none]"),
     mutant("G17 a reservation id that is not a non-empty str is used",
         "        if not (isinstance(reservation, str) and reservation):\n", "        if False:\n",
-        "test_d3_a_reservation_id_that_is_not_a_non_empty_str_means_no_call", "DID NOT RAISE"),
+        "test_d3_a_reservation_id_that_is_not_a_non_empty_str_means_no_call", "DID NOT RAISE", param="[17]"),
     mutant("G18 an overshoot is dropped from the ok row",
         "                code = CODE_OVERSHOOT\n", "                pass\n",
-        "test_a_settle_above_the_reservation_is_passed_through", "overshoot"),
+        "test_a_settle_above_the_reservation_is_passed_through", "the overshoot code is missing"),
     mutant("G19 the map is copied once per text, not once per call (D9)",
         "                mapping = runmap.snapshot(mapping)\n", "                pass\n",
         "test_d9_one_map_snapshot_and_one_redactor_per_chat_call_for_100_messages_and_a_2000_entry_map", "more than one redactor"),
     mutant("G20 the bind arguments are not checked (D5)",
         "        if not all(isinstance(value, str) for value in (agent_id, run_id, source)):\n", "        if False:\n",
-        "test_d5_bind_refuses_ids_that_are_not_str_at_bind_not_later_in_a_lost_row", "DID NOT RAISE"),
+        "test_d5_bind_refuses_ids_that_are_not_str_at_bind_not_later_in_a_lost_row", "DID NOT RAISE", param="[agent]"),
     mutant("G21 the audit row does not say whether the map was enforced (D1)",
         "                    decision=self._mode,\n", "                    decision=None,\n",
-        "test_d1_every_audit_row_says_whether_the_map_was_enforced", "no_map"),
+        "test_d1_every_audit_row_says_whether_the_map_was_enforced", "does not say whether the map was enforced"),
     # --- m-new-6: the source guard fails on each of these leaks ---
     mutant("G7f getattr(exc, 'args') in chat",
         '            reason = getattr(exc, "reason", None)\n', '            reason = getattr(exc, "args", None)\n', I9, I9_SAYS),
@@ -274,7 +275,10 @@ if __name__ == "__main__":
     for m in M:  # the search text of a mutant must be in the file exactly once (the runner replaces every copy)
         found = (ROOT / m.file).read_text(encoding="utf-8").count(m.old)
         if found != 1:
-            print(f"mutant {m.name!r}: its search text is in {m.file} {found} times, not once", file=sys.stderr)
+            print(
+                f"mutant {m.name!r}: its search text is in {m.file} {found} times, not once",
+                file=sys.stderr,
+            )
             sys.exit(2)
     first_lines: dict[str, str] = {}
 

@@ -29,18 +29,22 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   one is replaced and the tail of the other stays (`<A_1>ef`); two identifiers there are both left. A value that
   is a piece of one of the map's placeholders loses to any other value, even a shorter one.
   E::test_stated_limit_partial_overlap_leaves_a_tail
-- A placeholder can be damaged, with no raw value shown: by a known value that spans the end of a placeholder
-  written in the same call, and in a map whose key is not a genuine placeholder.
-  E::test_stated_limit_a_value_spanning_the_end_of_a_placeholder_written_in_this_call
-  E::test_m_new_2_stated_limit_a_map_key_that_is_not_a_genuine_placeholder_is_not_protected
+- A known value that begins with the tail of a placeholder (`>abc`) or ends with the head of one (`xyz<`) is
+  replaced only where it stands clear of every placeholder: beside a placeholder written in the same call its
+  tail stays readable (`<SECRET_1>abc`), but the placeholder is never cut open.
+  E::test_e2_a_value_straddling_the_edge_of_a_placeholder_written_in_the_same_pass
+- In a map whose key is not a genuine placeholder (`<host_1>`) a placeholder can be damaged, with no raw value
+  shown. E::test_m_new_2_stated_limit_a_map_key_that_is_not_a_genuine_placeholder_is_not_protected
+- One original held under two placeholders follows the stronger rule (a secret kind wins over an identifier
+  kind, whatever the order). E::test_e5_one_original_under_two_placeholders_follows_the_stronger_rule
 - A text that is still changing after `runmap.ENFORCE_MAX_SWEEPS` sweeps (a chain of glued identifiers) is
   refused, not sent. E::test_mj2_a_chain_settles_within_the_cap_and_is_refused_past_it
 - The gate runs no pattern: a value that is in no map passes as written, also a clean key and a clean value that
   only match a pattern once composed (`"user_id": "abc123"`).
   T::test_stated_limit_a_clean_key_and_value_that_match_a_pattern_once_composed_are_not_touched
 - A known SECRET value that equals a word of the trusted framing (the tool-result marker words, a tool name) is
-  replaced there too: the marker the agent loop wrote is rewritten in what is sent. OPEN, a design decision.
-  T::test_d6_gap_a_secret_equal_to_a_marker_word_rewrites_the_trusted_tool_result_marker (strict expected failure)
+  replaced there too: the marker the agent loop wrote is rewritten in what is sent. OPEN (ORDER 017 item 6).
+  Not pinned yet.
 - With no map (`mapping=None`: the eval and replay command lines, the judge with its own map) there is no enforce
   step; every audit row of such a gate says so (`decision` is `no_map`, else `map_enforced`).
   T::test_d1_every_audit_row_says_whether_the_map_was_enforced
@@ -54,16 +58,22 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
 
 Before any provider contact the gate enforces the caller's run map on every message and document (a raw copy
 of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then asks for the
-worst-case cost, checks it and reserves it. The client gets the enforced copies. After the call the gate
-settles by the one settle rule below (the real cost of a reply, 0 for a marked refusal, nothing otherwise) and
-writes one audit row. If the enforce step, the worst case or the reservation fails, no call is made. The gate
-keeps no prices, no budgets and no patterns: the amounts come from `worst_case` and the reply, the replace
-from `runmap`. What it does decide is the ORDER of the steps and WHEN a reservation is settled.
+worst-case cost, checks that it is a finite Decimal of 0 or more, and reserves it. The client gets the enforced
+copies. After the call the gate settles by the one settle rule below (the real cost of a reply that has a usable
+cost, 0 for an error the adapter marked as refused before any response, otherwise no settle) and writes one
+audit row. If the enforce step, the worst case or the reservation fails, no call is made.
 
-No logger, no module-level state, and no message text and no exception text in any audit row. The gate's own
-refusals (`GateRefused` and its subclasses) carry a fixed code and no cause; an error of the meter, of
-`worst_case` or of the client is re-raised as the same object, with whatever chain it already had. The
-caller's messages, dicts and documents are never changed in place.
+What the gate keeps and what it does not. It keeps no prices, no budgets and no patterns: the amounts come from
+`worst_case` and the reply, the replace from `runmap`, the booking from the meter. It does hold three small
+money rules of its own: an amount is usable only when it is a finite Decimal of 0 or more (reserve and settle),
+the ORDER of the steps, and WHEN a reservation is settled (the one settle rule).
+
+Exceptions and text. No logger, no module-level state, and no message text and no exception text in any audit
+row (a source guard in tests/test_model_gate.py reads the whole module's syntax tree for this). The gate's own
+refusals (`GateRefused` and its subclasses) are raised outside any `except` block, so they carry a fixed code
+and neither a cause nor a context. An error of the meter, of `worst_case` or of the client is re-raised as the
+same object with whatever chain it already had: the gate adds nothing to it and removes nothing. The caller's
+messages, dicts and documents are never changed in place.
 """
 
 from __future__ import annotations

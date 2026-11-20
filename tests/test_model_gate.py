@@ -257,7 +257,8 @@ def test_a_settle_above_the_reservation_is_passed_through():
     client.reply = Reply(cost_usd=WORST * 4, model_id="fake-model")
     bound, _, meter, sink = build(client)
     assert bound.chat(CLEAN, system="s", route="main") is client.reply
-    assert meter.settles == [("res_1", WORST * 4)] and sink.codes() == [("ok", "overshoot")]
+    assert meter.settles == [("res_1", WORST * 4)]
+    assert sink.codes() == [("ok", "overshoot")], "the overshoot code is missing"
     exact = Client()
     exact.reply = Reply(
         cost_usd=WORST, model_id="fake-model"
@@ -768,7 +769,9 @@ def test_e4_note_enforces_the_allowlist_a_code_outside_it_is_never_written():
         bound._note("failed", bad)
     bound._note("failed", "call_failed")
     bound._note("ok", None)
-    assert [row.error_code for row in sink.rows] == ["gate_refused"] * 6 + ["call_failed", None]
+    assert [row.error_code for row in sink.rows] == ["gate_refused"] * 6 + ["call_failed", None], (
+        "a code outside the allowlist was written"
+    )
 
 
 def test_d2_worst_case_raising_has_its_own_code_and_its_error_comes_out_unchanged():
@@ -1177,7 +1180,9 @@ def test_pin_the_mark_counts_only_on_a_provider_error_that_is_not_exhausted():
     assert refused_before(_flagged(ProviderError("x"))) is True
     assert refused_before(_flagged(ValueError("x"))) is False, "a flagged non-ProviderError counted"
     assert refused_before(_flagged(OSError("x"))) is False, "a flagged non-ProviderError counted"
-    assert refused_before(_flagged(ProviderExhausted("x"))) is False, "a flagged ProviderExhausted counted"
+    assert refused_before(_flagged(ProviderExhausted("x"))) is False, (
+        "a flagged ProviderExhausted counted"
+    )
     assert refused_before(ProviderError("x")) is False
 
 
@@ -1340,7 +1345,16 @@ BANNED_NAMES = {"logging", "getLogger", "print", "warnings", "traceback", "repr"
 BANNED_ATTRS = {"__cause__", "__context__", "__traceback__", "args", "with_traceback", "add_note", "__notes__", "__dict__", "local", "getLogger", "exception", "exc_info", "stderr", "stdout", "write", "format", "format_map", "open", "write_text", "print_exc"}  # fmt: skip
 # a module-level value of these kinds is state (I10): a container that a call could fill
 MUTABLE_VALUES = (ast.List, ast.Dict, ast.Set, ast.ListComp, ast.DictComp, ast.SetComp)
-MUTABLE_FACTORIES = {"list", "dict", "set", "bytearray", "deque", "defaultdict", "OrderedDict", "Counter"}
+MUTABLE_FACTORIES = {
+    "list",
+    "dict",
+    "set",
+    "bytearray",
+    "deque",
+    "defaultdict",
+    "OrderedDict",
+    "Counter",
+}
 ROW_VALUES = {
     "run_id": "self._run_id",
     "domain": "AUDIT_DOMAIN",
@@ -1390,7 +1404,9 @@ def gate_source_problems(source: str) -> list[str]:
                 and isinstance(call.args[1], ast.Constant)
                 and call.args[1].value in GETATTR_ON_EXC
             ):
-                problems.append(f"line {line}: getattr on an exception with a name that is not allowed")
+                problems.append(
+                    f"line {line}: getattr on an exception with a name that is not allowed"
+                )
         elif isinstance(node, ast.Raise):
             bare_or_fixed = node.exc is None or (
                 isinstance(node.exc, ast.Name) and node.cause is None
@@ -1409,8 +1425,12 @@ def gate_source_problems(source: str) -> list[str]:
                 problems.append(f"line {line}: an audit row field that is not a fixed code or id")
         elif isinstance(node, ast.Call) and ast.unparse(node.func) == "str":
             problems.append(f"line {line}: str() call")
-    for node in tree.body:  # module-level state: a mutable container (a constant frozenset or tuple is fine)
-        value = getattr(node, "value", None) if isinstance(node, ast.Assign | ast.AnnAssign) else None
+    for node in (
+        tree.body
+    ):  # module-level state: a mutable container (a constant frozenset or tuple is fine)
+        value = (
+            getattr(node, "value", None) if isinstance(node, ast.Assign | ast.AnnAssign) else None
+        )
         factory = value.func if isinstance(value, ast.Call) else None
         name = factory.id if isinstance(factory, ast.Name) else getattr(factory, "attr", None)
         if isinstance(value, MUTABLE_VALUES) or name in MUTABLE_FACTORIES:
@@ -1527,7 +1547,9 @@ def test_d1_every_audit_row_says_whether_the_map_was_enforced():
             bound, _, _, sink = build(client, meter=meter, mapping=mapping)
             with contextlib.suppress(Exception):
                 bound.chat([{"role": "user", "content": content}], system="s", route="main")
-            assert len(sink.rows) == 1 and sink.rows[0].decision == mode, (mode, sink.codes())
+            assert len(sink.rows) == 1 and sink.rows[0].decision == mode, (
+                "the row does not say whether the map was enforced: " + mode
+            )
 
 
 @pytest.mark.parametrize(
@@ -1664,6 +1686,27 @@ def test_d9_the_snapshot_is_taken_once_per_call_so_every_text_sees_the_same_entr
     ]  # not yet known to this call
     bound.chat([{"role": "user", "content": later}], system="s", route="main")
     assert gate._llm.sent[1]["messages"][0]["content"] == "<TENANT_1>"
+
+
+def test_d8_every_test_the_module_docstring_names_exists():
+    """D8: the docstring says each stated limit is pinned by the test it names (T:: = this file, E:: =
+    tests/test_runmap_enforce_map.py). A name that does not exist, or a limit with no name that is not marked
+    'Not pinned', is a claim the code does not back."""
+    import re
+
+    doc = model_gate.__doc__
+    files = {
+        "T": Path(__file__).read_text(encoding="utf-8"),
+        "E": (Path(__file__).parent / "test_runmap_enforce_map.py").read_text(encoding="utf-8"),
+    }
+    named = re.findall(r"\b([TE])::(test_\w+)", doc)
+    assert len(named) >= 12
+    missing = [f"{f}::{n}" for f, n in named if f"def {n}(" not in files[f]]
+    assert missing == [], f"tests named in the docstring that do not exist: {missing}"
+    for block in re.split(
+        r"\n(?=- )", doc.split("Stated limits")[1].split("Before any provider")[0]
+    )[1:]:
+        assert re.search(r"\b[TE]::test_", block) or "Not pinned" in block, block[:60]
 
 
 def test_the_exceptions_carry_a_stable_code_and_are_not_provider_errors():
