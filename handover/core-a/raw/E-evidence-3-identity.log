@@ -1,0 +1,24 @@
+Fri Nov 20 07:02:27 UTC 2026
+a1dc55e689d3aff5a2003c7956f500e903f0cdc8aaa8d90b74a330f81f8ade2d  src/hadavin_sdk/testing/crash.py
+97c5931f2cc8532c83959a1d5b92d698d16fc82c0c4f8594bebf5b03c26c1401  tests/test_testing_crash.py
+3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c  src/hadavin_sdk/testing/__init__.py
+75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e  src/hadavin_sdk/testing/mutation.py
+  264 src/hadavin_sdk/testing/crash.py
+  857 tests/test_testing_crash.py
+ 1121 total
+Python 3.13.18
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+PYTHONUNBUFFERED=[1]
+--- earlier identity
+Fri Nov 20 06:52:29 UTC 2026
+3b68090ca02188366c0f7157a73b9d503e76346cd6d24cba5f7e2d78417f4fa9  src/hadavin_sdk/testing/crash.py
+c4b75e82e5e173a178ec155f46f2dd1e3ad2fb3effabc7d13ad3e5a53bb60a46  tests/test_testing_crash.py
+3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c  src/hadavin_sdk/testing/__init__.py
+75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e  src/hadavin_sdk/testing/mutation.py
+71a895ef9
+Python 3.13.18
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+  298 src/hadavin_sdk/testing/crash.py
+ 1065 tests/test_testing_crash.py
+ 1363 total
+PYTHONUNBUFFERED=1
