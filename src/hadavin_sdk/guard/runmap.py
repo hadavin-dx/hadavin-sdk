@@ -10,6 +10,9 @@ Pure functions over a plain ``dict[str, str]`` (placeholder -> original). Stdlib
 
 from __future__ import annotations
 
+import base64
+import binascii
+import bisect
 import collections
 import functools
 import hashlib
@@ -18,7 +21,8 @@ import re
 import time
 import unicodedata
 from collections.abc import Callable, Mapping
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, NamedTuple
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
@@ -28,13 +32,16 @@ from hadavin_sdk.guard.redact import (
     ARN_TAIL,
     PATTERNS,
     SECRET_KINDS,
+    RedactionResult,
     _alias_keys,
     _plain,
     _Redactor,
     _replace_standalone,
     _sweep,
     kind_of,
+    place_encoded,
     redact,
+    strip_ansi,
 )
 from hadavin_sdk.guard.textnorm import without_spacing_marks
 
@@ -530,6 +537,380 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]]) -> str:
     return view
 
 
+@dataclass
+class _ScanBudget:
+    """The base64 step's budget for ONE redact_text call; the text, every view and every depth share it."""
+
+    started: float  # redact_text's `started`; the deadline is started + defaults.REDACT_BUDGET_S
+    units: int = (
+        0  # units decoded or masked unread so far (decodable, not held), all views and depths
+    )
+    decoded_chars: int = 0  # characters of decoded text read so far (len of each _b64_text result)
+    part_chars: int = 0  # decoded characters of the lines and trimmed joins of blocks tried alone (a count of their own)
+
+    def clock(self) -> None:
+        """ONE time.thread_time() read; past the deadline: InputTooLarge."""
+        if time.thread_time() - self.started > defaults.REDACT_BUDGET_S:
+            raise InputTooLarge("InputTooLarge")
+
+    def take(self, chars: int, part: bool = False) -> None:
+        if part:
+            self.part_chars += chars
+            if self.part_chars > defaults.B64_MAX_DECODED_CHARS:
+                raise InputTooLarge("InputTooLarge")
+            return
+        self.units += 1
+        self.decoded_chars += chars
+        if (
+            self.units > defaults.B64_MAX_UNITS
+            or self.decoded_chars > defaults.B64_MAX_DECODED_CHARS
+        ):
+            raise InputTooLarge("InputTooLarge")
+
+
+class _B64Unit(NamedTuple):
+    start: int  # offset in the ANSI-stripped text (3.1 point 5)
+    end: int
+    written: str  # the unit as written, line breaks included: the ENCODED original
+    joined: str  # its lines, stripped, joined with nothing between: what _b64_text decodes
+    lines: tuple[str, ...]  # its lines as written (stripped), for the held rule
+    parts: tuple[
+        _B64Unit, ...
+    ] = ()  # a block's lines of at least B64_MIN_CHARS characters, each a one-line unit; () for a run
+    trims: tuple[
+        _B64Unit, ...
+    ] = ()  # a block of 3 or more lines: its lines without the last, and without the first (2 or more lines)
+
+
+_B64_LINE = re.compile(r"[A-Za-z0-9+/_\-]+={0,2}")  # one line of a block, matched whole (fullmatch)
+_B64_RUN = re.compile(
+    rf"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+/_\-]{{{defaults.B64_MIN_CHARS},}}={{0,2}}(?![A-Za-z0-9+/_\-=])"
+)
+_B64_TOKEN_SKIP = re.compile(r"[<‹](?:[A-Za-z][A-Za-z0-9]*_\d+|[A-Z][A-Z0-9_]*)[>›]")
+_B64_SEP = "\n\n;\n\n"  # between decoded texts: survives `neutralise_untrusted`, holds no run character, no `\`, `%` or `&`
+
+
+def _b64_lines(search: str) -> list[tuple[int, int]]:
+    """(start, end) of each line's content: split on `\\n`, one trailing `\\r` and spaces or tabs at both ends dropped."""
+    spans: list[tuple[int, int]] = []
+    pos = 0
+    for line in search.split("\n"):
+        s, e = pos, pos + len(line)
+        pos = e + 1
+        if e > s and search[e - 1] == "\r":
+            e -= 1
+        while s < e and search[s] in " \t":
+            s += 1
+        while e > s and search[e - 1] in " \t":
+            e -= 1
+        spans.append((s, e))
+    return spans
+
+
+def _b64_units(text: str) -> tuple[str, list[_B64Unit]]:
+    """(the ANSI-stripped text, its base64 units in order); (text, []) when the text holds no run. A unit is a wrapped block
+    (two or more lines of one length) or a run that does not start inside a block. Placeholders and markers are never runs."""
+    stripped = strip_ansi(text)
+    search = stripped
+    if "<" in search or "‹" in search:
+        search = _B64_TOKEN_SKIP.sub(lambda m: " " * len(m.group()), search)
+    if not _B64_RUN.search(search):
+        return stripped, []
+    spans = _b64_lines(search)
+    blocks: list[_B64Unit] = []
+    i = 0
+    while i < len(spans):
+        first_start, first_end = spans[i]
+        width = first_end - first_start
+        line = search[first_start:first_end]
+        if width < defaults.B64_WRAP_MIN_CHARS or "=" in line or not _B64_LINE.fullmatch(line):
+            i += 1
+            continue
+        taken = [i]
+        for j in range(i + 1, len(spans)):
+            s, e = spans[j]
+            line = search[s:e]
+            if not line or len(line) > width or not _B64_LINE.fullmatch(line):
+                break
+            taken.append(j)
+            if len(line) < width or "=" in line:
+                break  # a shorter or padded line is the last
+        if len(taken) >= 2:
+            start, end = spans[taken[0]][0], spans[taken[-1]][1]
+            lines = tuple(search[s:e] for s, e in (spans[k] for k in taken))
+            parts = tuple(
+                _B64Unit(s, e, search[s:e], search[s:e], (search[s:e],))
+                for s, e in (spans[k] for k in taken)
+                if len(search[s:e].rstrip("=")) >= defaults.B64_MIN_CHARS
+            )
+            trims: list[_B64Unit] = []
+            if len(taken) >= 3:  # the blob without a closing word, and without an odd first line
+                for ks in (taken[:-1], taken[1:]):
+                    ts, te = spans[ks[0]][0], spans[ks[-1]][1]
+                    tl = tuple(search[s:e] for s, e in (spans[k] for k in ks))
+                    trims.append(_B64Unit(ts, te, stripped[ts:te], "".join(tl), tl))
+            blocks.append(
+                _B64Unit(
+                    start, end, stripped[start:end], "".join(lines), lines, parts, tuple(trims)
+                )
+            )
+            i = taken[-1] + 1
+        else:
+            i += 1
+    starts = [b.start for b in blocks]
+    units = list(blocks)
+    for m in _B64_RUN.finditer(search):
+        k = bisect.bisect_right(starts, m.start()) - 1
+        if k < 0 or m.start() >= blocks[k].end:  # a run inside a block is not a unit
+            units.append(_B64Unit(m.start(), m.end(), m.group(), m.group(), (m.group(),)))
+    units.sort(key=lambda u: u.start)
+    return stripped, units
+
+
+def _b64_held(unit: _B64Unit, secret: frozenset[str], wholes: str) -> bool:
+    """A unit pass one already masked: its text (padding ignored) is the original of a secret placeholder, or every line is one or a
+    piece of a JWT or key original (`wholes`: those originals joined by NUL, built once per `_pass_one`)."""
+    if unit.written.rstrip("=") in secret:
+        return True
+    return all(line.rstrip("=") in secret or line in wholes for line in unit.lines)
+
+
+def _printable_text(s: str | None) -> str | None:
+    if (
+        s is not None
+        and s
+        and sum(c.isprintable() or c in "\t\n\r" for c in s)
+        >= defaults.B64_PRINTABLE_SHARE * len(s)
+    ):
+        return s
+    return None
+
+
+def _decoded(raw: bytes, codec: str) -> str | None:
+    try:
+        return raw.decode(codec)
+    except UnicodeDecodeError:
+        return None
+
+
+def _b64_text(joined: str) -> str | None:
+    """The text a base64 run (standard or URL-safe alphabet, padded or not) decodes to, or None when it is not text."""
+    body = joined.rstrip("=")
+    std = "+" in body or "/" in body
+    url = "-" in body or "_" in body
+    if std and url:
+        return None
+    if url:
+        body = body.replace("-", "+").replace("_", "/")
+    if len(body) % 4 == 1:
+        return None
+    try:
+        raw = base64.b64decode(body + "=" * (-len(body) % 4), validate=True)
+    except (binascii.Error, ValueError):
+        return None
+    if raw[:2] == b"\xff\xfe":
+        return _printable_text(_decoded(raw[2:], "utf-16-le"))
+    if raw[:2] == b"\xfe\xff":
+        return _printable_text(_decoded(raw[2:], "utf-16-be"))
+    if raw[:3] == b"\xef\xbb\xbf":
+        return _printable_text(_decoded(raw[3:], "utf-8"))
+    text = _printable_text(_decoded(raw, "utf-8"))
+    if text is not None:
+        return text
+    if len(raw) % 2 == 0 and len(raw) >= 4:
+        odd, even = raw[1::2], raw[0::2]
+        if odd.count(0) >= defaults.B64_UTF16_ZERO_SHARE * len(odd):
+            return _printable_text(_decoded(raw, "utf-16-le"))
+        if even.count(0) >= defaults.B64_UTF16_ZERO_SHARE * len(even):
+            return _printable_text(_decoded(raw, "utf-16-be"))
+    return None
+
+
+def _b64_hits(
+    units: list[_B64Unit],
+    known: dict[str, str],
+    budget: _ScanBudget,
+    depth: int,
+    part: bool = False,
+) -> tuple[list[bool], list[tuple[str, str]]]:
+    """For each unit, whether it is a HIT (its decoded text held a value the scan masks, or it was masked unread because it was too
+    long or too deep), and the KEPT entries: (kind, original) pairs of the decoded view's new values of kinds that are never stored
+    (kept as pairs, not as placeholders: two scans number their entries from the same start). `part=True` is the call for the lines
+    and trimmed joins of blocks: nothing counts against `B64_MAX_UNITS` and the decoded characters go to `budget.part_chars`."""
+    hits = [False] * len(units)
+    pieces: list[str] = []
+    idx: list[int] = []
+    for k, u in enumerate(units):
+        budget.clock()
+        if len(u.joined) > defaults.B64_MAX_UNIT_CHARS:
+            budget.take(0, part)
+            hits[k] = True
+            continue
+        d = _b64_text(u.joined)
+        if d is None:
+            continue
+        if depth >= defaults.B64_MAX_DEPTH:
+            budget.take(0, part)
+            hits[k] = True
+            continue
+        budget.take(len(d), part)
+        piece = _clean(d)
+        if _B64_SEP in piece:  # a decoded text cannot fake the boundaries
+            hits[k] = True
+            continue
+        pieces.append(piece)
+        idx.append(k)
+
+    def all_hit() -> tuple[list[bool], list[tuple[str, str]]]:
+        for k in idx:
+            hits[k] = True
+        return hits, []
+
+    if not pieces:
+        return hits, []
+    joined = _B64_SEP.join(pieces)
+    if _expanded_len(joined) > defaults.MAX_REDACT_CHARS:
+        return all_hit()
+    seen = fits_after_nfkc(neutralise_untrusted(fits_after_nfkc(_clean(joined)))).split(_B64_SEP)
+    if len(seen) != len(pieces):
+        return all_hit()
+    try:
+        out, scanned_map = _scan(joined, dict(known), None, neutralise_untrusted, budget, depth + 1)
+    except TooDeep:
+        return all_hit()
+    after = out.split(_B64_SEP)
+    if len(after) != len(pieces):
+        return all_hit()
+    for i, a, s in zip(idx, after, seen, strict=False):
+        hits[i] = _held(a) > _held(s)
+    kept = [
+        (kind_of(k), v)
+        for k, v in scanned_map.items()
+        if k not in known and kind_of(k) not in STORED_KINDS and kind_of(k) != "ENCODED"
+    ]
+    return hits, kept
+
+
+def _b64_place(stripped: str, units: list[_B64Unit], placeholders: dict[str, str]) -> str:
+    """`stripped` with each chosen unit (sorted, not overlapping) replaced by the placeholder of its `written`."""
+    out: list[str] = []
+    pos = 0
+    for u in units:
+        out.append(stripped[pos : u.start])
+        out.append(placeholders[u.written])
+        pos = u.end
+    out.append(stripped[pos:])
+    return "".join(out)
+
+
+def _pass_one(
+    text: str, mapping: dict[str, str], cache, budget: _ScanBudget, depth: int
+) -> RedactionResult:
+    """Pass one (`redact`, with G7's settle) and, when a base64 run that pass one did not hold decodes to text in which the scan
+    masks something, a second `redact` over the text with each such run replaced whole by one `<ENCODED_n>`."""
+    started = budget.started
+    first = redact(
+        text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+    )
+    stripped, units = _b64_units(text)
+    if not units:
+        return first
+    secret = frozenset(
+        v.rstrip("=") for k, v in first.mapping.items() if kind_of(k) in SECRET_KINDS
+    )
+    wholes = "\x00".join(v for k, v in first.mapping.items() if kind_of(k) in ("JWT", "PRIVKEY"))
+    units = [u for u in units if not _b64_held(u, secret, wholes)]
+    distinct = list({u.written: u for u in units}.values())
+    if not distinct:
+        return first
+    hits, kept = _b64_hits(distinct, first.mapping, budget, depth)
+    hit_of = {u.written: hit for u, hit in zip(distinct, hits, strict=True)}
+    fallback: dict[str, _B64Unit] = {}
+    for unit in distinct:
+        if (unit.parts or unit.trims) and not hit_of[unit.written]:
+            for p in (*unit.trims, *unit.parts):
+                if p.written not in hit_of and not _b64_held(p, secret, wholes):
+                    fallback.setdefault(p.written, p)
+    if fallback:
+        part_hits, part_kept = _b64_hits(
+            list(fallback.values()), first.mapping, budget, depth, part=True
+        )
+        hit_of.update(zip(fallback, part_hits, strict=True))
+        have = {v for _, v in kept}
+        for kind, original in part_kept:
+            if original not in have:
+                kept.append((kind, original))
+                have.add(original)
+    if not any(hit_of.values()):
+        return first
+    base = dict(mapping)
+    counters = _Redactor(dict(base)).counters
+    for kind, original in kept:
+        counters[kind] += 1
+        base[f"<{kind}_{counters[kind]}>"] = original
+    chosen: list[_B64Unit] = []
+    for unit in units:
+        if hit_of[unit.written]:
+            chosen.append(unit)
+        elif unit.parts or unit.trims:
+            trim = next((t for t in unit.trims if hit_of.get(t.written)), None)
+            if trim is not None:
+                chosen.append(trim)
+            chosen.extend(
+                p
+                for p in unit.parts
+                if hit_of.get(p.written)
+                and (trim is None or p.end <= trim.start or p.start >= trim.end)
+            )
+    chosen.sort(key=lambda u: u.start)
+    runs = list(dict.fromkeys(u.written for u in chosen))
+    placeholders = dict(zip(runs, place_encoded(base, runs), strict=True))
+    t2 = _b64_place(stripped, chosen, placeholders)
+    return redact(t2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S)
+
+
+def _scan(
+    text: str,
+    mapping: dict[str, str],
+    cache,
+    neutralise: Callable[[str], str] | None,
+    budget: _ScanBudget,
+    depth: int,
+) -> tuple[str, dict[str, str]]:
+    """The whole of `redact_text` but the cap, the exception wrapper and the map write: the text and its views, each through
+    `_pass_one`. Returns the output and the new map; never writes `mapping`."""
+    started = budget.started
+    text = fits_after_nfkc(_clean(text))
+    if neutralise is not None:
+        text = fits_after_nfkc(neutralise(text))
+    scan = not text.isascii() or any(c in text for c in "\\%&")
+    views = _views(text) if scan else []  # _views refuses a view that would pass the cap
+    result = _pass_one(text, mapping, cache, budget, depth)
+    out, current = result.text, result.mapping
+    if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
+        raise InputTooLarge("InputTooLarge")
+    pairs = _decoded_masks(current, text, started + defaults.REDACT_BUDGET_S) if views else []
+    if (
+        neutralise is not None
+    ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
+        pairs += [
+            (ph, n) for ph, d in pairs if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
+        ]
+    for view in views:
+        if (
+            time.thread_time() - started > defaults.REDACT_BUDGET_S
+        ):  # a hostile text: fail closed, nothing shown
+            raise InputTooLarge("InputTooLarge")
+        if neutralise is not None:
+            view = fits_after_nfkc(neutralise(view))
+        view = _keep_earlier_masks(view, pairs)
+        again = _pass_one(view, current, cache, budget, depth)
+        # a new value, or a known one only the view spells in a way pass one could not read
+        if again.mapping != current or _held(again.text) > _held(out):
+            out, current = again.text, again.mapping
+    return _clean(out), current
+
+
 def redact_text(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> str:
@@ -543,6 +924,16 @@ def redact_text(
     neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. Output is cleaned of NUL and lone
     surrogates last, so it always encodes.
 
+    Base64 step (G4): every run of the base64 alphabet that pass one did not mask as a secret and that decodes to text is decoded;
+    the decoded texts are scanned as ONE text by this same procedure (escaped with `neutralise_untrusted` whatever the caller's hook
+    is, then views, decoded masks and nested base64 to `defaults.B64_MAX_DEPTH`), and a run whose decoded text held anything that
+    scan masks is replaced whole by one `<ENCODED_n>` before pass one runs again. ENCODED is a secret kind, never stored or restored.
+    A wrapped block (lines of one length) is decoded joined; when the join holds nothing, its lines are decoded one by one, and those
+    lines are not counted as units (their decoded characters have a count of their own under the same limit). At most
+    `defaults.B64_MAX_UNITS` units and `defaults.B64_MAX_DECODED_CHARS` decoded characters per call, the deadline read before
+    each unit; past either, `InputTooLarge`; the decoded texts are scanned joined by a line holding `;`, and a decoded value of a kind
+    that is never stored stays in the run's map (its plain copies are masked).
+
     The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
     `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
     `InputTooLarge` (a RedactionError) is raised and nothing is redacted. NFKC expands some characters (U+FDFA
@@ -554,42 +945,9 @@ def redact_text(
     _within_cap(text)
     started = time.thread_time()
     try:
-        text = fits_after_nfkc(_clean(text))
-        if neutralise is not None:
-            text = fits_after_nfkc(neutralise(text))
-        scan = not text.isascii() or any(c in text for c in "\\%&")
-        views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
-        result = redact(
-            text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
-        )
-        out, current = result.text, result.mapping
-        if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
-            raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current, text, started + defaults.REDACT_BUDGET_S) if views else []
-        if (
-            neutralise is not None
-        ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
-            pairs += [
-                (ph, n)
-                for ph, d in pairs
-                if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
-            ]
-        for view in views:
-            if (
-                time.thread_time() - started > defaults.REDACT_BUDGET_S
-            ):  # a hostile text: fail closed, nothing shown
-                raise InputTooLarge("InputTooLarge")
-            if neutralise is not None:
-                view = fits_after_nfkc(neutralise(view))
-            view = _keep_earlier_masks(view, pairs)
-            again = redact(
-                view, mapping=current, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
-            )
-            # a new value, or a known one only the view spells in a way pass one could not read
-            if again.mapping != current or _held(again.text) > _held(out):
-                out, current = again.text, again.mapping
-        out = _clean(out)
+        budget = _ScanBudget(started)
+        out, current = _scan(text, mapping, cache, neutralise, budget, 0)
     except (InputTooLarge, TooDeep, RedactionError):
         raise  # as raised: the text of `NotSettled` (the settle loop's cap) is kept for the caller's log
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
@@ -906,9 +1264,9 @@ def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) ->
             raise InputTooLarge("InputTooLarge")
         if _rules_conflict(known):
             # One original under two placeholders (E5). Since G4 the redactor itself keeps the secret kind's rule for that
-            # original (the `_build` tie-break); this re-sort is kept because it also puts every every-copy entry before the others,
-            # which decides the order of DIFFERENT overlapping originals at the gate (test_e5b). Built fresh: the run's cache holds
-            # the map's own order.
+            # original (the `_build` tie-break); this re-sort is kept because it also puts every every-copy entry before the
+            # others, which decides the order of DIFFERENT overlapping originals at the gate (test_e5b). Built fresh: the
+            # run's cache holds the map's own order.
             ordered = dict(sorted(known.items(), key=lambda kv: _sweep(*kv) is not _EVERY_COPY))
             first = _built(
                 {ph: o for ph, o in ordered.items() if ph not in late}, cache, "first", deadline
