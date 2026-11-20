@@ -25,3 +25,11 @@ Result: 0 Blocker, 1 Medium, 2 Low, 1 Info. Not CLEAN: M1.
 
 ## Info
 - I1: CHANGELOG.md:334 and :336-338 now describe the path-form refusal ("a name elsewhere in the config ... is refused at start"); if M1 is fixed, reword it (applies to a file-backed secrets kind, or when senders exist).
+
+## Round 4 fix status (builder D4)
+M1, L1, L2, I1 fixed (tests/test_trigger_hardening_round4.py, fail-first 25 of 29 on the old code). A "." or ".." segment
+(split on "/" and "\") is refused for sender names and for other names when senders exist, for every kind; a leading or
+trailing "/" only for the mounted_file kind (`file_backed`). `collides` is False for an empty list and fails closed on
+path shapes only with `file_backed=True`. Reset and release refs with a path form get a "path-shaped" message.
+L2 limit: for mounted_file names are compared in canonical form and also NFKC+casefold form (Kelvin, long s); this
+is NOT tested on a real macOS (APFS/HFS+) or Windows (NTFS) volume, only by text. Env fold unchanged.

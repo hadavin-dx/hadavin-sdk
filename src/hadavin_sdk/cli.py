@@ -55,7 +55,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
-from hadavin_sdk.secret_name import collides
+from hadavin_sdk.secret_name import collides, path_form_problem
 from hadavin_sdk.stages import is_live
 from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
@@ -242,7 +242,19 @@ def _main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        if reset_ref and b.store.dsn_secret_name and collides(reset_ref, [b.store.dsn_secret_name]):
+        if reset_ref and path_form_problem(reset_ref, _file_backed(b)):
+            print(
+                "refused: backends.store.reset_credential_ref is a path-shaped name (a '.' or '..' segment, or "
+                "for a mounted_file folder a leading or trailing '/'), which cannot be compared with the runtime "
+                "login. Write a plain secret name. The kill switch was not changed.",
+                file=sys.stderr,
+            )
+            return 2
+        if (
+            reset_ref
+            and b.store.dsn_secret_name
+            and collides(reset_ref, [b.store.dsn_secret_name], file_backed=_file_backed(b))
+        ):
             # Before any connection: the reset must not run on the runtime's own login.
             print(
                 "refused: backends.store.reset_credential_ref names the same secret as "
@@ -471,6 +483,11 @@ def audit_verify(audit) -> int:
     return 0 if result.ok else 1
 
 
+def _file_backed(b) -> bool:
+    """The secrets kind is mounted_file: a name is a path there."""
+    return getattr(b.secrets, "kind", None) == "mounted_file"
+
+
 def _same_login(secrets, ref: str, others) -> bool:
     """True when the secret ``ref`` holds the same value as one of ``others`` (two names, one login). A name that
     cannot be read is not the same: the start-up probe reports it with its own message."""
@@ -541,7 +558,15 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
         )
         if n
     ]
-    if collides(ref, others_names):
+    if path_form_problem(ref, _file_backed(b)):
+        print(
+            "refused: backends.store.release_credential_ref is a path-shaped name (a '.' or '..' segment, or for "
+            "a mounted_file folder a leading or trailing '/'), which cannot be compared with the other logins. "
+            "Write a plain secret name. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    if collides(ref, others_names, file_backed=_file_backed(b)):
         print(
             "refused: backends.store.release_credential_ref names the same secret as the runtime, reset or purge "
             "login. Point it at the secret that holds the release role's own DSN. Nothing was changed.",

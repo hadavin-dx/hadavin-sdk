@@ -334,8 +334,11 @@
     characters of letters, digits and `_ . : -` (no `/`, no `..`, at least one letter or digit); the two ids the same.
     Names are compared in one canonical form (every run of characters outside `A-Za-z0-9` becomes `_` first, then
     lower case), so `db-pass`, `DB_PASS`, `db.pass` and a Unicode look-alike such as a dotted capital I name one
-    secret. A name elsewhere in the config with a `.` or `..` segment or a leading or trailing `/` (a mounted file
-    resolves `a/../x` to `x`) is refused at start, not folded.
+    secret. When senders exist, a name elsewhere in the config with a `.` or `..` segment (split on `/` and on `\`)
+    is refused at start, not folded; with the `mounted_file` kind a leading or trailing `/` is refused too (a
+    mounted file resolves `a/../x` to `x`). Other kinds keep names such as `/hadavin/prod/dsn`. With
+    `mounted_file`, names are also compared after NFKC and case folding (macOS and Windows file systems; not run
+    here). A reset or release ref with a path form gets its own message.
   - **Limits.** `max_body_bytes` (default 524288, at least 1024, at most 524288: twice the document cap, so a full-size
     document still fits once it is wrapped in JSON), `max_running` (default 4, 1 to 64), `ack_wait_s` (default 5.0,
     at least 0.1, at most 30). The three are strict: `true` or a quoted number is refused.

@@ -48,7 +48,7 @@ PATHY = [
 def test_check_senders_refuses_a_path_shaped_other_name(other):
     provider = Provider()
     with pytest.raises(ConfigError) as caught:
-        platform_secrets.check_senders(provider, {"s": ["slack_token"]}, {other})
+        platform_secrets.check_senders(provider, {"s": ["slack_token"]}, {other}, file_backed=True)
     assert other not in str(caught.value) and "slack_token" not in str(caught.value)
     assert provider.calls == []
 
@@ -59,8 +59,8 @@ def test_check_senders_still_accepts_a_plain_slashed_other_name():
 
 @pytest.mark.parametrize("other", PATHY)
 def test_collides_fails_closed_on_a_path_shaped_name(other):
-    assert collides(other, ["unrelated"])
-    assert collides("unrelated", [other])
+    assert collides(other, ["unrelated"], file_backed=True)
+    assert collides("unrelated", [other], file_backed=True)
 
 
 def test_the_mounted_file_provider_really_aliases_such_a_name():
