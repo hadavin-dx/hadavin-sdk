@@ -136,4 +136,36 @@ s.s..ssssss....ssss..s.................................................. [  8%]
 ........................................................................ [ 74%]
 ........................................................................ [ 74%]
 ........................................................................ [ 75%]
-......
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+.........................F.............................................. [ 77%]
+...Traceback (most recent call last):
+.  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/hadavin-sdk/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.................................................................... [ 77%]
+..................................................s..................... [ 78%]
+............................xxxx.xxx...xxx..

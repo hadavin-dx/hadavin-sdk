@@ -713,6 +713,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "READY item from the lead's list"
+  },
+  {
+   "id": "req-mark",
+   "role": "builder (text only)",
+   "model": "sonnet",
+   "what exactly it is doing": "REQ-001..004: the assumption D builds on, marked in ticket D; OPEN-ITEMS.md updated",
+   "started UTC": "09:08",
+   "expected end": "10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "lead: do not wait idle, build on the recommended answer"
   }
  ],
  "tests": [
