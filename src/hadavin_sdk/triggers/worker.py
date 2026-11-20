@@ -210,7 +210,9 @@ def check_senders(
     qualified = set(agents)
     for sender_id, sender in senders:
         if sender.agent_id not in qualified:
-            raise ConfigError(f"trigger sender {sender_id}: agent {sender.agent_id} is not qualified")
+            raise ConfigError(
+                f"trigger sender {sender_id}: agent {sender.agent_id} is not qualified"
+            )
         principal = principals.get(sender.principal_id)
         if principal is None:
             raise ConfigError(
@@ -230,7 +232,9 @@ def read_secrets(
     for sender_id, sender in senders:
         names = list(sender.secret_names)
         if len(names) > 1:
-            _LOG.warning("trigger sender %s accepts %d secrets: finish the swap", sender_id, len(names))
+            _LOG.warning(
+                "trigger sender %s accepts %d secrets: finish the swap", sender_id, len(names)
+            )
         try:
             out[sender_id] = tuple(resolve(name) for name in names)
         except Exception as exc:  # noqa: BLE001 - any provider failure stops the start
@@ -258,7 +262,9 @@ def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, 
     settings = trigger_settings(app.config)
     resolve = getattr(app, "trigger_resolve", None)
     if resolve is None:
-        raise ConfigError("App.trigger_resolve is not available: the trigger secrets cannot be read")
+        raise ConfigError(
+            "App.trigger_resolve is not available: the trigger secrets cannot be read"
+        )
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
