@@ -85,3 +85,21 @@ egm:egm-review-loop ran through the Skill tool on a 3-line test paragraph. 2 rev
 
 ### Files changed (all in handover/core-c/)
 REPORT.md, egm-dryrun.md, egm-dryrun-input.md
+
+## Finished agents and commits, 07:36Z to 08:50Z (moved here from the board per ORDER 022)
+| What | Result | Commit |
+|---|---|---|
+| Gate round 4 (review round 3 findings) | builder batch 2583 passed, 1 skipped, 9 xfailed; 105 of 105 mutants good; escalations E8 (builder) | b83accc |
+| G7 round 3 (fixed point, linear spelled scan, ghost rollback, deadline) | builder batch 2321 passed, 4 xfailed; perf 10 passed | da0f71f |
+| G7 round 4 (caps, overlap rule, bank_near, docs) | builder batch 2597 passed, 4 xfailed; perf 10 passed | 6783535 |
+| P1d-a round 2 (independent link oracle, bracketed host defanged, N1) | builder batch 1772 passed, 4 skipped, 4 xfailed | a2dea63 |
+| P1d-a round 3 (oracle boundaries, over-defang, CommonMark fences, linkifier test; pyproject hunk NOT committed, QUESTIONS 16) | my focused run 295 passed, 1 skipped | 61ff6e7 |
+| Docstring and ticket corrections from the drift report | 261 passed, 1 skipped (builder) | a4b2ce2 |
+| Merged-tree batch 1 (14 files) | 2558 passed, 2 skipped, 5 xfailed | evidence/INT-merged-batch-1.md |
+| Merged-tree batch 2 (15 files) | 2601 passed, 2 skipped, 5 xfailed | evidence/INT-merged-batch-2.md |
+| Drift report G1-G3, G7 | 70 verified, 31 differ, 13 cannot check | evidence/DRIFT-G1-G2-G3.md |
+| Wording v3, v4, v5 (opus drafts) and their reviews | v5 committed e422cbf (stale for the round 3/4 fixes: refresh then final review) | SEC-wording-review-3.md, -4.md |
+| Ticket G4 v2, v3 and plan reviews round 2, 3 | v3 NOT READY (G4-review-3.md); v4 drafting | G4-review-2.md, -3.md |
+| Ticket G8 v1 and plan review round 1 | NOT READY (G8-review-1.md); v2 drafting | G8-review-1.md |
+| Result reviews: gate round 3 (F-result-review-3), G7 rounds 2, 3, 4, P1d-a round 2 | findings recorded in tickets/ | tickets/*result-review-* |
+Not run anywhere: the whole suite, Python 3.12 on the merged tree, PostgreSQL 17, the textnorm mutant list, P1d-a mutants after the last change.
