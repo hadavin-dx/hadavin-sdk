@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:36:27Z
+UPDATED_UTC: 2026-11-20T06:36:55Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,21 +6,23 @@ BOOT_ID: 70253298
 ITEMS_TOTAL: 26
 ITEMS_OPEN: 12
 PERCENT: 72
-AGENTS_RUNNING: 3
-CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 3, heavy agents 0
+AGENTS_RUNNING: 5
+CAPACITY: load 2.0 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 63M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-INTERRUPTED: all agents stopped by the Fable limit at ~06:36 UTC; restarting on normal models (opus planning, sonnet work, haiku lookups)
+INTERRUPTED: the Fable limit stopped all agents at ~06:36 UTC; the same work is restarted on claude-sonnet-5-5 (5 agents running)
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: restart gate round 2 + ORDER 017, the G2/G3 integration, the grants rework, the G7 result review on claude-sonnet-5-5
-PUSHED_UTC: 2026-11-20T06:35:23+00:00
+PUSHED_UTC: 2026-11-20T06:36:27+00:00
 
 (12:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) r-g7D | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:42 | 06:57 | 5 | running | 1 of 3 | 0 | the first two reviewers died at the limit before reporting |
+| (new) r-g7C | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:42 | 07:00 | 5 | running | 1 of 3 | 0 | same |
 | (new) r-gate | builder | claude-sonnet-5-5 | restart: gate round 2 findings + ORDER 017 (mapping required with NO_MAP, one pre-call exception type, framing protection); phases with progress notes | 06:40 | 07:30 | 2 | running | 3 of 3 not used yet | 0 | restart after the Fable limit; see RESUME-NOTE item 1 |
 | (new) r-int | builder | claude-sonnet-5-5 | restart: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then the ORDER 014/016c follow-ups, one batch | 06:40 | 07:40 | 2 | running | n/a | 0 | restart; RESUME-NOTE item 2; HEAVY at its end |
 | (new) r-grants | builder (tests only) | claude-sonnet-5-5 | restart: grants negative tests reworked for core-b step B map, local PostgreSQL 16 | 06:40 | 07:10 | 2 | running | n/a | 0 | restart; RESUME-NOTE item 3 |
@@ -106,7 +108,7 @@ PUSHED_UTC: 2026-11-20T06:35:23+00:00
 | Integration of G2 + G3 onto cloud/core-c | RUNNING | 2 | evidence/INT-g2-g3.md | 1 | one builder in a worktree |
 | EGM result review of the gate code (round 1) | DONE | 100 | tickets/F-result-review-1.md | 1 | NOT CLEAN: 1 Blocker, 14 Majors, 14 Nits merged; tickets/F-result-review-1.md; in-file findings with the builder, 6 escalated (E6), per-site install list for core-b written |
 | Rework tests/test_grants_negative_roles.py against core-b's step B grant map | RUNNING | 5 | evidence/B-grants-rework.md | 1 | core-b step B is pushed, so the rework starts now |
-| EGM result review of the G7 redactor change (round 1) | RUNNING | 5 | tickets/G7-result-review-1.md | 1 | two reviewers on a fixed snapshot of 4864984 |
+| EGM result review of the G7 redactor change (round 1) | RUNNING (restart) | 5 | tickets/G7-result-review-1.md | 2 | first attempt cut off by the limit; two reviewers on claude-sonnet-5-5 |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -131,4 +133,4 @@ PUSHED_UTC: 2026-11-20T06:35:23+00:00
 | ad457b53 integration: cherry-picks P1d-a (5 commits) and the P2d-1 po | integration: cherry-picks P1d-a (5 commits) and the P2d-1 port (6 commits) onto  | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
 
 ## LEAD ACTIONS NEEDED
-Resume note pushed: handover/core-c/RESUME-NOTE-2026-11-20.md. Interrupted snapshots: wip/cloud-core-c/gate-r2-interrupted 9b5f458, int-g2g3-interrupted 5316e14 (not verified). Restart on claude-sonnet-5-5 follows now.
+RESTART RUNNING on claude-sonnet-5-5: gate round 2 + ORDER 017, G2/G3 integration, grants rework, G7 result review (2 reviewers). Resume note: handover/core-c/RESUME-NOTE-2026-11-20.md. P1c build waits for the integration. E1 cron denied.
