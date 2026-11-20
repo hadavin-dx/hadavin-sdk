@@ -694,10 +694,10 @@
   {
    "item": "E1-fix3",
    "what": "E1 round-2 Major E1b-1 (non-connectivity ping failure counts toward the fatal counter, class logged at WARNING) + nits E1b-2/3 + flake test fix: in tests/triggers/test_t5_crash_matrix_paths.py `_memory_wait` (and the other path.final waits incl. the sqlite/pg twin) also wait for the approval request to be saved before the tick",
-   "state": "QUEUED after mut17 ends (it reads worker.py)",
-   "percent": 0,
+   "state": "RUNNING",
+   "percent": 5,
    "evidence file": "reviews/D-code-result-review-5.md (round 2 table)",
-   "tries": 0,
+   "tries": 1,
    "reason": "mutant run in progress"
   }
  ],
@@ -716,17 +716,17 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "mut17",
-   "role": "builder (mutants)",
+   "id": "e1-fix3",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "anchors re-checked, mutants for the e1-fix2 guards, ONE full mutant run 17 (E1, E5/E11, all)",
-   "started UTC": "10:03",
+   "what exactly it is doing": "E1 round-2 Major (store refusal counts toward the fatal counter) + nits; flake test fix; one test run; bandit lines",
+   "started UTC": "10:11",
    "expected end": "25 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "n/a",
+   "review round n of cap": "fix after round 2 (no cap)",
    "retries so far": 0,
-   "reason": "tree quiet"
+   "reason": "E1 review round 2"
   }
  ],
  "tests": [
@@ -2594,6 +2594,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "TEST RACE (by reading; not reproduced in 2 runs): after the kill the retry thread sets WAITING_FOR_APPROVAL (agent_loop.py:762) and saves the approval request only later (:763); _memory_wait returns on the state, the test's tick at +1 h clock runs in that window and the orphan rule moves the run to NEEDS_PERSON/approval_missing; production unaffected (needs stuck_after_s of real time); fix in the test only: wait for the request (or loop end) before the tick; FINDINGS-flake-crash-matrix.md"
+  },
+  {
+   "id": "mut17",
+   "role": "builder (mutants)",
+   "model": "sonnet",
+   "what exactly it is doing": "anchors re-checked, mutants for the e1-fix2 guards, ONE full mutant run 17 (E1, E5/E11, all)",
+   "started UTC": "10:03",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "run 17 (109 mutants): 103 killed, 4 crash-accepted (G20j, G31, G32e, G33d), 0 survivors, 2 problems = stale pins G32a, G32d fixed and re-run alone (killed); G33a-f (e1-fix2 guards) added; no single log shows 109/109 clean: a final clean run follows e1-fix3"
   }
  ]
 }
