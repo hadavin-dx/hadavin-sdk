@@ -20,15 +20,17 @@ Order required: brainstorm, draft, plan review, resolve, build, evidence runner,
 | A audit drain | none ordered (lead) | done | tests and mutants by other agents | lead review x2, hostile re-read (fresh, 1 round) | drift report |
 | B stop state | 1 round | done (3 fix rounds, cap) | tests and mutants | ticket review round (fresh), hostile re-read (fresh); the lead has taken the rest | drift report (lead) |
 | C price constraint | AFTER the build (order reversed), 1 round | done | tests and mutants | the ticket review round doubled as result review (fresh) | drift report |
-| D-config | NONE | done (fix round 1) | core-a's tests (92 of 109 pass, marks to remove) | lead review only; NO egm result review | RUNNING NOW: egm result review |
+| D-config | NONE | done (fix round 1) | core-a's tests (92 of 109 pass, marks to remove) | lead review; egm result review RUNNING (ac7e13a5) | resolve its findings; drift report |
 | F-store | 2 rounds | done (fix 1 and 2) | tests, mutants, random-sequence model test | hostile re-read RUNNING (sonnet) | result review resolve; drift report |
-| provider mark | NONE | done | tests/test_refused_before_response.py | NO egm result review | RUNNING NOW: egm result review (post-hoc ticket tickets/F-provider-mark.md) |
+| provider mark | NONE | done | tests/test_refused_before_response.py | egm result review RUNNING (a879d0f3; post-hoc ticket tickets/F-provider-mark.md) | resolve its findings; drift report |
 | F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
 Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
 
 ## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a879d0f3 | reviewer (egm-codebase-details) | sonnet | RESULT review of the provider mark against the built code (missing step found by the EGM audit) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
+| ac7e13a5 | reviewer (egm-codebase-details) | sonnet | RESULT review of the trigger config (D-config) against the built code (missing step) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
 | ae188231 | builder | sonnet | F-install Y2 and Y3: Reply.cost_usd None when unknown, retries never under-book; worktree Y on the F-install tree | 06:55 | +25 min | UNVERIFIED | running | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: section Y1 to Y6, esp. the release command Y4 (money path) | 06:56 | +10 min | UNVERIFIED | running | 3 of 3 | 0 | |
 | a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
