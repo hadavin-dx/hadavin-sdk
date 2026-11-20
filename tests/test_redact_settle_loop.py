@@ -185,6 +185,19 @@ def test_a_deadline_in_the_future_changes_nothing():
     assert R.redact_many([CHAIN3], _deadline=future)[0] == R.redact_many([CHAIN3])[0]
 
 
+def test_sweep_takes_an_optional_deadline_checked_inside_the_value_loop():
+    from hadavin_sdk.guard.runmap import InputTooLarge
+
+    values = {f"<TENANT_{n}>": f"val{n:04d}" for n in range(1, 1500)}
+    text = " ".join(values.values()) * 40
+    r = R._Redactor(values)
+    expected = R._Redactor(values).sweep(text)
+    assert r.sweep(text, None) == expected  # None: as before
+    assert r.sweep(text, time.thread_time() + 600.0) == expected
+    with pytest.raises(InputTooLarge):
+        r.sweep(text, time.thread_time() - 1.0)  # a spent deadline stops the sweep
+
+
 # --- cb nits: patterns the chain tests did not name -----------------------------------------------------------------
 
 

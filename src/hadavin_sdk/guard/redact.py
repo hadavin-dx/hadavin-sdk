@@ -1685,7 +1685,7 @@ class _Redactor:
                 self.alias,
             )
 
-    def sweep(self, out: str) -> str:
+    def sweep(self, out: str, deadline: float | None = None) -> str:
         # Final literal sweep. The patterns FIND values; this masks the copies a regex boundary missed,
         # by the rule in _sweep: every copy of a secret, every standalone copy of an identifier. Real
         # example from a live cluster: a Kubernetes "failed to reserve container name" event embeds the pod
@@ -1701,6 +1701,8 @@ class _Redactor:
         # Which values occur in a segment is found by ONE trie-shaped regex over all of them, built once
         # per map: testing every value against every segment was quadratic - 217 s for 2,000 lines of
         # 22,500 distinct values (fourth review, 2026-09-30).
+        # `deadline` (default None: unchecked, as before): a time.thread_time() value, the clock of `_deadline`. Checked before each
+        # segment and before each value replaced, so many short known values over a large text stop at it (InputTooLarge, nothing returned).
         if self._built_for != len(self.mapping):
             self._build()
         # A compound secret found late (`Bearer <SECRET_1>xy` stored as V+xy): the first sweep already cut its other copies to
@@ -1720,6 +1722,8 @@ class _Redactor:
             segment = parts[i]
             if not segment:
                 continue
+            if deadline is not None:
+                self._over_budget(deadline)
             present = {w for w in self._slow if w in segment}
             for finder, prefixes in self._finders:
                 found = {m.group(1) for m in finder.finditer(segment)}
@@ -1727,6 +1731,8 @@ class _Redactor:
             todo = sorted((self._rules[o] for o in present if o in self._rules), key=lambda r: r[0])
             todo = [(self._ordered[n][1], ph, rule) for n, ph, rule in todo]
             for original, placeholder, rule in todo:
+                if deadline is not None:
+                    self._over_budget(deadline)
                 if original not in segment:
                     continue
                 before = segment.count(placeholder)
