@@ -2,8 +2,8 @@
  "order": "017 on top of the backlog (016 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile",
- "note": "two local PostgreSQL 16 servers: port 55432 is started and stopped by the trial agent, port 55433 was started by me at 06:16Z for the fuzz, crash matrix and F-store agents and I stop it when they end; data folders and scratch copies stay on disk (the safety check refuses folder deletes)",
+ "next": "code-minors agent ends: start (a) worker switch to App.trigger_secret + start test through main, (b) 10 more mutants; design review ends: resolve through the Skill tool and fix",
+ "note": "PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -244,11 +244,11 @@
   {
    "item": "O14-1",
    "what": "TRIAL INTEGRATION: combined tree of core-b, core-c and core-a code paths in a scratch worktree from main; conflicts, name mismatches, ONE whole-suite run on PostgreSQL 16; findings only, nothing pushed",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "TRIAL-INTEGRATION.md, raw/TRIAL-*.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "TRIAL-INTEGRATION.md (168 lines), raw/TRIAL-*.log",
    "tries": 1,
-   "reason": "ORDER 014 item 1 (most valuable)"
+   "reason": "combined tree, one whole-suite run on PostgreSQL 16.15: 15 failed, 13655 passed, 25 skipped, 21 expected-failures in 309 s. Classes: 1 INHERITED (needs a database on the default socket), 1 SINGLE-BRANCH (core-c, a stage word literal, already changed on its new head), 13 COMBINATION (4 mine against core-b's store: already corrected in my tests since; 8 core-c's grant tests against core-b's new migrations; 1 inside core-c). 4 files conflict, worst inside core-c's own branches. WEAK: the run used the heads fetched at 06:13Z; core-b pushed 6 and core-c 2 more code commits during the trial; the new heads got targeted checks only"
   },
   {
    "item": "O14-2",
@@ -262,11 +262,11 @@
   {
    "item": "O14-3",
    "what": "switch the worker to core-b's bound reader and run the worker start test for real",
-   "state": "WAIT core-b",
+   "state": "READY (queued behind O17-code, same file)",
    "percent": 0,
    "evidence file": "",
    "tries": 0,
-   "reason": "CORRECTION of my last board: core-b's requests/001.answer.md DOES exist (written 05:33Z, built 05:38Z) but it answers DRAFT 1: the worker would read app.secrets.get(name), the whole secret store. The bound reader that ORDER 014 names is not in it yet. I wait for that version and check at every board"
+   "reason": "core-b's NEW head has a bound reader, named App.trigger_secret (not trigger_resolve); my worker refuses to start on both heads until it reads that name; with the name supplied it starts (probed by the trial). Switch + the start test through main start when the agent editing worker.py ends"
   },
   {
    "item": "O15",
@@ -298,11 +298,11 @@
   {
    "item": "B6-fstore",
    "what": "run my 102 spend contract tests against core-b's pushed F-store code (memory and PostgreSQL 16); failures are findings",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "FINDINGS-core-b-F-store.md (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "FINDINGS-core-b-F-store.md (my shortened copy; the agent was not allowed to write it), raw/F-store-*.log, tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py",
    "tries": 1,
-   "reason": "backlog 6: core-b's code has reserve_spend now, so the tests must run, not skip"
+   "reason": "on core-b f390b7d6e: 183 passed, 4 strict expected-failures, 0 skipped (memory and PostgreSQL 16). 2 findings: F1 the memory store books the amount before it builds the row, so a refused reserve leaks budget for good; F2 a huge cap gives a driver error on PostgreSQL. T1: 50 connections, cap 3.00, amount 1.00: 3 granted, 47 refused, 50 distinct database processes; control (old pattern): 50 of 50 admitted. core-b's OWN tests for this step are not on its branch. 2 of our 102 tests were corrected because the interface changed (12 decimal places; settled amount after expiry), none weakened"
   },
   {
    "item": "B7-g7",
@@ -384,6 +384,24 @@
    "evidence file": "raw/D-crash-matrix-paths-pg16.log (not yet)",
    "tries": 1,
    "reason": "ORDER 016 item 4b (more hostile tests for my guarantee paths): part 1 covered only the 'nothing to do' path; started in the same batch part 1 returned in"
+  },
+  {
+   "item": "CFG-2",
+   "what": "update tests/test_trigger_config.py to core-b's new head: its fixes make all 16 strict expected-failures pass (so the file shows 17 failures there until the markers are removed); add tests for the bound reader",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/trigger-config-tests-on-core-b-run2.log (not yet)",
+   "tries": 1,
+   "reason": "found by the trial integration; started in the same batch"
+  },
+  {
+   "item": "METER",
+   "what": "non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/meter-contract-on-core-b.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch"
   }
  ],
  "agents": [
@@ -666,12 +684,12 @@
    "model": "fable",
    "what exactly it is doing": "builds the combined tree in a scratch worktree, lists conflicts and mismatches, runs the whole suite once on PostgreSQL 16, classifies failures; owns the local PostgreSQL start and stop",
    "started UTC": "06:12",
-   "expected end": "about 60 min after start",
-   "percent": 5,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "ORDER 014 item 1; only 1 agent runs: item 2 needs no work (scripts exist), item 3 waits for core-b, and the trial is one indivisible job on one database and one worktree"
+   "reason": "finished, 217k tokens; its PostgreSQL on port 55432 is stopped"
   },
   {
    "id": "o15-n8n",
@@ -715,15 +733,15 @@
   {
    "model": "fable",
    "started UTC": "06:16",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "b6-fstore",
    "role": "evidence runner (non-builder)",
    "what exactly it is doing": "runs the spend contract tests on a scratch copy of core-b's tree, corrects wrong shape assumptions, writes findings",
-   "expected end": "about 35 min after start",
-   "reason": "backlog 6"
+   "expected end": "ended",
+   "reason": "finished; the harness refused its findings file write, it returned the text and I saved a shortened copy"
   },
   {
    "model": "fable",
@@ -789,6 +807,32 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "8 agents run"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:27",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "meter",
+   "role": "builder (tests, non-builder of the code) and evidence runner",
+   "what exactly it is doing": "writes tests/contracts/test_meter.py, runs it on a scratch copy of core-b's tree (memory and PostgreSQL 16), plants 5 bugs in the scratch copy to prove the tests bite",
+   "expected end": "about 40 min after start",
+   "reason": "ORDER 016 item 4c"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:27",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "cfg-2",
+   "role": "builder (tests, non-builder)",
+   "what exactly it is doing": "removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use",
+   "expected end": "about 25 min after start",
+   "reason": "trial integration result; 8 agents run (fuzz, G7, design review, n8n, code minors, matrix part 2, meter, config tests)"
   }
  ],
  "tests": [
@@ -1016,6 +1060,15 @@
    "first failing line": "run 1: point r4, 'no row' read too early",
    "state": "done",
    "reason": "PostgreSQL 16.15 on port 55433"
+  },
+  {
+   "suite or file": "TRIAL: whole suite of the combined tree (core-b + core-c + core-a code paths on main), PostgreSQL 16.15",
+   "branch and SHA": "local throwaway branch trial/combined 96768f66d (core-b 44d691b24, core-c c73b55238 + 3 wip branches, core-a 7129afc9b); NOT pushed",
+   "run number": "1 of 1",
+   "passed / failed / errors": "13655 / 15 / 0, 25 skipped, 21 xfailed (309 s)",
+   "first failing line": "see TRIAL-INTEGRATION.md section 6: 1 inherited, 1 single-branch (core-c), 13 combination",
+   "state": "done",
+   "reason": "ORDER 014 item 1; lint clean except 1 file the trial's own conflict joins touched"
   }
  ],
  "restarts": [],
@@ -1044,12 +1097,12 @@
  ],
  "lost": [],
  "lead_actions": [
-  "ORDER 017 read at 06:22Z. Major A = ORDER 015, already in the files since 06:20Z (your review read the older commit); Major B and the minors are in work",
-  "CRASH-MATRIX.md: 43 kill points on PostgreSQL 16, no finding on the 'nothing to do' path. Two facts read from code and NOT yet tested, for the plan: (1) a kill right after the final state write leaves no audit event and no card for that final state, and nothing writes them later; (2) a kill between the model call and the spend booking leaves that call uncounted (step F reservations should close this)",
-  "ORDER 015 done in the files. What your evidence file says differently from the order's summary (so you can decide): (a) the Crypto node version 2 with a credential ran only in a small test workflow, never in the full chain; (b) the secret IS in plain text in a decrypted credential export and in the import file; (c) the retry caps rest on one run; (d) import drops the top-level notes key; (e) no observed shape exists for 'answer the caller' (fix 6), mine is unverified; (f) I added a second answer node (202 to the caller when the guard passes) because without it the caller would hang for the whole 503 loop: say CHANGE to remove it. The edited files need a new import on your n8n",
-  "STANDING ORDER 016 read at 06:16Z: WAITING-LEAD dropped, 6 agents running, backlog items 4, 5, 6, 7 started; 3 needs no work (core-b has both scripts); 8 is mine now; 9 queued",
-  "ORDER 015: template fix in work; the fixed files need a second import on your n8n before a client sees them",
-  "Item O14-3: core-b's answer file is the DRAFT 1 answer (whole secret store); I wait for the bound reader",
+  "TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since",
+  "FINDINGS-core-b-F-store.md: 2 findings (memory store leaks budget on a refused reserve; unbounded cap) and the note that core-b's own spend tests are not on its branch",
+  "core-b's new head fixes all 7 trigger-config findings and has the bound reader (App.trigger_secret): I switch the worker as soon as the agent editing worker.py ends",
+  "ORDER 017: Major A was already done; Major B and the minors in work",
+  "CRASH-MATRIX.md: 43 kill points, no finding on the 'nothing to do' path; part 2 (tool, proposal, approval paths) running",
+  "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
  "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"

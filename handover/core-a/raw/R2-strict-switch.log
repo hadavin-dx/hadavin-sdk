@@ -1,5 +1,1 @@
-## run 1: HADAVIN_REQUIRE_PG=1, no HADAVIN_TEST_PG_DSN
-exit code: 1
-      2 SKIPPED tests/triggers/test_endpoint.py: an empty body is refused at Content-Length (own test)
-441 passed, 2 skipped, 88 errors in 16.61s
-## run 2: HADAVIN_REQUIRE_PG=1 and HADAVIN_TEST_PG_DSN set
+## run 1: HADAVIN_REQUIRE_PG=1, no HADAVIN_TEST_PG_DSN (the failures are in the fixture, so pytest counts them as errors)
