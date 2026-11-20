@@ -207,7 +207,12 @@ runtime and not the reset login):
    DELETE or TRUNCATE a money table (PUBLIC and inherited memberships included, when roles are named). Residuals: a
    login that shares the migration owner (or is a member of the owner role) has no guard at all, so keep the runtime
    login separate from the owner; a superuser owner is not stopped; the runtime can still settle an open hold it can
-   name. `migrate` pins the trigger function's search path too.
+   name. `migrate` pins the trigger function's search path too. The store also checks at start that the runtime login
+   (and every role it is a member of, inherit option or not) holds no write right on the money tables and no EXECUTE
+   on set_cap, release or purge; a login that owns a table (or is a member of its owner) or a superuser is skipped for
+   that table with a WARNING in the log: this is the single-role dev escape hatch, never a production setup. Views and
+   materialized views that select from the money tables are not scanned (a residual: review who may write through
+   them).
    Drift: when a counter is already below the booked holds, a legal settle that lowers it is refused (fail closed) until
    the counter is repaired; `applied_usd` of a release shows such drift.
    Emergency switch-off (the OWNER only; the guards then do nothing until switched back on): `ALTER TABLE spend

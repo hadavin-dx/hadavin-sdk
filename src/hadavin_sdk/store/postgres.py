@@ -51,6 +51,7 @@ from hadavin_sdk.models import (
     now,
 )
 from hadavin_sdk.store.protocol import (
+    BookingDayRefused,
     NotFound,
     SpendCapExceeded,
     SpendRelease,
@@ -273,49 +274,101 @@ _ALL_TABLE_RIGHTS = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERE
 _COLUMN_RIGHTS = ("SELECT", "INSERT", "UPDATE", "REFERENCES")  # what a column grant can give
 
 
+_CLOSURE = (
+    "WITH RECURSIVE closure(oid) AS ("
+    " SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = current_user"
+    " UNION SELECT m.roleid FROM pg_catalog.pg_auth_members m JOIN closure c ON m.member = c.oid)"
+)
+_WARNED_OWNER: set[str] = set()
+_RIGHTS_QUERY = (
+    _CLOSURE + " SELECT DISTINCT c.oid, p.priv FROM closure r CROSS JOIN pg_catalog.pg_class c"  # noqa: S608
+    " CROSS JOIN unnest(%s::text[]) AS p(priv)"
+    " WHERE c.oid = ANY(%s) AND (pg_catalog.has_table_privilege(r.oid, c.oid, p.priv)"
+    " OR (p.priv = ANY(%s) AND pg_catalog.has_any_column_privilege(r.oid, c.oid, p.priv)))"
+)
+_EXECUTE_QUERY = (
+    _CLOSURE  # noqa: S608
+    + " SELECT s.sig, bool_or(p.oid IS NOT NULL AND pg_catalog.has_function_privilege(r.oid, p.oid, 'EXECUTE'))"
+    " FROM unnest(%s::text[]) AS s(sig)"
+    " CROSS JOIN LATERAL (SELECT pg_catalog.to_regprocedure(pg_catalog.quote_ident(%s) || '.' || s.sig)::oid AS oid)"
+    " AS p CROSS JOIN closure r GROUP BY s.sig"
+)
+
+
+def _scoped_tables(conn: psycopg.Connection, schema: str, tables: Sequence[str]):
+    """[(oid, name)] of `tables` in `schema` when the CURRENT login is a restricted one, else None (a superuser, or a
+    member of the tables' owner: the single-role dev setup, outside the guarantee; the owner case logs a WARNING)."""
+    rows = conn.execute(
+        "SELECT c.oid, c.relname, pg_catalog.pg_has_role(current_user, c.relowner, 'MEMBER'),"
+        " (SELECT r.rolsuper FROM pg_catalog.pg_roles r WHERE r.rolname = current_user)"
+        " FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
+        " WHERE n.nspname = %s AND c.relkind IN ('r','p') AND c.relname = ANY(%s) ORDER BY c.relname",
+        (schema, list(tables)),
+    ).fetchall()
+    missing = sorted(set(tables) - {name for _, name, _, _ in rows})
+    if missing and schema not in _WARNED_OWNER:
+        _LOG.warning(
+            "store postgres: tables not found in schema %r, their rights are not checked at start: %s",
+            schema,
+            ", ".join(missing),
+        )
+    if not rows or rows[0][3] is None:
+        return None
+    # judged table by table: a login that owns (or is a member of the owner of) some tables is exempt for those only
+    kept = [(oid, name) for oid, name, owns, _ in rows if not owns]
+    if (rows[0][3] or len(kept) < len(rows)) and schema not in _WARNED_OWNER:
+        _WARNED_OWNER.add(schema)
+        skipped = [name for _, name, owns, _ in rows if owns or rows[0][3]]
+        _LOG.warning(
+            "store postgres: the login is a superuser or owns (is a member of the owner of) tables of schema "
+            "%r: the start checks of the stop and money rights are skipped for %s (single-role dev setup; run "
+            "migrate with named roles for a production login)",
+            schema,
+            ", ".join(skipped),
+        )
+    return [] if rows[0][3] else kept
+
+
+def _rights_held(
+    conn: psycopg.Connection,
+    oids: Sequence[int],
+    rights: Sequence[str],
+    column_rights: Sequence[str],
+) -> set[tuple[int, str]]:
+    """(table oid, right) pairs held by the login OR by any role in its membership closure, whatever the inherit
+    option (a NOINHERIT login, or INHERIT FALSE with SET TRUE, can still SET ROLE to the group and write): table level
+    and, for `column_rights`, column level."""
+    rows = conn.execute(
+        _RIGHTS_QUERY,
+        (list(rights), list(oids), list(column_rights)),
+    ).fetchall()
+    return {(oid, right) for oid, right in rows}
+
+
 def own_stop_rights_problems(conn: psycopg.Connection, schema: str) -> list[str]:
     """What the CURRENT login can do on the three stop tables beyond what `GRANTS` gives the runtime role, however
-    it got it (a direct grant, a column grant, a role it is a member of, PUBLIC). Strings like `UPDATE on
-    kill_switch`: the right and the table, never a value. [] for a superuser or a member of the tables' owner:
-    that login owns the tables and is outside the guarantee (migrate warns when no roles are named)."""
+    it got it (a direct grant, a column grant, a role it is a member of with or without inheriting, PUBLIC). Strings
+    like `UPDATE on kill_switch`: the right and the table, never a value. [] for a superuser or a member of the
+    tables' owner: that login owns the tables and is outside the guarantee (migrate warns when no roles are named)."""
     from hadavin_sdk.store.migrate import GRANTS  # late: migrate imports this module
 
-    me = conn.execute(
-        "SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user"
-    ).fetchone()
-    if me is None or me[0]:
-        return []
-    rows = conn.execute(
-        "SELECT c.oid, c.relname, pg_catalog.pg_has_role(current_user, c.relowner, 'MEMBER') "
-        "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
-        "WHERE n.nspname = %s AND c.relkind IN ('r','p') AND c.relname = ANY(%s)",
-        (schema, list(_STOP_TABLES)),
-    ).fetchall()
-    if any(owns for _, _, owns in rows):
+    scope = _scoped_tables(conn, schema, _STOP_TABLES)
+    if not scope:
         return []
     rights = list(_ALL_TABLE_RIGHTS)
     if conn.info.server_version >= 170000:
         rights.append("MAINTAIN")
+    held = _rights_held(conn, [oid for oid, _ in scope], rights, _COLUMN_RIGHTS)
     problems = []
-    for oid, name, _ in sorted(rows, key=lambda r: r[1]):
+    for oid, name in scope:
         allowed = {x.strip() for x in GRANTS[name].runtime.split(",") if x.strip()}
-        for right in rights:
-            if right in allowed:
-                continue
-            held = conn.execute(
-                "SELECT pg_catalog.has_table_privilege(%s, %s)", (oid, right)
-            ).fetchone()[0]
-            if not held and right in _COLUMN_RIGHTS:
-                held = conn.execute(
-                    "SELECT pg_catalog.has_any_column_privilege(%s, %s)", (oid, right)
-                ).fetchone()[0]
-            if held:
-                problems.append(f"{right} on {name}")
+        problems += [f"{r} on {name}" for r in rights if r not in allowed and (oid, r) in held]
     return problems
 
 
 _MONEY_TABLES = ("spend", "spend_month", "spend_reservations", "hadavin_caps", "hadavin_limits")
-_MONEY_WRITE_RIGHTS = ("INSERT", "UPDATE", "DELETE", "TRUNCATE")
+_MONEY_WRITE_RIGHTS = ("INSERT", "UPDATE", "DELETE", "TRUNCATE", "TRIGGER")
+_RUNTIME_MARK_FUNCTION = "hadavin_reserve_spend(text, text, date, numeric, text)"
 # The functions the runtime login must NOT run: the cap setter (reset role) and the two the release / purge roles run.
 _MONEY_FORBIDDEN_FUNCTIONS = (
     "hadavin_set_cap(text, numeric, numeric, text)",
@@ -324,57 +377,30 @@ _MONEY_FORBIDDEN_FUNCTIONS = (
 )
 
 
-_RUNTIME_MARK_FUNCTION = "hadavin_reserve_spend(text, text, date, numeric, text)"
-
-
-def _may_execute(conn: psycopg.Connection, schema: str, signature: str) -> bool:
-    return bool(
-        conn.execute(
-            "SELECT p IS NOT NULL AND pg_catalog.has_function_privilege(current_user, p, 'EXECUTE') "
-            "FROM (SELECT pg_catalog.to_regprocedure(pg_catalog.quote_ident(%s) || '.' || %s) AS p) q",
-            (schema, signature),
-        ).fetchone()[0]
-    )
-
-
 def own_money_rights_problems(conn: psycopg.Connection, schema: str) -> list[str]:
-    """What the CURRENT login can do on the money tables (INSERT, UPDATE, DELETE, TRUNCATE, at table or column level,
-    however it got it) and which money functions it may EXECUTE although only the owner-side roles may (set_cap,
-    release, purge). Strings like `UPDATE on spend` or `EXECUTE on hadavin_set_cap`. [] for a superuser or a member of
-    the tables' owner (the dev setup, outside the guarantee: same convention as `own_stop_rights_problems`)."""
-    me = conn.execute(
-        "SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user"
-    ).fetchone()
-    if me is None or me[0]:
+    """What the CURRENT login (or any role in its membership closure, inherit option or not) can do on the money
+    tables (INSERT, UPDATE, DELETE, TRUNCATE, table or column level) and which money functions it may EXECUTE although
+    only the owner-side roles may (set_cap, release, purge). Strings like `UPDATE on spend` or `EXECUTE on
+    hadavin_set_cap`. [] for a superuser or a member of the tables' owner (same convention as the stop-table check)."""
+    scope = _scoped_tables(conn, schema, _MONEY_TABLES)
+    if not scope:
         return []
+    held = _rights_held(conn, [oid for oid, _ in scope], _MONEY_WRITE_RIGHTS, ("INSERT", "UPDATE"))
+    problems = [
+        f"{r} on {name}" for oid, name in scope for r in _MONEY_WRITE_RIGHTS if (oid, r) in held
+    ]
+    # Function rights are judged only for a login that acts as the runtime (some role of its closure may EXECUTE the
+    # booking): the purge, release and reset logins build a store too and legitimately hold their own function.
+    signatures = (_RUNTIME_MARK_FUNCTION, *_MONEY_FORBIDDEN_FUNCTIONS)
     rows = conn.execute(
-        "SELECT c.oid, c.relname, pg_catalog.pg_has_role(current_user, c.relowner, 'MEMBER') "
-        "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
-        "WHERE n.nspname = %s AND c.relkind IN ('r','p') AND c.relname = ANY(%s)",
-        (schema, list(_MONEY_TABLES)),
+        _EXECUTE_QUERY,
+        (list(signatures), schema),
     ).fetchall()
-    if any(owns for _, _, owns in rows):
-        return []
-    problems = []
-    for oid, name, _ in sorted(rows, key=lambda r: r[1]):
-        for right in _MONEY_WRITE_RIGHTS:
-            held = conn.execute(
-                "SELECT pg_catalog.has_table_privilege(%s, %s)", (oid, right)
-            ).fetchone()[0]
-            if not held and right in ("INSERT", "UPDATE"):  # a column grant gives these two
-                held = conn.execute(
-                    "SELECT pg_catalog.has_any_column_privilege(%s, %s)", (oid, right)
-                ).fetchone()[0]
-            if held:
-                problems.append(f"{right} on {name}")
-    # The function rights are judged only for a login that acts as the runtime (it may EXECUTE the booking): the
-    # purge, release and reset logins build a store too and legitimately hold their own function.
-    if not _may_execute(conn, schema, _RUNTIME_MARK_FUNCTION):
-        return problems
-    for signature in _MONEY_FORBIDDEN_FUNCTIONS:
-        held = _may_execute(conn, schema, signature)
-        if held:
-            problems.append(f"EXECUTE on {signature.split('(')[0]}")
+    may = {sig: ok for sig, ok in rows}
+    if may.get(_RUNTIME_MARK_FUNCTION):
+        problems += [
+            f"EXECUTE on {sig.split('(')[0]}" for sig in _MONEY_FORBIDDEN_FUNCTIONS if may.get(sig)
+        ]
     return problems
 
 
@@ -478,9 +504,9 @@ def _money_error(
         # OperationalError (looks like a lost connection), so it is named here and fails closed
         return ConfigError(f"store postgres: unexpected money function error ({code})")
     if code == "22023":  # the function refused an argument the Python check let through
-        # only a fixed token for the day argument is passed on, never the message: Limits turns it into the clock hint
-        day = " (p_day)" if "p_day" in str(exc.diag.message_primary or "") else ""
-        return ValueError("spend argument refused by the database" + day)
+        if str(exc.diag.message_primary or "") == "invalid argument: p_day window":
+            return BookingDayRefused("spend argument refused by the database (p_day)")
+        return ValueError("spend argument refused by the database")
     return exc
 
 

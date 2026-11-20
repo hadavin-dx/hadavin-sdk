@@ -95,15 +95,117 @@ def test_the_owner_login_is_outside_the_check(w):
     assert _build(w, w.scoped).get_kill_switch().on is False
 
 
-def test_the_reset_login_mark_is_not_held_to_the_runtime_map(w):
-    w.grant(f"GRANT UPDATE ON {w.schema}.hadavin_caps TO {{}}", w.reset)
+def _build_marked(w, role, mark):
     settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106
-    settings._login_role = "reset"
-    store = make("store", settings, FakeSecretProvider({"pg-dsn": w.dsn_of(w.reset)}))
+    if mark:
+        settings._login_role = mark
+    store = make("store", settings, FakeSecretProvider({"pg-dsn": w.dsn_of(role)}))
     w.stores.append(store)
+    return store
+
+
+def test_the_reset_mark_exempts_exactly_the_check(w):
+    # an over-granted reset-marked login builds; the same over-grant on an unmarked login is refused
+    other = w.new_role("ovg")
+    w.grant(f"GRANT USAGE ON SCHEMA {w.schema} TO {{}}", other)
+    w.grant(f"GRANT UPDATE ON {w.schema}.spend TO {{}}", other)
+    _build_marked(w, other, "reset")
+    with pytest.raises(ConfigError, match="UPDATE on spend"):
+        _build_marked(w, other, None)
 
 
 def test_the_purge_and_portal_logins_start_with_their_own_function_rights(w):
     # the purge login holds EXECUTE on the purge (its job) and is not the runtime: not refused
     for role in (w.portal, w.purge):
         _build(w, w.dsn_of(role))
+
+
+def _server_version(w):
+    return int(w.run("SHOW server_version_num")[0][0])
+
+
+@pytest.mark.parametrize(
+    "target", ["spend.UPDATE", "hadavin_caps.UPDATE", "kill_switch_clears.INSERT"]
+)
+def test_a_noinherit_login_in_a_group_with_write_rights_is_refused(w, target):
+    # has_table_privilege is false for a NOINHERIT login, but it can SET ROLE to the group and write
+    table, right = target.split(".")
+    group = w.new_role("ngrp", "NOLOGIN")
+    w.grant(f"GRANT {right} ON {w.schema}.{table} TO {{}}", group)
+    w.grant("ALTER ROLE {} NOINHERIT", w.runtime)
+    w.grant("GRANT {} TO {}", group, w.runtime)
+    with pytest.raises(ConfigError, match=f"{right} on {table}"):
+        _build(w, w.dsn_of(w.runtime))
+
+
+def test_a_nested_group_chain_is_walked(w):
+    outer = w.new_role("outer", "NOLOGIN")
+    inner = w.new_role("inner", "NOLOGIN")
+    w.grant(f"GRANT UPDATE ON {w.schema}.spend TO {{}}", inner)
+    w.grant("GRANT {} TO {}", inner, outer)
+    w.grant("ALTER ROLE {} NOINHERIT", w.runtime)
+    w.grant("GRANT {} TO {}", outer, w.runtime)
+    with pytest.raises(ConfigError, match="UPDATE on spend"):
+        _build(w, w.dsn_of(w.runtime))
+
+
+def test_inherit_false_set_true_membership_is_refused(w):
+    if _server_version(w) < 160000:
+        pytest.skip("GRANT ... WITH INHERIT FALSE, SET TRUE needs PostgreSQL 16 or later")
+    group = w.new_role("fgrp", "NOLOGIN")
+    w.grant(f"GRANT UPDATE ON {w.schema}.spend TO {{}}", group)
+    w.grant("GRANT {} TO {} WITH INHERIT FALSE, SET TRUE", group, w.runtime)
+    with pytest.raises(ConfigError, match="UPDATE on spend"):
+        _build(w, w.dsn_of(w.runtime))
+
+
+def test_the_owner_exemption_logs_a_warning(w, caplog):
+    import hadavin_sdk.store.postgres as pgmod
+
+    pgmod._WARNED_OWNER.discard(w.schema)
+    with caplog.at_level("WARNING", logger="hadavin_sdk.store"):
+        _build(w, w.scoped)
+    assert "start checks" in caplog.text and "skipped" in caplog.text
+
+
+def test_owning_one_money_table_exempts_only_that_table(w):
+    # the login owns hadavin_limits (so it holds every right there) but also UPDATE on spend: spend is still judged
+    w.grant(f"ALTER TABLE {w.schema}.hadavin_limits OWNER TO {{}}", w.runtime)
+    w.grant(f"GRANT UPDATE ON {w.schema}.spend TO {{}}", w.runtime)
+    with pytest.raises(ConfigError) as caught:
+        _build(w, w.dsn_of(w.runtime))
+    assert "UPDATE on spend" in str(caught.value) and "hadavin_limits" not in str(caught.value)
+
+
+def test_the_trigger_right_on_a_money_table_is_refused(w):
+    w.grant(f"GRANT TRIGGER ON {w.schema}.spend_month TO {{}}", w.runtime)
+    with pytest.raises(ConfigError, match="TRIGGER on spend_month"):
+        _build(w, w.dsn_of(w.runtime))
+
+
+def test_missing_money_tables_are_said_not_passed_silently(w, caplog):
+    import psycopg
+
+    import hadavin_sdk.store.postgres as pgmod
+
+    empty = w.new_schema("empty")
+    with psycopg.connect(empty) as db, caplog.at_level("WARNING", logger="hadavin_sdk.store"):
+        assert pgmod.own_money_rights_problems(db, f"sb_empty_{w.sfx}") == []
+    assert "not found" in caplog.text and "spend" in caplog.text
+
+
+def test_only_the_window_refusal_is_the_booking_day_refusal(w):
+    import psycopg
+
+    import hadavin_sdk.store.postgres as pgmod
+    from hadavin_sdk.store.protocol import BookingDayRefused
+
+    def refusal(day_sql):
+        with w.as_(w.runtime) as db, pytest.raises(psycopg.errors.DataError) as err:
+            db.execute(f"SELECT * FROM hadavin_add_spend('x', {day_sql}, 1)")  # noqa: S608
+        return pgmod._money_error(err.value)
+
+    assert isinstance(refusal("current_date + 5"), BookingDayRefused)
+    for other in ("DATE 'infinity'", "DATE '1960-01-01'"):
+        got = refusal(other)
+        assert isinstance(got, ValueError) and not isinstance(got, BookingDayRefused)

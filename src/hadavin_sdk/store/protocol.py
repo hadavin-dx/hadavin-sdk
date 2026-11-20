@@ -62,6 +62,11 @@ class SpendCapExceeded(RuntimeError):
         self.which = which
 
 
+class BookingDayRefused(ValueError):
+    """The database refused the booking day (outside its UTC date +/- the window): a clock off by days. A dedicated
+    class, so a hint never depends on the text of a message a caller could shape."""
+
+
 MAX_RESERVATION_ID_CHARS = 200
 _RESERVATION_ID = re.compile(r"[A-Za-z0-9._:-]+")
 
