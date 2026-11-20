@@ -1,0 +1,6 @@
+........................................................................ [ 35%]
+.....................................................s.................. [ 71%]
+..........................................................               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:958: contract point 10: no worst-case formula on this branch (neither llm.common.worst_case_usd nor one in the gate); the tests above use the formula of the interface text, not shipped code
+201 passed, 1 skipped in 0.60s
