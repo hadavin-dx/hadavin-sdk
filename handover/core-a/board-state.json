@@ -1543,11 +1543,11 @@
    "what exactly it is doing": "round 3 (last under the cap) read-only review of the n8n pack against evidence and the endpoint; also explains why an earlier log said 200 passed and now 88",
    "started UTC": "07:23",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "3 of 3",
    "retries so far": 0,
-   "reason": "after n8n-fix2"
+   "reason": "round 3: 0 Blocker, 0 Major, 8 Nits: CLEAN round under the rule; signing, statuses, state table, retry numbers and evidence line cites checked against endpoint.py/tick.py/evidence"
   },
   {
    "id": "maint-ev2",
@@ -1561,6 +1561,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "after maint1"
+  },
+  {
+   "id": "n8n-fix3",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "8 text nits of round 3 (README, JSON notes)",
+   "started UTC": "07:26",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "3 of 3 (nits only)",
+   "retries so far": 0,
+   "reason": "round 3"
   }
  ],
  "tests": [
@@ -1933,6 +1946,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Puzzle answered: 200 vs 88. My own board row M1-template (line 67) says the 193 run was with 2 rule files (test_stage_names.py, test_no_hardcoded_values.py); logs 5 and earlier included them, log 6 is the single file. No test lost (collect-only shows 52 functions; one run: 88 passed). Ticket D lines 299 and 377 are stale against the pack: fixed in d-fix2.",
   "Open puzzle (mine, not yet explained): n8n template test log 5 says 200 passed, log 6 says 88 passed for the same test file (8 changed lines). Round-3 reviewer asked to check git history; I do not claim a lost test or a different selection until that is answered.",
   "OWNER ORDER 13:10 IST answered: own session is on claude-sonnet-5-5 (get_session: model, last_served_model, user_switched_model all sonnet-5-5; configured_model fable-5-2 is the creation-time value only). Proof at top of REPORT.md.",
   "MODEL CHECK (lead message 07:20): this session runs claude-sonnet-5-5 now (get_session: model and last_served_model both sonnet-5-5; configured_model at creation was fable-5-2, switched by the owner with /model). All my agents are sonnet/haiku/opus-for-skills, none Fable. Opus lines only in brainstorm/draft/resolve skill files, as the owner set.",

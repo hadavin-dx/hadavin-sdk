@@ -33,4 +33,74 @@ SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: tri
 .....................................................s.................. [ 39%]
 .......................................................F................ [ 59%]
 x....................................xxx................xxxx............ [ 79%]
-....................................................
+........................................................................ [ 98%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+_______________ test_m1_the_module_keeps_no_state_between_calls ________________
+
+    def test_m1_the_module_keeps_no_state_between_calls():
+        """Ticket I10 ("no ContextVar and no module-level state"): every module-level assignment is a constant,
+        a frozenset of constants or a type alias; nothing at module level is a list, a dict, a set, a lock or a
+        context variable."""
+        tree = gate_tree()
+        for node in tree.body:
+            if isinstance(node, ast.Assign | ast.AnnAssign):
+                value = node.value
+                assert not isinstance(
+                    value, ast.List | ast.Dict | ast.Set | ast.ListComp | ast.DictComp | ast.SetComp
+                ), f"line {node.lineno}: a mutable module-level value"
+                if isinstance(value, ast.Call):
+                    name = getattr(value.func, "id", getattr(value.func, "attr", ""))
+                    # a compiled pattern (`re.compile`, since the framing rule of ORDER 017 item 6) is an immutable
+                    # constant, not state; any other call still is refused
+                    is_compile = (
+                        name == "compile"
+                        and isinstance(value.func, ast.Attribute)
+                        and getattr(value.func.value, "id", "") == "re"
+                    )
+                    # the NO_MAP sentinel (ORDER 017 item 1): one instance of a class that has `__slots__ = ()` and
+                    # only methods, so it can hold no state
+                    stateless = [
+                        c
+                        for c in tree.body
+                        if isinstance(c, ast.ClassDef)
+                        and c.name == name
+                        and any(
+                            isinstance(b, ast.Assign)
+                            and [getattr(t, "id", "") for t in b.targets] == ["__slots__"]
+                            and isinstance(b.value, ast.Tuple)
+                            and not b.value.elts
+                            for b in c.body
+                        )
+                        and all(isinstance(b, ast.FunctionDef | ast.Assign | ast.Expr) for b in c.body)
+                    ]
+>                   assert name == "frozenset" or is_compile or stateless, (
+                        f"line {node.lineno}: module-level call of {name}"
+                    )
+E                   AssertionError: line 383: module-level call of _NoMap
+E                   assert ('_NoMap' == 'frozenset'
+E                     
+E                     - frozenset
+E                     + _NoMap or False or [])
+
+tests/contracts/test_model_gate_contract.py:1435: AssertionError
+=========================== short test summary info ============================
+XFAIL tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['. '] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P6_P1_generated_a_value_in_a_look_alike_spelling_and_again_plainly - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places[password-then-comma] - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places[token-in-three-parts] - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[call {}.] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[call {}. Thanks] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[phone={}.] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[rang {}.\nno answer] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:944: contract point 10: no worst-case formula on this branch (neither llm.common.worst_case_usd nor one in the gate); the tests above use the formula of the interface text, not shipped code
+1 failed, 354 passed, 1 skipped, 8 xfailed in 29.88s
+== checkout uv run
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 11%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 23%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 35%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 46%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 58%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 70%]
+sssssssssssssssssssss.............xxxxxxxxxx..xxxxxxxxx......xxxxxxxx.
