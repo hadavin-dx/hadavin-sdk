@@ -209,14 +209,18 @@ def test_the_table_has_no_other_pattern_that_names_a_placeholder():
     ]
     assert [label for label, _ in naming] == ["BANKACCT", "SECRET"]
     assert naming[0][1].pattern.startswith("<BANKCODE_")
-    assert "(?!<[A-Z][A-Z0-9]*_\\d+>(?:\\s|$))" in naming[1][1].pattern  # the cookie header's negative guard
+    assert (
+        "(?!<[A-Z][A-Z0-9]*_\\d+>(?:\\s|$))" in naming[1][1].pattern
+    )  # the cookie header's negative guard
     context = list(R._CONTEXT_PATTERNS)
     assert [label for label, _ in context] == ["BANKACCT", "BANKACCT"]
     assert naming[0] in context
     assert all(entry in R.PATTERNS for entry in context)
     assert context == [entry for entry in R.PATTERNS if entry[0] == "BANKACCT"]
     assert R._CONTEXT_MARK == "<BANKCODE_"
-    assert "<BANKCODE_" in R._BANK_CONTEXT.pattern  # the keyword pattern's context names the same mark
+    assert (
+        "<BANKCODE_" in R._BANK_CONTEXT.pattern
+    )  # the keyword pattern's context names the same mark
 
 
 def test_the_round_bound_is_a_small_constant():
