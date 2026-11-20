@@ -1,0 +1,28 @@
+trial-main: file not on this tree: tests/contracts/test_store_spend_reservations.py
+trial-main: file not on this tree: tests/test_grants_negative_roles.py
+trial-main: file not on this tree: tests/test_redact_context_after_sweep.py
+##### trial-main (51c9fc4fb) : 2 ids
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+E   psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+    DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+    	Is the server running locally and accepting connections on that socket?
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-main/.venv/lib/python3.13/site-packages/psycopg/connection.py:304: psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+1 failed, 1 passed in 1.63s
+trial-core-b: file not on this tree: tests/contracts/test_store_spend_reservations.py
+trial-core-b: file not on this tree: tests/test_grants_negative_roles.py
+trial-core-b: file not on this tree: tests/test_redact_context_after_sweep.py
+##### trial-core-b (44d691b24) : 2 ids
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+E   psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+    DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+    	Is the server running locally and accepting connections on that socket?
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-core-b/.venv/lib/python3.13/site-packages/psycopg/connection.py:304: psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+1 failed, 1 passed in 1.79s
+trial-core-c: file not on this tree: tests/contracts/test_store_spend_reservations.py
+##### trial-core-c (c73b55238) : 11 ids

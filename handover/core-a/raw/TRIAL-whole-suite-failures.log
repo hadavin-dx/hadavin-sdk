@@ -1,0 +1,356 @@
+=================================== FAILURES ===================================
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
+shared = 'user=postgres dbname=askdata_h_ad7db545 host=127.0.0.1 port=55432'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f504a724aa0>
+query = "SELECT dblink_connect('dbname=postgres')", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+E           	Is the server running locally and accepting connections on that socket?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
+_______________________ test_nothing_is_rounded[memory] ________________________
+[gw1] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+store = <hadavin_sdk.store.memory.MemoryStore object at 0x7fe10862d9d0>
+
+    def test_nothing_is_rounded(store):
+        """Invariant "nothing rounded": a long Decimal survives the counters, the row and the run's cost."""
+        long_reserved, long_actual = (
+            _usd("0.000000123456789012345"),
+            _usd("0.00108225000000000001"),
+        )
+        run_id = _run(store)
+>       rid = _reserve(store, long_reserved, run_id=run_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contracts/test_store_spend_reservations.py:220: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_store_spend_reservations.py:73: in _reserve
+    store.reserve_spend(rid, agent, day, usd, day_cap=day_cap, month_cap=month_cap, run_id=run_id)
+src/hadavin_sdk/store/memory.py:309: in reserve_spend
+    check_spend_amount(usd)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+usd = Decimal('1.23456789012345E-7')
+
+    def check_spend_amount(usd: object) -> Decimal:
+        """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+        bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+        ValueError and nothing is booked."""
+        if (
+            type(usd) is not Decimal
+            or not usd.is_finite()
+            or not 0 <= usd < MAX_SPEND_USD
+            or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+        ):
+>           raise ValueError(
+                "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+            )
+E           ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+
+src/hadavin_sdk/store/protocol.py:77: ValueError
+______________________ test_nothing_is_rounded[postgres] _______________________
+[gw1] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7fe108727b30>
+
+    def test_nothing_is_rounded(store):
+        """Invariant "nothing rounded": a long Decimal survives the counters, the row and the run's cost."""
+        long_reserved, long_actual = (
+            _usd("0.000000123456789012345"),
+            _usd("0.00108225000000000001"),
+        )
+        run_id = _run(store)
+>       rid = _reserve(store, long_reserved, run_id=run_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contracts/test_store_spend_reservations.py:220: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_store_spend_reservations.py:73: in _reserve
+    store.reserve_spend(rid, agent, day, usd, day_cap=day_cap, month_cap=month_cap, run_id=run_id)
+src/hadavin_sdk/store/postgres.py:614: in reserve_spend
+    check_spend_amount(usd)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+usd = Decimal('1.23456789012345E-7')
+
+    def check_spend_amount(usd: object) -> Decimal:
+        """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+        bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+        ValueError and nothing is booked."""
+        if (
+            type(usd) is not Decimal
+            or not usd.is_finite()
+            or not 0 <= usd < MAX_SPEND_USD
+            or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+        ):
+>           raise ValueError(
+                "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+            )
+E           ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+
+src/hadavin_sdk/store/protocol.py:77: ValueError
+___ test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory] ____
+[gw1] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+store = <hadavin_sdk.store.memory.MemoryStore object at 0x7fe10862e390>
+
+    def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
+        """S1.settle (2.1): "an expired row only upward". The first settle still claims the row and the run gets the
+        actual amount; a second settle returns False."""
+        run_id = _run(store)
+        rid = _reserve(store, _usd("1.00"), run_id=run_id)
+        assert _expire_all(store) == 1
+        row, applied = store.settle_spend(rid, _usd("0.40"))
+        assert applied is True
+        assert row.status in ("settled", "expired") and row.closed_at is not None
+>       assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("0.40"))
+E       AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+E         
+E         At index 1 diff: Decimal('1.00') != Decimal('0.40')
+E         Use -v to get more diff
+
+tests/contracts/test_store_spend_reservations.py:418: AssertionError
+__ test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres] ___
+[gw1] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7fe1087bf5f0>
+
+    def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
+        """S1.settle (2.1): "an expired row only upward". The first settle still claims the row and the run gets the
+        actual amount; a second settle returns False."""
+        run_id = _run(store)
+        rid = _reserve(store, _usd("1.00"), run_id=run_id)
+        assert _expire_all(store) == 1
+        row, applied = store.settle_spend(rid, _usd("0.40"))
+        assert applied is True
+        assert row.status in ("settled", "expired") and row.closed_at is not None
+>       assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("0.40"))
+E       AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+E         
+E         At index 1 diff: Decimal('1.00') != Decimal('0.40')
+E         Use -v to get more diff
+
+tests/contracts/test_store_spend_reservations.py:418: AssertionError
+_______________ test_the_identities_are_the_ones_this_file_knows _______________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_the_identities_are_the_ones_this_file_knows():
+        """A new role keyword or Grant field is a new identity: its denials must be written here first."""
+        keywords = {p for p in inspect.signature(mig.migrate).parameters if p.endswith("_role")}
+>       assert keywords == {f"{role}_role" for role in ROLES}
+E       AssertionError: assert {'portal_role...runtime_role'} == {'portal_role...runtime_role'}
+E         
+E         Extra items in the left set:
+E         'reset_role'
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:134: AssertionError
+______________ test_every_write_privilege_is_on_the_reviewed_list ______________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_every_write_privilege_is_on_the_reviewed_list():
+        actual = {role: {} for role in ROLES}
+        for (role, table, privilege), held in _matrix().items():
+            if held and privilege != "SELECT":
+                actual[role].setdefault(table, set()).add(privilege)
+>       assert actual == WRITES
+E       AssertionError: assert {'runtime': {...: {'DELETE'}}} == {'runtime': {...: {'DELETE'}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'purge': {'spend_reservations': {'DELETE'}, 'tool_calls': {'DELETE'}, 'redaction_maps': {'DELETE'}}} != {'purge': {'tool_calls': {'DELETE'}, 'redaction_maps': {'DELETE'}}}
+E         {'runtime': {'runs': {'INSERT', 'UPDATE'}, 'plans': {'INSERT', 'UPDATE'}, 'gate_decisions': {'INSERT'}, 'approval_requests': {'INSERT', 'UPDATE'}, ...}} != {'runtime': {'runs': {'INSERT', 'UPDATE'}, 'plans': {'INSERT', 'UPDATE'}, 'gate_decisions': {'INSERT'}, 'approval_requests': {'INSERT', 'UPDATE'}, ...}}
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:159: AssertionError
+_________ test_only_the_runtime_role_holds_anything_on_the_stop_table __________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_only_the_runtime_role_holds_anything_on_the_stop_table():
+        held = {role: {p for p in PRIVILEGES if _matrix()[role, STOP_TABLE, p]} for role in ROLES}
+>       assert held == {"runtime": {"SELECT", "INSERT", "UPDATE"}, "portal": set(), "purge": set()}
+E       AssertionError: assert {'runtime': {...purge': set()} == {'runtime': {...purge': set()}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'runtime': {'SELECT'}} != {'runtime': {'INSERT', 'SELECT', 'UPDATE'}}
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:192: AssertionError
+________ test_delete_is_held_only_on_the_outbox_and_the_purged_evidence ________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_delete_is_held_only_on_the_outbox_and_the_purged_evidence():
+        deletes = {(r, t) for (r, t, p), held in _matrix().items() if held and p == "DELETE"}
+>       assert deletes == {
+            ("runtime", "audit_outbox"),
+            ("purge", "tool_calls"),
+            ("purge", "redaction_maps"),
+        }
+E       AssertionError: assert {('purge', 'r...udit_outbox')} == {('purge', 'r...udit_outbox')}
+E         
+E         Extra items in the left set:
+E         ('purge', 'spend_reservations')
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:205: AssertionError
+________ test_the_purge_role_holds_delete_only_and_no_whole_table_read _________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_the_purge_role_holds_delete_only_and_no_whole_table_read():
+        for table in _tables():
+            assert HOLDS["purge"](mig.GRANTS[table]) <= {"DELETE"}, table
+        # column reads exist only to find the rows to delete or the run they belong to, never on other tables
+>       assert {t for t in _tables() if mig.GRANTS[t].purge_cols} == {
+            "runs",
+            "tool_calls",
+            "redaction_maps",
+        }
+E       AssertionError: assert {'redaction_m... 'tool_calls'} == {'redaction_m... 'tool_calls'}
+E         
+E         Extra items in the left set:
+E         'spend_reservations'
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:223: AssertionError
+_______________ test_pg_the_runtime_role_can_switch_the_stop_on ________________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55432 options='-c search_path=t_428f9698c5aa'", {'runtime': 'ru_ef316735cd', 'portal': 'po_021bddd4d2', 'purge': 'pu_459bd86c72', 'stranger': 'st_2a46c5b1e3'})
+
+    def test_pg_the_runtime_role_can_switch_the_stop_on(identities):
+        """The emergency stop works with the runtime identity alone. Must stay true after step B."""
+        dsn, names = identities
+        assert _stop_is_on(dsn) is False
+        with _as(dsn, names["runtime"]) as db:
+>           db.execute('UPDATE kill_switch SET "on" = true, "by" = %s, ts = now() WHERE id = 1', ("t",))
+
+tests/test_grants_negative_roles.py:515: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f5049ec45f0>
+query = 'UPDATE kill_switch SET "on" = true, "by" = %s, ts = now() WHERE id = 1'
+params = ('t',), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table kill_switch
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+_ test_step_b_the_grant_map_gives_the_runtime_role_no_way_to_switch_the_stop_off _
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+[XPASS(strict)] step B not built: stop and reset are one row the runtime role may UPDATE (migrate.py:55)
+__________ test_pg_step_b_the_runtime_role_cannot_switch_the_stop_off __________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+[XPASS(strict)] step B not built: stop and reset are one row the runtime role may UPDATE (migrate.py:55)
+_____________________ test_public_signatures_are_unchanged _____________________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_public_signatures_are_unchanged():
+        import inspect
+    
+>       assert str(inspect.signature(R.redact)) == (
+            "(text: 'str', *, mapping: 'dict[str, str] | None' = None, near: 'tuple[str, ...]' = (), "
+            "_sweep_copies: 'bool' = True, _cache: 'dict | None' = None) -> 'RedactionResult'"
+        )
+E       assert "(text: 'str'...actionResult'" == "(text: 'str'...actionResult'"
+E         
+E         Skipping 136 identical leading characters in diff, use -v to show
+E         - ne' = None) -> 'RedactionResult'
+E         + ne' = None, _deadline: 'float | None' = None) -> 'RedactionResult'
+
+tests/test_redact_context_after_sweep.py:266: AssertionError
+_______________________ test_the_old_stage_word_is_gone ________________________
+[gw0] linux -- Python 3.13.18 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/bin/python
+
+    def test_the_old_stage_word_is_gone():
+        found, _ = _scan()
+>       assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
+E       AssertionError: the old stage word is still used as a stage:
+E         tests/test_runmap_enforce_map.py:231 [quoted literal] ({"<SECRET_1>": "dev"}, "x dev y"),
+E       assert not ['tests/test_runmap_enforce_map.py:231 [quoted literal] ({"<SECRET_1>": "dev"}, "x dev y"),']
+
+tests/test_stage_names.py:543: AssertionError
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[postgres]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres]
+FAILED tests/test_grants_negative_roles.py::test_the_identities_are_the_ones_this_file_knows
+FAILED tests/test_grants_negative_roles.py::test_every_write_privilege_is_on_the_reviewed_list
+FAILED tests/test_grants_negative_roles.py::test_only_the_runtime_role_holds_anything_on_the_stop_table
+FAILED tests/test_grants_negative_roles.py::test_delete_is_held_only_on_the_outbox_and_the_purged_evidence
+FAILED tests/test_grants_negative_roles.py::test_the_purge_role_holds_delete_only_and_no_whole_table_read
+FAILED tests/test_grants_negative_roles.py::test_pg_the_runtime_role_can_switch_the_stop_on
+FAILED tests/test_grants_negative_roles.py::test_step_b_the_grant_map_gives_the_runtime_role_no_way_to_switch_the_stop_off
+FAILED tests/test_grants_negative_roles.py::test_pg_step_b_the_runtime_role_cannot_switch_the_stop_off
+FAILED tests/test_redact_context_after_sweep.py::test_public_signatures_are_unchanged
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+15 failed, 13655 passed, 25 skipped, 21 xfailed in 309.24s (0:05:09)
+exit=1

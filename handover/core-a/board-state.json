@@ -271,11 +271,11 @@
   {
    "item": "O15",
    "what": "fix the n8n template from the lead's run in a real n8n 2.47.7 (8 fixes: Set node version, webhook id, secret only through a crypto credential, status field, retry numbers, guard answers the caller, publish step, guard before hash)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "inputs/lead-evidence-n8n-1.md (lead), raw/n8n-template-tests-2.log (not yet)",
+   "state": "DONE in the files; NOT re-imported into any n8n",
+   "percent": 100,
+   "evidence file": "n8n/ (3 files), tests/triggers/test_n8n_template.py, raw/n8n-template-tests-2.log",
    "tries": 1,
-   "reason": "ORDER 015. My outline was WRONG in 4 places a real n8n showed: Set nodes built nothing, the webhook URL answered 404, the secret way did not work on default settings, the status field name was wrong"
+   "reason": "all 8 fixes applied from the lead's evidence file; template checks 150 passed (with 2 rule files). Fix 6 (answer the caller when the guard stops) is written from memory: the evidence shows no working shape for it. 16 UNVERIFIED marks remain. The evidence file differs from the ORDER 015 summary in 6 points, see LEAD ACTIONS"
   },
   {
    "item": "B4-fuzz",
@@ -325,11 +325,11 @@
   {
    "item": "B9-review",
    "what": "hostile re-read of all my own code with egm:egm-design, one round, and fix",
-   "state": "QUEUED",
-   "percent": 0,
+   "state": "RUNNING",
+   "percent": 5,
    "evidence file": "",
-   "tries": 0,
-   "reason": "starts when one of the 6 running agents ends (6 run now)"
+   "tries": 1,
+   "reason": "backlog 9: one hostile design reviewer (egm:egm-design) reads endpoint.py, worker.py, server.py, crash.py; started in the same batch the n8n agent returned in"
   }
  ],
  "agents": [
@@ -625,12 +625,12 @@
    "model": "fable",
    "what exactly it is doing": "applies the 8 observed fixes to the two workflow files, the README and the template checks",
    "started UTC": "06:13",
-   "expected end": "about 20 min after start",
-   "percent": 5,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "ORDER 015; 2 agents run (trial integration, n8n fix)"
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -683,6 +683,19 @@
    "what exactly it is doing": "writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree",
    "expected end": "about 35 min after start",
    "reason": "backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line"
+  },
+  {
+   "id": "b9-design",
+   "role": "reviewer",
+   "model": "fable",
+   "what exactly it is doing": "egm:egm-design, hostile read of my 4 source files against the ticket invariants and the lead's earlier review",
+   "started UTC": "06:20",
+   "expected end": "about 15 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of 1",
+   "retries so far": 0,
+   "reason": "backlog 9; 6 agents run"
   }
  ],
  "tests": [
@@ -929,6 +942,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "ORDER 015 done in the files. What your evidence file says differently from the order's summary (so you can decide): (a) the Crypto node version 2 with a credential ran only in a small test workflow, never in the full chain; (b) the secret IS in plain text in a decrypted credential export and in the import file; (c) the retry caps rest on one run; (d) import drops the top-level notes key; (e) no observed shape exists for 'answer the caller' (fix 6), mine is unverified; (f) I added a second answer node (202 to the caller when the guard passes) because without it the caller would hang for the whole 503 loop: say CHANGE to remove it. The edited files need a new import on your n8n",
   "STANDING ORDER 016 read at 06:16Z: WAITING-LEAD dropped, 6 agents running, backlog items 4, 5, 6, 7 started; 3 needs no work (core-b has both scripts); 8 is mine now; 9 queued",
   "ORDER 015: template fix in work; the fixed files need a second import on your n8n before a client sees them",
   "Item O14-3: core-b's answer file is the DRAFT 1 answer (whole secret store); I wait for the bound reader",
