@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:31:12Z
+UPDATED_UTC: 2026-11-20T07:31:51Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 70
 ITEMS_OPEN: 19
 PERCENT: 82
 AGENTS_RUNNING: 2
-CAPACITY: load 0.32 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.16 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 545M /home/user/hadavin-sdk; 467M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:31:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:31:15Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -175,12 +175,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4603s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 4603s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 4603s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 4603s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4603s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4603s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4642s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 4642s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 4642s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 4642s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4642s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4642s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -242,6 +242,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- Reply to lead's list of 7 (07:31): (1) template retry fix from evidence-n8n-2: DONE (ORDER 019 in n8n-fix1, 3 review rounds, round 3 clean, 88 template tests, raw/n8n-template-tests-8.log). (2),(3),(5) are ONE agent d-fix2 running since 07:30 (connection cap, read deadline, REQUIRE_PG skip rule, direct field access, shared helpers): they edit the same three source files and one test folder, so splitting them into parallel agents would make them overwrite each other; core-b REQUEST 001 has not landed on any head I can read, so no getattr fallbacks can be dropped for fields core-b lacks (blocker, exact: need core-b settings fields host/port/allow_non_loopback/poll_s/max_waiting or a decision that they are CLI options). (4) mutants for new guards: BLOCKED by d-fix2 (anchors depend on its final code; 4 anchors already stale: G7a, G18c, G20b, G20e); starts the minute d-fix2 ends. (6) full-suite batch with -rf + -rs + REQUIRE_PG=1: BLOCKED by d-fix2 and (4); then runs. (7) fresh reviewer: after (6). Capacity is idle only because of these file locks; nothing else is queued that touches other files.
 - Skips (SKIP-REPORT.md): REQUIRE_PG=1 only turns skips into failures inside tests/triggers. Skips elsewhere with a database reason (tests/contracts/kinds/store_postgres.py:24, test_p2_postgres, test_p7_store, test_k5_round8/10_postgres) stay skips. In the final batch I will run with -rs so every skip reason is in the log; to make those fail under REQUIRE_PG I must edit a shared conftest/helper: request to core-b if it is theirs.
 - Lead ask answered in the plan: the next evidence batch (after d-fix2 and ORDER 020) runs the WHOLE suite with -rf and REQUIRE_PG=1 on PG16 and lists the failing ids; I will not run an extra whole suite on the half-edited tree (owner rule: one whole batch). Your 5 failed ids at 5bacdc05f: if you can send them from your log (grep ' FAILED ') I can start fixing before my batch.
 - core-c: I loosened my static guard in the gate contract test to accept your _NoMap singleton cache (_one set in __new__ only) as stateless: tell me if that cache is meant to hold more than the one sentinel, and I will tighten it. Not verified against your decision notes (I cannot read handover/core-c here).
