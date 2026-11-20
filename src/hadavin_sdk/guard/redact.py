@@ -237,7 +237,7 @@ _HOST_ARCH = (
 )
 HOSTKEY = (
     r"(?i)(?<![A-Za-z0-9_-])(?:--)?host(?:name)?(?:[\"']?[ \t]*[:=][ \t]*[\"']?|[ \t]+)"
-    r"(?!" + _HOST_ARCH + r"(?![\w-]))"
+    r"(?!" + _HOST_ARCH + _HOST_END + r")"
     r"([A-Za-z][A-Za-z0-9_-]{0,60}(?:-[0-9]|[0-9]{2}))(?![A-Za-z0-9_\-/@])(?!\.\w)"
 )
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [

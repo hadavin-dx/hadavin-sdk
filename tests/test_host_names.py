@@ -153,6 +153,10 @@ def test_host_key_glued_to_a_non_ascii_word_character():
     assert red("\u4f8bhost=db01-7") == "\u4f8bhost=<HOSTNAME_1>", "TB-4.13 HOSTKEY glued before"
     assert red("host=db01-7\u4f8b") == "host=<HOSTNAME_1>\u4f8b", "TB-4.13 HOSTKEY glued after"
     assert red("host=db01-7") == "host=<HOSTNAME_1>", "TB-4.13 HOSTKEY plain"
+    for cpu in ("x86", "arm64", "x86_64"):
+        assert red(f"host={cpu}\u4f8b") == f"host={cpu}\u4f8b", (
+            f"TB-4.13 HOSTKEY CPU name {cpu} stays kept before a CJK letter"
+        )
 
 
 @pytest.mark.xfail(
