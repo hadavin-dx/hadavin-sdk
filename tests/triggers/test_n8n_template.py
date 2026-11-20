@@ -7,7 +7,7 @@ the signing value in a credential and nowhere else, the status read from error.s
 the guard before the hash node and the sign node, a 502, 503, 504 or missing status leading through a Wait
 back to a new timestamp and a new signature, and 400, 401, 409, 413 stopping at once.
 Round 1 of the review added: the key text with an event name and a rerun value, the webhook authentication, the
-busy rounds tied to the stuck limit, the statuses 520 to 524, and the no-status cases that the second record
+busy rounds tied to the stuck limit, the statuses 520 to 524 (never run) and the state check (never run), and the no-status cases that the second record
 (handover/core-a/inputs/evidence-n8n-2.md) showed in a real n8n.
 They also pin the state check that was added after the run: a 202 or 200 answer is not the end of the workflow;
 it asks again, signed anew, until the state says how the run ended, and the state names it sorts by are
@@ -59,6 +59,8 @@ OPEN_NODES = {
         "Stop: id or text missing",
         "Answer caller: taken",
         "Hash business id",
+        "Build request",
+        "Stamp time",
         "Sign",
         "Send to Hadavin",
         "Busy and rounds left?",
@@ -73,7 +75,7 @@ OPEN_NODES = {
         "Stop: run did not end well",
         "Stop: still running",
     },
-    ERROR: set(),
+    ERROR: {"Notify placeholder"},
 }
 # What nobody has run, as the README's status part must name it.
 NOT_RUN = (

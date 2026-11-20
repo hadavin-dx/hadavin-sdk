@@ -123,7 +123,7 @@
         },
         "includeOtherFields": false
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends so far that were not acknowledged (answered 502, 503, 504 or 520 to 524, or not answered at all)."
+      "notes": "UNVERIFIED: the input path of this node. Its input now comes through 'Answer caller: taken' and the changed 'Hash business id' node, and nobody has run that chain. SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends so far that were not acknowledged (answered 502, 503, 504 or 520 to 524, or not answered at all)."
     },
     {
       "name": "Stamp time",
@@ -145,7 +145,7 @@
         },
         "includeOtherFields": true
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held body, round and a new ts in every round. Keep typeVersion 3.4 (with 3 no ts is added). ts = the time NOW in whole Unix seconds, as text. This node is the entry of the loop: the first send and every later round pass through it, so each send gets a new ts and, in the next node, a new signature over the SAME body."
+      "notes": "UNVERIFIED: the input path of this node: its input now comes through the state check and the second way into the wait node, which nobody has run. SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held body, round and a new ts in every round. Keep typeVersion 3.4 (with 3 no ts is added). ts = the time NOW in whole Unix seconds, as text. This node is the entry of the loop: the first send and every later round pass through it, so each send gets a new ts and, in the next node, a new signature over the SAME body."
     },
     {
       "name": "Sign",
@@ -289,7 +289,7 @@
       ],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "Hadavin trigger: a request was refused (400, 401, 409, 413, 500, a redirect or another status that is not tried again), or the busy rounds were used up (502, 503, 504, 520 to 524 or no answer in every round). If this happened at the FIRST send: not acknowledged; send again with the same key; it may already be running. If it happened while asking about a run that Hadavin had ALREADY acknowledged (a state check): that run exists; look at it in Hadavin and do not send the event with a new key before its state is known."
+        "errorMessage": "Hadavin trigger: a request was refused (400, 401, 409, 413, 500, a redirect or another status that is not tried again), or the busy rounds were used up (502, 503, 504, 520 to 524 or no answer in every round). If this happened at the FIRST send: not acknowledged; send again with the same key; it may already be running. If it happened while asking about a run that Hadavin had ALREADY acknowledged (a state check): that run exists; ask the Hadavin operator to look at it (no lookup tool exists yet in this tree) and do not send the event with a new key before its state is known."
       },
       "notes": "UNVERIFIED: the message text as it stands now (reworded twice after the run), and that this node is reached after rounds of 502, 504, 520 to 524 or no answer. SEEN IN n8n 2.47.7: the node with the earliest message text failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. This node is reached from two places: a failed FIRST send, and a failed state check (the same failure branch serves both). The message says what to do in each case. The message must never hold the body, a header value or the signing value."
     },
@@ -424,7 +424,7 @@
       ],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "={{ 'Hadavin trigger: ' + (['NEEDS_PERSON', 'DENIED', 'REJECTED', 'EXPIRED', 'ROLLED_BACK', 'STOPPED'].includes(String($json.state ?? '')) ? 'the run ended in state ' + String($json.state ?? '') + '. The work was not done or not completed. The answer holds no reason: a person reads it in the stored run in Hadavin.' : 'the answer held no state that this workflow knows. Treat the work as not done.') + ' Run id: ' + String($json.run_id ?? 'not in the answer') + '. This key is never run again: after a person has looked, send the event with a NEW key to redo it.' }}"
+        "errorMessage": "={{ 'Hadavin trigger: ' + (['NEEDS_PERSON', 'DENIED', 'REJECTED', 'EXPIRED', 'ROLLED_BACK', 'STOPPED'].includes(String($json.state ?? '')) ? 'the run ended in state ' + String($json.state ?? '') + '. The work was not done or not completed. The answer holds no reason, and no lookup tool exists yet in this tree: ask the Hadavin operator, giving the run id below.' : 'the answer held no state that this workflow knows. Treat the work as not done.') + ' Run id: ' + String($json.run_id ?? 'not in the answer') + '. This key is never run again: after a person has looked, send the event with a NEW key to redo it.' }}"
       },
       "notes": "UNVERIFIED: this whole node in this place, and that the errorMessage field takes an expression (in the run the message was a fixed text); it was added after the run and nobody has run it. SEEN IN n8n 2.47.7: a Stop and Error node of this version with a fixed message failed the execution and the error workflow ran. The message names the state and the run id and nothing else from the answer. It cannot name a reason: Hadavin's answer holds only run_id and state. The six states named in the expression are the ends that are not a success: NEEDS_PERSON (the run stopped and waits for a person; a run cut off by a crash or a forced kill ends here with the reason 'interrupted', and from this workflow it looks like every other NEEDS_PERSON), DENIED (a rule refused the plan), REJECTED (a person said no), EXPIRED (nobody answered the approval in time), ROLLED_BACK (the action was carried out, the check failed, it was undone), STOPPED (the stop switch ended it). The message must never hold the body, a header value or the signing value."
     },
@@ -438,7 +438,7 @@
       ],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "Hadavin trigger: the run was still shown as running after 45 checks, about 45 minutes. Either it runs very long, or it was cut off and Hadavin's clean-up job (the tick) has not ended it: check that the tick runs. A person must look at the run in Hadavin. Do not send the event with a new key before the state of this run is known."
+        "errorMessage": "Hadavin trigger: the run was still shown as running after 45 checks, about 45 minutes. Either it runs very long, or it was cut off and Hadavin's clean-up job (the tick) has not ended it: check that the tick runs. A person must have the run looked at: ask the Hadavin operator (no lookup tool exists yet in this tree). Do not send the event with a new key before the state of this run is known."
       },
       "notes": "UNVERIFIED: this node in this place; it was added after the run. SEEN IN n8n 2.47.7: a Stop and Error node of this version with a fixed message failed the execution and the error workflow ran. The numbers in the message (45 checks, about 45 minutes) are the placeholders of 'Checks left?' and 'Wait before next round': change the text when you change them. The message must never hold the body, a header value or the signing value."
     }
