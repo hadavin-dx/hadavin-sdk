@@ -1,0 +1,1724 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 17%]
+...........................................................F............ [ 20%]
+........F............................................................... [ 23%]
+........................................................................ [ 27%]
+......F.......FFFF.................................xx................... [ 30%]
+........................................................................ [ 34%]
+..........................E..................................F........EF [ 37%]
+.....F.......F........................s..s.s............................ [ 40%]
+..................................F.F....F........s.s..s......s..s...... [ 44%]
+...............F..F....F....F........................................... [ 47%]
+........................................................................ [ 51%]
+...................................F.................................... [ 54%]
+..............F.......F................................................. [ 57%]
+........................................................s............... [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 78%]
+........................................................................ [ 81%]
+........................s............................................... [ 85%]
+...................s.................................................... [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 95%]
+.........................F...................................F.......... [ 98%]
+........................                                                 [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_the_purge_login_is_denied[SELECT run_id FROM spend_reservations] _
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    @pytest.fixture(name="w")
+    def reservation_world():
+        world = World()
+        with psycopg.connect(world.dsn, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(world.schema)))
+            for r in world.roles:
+                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+        try:
+>           world.migrate()
+
+tests/test_spend_reservations_pg.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_stop_state_roles.py:94: in migrate
+    return migrate(self.scoped, **{**roles, **kw})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=sb_s_7b99337b13'"
+runtime_role = 'sb_rt_7b99337b13', portal_role = 'sb_po_7b99337b13'
+purge_role = 'sb_pu_7b99337b13', reset_role = 'sb_rs_7b99337b13'
+release_role = None, no_roles = False, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+            raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+        if not named and not no_roles:
+            raise ConfigError(
+                "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
+                "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+                "schema without checking any role (the first install, before the roles exist)"
+            )
+        applied = []
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+            _ensure_ledger(db)
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := sorted(done - {p.stem for p in files}):
+                raise ConfigError(
+                    f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                    "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                    "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                    "run migrate again"
+                )
+            texts = {
+                p: _read_migration(p) for p in files
+            }  # each file read ONCE: what is hashed is what runs
+            _check_released({p: t[1] for p, t in texts.items()})
+            if reset_draft is not None:
+                _reset_draft(db, reset_draft, files)
+                done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+            for path in files:
+                if path.stem in done:
+                    continue
+                text, digest = texts[path]
+                db.execute(text)  # a file shipped in this package
+                db.execute(
+                    "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                    (path.stem, digest),
+                )
+                applied.append(path.stem)
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal, purge, reset and release roles must not be members of each other"
+                        )
+            if unmapped := _unmapped_functions(db):
+                raise ConfigError(
+                    "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
+                    + ", ".join(unmapped[:20])
+                )
+            if problems := _owner_problems(db, named):
+                raise ConfigError("; ".join(problems))
+            if (
+                named
+                and db.execute(
+                    "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
+                    "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                    (RELEASE_FUNCTION.split("(")[0],),
+                ).fetchone()[0]
+            ):
+                owner_note = (
+                    "the hadavin_* functions are owned by a superuser: allowed (test servers and some managed "
+                    "services), but a superuser owner is a wider key than a plain owner role"
+                )
+                _LOG.warning("migrate: %s", owner_note)
+                if notes is not None:
+                    notes.append(owner_note)
+            _seed_limits(db)
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+                    raise ConfigError(
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if reset_role:
+                _apply_grants(db, reset_role, lambda g: g.reset)
+                if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):
+                    raise ConfigError(
+                        "the reset role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if release_role:
+                _apply_grants(db, release_role, lambda g: g.release)
+                if bad := effective_problems(db, release_role, lambda g: g.release if g else ""):
+                    raise ConfigError(
+                        "the release role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            _pin_money_guard(db)
+            _apply_release_function(db, release_role, [r for r in named if r != release_role])
+            _apply_money_functions(
+                db,
+                {
+                    "runtime": runtime_role,
+                    "purge": purge_role,
+                    "release": release_role,
+                    "reset": reset_role,
+                    "portal": portal_role,
+                },
+            )
+            if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
+                raise ConfigError(
+                    "roles not named in this command can run the money functions, or will for future functions: "
+                    + "; ".join(extra_exec[:20])
+                )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+            if any(roles) and (writers := _money_table_writers(db)):
+>               raise ConfigError(
+                    "a role other than the owner can write a money table (only the definer functions may): "
+                    + "; ".join(writers[:20])
+                )
+E               hadavin_sdk.errors.ConfigError: a role other than the owner can write a money table (only the definer functions may): role sb_member_417a62ca1c can DELETE spend; role sb_member_417a62ca1c can INSERT spend; role sb_member_417a62ca1c can TRUNCATE spend; role sb_member_417a62ca1c can UPDATE spend; role sb_member_417a62ca1c can DELETE spend_month; role sb_member_417a62ca1c can INSERT spend_month; role sb_member_417a62ca1c can TRUNCATE spend_month; role sb_member_417a62ca1c can UPDATE spend_month; role sb_member_417a62ca1c can DELETE spend_reservations; role sb_member_417a62ca1c can INSERT spend_reservations; role sb_member_417a62ca1c can TRUNCATE spend_reservations; role sb_member_417a62ca1c can UPDATE spend_reservations
+
+src/hadavin_sdk/store/migrate.py:1387: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ ERROR at setup of test_the_portal_and_the_reset_login_hold_no_right_at_all[SELECT 1 FROM spend_reservations-reset] _
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    @pytest.fixture(name="w")
+    def reservation_world():
+        world = World()
+        with psycopg.connect(world.dsn, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(world.schema)))
+            for r in world.roles:
+                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+        try:
+>           world.migrate()
+
+tests/test_spend_reservations_pg.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_stop_state_roles.py:94: in migrate
+    return migrate(self.scoped, **{**roles, **kw})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=sb_s_2ed4409bbf'"
+runtime_role = 'sb_rt_2ed4409bbf', portal_role = 'sb_po_2ed4409bbf'
+purge_role = 'sb_pu_2ed4409bbf', reset_role = 'sb_rs_2ed4409bbf'
+release_role = None, no_roles = False, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+            raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+        if not named and not no_roles:
+            raise ConfigError(
+                "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
+                "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+                "schema without checking any role (the first install, before the roles exist)"
+            )
+        applied = []
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+            _ensure_ledger(db)
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := sorted(done - {p.stem for p in files}):
+                raise ConfigError(
+                    f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                    "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                    "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                    "run migrate again"
+                )
+            texts = {
+                p: _read_migration(p) for p in files
+            }  # each file read ONCE: what is hashed is what runs
+            _check_released({p: t[1] for p, t in texts.items()})
+            if reset_draft is not None:
+                _reset_draft(db, reset_draft, files)
+                done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+            for path in files:
+                if path.stem in done:
+                    continue
+                text, digest = texts[path]
+                db.execute(text)  # a file shipped in this package
+                db.execute(
+                    "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                    (path.stem, digest),
+                )
+                applied.append(path.stem)
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal, purge, reset and release roles must not be members of each other"
+                        )
+            if unmapped := _unmapped_functions(db):
+                raise ConfigError(
+                    "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
+                    + ", ".join(unmapped[:20])
+                )
+            if problems := _owner_problems(db, named):
+                raise ConfigError("; ".join(problems))
+            if (
+                named
+                and db.execute(
+                    "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
+                    "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                    (RELEASE_FUNCTION.split("(")[0],),
+                ).fetchone()[0]
+            ):
+                owner_note = (
+                    "the hadavin_* functions are owned by a superuser: allowed (test servers and some managed "
+                    "services), but a superuser owner is a wider key than a plain owner role"
+                )
+                _LOG.warning("migrate: %s", owner_note)
+                if notes is not None:
+                    notes.append(owner_note)
+            _seed_limits(db)
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+                    raise ConfigError(
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if reset_role:
+                _apply_grants(db, reset_role, lambda g: g.reset)
+                if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):
+                    raise ConfigError(
+                        "the reset role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if release_role:
+                _apply_grants(db, release_role, lambda g: g.release)
+                if bad := effective_problems(db, release_role, lambda g: g.release if g else ""):
+                    raise ConfigError(
+                        "the release role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            _pin_money_guard(db)
+            _apply_release_function(db, release_role, [r for r in named if r != release_role])
+            _apply_money_functions(
+                db,
+                {
+                    "runtime": runtime_role,
+                    "purge": purge_role,
+                    "release": release_role,
+                    "reset": reset_role,
+                    "portal": portal_role,
+                },
+            )
+            if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
+                raise ConfigError(
+                    "roles not named in this command can run the money functions, or will for future functions: "
+                    + "; ".join(extra_exec[:20])
+                )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+            if any(roles) and (writers := _money_table_writers(db)):
+>               raise ConfigError(
+                    "a role other than the owner can write a money table (only the definer functions may): "
+                    + "; ".join(writers[:20])
+                )
+E               hadavin_sdk.errors.ConfigError: a role other than the owner can write a money table (only the definer functions may): role sb_wa_32f831b639 can DELETE spend; role sb_wa_32f831b639 can INSERT spend; role sb_wa_32f831b639 can UPDATE spend; role sb_wa_32f831b639 can DELETE spend_month; role sb_wa_32f831b639 can INSERT spend_month; role sb_wa_32f831b639 can UPDATE spend_month; role sb_wa_32f831b639 can DELETE spend_reservations; role sb_wa_32f831b639 can INSERT spend_reservations; role sb_wa_32f831b639 can UPDATE spend_reservations
+
+src/hadavin_sdk/store/migrate.py:1387: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=================================== FAILURES ===================================
+____ test_the_battery_kills_every_mutant[f_reserve_p_day_cap_check_removed] ____
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'f_reserve_p_day_cap_check_removed'
+scratch = <tests.test_stop_state_roles.World object at 0x7f8654735de0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_battery_kills_every_m29')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae00bb0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: (IF )[^;]*?( THEN\s+RAISE EXCEPTION 'invalid argument: p_day_cap')
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+___ test_the_battery_kills_every_mutant[f_reserve_p_month_cap_check_removed] ___
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'f_reserve_p_month_cap_check_removed'
+scratch = <tests.test_stop_state_roles.World object at 0x7f86534ff5f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_battery_kills_every_m30')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae032a0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: (IF )[^;]*?( THEN\s+RAISE EXCEPTION 'invalid argument: p_month_cap')
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+_______ test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner ________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564dd06570>
+
+    def test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner(w):
+        owner = w.run("SELECT current_user")[0][0]
+        member = w.new_role("mo", "NOLOGIN NOINHERIT")
+        w.grant("GRANT {} TO {}", owner, member)
+        try:
+>           with pytest.raises(
+                ConfigError, match="reset role holds more than the grant map.*member of"
+            ):
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'reset role holds more than the grant map.*member of'
+E             Actual message: 'sb_mo_76c1fc45b3 is a member of postgres, the owner of the hadavin_* functions: remove the membership'
+
+tests/test_stop_state_roles.py:667: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+___________ test_the_battery_kills_every_mutant[i_day_cap_weakened] ____________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_day_cap_weakened'
+scratch = <tests.test_stop_state_roles.World object at 0x7f86534ff120>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_battery_kills_every_m46')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae00d00>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: s\.usd < p_day_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+__________ test_the_battery_kills_every_mutant[i_month_cap_weakened] ___________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_month_cap_weakened'
+scratch = <tests.test_stop_state_roles.World object at 0x7f8654735de0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_battery_kills_every_m47')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f86537c3700>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: m\.usd < p_month_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+_____ test_the_battery_kills_every_mutant[i_sum_check_dropped_on_the_day] ______
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_sum_check_dropped_on_the_day'
+scratch = <tests.test_stop_state_roles.World object at 0x7f86534ffa10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_battery_kills_every_m48')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae00ec0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve:  AND s\.usd \+ p_usd <= p_day_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+___________ test_the_battery_kills_every_mutant[i_month_cap_ignored] ___________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_month_cap_ignored'
+scratch = <tests.test_stop_state_roles.World object at 0x7f86536241b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_battery_kills_every_m49')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae01a20>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: AND m\.usd < p_month_cap AND m\.usd \+ p_usd <= p_month_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+__________ test_s2_migrate_refuses_a_member_of_the_reset_role[LOGIN] ___________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd63490>
+options = 'LOGIN'
+
+    @pytest.mark.parametrize("options", ["LOGIN NOINHERIT", "LOGIN"])
+    def test_s2_migrate_refuses_a_member_of_the_reset_role(w, options):
+        member = w.new_role("mb", options)
+        w.grant("GRANT {} TO {}", w.reset, member)
+>       _refused_naming(w, member)
+
+tests/test_stop_state_roles.py:1216: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd63490>
+role = 'sb_mb_bf98c33035', call = None
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_mb_bf98c33035 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_mb_bf98c33035 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed __
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd63b70>
+
+    def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(w):
+        """The check reads this schema's grants only. A role with nothing here, a member of the (superuser) owner and
+        a member of a predefined role that can write every table are outside the guarantee and never refuse a migrate.
+        (Before 2026-11-20 the member of pg_write_all_data and the member of the owner were refused.)"""
+        owner = w.run("SELECT current_user")[0][0]
+        w.new_role("st")
+        of_owner, writer = w.new_role("mw", "LOGIN NOINHERIT"), w.new_role("wa")
+        w.grant("GRANT {} TO {}", owner, of_owner)
+        w.grant("GRANT pg_write_all_data TO {}", writer)
+        try:
+            assert _who(w.scoped, w.reset) == []
+>           assert w.migrate() == []
+                   ^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_stop_state_roles.py:94: in migrate
+    return migrate(self.scoped, **{**roles, **kw})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=sb_s_32f831b639'"
+runtime_role = 'sb_rt_32f831b639', portal_role = 'sb_po_32f831b639'
+purge_role = 'sb_pu_32f831b639', reset_role = 'sb_rs_32f831b639'
+release_role = None, no_roles = False, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+            raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+        if not named and not no_roles:
+            raise ConfigError(
+                "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
+                "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+                "schema without checking any role (the first install, before the roles exist)"
+            )
+        applied = []
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+            _ensure_ledger(db)
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := sorted(done - {p.stem for p in files}):
+                raise ConfigError(
+                    f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                    "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                    "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                    "run migrate again"
+                )
+            texts = {
+                p: _read_migration(p) for p in files
+            }  # each file read ONCE: what is hashed is what runs
+            _check_released({p: t[1] for p, t in texts.items()})
+            if reset_draft is not None:
+                _reset_draft(db, reset_draft, files)
+                done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+            for path in files:
+                if path.stem in done:
+                    continue
+                text, digest = texts[path]
+                db.execute(text)  # a file shipped in this package
+                db.execute(
+                    "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                    (path.stem, digest),
+                )
+                applied.append(path.stem)
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal, purge, reset and release roles must not be members of each other"
+                        )
+            if unmapped := _unmapped_functions(db):
+                raise ConfigError(
+                    "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
+                    + ", ".join(unmapped[:20])
+                )
+            if problems := _owner_problems(db, named):
+                raise ConfigError("; ".join(problems))
+            if (
+                named
+                and db.execute(
+                    "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
+                    "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                    (RELEASE_FUNCTION.split("(")[0],),
+                ).fetchone()[0]
+            ):
+                owner_note = (
+                    "the hadavin_* functions are owned by a superuser: allowed (test servers and some managed "
+                    "services), but a superuser owner is a wider key than a plain owner role"
+                )
+                _LOG.warning("migrate: %s", owner_note)
+                if notes is not None:
+                    notes.append(owner_note)
+            _seed_limits(db)
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+                    raise ConfigError(
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if reset_role:
+                _apply_grants(db, reset_role, lambda g: g.reset)
+                if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):
+                    raise ConfigError(
+                        "the reset role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if release_role:
+                _apply_grants(db, release_role, lambda g: g.release)
+                if bad := effective_problems(db, release_role, lambda g: g.release if g else ""):
+                    raise ConfigError(
+                        "the release role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            _pin_money_guard(db)
+            _apply_release_function(db, release_role, [r for r in named if r != release_role])
+            _apply_money_functions(
+                db,
+                {
+                    "runtime": runtime_role,
+                    "purge": purge_role,
+                    "release": release_role,
+                    "reset": reset_role,
+                    "portal": portal_role,
+                },
+            )
+            if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
+                raise ConfigError(
+                    "roles not named in this command can run the money functions, or will for future functions: "
+                    + "; ".join(extra_exec[:20])
+                )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+            if any(roles) and (writers := _money_table_writers(db)):
+>               raise ConfigError(
+                    "a role other than the owner can write a money table (only the definer functions may): "
+                    + "; ".join(writers[:20])
+                )
+E               hadavin_sdk.errors.ConfigError: a role other than the owner can write a money table (only the definer functions may): role sb_wa_32f831b639 can DELETE spend; role sb_wa_32f831b639 can INSERT spend; role sb_wa_32f831b639 can UPDATE spend; role sb_wa_32f831b639 can DELETE spend_month; role sb_wa_32f831b639 can INSERT spend_month; role sb_wa_32f831b639 can UPDATE spend_month; role sb_wa_32f831b639 can DELETE spend_reservations; role sb_wa_32f831b639 can INSERT spend_reservations; role sb_wa_32f831b639 can UPDATE spend_reservations
+
+src/hadavin_sdk/store/migrate.py:1387: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer _
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd63c20>
+
+    def test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer(
+        w,
+    ):
+        two, _owner, rt2, rs2 = _second_schema(w)
+        stray, member = w.new_role("x5", "NOLOGIN"), w.new_role("y5")
+        with psycopg.connect(two, autocommit=True) as db:
+            db.execute(sql.SQL("GRANT UPDATE ON kill_switch TO {}").format(sql.Identifier(stray)))
+        w.grant("GRANT {} TO {}", rs2, member)
+        assert _who(two, rs2) == sorted([stray, member])
+        assert _who(w.scoped, w.reset) == []  # the other schema's roles are not this schema's business
+        assert w.migrate() == []
+>       with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_y5_a80b379c46 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_y5_a80b379c46 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1293: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+________________ test_s2_a_grant_to_public_is_listed_as_public _________________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd622b0>
+
+    def test_s2_a_grant_to_public_is_listed_as_public(w):
+        w.do("GRANT INSERT ON kill_switch_clears TO PUBLIC")
+        assert _who(w.scoped, w.reset) == ["PUBLIC"]
+>       names = _refused_naming(w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd622b0>
+role = 'PUBLIC'
+call = <function test_s2_a_grant_to_public_is_listed_as_public.<locals>.<lambda> at 0x7f564cd50f40>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_rt_18db7e6e15 (not named in this command) can run hadavin_reserve_spend(text, text, date, numeric, text); role sb_rt_18db7e6e15 (not named in this command) can run hadavin_settle_spend(text, numeric, text); role sb_rt_18db7e6e15 (not named in this command) can run hadavin_expire_spend_reservations(integer); role sb_pu_18db7e6e15 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz); role sb_rt_18db7e6e15 (not named in this command) can run hadavin_add_spend(text, date, numeric); role sb_rt_18db7e6e15 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_spend] _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'trigger_removed_spend'
+scratch = <tests.test_stop_state_roles.World object at 0x7f8654735de0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_attack_battery_kills_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f86569dc830>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_path, monkeypatch):
+        mutate, expect = MUTANTS[name]
+        changed = _world_with(tmp_path, monkeypatch, mutate)
+        assert changed or name == "control", (
+            "the mutation did not change the SQL: it would prove nothing"
+        )
+        w = scratch
+        w.migrate(release_role=w.release)
+        if expect == "release breaks":
+            rt = w.store(w.runtime)
+            rid = _reserve(rt, "1.00")
+            _expire(w, rid)
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                _release(w)
+            return
+        opened, settled = seed(w)
+        # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+>       went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_guard_mutants.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_guard_pg.py:99: in lowering_attacks
+    db.execute(stmt, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f8656f8aa80>
+query = 'UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s'
+params = ('agent-a', datetime.date(2025, 1, 31)), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "spend" violates check constraint "spend_usd_range"
+E           DETAIL:  Failing row contains (agent-a, 2025-01-31, -0.5).
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: CheckViolation
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_all_counters] _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'trigger_removed_all_counters'
+scratch = <tests.test_stop_state_roles.World object at 0x7f86534ff120>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_attack_battery_kills_2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae01010>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_path, monkeypatch):
+        mutate, expect = MUTANTS[name]
+        changed = _world_with(tmp_path, monkeypatch, mutate)
+        assert changed or name == "control", (
+            "the mutation did not change the SQL: it would prove nothing"
+        )
+        w = scratch
+        w.migrate(release_role=w.release)
+        if expect == "release breaks":
+            rt = w.store(w.runtime)
+            rid = _reserve(rt, "1.00")
+            _expire(w, rid)
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                _release(w)
+            return
+        opened, settled = seed(w)
+        # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+>       went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_guard_mutants.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_guard_pg.py:99: in lowering_attacks
+    db.execute(stmt, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f8653628aa0>
+query = 'UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s'
+params = ('agent-a', datetime.date(2025, 1, 31)), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "spend" violates check constraint "spend_usd_range"
+E           DETAIL:  Failing row contains (agent-a, 2025-01-31, -0.5).
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: CheckViolation
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_attack_battery_kills_every_mutant_of_the_guard[release_owner_check_removed] _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'release_owner_check_removed'
+scratch = <tests.test_stop_state_roles.World object at 0x7f8653624aa0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw1/test_the_attack_battery_kills_4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f865ae03ee0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_path, monkeypatch):
+        mutate, expect = MUTANTS[name]
+        changed = _world_with(tmp_path, monkeypatch, mutate)
+        assert changed or name == "control", (
+            "the mutation did not change the SQL: it would prove nothing"
+        )
+        w = scratch
+        w.migrate(release_role=w.release)
+        if expect == "release breaks":
+            rt = w.store(w.runtime)
+            rid = _reserve(rt, "1.00")
+            _expire(w, rid)
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                _release(w)
+            return
+        opened, settled = seed(w)
+        # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+>       went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_guard_mutants.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_guard_pg.py:99: in lowering_attacks
+    db.execute(stmt, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f865362be30>
+query = 'UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s'
+params = ('agent-a', datetime.date(2025, 1, 31)), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "spend" violates check constraint "spend_usd_range"
+E           DETAIL:  Failing row contains (agent-a, 2025-01-31, -0.5).
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: CheckViolation
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[oserror] __
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cd63b70>
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw2/test_cli_migrate_a_fully_broke0/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f564b6047c0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f564cdc3230>
+kind = 'oserror'
+
+    @pytest.mark.parametrize("kind", ["oserror", "closed"])
+    def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
+        w, cfg_dir, monkeypatch, capsys, kind
+    ):
+        """EVERY stdout write fails (the accepted-roles note and the "applied" line). A success still exits 0, a refusal
+        still exits 2, and the refusal text still reaches stderr."""
+        _demo(cfg_dir)
+        vouched = f"sb_ac4_{w.sfx}"
+        argv = [
+            "--config",
+            str(cfg_dir),
+            "migrate",
+            "--runtime-role",
+            w.runtime,
+            "--reset-role",
+            w.reset,
+            "--accept-admin-role",
+            vouched,
+        ]
+        monkeypatch.setattr(sys, "stdout", _BrokenOut() if kind == "oserror" else _closed_out())
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.new_schema("bo"))
+        assert cli.main(argv) == 0
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+        assert cli.main(argv) == 2
+        err = capsys.readouterr().err
+>       assert "refused:" in err and third in err
+E       AssertionError: assert ('refused:' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_5875125bb2 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n' and 'sb_x4_5875125bb2' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_5875125bb2 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n')
+
+tests/test_stop_state_roles.py:1732: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+WARNING  hadavin_sdk.store:migrate.py:1407 migrate: accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: sb_ac4_5875125bb2)
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+___________ test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade ___________
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f4c9a65b3e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f4c9a646b30>
+
+    def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
+        old = w.new_schema("up")
+        files = migrate_mod._migration_files()
+        with (
+            monkeypatch.context() as m
+        ):  # the release before step B: five files and no stop rows in the map
+            m.setattr(migrate_mod, "_migration_files", lambda: files[:5])
+            for name in [
+                k for k in GRANTS if k.startswith("kill_switch_") or k == "spend_reservations"
+            ]:
+                m.delitem(GRANTS, name)
+>           assert migrate(old, no_roles=True)[-1].startswith("0005_")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:477: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=sb_up_8dde87eccb'"
+runtime_role = None, portal_role = None, purge_role = None, reset_role = None
+release_role = None, no_roles = True, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+>           raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+E           hadavin_sdk.errors.ConfigError: migrations are inconsistent: GRANTS names hadavin_caps, which no migration creates; GRANTS names hadavin_limits, which no migration creates; FUNCTION_GRANTS names hadavin_add_spend(text, date, numeric), which no migration creates; FUNCTION_GRANTS names hadavin_cap_matches(text, numeric, numeric), which no migration creates; FUNCTION_GRANTS names hadavin_expire_spend_reservations(integer), which no migration creates; FUNCTION_GRANTS names hadavin_purge_spend_reservations(timestamptz), which no migration creates; FUNCTION_GRANTS names hadavin_release_expired_spend(text, date), which no migration creates; FUNCTION_GRANTS names hadavin_reserve_spend(text, text, date, numeric, text), which no migration creates; FUNCTION_GRANTS names hadavin_set_cap(text, numeric, numeric, text), which no migration creates; FUNCTION_GRANTS names hadavin_settle_spend(text, numeric, text), which no migration creates
+
+src/hadavin_sdk/store/migrate.py:1265: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+__ test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[closed] __
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb62b0>
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw2/test_cli_migrate_a_fully_broke1/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f564b604360>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f564cdc2f90>
+kind = 'closed'
+
+    @pytest.mark.parametrize("kind", ["oserror", "closed"])
+    def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
+        w, cfg_dir, monkeypatch, capsys, kind
+    ):
+        """EVERY stdout write fails (the accepted-roles note and the "applied" line). A success still exits 0, a refusal
+        still exits 2, and the refusal text still reaches stderr."""
+        _demo(cfg_dir)
+        vouched = f"sb_ac4_{w.sfx}"
+        argv = [
+            "--config",
+            str(cfg_dir),
+            "migrate",
+            "--runtime-role",
+            w.runtime,
+            "--reset-role",
+            w.reset,
+            "--accept-admin-role",
+            vouched,
+        ]
+        monkeypatch.setattr(sys, "stdout", _BrokenOut() if kind == "oserror" else _closed_out())
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.new_schema("bo"))
+        assert cli.main(argv) == 0
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+        assert cli.main(argv) == 2
+        err = capsys.readouterr().err
+>       assert "refused:" in err and third in err
+E       AssertionError: assert ('refused:' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_b4f47a8d26 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n' and 'sb_x4_b4f47a8d26' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_b4f47a8d26 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n')
+
+tests/test_stop_state_roles.py:1732: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+WARNING  hadavin_sdk.store:migrate.py:1407 migrate: accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: sb_ac4_b4f47a8d26)
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_____ test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too _____
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb64c0>
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1208/popen-gw2/test_cli_migrate_prints_the_ac0/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f564f0a1390>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f564b5681f0>
+
+    def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
+        w, cfg_dir, monkeypatch, capsys
+    ):
+        _demo(cfg_dir)
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+        third, vouched = w.new_role("x3", "NOLOGIN"), f"sb_ac3_{w.sfx}"
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        argv = [
+            "--config",
+            str(cfg_dir),
+            "migrate",
+            "--runtime-role",
+            w.runtime,
+            "--reset-role",
+            w.reset,
+        ]
+        assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
+        captured = capsys.readouterr()
+>       assert vouched in captured.out and third in captured.err
+E       AssertionError: assert ('sb_ac3_f809f44ffc' in 'the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role\n')
+E        +  where 'the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role\n' = CaptureResult(out='the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services),... functions: role sb_pu_f809f44ffc (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n').out
+
+tests/test_stop_state_roles.py:1753: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call _
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb5e90>
+
+    def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
+>       names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1900: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb5e90>
+role = 'sb_rs_9c56a2ad94'
+call = <function test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call.<locals>.<lambda> at 0x7f564cddc400>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_pu_9c56a2ad94 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz); role sb_rs_9c56a2ad94 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_rs_9c56a2ad94 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_s2_migrate_naming_one_other_role_runs_the_same_check[portal_role] ____
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb7a10>
+only = 'portal_role'
+
+    @pytest.mark.parametrize("only", ["portal_role", "purge_role"])
+    def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        role = {"portal_role": w.portal, "purge_role": w.purge}[only]
+>       names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1910: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb7a10>
+role = 'sb_x4_62e3c22e34'
+call = <function test_s2_migrate_naming_one_other_role_runs_the_same_check.<locals>.<lambda> at 0x7f564cd33240>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_rt_62e3c22e34 (not named in this command) can run hadavin_reserve_spend(text, text, date, numeric, text); role sb_rt_62e3c22e34 (not named in this command) can run hadavin_settle_spend(text, numeric, text); role sb_rt_62e3c22e34 (not named in this command) can run hadavin_expire_spend_reservations(integer); role sb_pu_62e3c22e34 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz); role sb_rt_62e3c22e34 (not named in this command) can run hadavin_add_spend(text, date, numeric); role sb_rs_62e3c22e34 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_rs_62e3c22e34 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric); role sb_rt_62e3c22e34 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_s2_migrate_naming_one_other_role_runs_the_same_check[purge_role] _____
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb4d60>
+only = 'purge_role'
+
+    @pytest.mark.parametrize("only", ["portal_role", "purge_role"])
+    def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        role = {"portal_role": w.portal, "purge_role": w.purge}[only]
+>       names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1910: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f564cdb4d60>
+role = 'sb_x4_d52e56445d'
+call = <function test_s2_migrate_naming_one_other_role_runs_the_same_check.<locals>.<lambda> at 0x7f564cd50d60>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_rt_d52e56445d (not named in this command) can run hadavin_reserve_spend(text, text, date, numeric, text); role sb_rt_d52e56445d (not named in this command) can run hadavin_settle_spend(text, numeric, text); role sb_rt_d52e56445d (not named in this command) can run hadavin_expire_spend_reservations(integer); role sb_rt_d52e56445d (not named in this command) can run hadavin_add_spend(text, date, numeric); role sb_rs_d52e56445d (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_rs_d52e56445d (not named in this command) can run hadavin_cap_matches(text, numeric, numeric); role sb_rt_d52e56445d (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+__ test_a_random_sequence_matches_the_model_after_every_call[postgres-seed23] __
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f4c9cb96ff0>
+seed = 23
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[f"seed{s}" for s in SEEDS])
+    def test_a_random_sequence_matches_the_model_after_every_call(store, seed):
+        """Invariants 2 to 7, 9, 12 and 13 at once: 200 mixed calls, the store compared with the model after each
+        (the totals of every agent and day, the run costs, the rows, what the call returned or raised), then
+        counter conservation over what is left."""
+        runs, steps, model = _script(seed, OPS)
+>       _replay(store, seed, runs, steps)
+
+tests/contracts/test_store_spend_model.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f4c9cb96ff0>
+seed = 23
+runs = ('run-00000000000000000000000000000170', 'run-00000000000000000000000000000171', 'run-00000000000000000000000000000172')
+steps = [(('expire', (), 0), ('count', 0), (((Decimal('0'), Decimal('0')), (Decimal('0'), Decimal('0')), (Decimal('0'), Decima... 'agent-a', datetime.date(2025, 2, 1), 'run-00000000000000000000000000000171', Decimal('0.999999'), None, ...)})), ...]
+
+    def _replay(store, seed, runs, steps):
+        """Every call of the script on the store, compared with the model after each one."""
+        _create_runs(store, runs)
+        for i, (op, want, want_state) in enumerate(steps):
+            tag = f"seed={seed} op={i} {op!r}"
+            got = _apply(store, op)
+>           assert got == want, f"{tag}: outcome store={got!r} model={want!r}"
+E           AssertionError: seed=23 op=0 ('expire', (), 0): outcome store=('ValueError',) model=('count', 0)
+E           assert ('ValueError',) == ('count', 0)
+E             
+E             At index 0 diff: 'ValueError' != 'count'
+E             Right contains one more item: 0
+E             Use -v to get more diff
+
+tests/contracts/test_store_spend_model.py:481: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+__ test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres[seed23] ___
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+both = (<hadavin_sdk.store.memory.MemoryStore object at 0x7f86534c2c90>, <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f86525d1730>)
+seed = 23
+
+    @pytest.mark.parametrize("seed", AGREE_SEEDS, ids=[f"seed{s}" for s in AGREE_SEEDS])
+    def test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres(both, seed):
+        """No model in the comparison: the two traces (what every call returned or raised, and every counter, run
+        cost and row after it) are compared with each other."""
+        memory, postgres = both
+        runs, steps, _ = _script(seed, OPS)
+        on_memory = _trace(memory, seed, runs, steps)
+        on_postgres = _trace(postgres, seed, runs, steps)
+        for i, (m, p) in enumerate(zip(on_memory, on_postgres, strict=True)):
+            tag = f"seed={seed} op={i} {steps[i][0]!r}"
+>           assert m[0] == p[0], f"{tag}: outcome memory={m[0]!r} postgres={p[0]!r}"
+E           AssertionError: seed=23 op=0 ('expire', (), 0): outcome memory=('count', 0) postgres=('ValueError',)
+E           assert ('count', 0) == ('ValueError',)
+E             
+E             At index 0 diff: 'count' != 'ValueError'
+E             Left contains one more item: 0
+E             Use -v to get more diff
+
+tests/contracts/test_store_spend_model.py:594: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=========================== short test summary info ============================
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[f_reserve_p_day_cap_check_removed]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[f_reserve_p_month_cap_check_removed]
+FAILED tests/test_stop_state_roles.py::test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_day_cap_weakened]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_month_cap_weakened]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_sum_check_dropped_on_the_day]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_month_cap_ignored]
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_refuses_a_member_of_the_reset_role[LOGIN]
+FAILED tests/test_stop_state_roles.py::test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed
+FAILED tests/test_stop_state_roles.py::test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer
+FAILED tests/test_stop_state_roles.py::test_s2_a_grant_to_public_is_listed_as_public
+FAILED tests/test_money_guard_mutants.py::test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_spend]
+FAILED tests/test_money_guard_mutants.py::test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_all_counters]
+FAILED tests/test_money_guard_mutants.py::test_the_attack_battery_kills_every_mutant_of_the_guard[release_owner_check_removed]
+FAILED tests/test_stop_state_roles.py::test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[oserror]
+FAILED tests/test_stop_state_roles.py::test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade
+FAILED tests/test_stop_state_roles.py::test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[closed]
+FAILED tests/test_stop_state_roles.py::test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_naming_one_other_role_runs_the_same_check[portal_role]
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_naming_one_other_role_runs_the_same_check[purge_role]
+FAILED tests/contracts/test_store_spend_model.py::test_a_random_sequence_matches_the_model_after_every_call[postgres-seed23]
+FAILED tests/contracts/test_store_spend_model.py::test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres[seed23]
+ERROR tests/test_spend_reservations_pg.py::test_the_purge_login_is_denied[SELECT run_id FROM spend_reservations]
+ERROR tests/test_spend_reservations_pg.py::test_the_portal_and_the_reset_login_hold_no_right_at_all[SELECT 1 FROM spend_reservations-reset]
+23 failed, 2074 passed, 11 skipped, 2 xfailed, 2 errors in 383.29s (0:06:23)

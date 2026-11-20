@@ -1,0 +1,2690 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  0%]
+........................................................................ [  1%]
+............................................................xx.......... [  1%]
+......................................................s................. [  2%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+..................................................................F..... [  9%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+.................................................F...................... [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 65%]
+.........................s.............................................. [ 66%]
+........................................................................ [ 66%]
+............................s........................................... [ 67%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+..................x.............x........x.............................. [ 68%]
+...x...x.......xx..x.xx..x.........xx..x.x..x........................... [ 69%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+.........................................F.............................. [ 75%]
+..F.F....F.............................................................. [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 77%]
+............................................F........................... [ 78%]
+........................................................................ [ 78%]
+........................................F............................... [ 79%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 88%]
+...............................................................s........ [ 89%]
+........FF.............................................................. [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 90%]
+FFFF.F........EF....F.......F.............................s............. [ 91%]
+.........................................s..s........................... [ 91%]
+........................................................................ [ 92%]
+....................F................................................... [ 92%]
+...................................................s..s..s........s..s.. [ 93%]
+................F.....F.......F..........................F.............. [ 93%]
+.......................................................F................ [ 94%]
+.......................................................F................ [ 94%]
+........................................................................ [ 95%]
+.................................F......................FFFF.FFFFFF.F..F [ 95%]
+FF..F....FFFFFF...............F..F..F................................... [ 96%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 98%]
+...............................................F........................ [ 99%]
+........................................................................ [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_planted_stop_years_are_refused[kill_switch_clears-20000-01-01] _
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    @pytest.fixture(name="w")
+    def world():
+        w = make_world()
+        try:
+>           w.migrate()
+
+tests/test_step_b_e7_migration_0009.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_step_b_e7_migration_0009.py:50: in migrate
+    return migrate(
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=e7_s_3680ad71a7'"
+runtime_role = 'e7_rt_3680ad71a7', portal_role = 'e7_po_3680ad71a7'
+purge_role = 'e7_pu_3680ad71a7', reset_role = 'e7_rs_3680ad71a7'
+release_role = None, no_roles = False, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+            raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+        if not named and not no_roles:
+            raise ConfigError(
+                "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
+                "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+                "schema without checking any role (the first install, before the roles exist)"
+            )
+        applied = []
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+            _ensure_ledger(db)
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := sorted(done - {p.stem for p in files}):
+                raise ConfigError(
+                    f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                    "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                    "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                    "run migrate again"
+                )
+            texts = {
+                p: _read_migration(p) for p in files
+            }  # each file read ONCE: what is hashed is what runs
+            _check_released({p: t[1] for p, t in texts.items()})
+            if reset_draft is not None:
+                _reset_draft(db, reset_draft, files)
+                done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+            for path in files:
+                if path.stem in done:
+                    continue
+                text, digest = texts[path]
+                db.execute(text)  # a file shipped in this package
+                db.execute(
+                    "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                    (path.stem, digest),
+                )
+                applied.append(path.stem)
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal, purge, reset and release roles must not be members of each other"
+                        )
+            if unmapped := _unmapped_functions(db):
+                raise ConfigError(
+                    "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
+                    + ", ".join(unmapped[:20])
+                )
+            if problems := _owner_problems(db, named):
+                raise ConfigError("; ".join(problems))
+            if (
+                named
+                and db.execute(
+                    "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
+                    "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                    (RELEASE_FUNCTION.split("(")[0],),
+                ).fetchone()[0]
+            ):
+                owner_note = (
+                    "the hadavin_* functions are owned by a superuser: allowed (test servers and some managed "
+                    "services), but a superuser owner is a wider key than a plain owner role"
+                )
+                _LOG.warning("migrate: %s", owner_note)
+                if notes is not None:
+                    notes.append(owner_note)
+            _seed_limits(db)
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+                    raise ConfigError(
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if reset_role:
+                _apply_grants(db, reset_role, lambda g: g.reset)
+                if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):
+                    raise ConfigError(
+                        "the reset role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if release_role:
+                _apply_grants(db, release_role, lambda g: g.release)
+                if bad := effective_problems(db, release_role, lambda g: g.release if g else ""):
+                    raise ConfigError(
+                        "the release role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            _pin_money_guard(db)
+            _apply_release_function(db, release_role, [r for r in named if r != release_role])
+            _apply_money_functions(
+                db,
+                {
+                    "runtime": runtime_role,
+                    "purge": purge_role,
+                    "release": release_role,
+                    "reset": reset_role,
+                    "portal": portal_role,
+                },
+            )
+            if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
+                raise ConfigError(
+                    "roles not named in this command can run the money functions, or will for future functions: "
+                    + "; ".join(extra_exec[:20])
+                )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+            if any(roles) and (writers := _money_table_writers(db)):
+>               raise ConfigError(
+                    "a role other than the owner can write a money table (only the definer functions may): "
+                    + "; ".join(writers[:20])
+                )
+E               hadavin_sdk.errors.ConfigError: a role other than the owner can write a money table (only the definer functions may): role sb_wa_248d1c6719 can DELETE spend; role sb_wa_248d1c6719 can INSERT spend; role sb_wa_248d1c6719 can UPDATE spend; role sb_wa_248d1c6719 can DELETE spend_month; role sb_wa_248d1c6719 can INSERT spend_month; role sb_wa_248d1c6719 can UPDATE spend_month; role sb_wa_248d1c6719 can DELETE spend_reservations; role sb_wa_248d1c6719 can INSERT spend_reservations; role sb_wa_248d1c6719 can UPDATE spend_reservations
+
+src/hadavin_sdk/store/migrate.py:1387: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=================================== FAILURES ===================================
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
+shared = 'user=postgres dbname=askdata_h_911340a0 host=127.0.0.1 port=55433'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fbb28b35400>
+query = "SELECT dblink_connect('dbname=postgres')", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+E           	Is the server running locally and accepting connections on that socket?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
+______________________ test_end_to_end_replay_then_score _______________________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw2/test_end_to_end_replay_then_sc0/config')
+export = {'bundles': PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw2/test_end_to_end_replay_then_sc0/bundles'), 'poisoned'...), 'answers': PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw2/test_end_to_end_replay_then_sc0/answers.json'), ...}
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff98bd73250>
+
+    def test_end_to_end_replay_then_score(cfg_dir, export, capsys):
+        assert _replay(cfg_dir, export) == 0
+        out = export["out"]
+        assert (out / "run1" / "case-003.json").is_file() and (out / "replay-report.md").is_file()
+        assert (
+            json.loads((out / "run1" / "case-003.json").read_text(encoding="utf-8"))["converted"]
+            == "uncited"
+        )
+        assert _score(cfg_dir, export) == 0
+        text = (out / "score" / "score-report.md").read_text(encoding="utf-8")
+        assert (
+            "| 1 | 1 | 1 | 2 | 2 | 1/0/0/0 | 1 | 0 |" in text
+        )  # Hit, no-evidence Hit, 2 Misses, 2 Not sure
+        assert "SDK version: 0.1.0" in text
+        ops = [e.operation for e in LocalDirSink(cfg_dir / "audit").events()]
+        assert (
+            ops.count("replay_run") == 1
+            and ops.count("hard_check_b") == 1
+            and ops.count("score_run") == 1
+        )
+        ev = next(e for e in LocalDirSink(cfg_dir / "audit").events() if e.operation == "score_run")
+>       assert ev.result == "H=2;Hne=1;M=2;S=2;ic=1;ha=0" and ev.decision == "-" and ev.domain == "k1b"
+E       AssertionError: assert ('H=2_Hne=1_M=2_S=2_ic=1_ha=0' == 'H=2;Hne=1;M=2;S=2;ic=1;ha=0'
+E         
+E         - H=2;Hne=1;M=2;S=2;ic=1;ha=0
+E         ?    ^     ^   ^   ^    ^
+E         + H=2_Hne=1_M=2_S=2_ic=1_ha=0
+E         ?    ^     ^   ^   ^    ^)
+
+tests/test_k1b_cli.py:61: AssertionError
+----------------------------- Captured stdout call -----------------------------
+replay complete: outputs in /tmp/pytest-of-root/pytest-1209/popen-gw2/test_end_to_end_replay_then_sc0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-1209/popen-gw2/test_end_to_end_replay_then_sc0/out/score/score-report.md
+__ test_a_random_sequence_matches_the_model_after_every_call[postgres-seed23] __
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f5a4536ccb0>
+seed = 23
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[f"seed{s}" for s in SEEDS])
+    def test_a_random_sequence_matches_the_model_after_every_call(store, seed):
+        """Invariants 2 to 7, 9, 12 and 13 at once: 200 mixed calls, the store compared with the model after each
+        (the totals of every agent and day, the run costs, the rows, what the call returned or raised), then
+        counter conservation over what is left."""
+        runs, steps, model = _script(seed, OPS)
+>       _replay(store, seed, runs, steps)
+
+tests/contracts/test_store_spend_model.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f5a4536ccb0>
+seed = 23
+runs = ('run-00000000000000000000000000000170', 'run-00000000000000000000000000000171', 'run-00000000000000000000000000000172')
+steps = [(('expire', (), 0), ('count', 0), (((Decimal('0'), Decimal('0')), (Decimal('0'), Decimal('0')), (Decimal('0'), Decima... 'agent-a', datetime.date(2025, 2, 1), 'run-00000000000000000000000000000171', Decimal('0.999999'), None, ...)})), ...]
+
+    def _replay(store, seed, runs, steps):
+        """Every call of the script on the store, compared with the model after each one."""
+        _create_runs(store, runs)
+        for i, (op, want, want_state) in enumerate(steps):
+            tag = f"seed={seed} op={i} {op!r}"
+            got = _apply(store, op)
+>           assert got == want, f"{tag}: outcome store={got!r} model={want!r}"
+E           AssertionError: seed=23 op=0 ('expire', (), 0): outcome store=('ValueError',) model=('count', 0)
+E           assert ('ValueError',) == ('count', 0)
+E             
+E             At index 0 diff: 'ValueError' != 'count'
+E             Right contains one more item: 0
+E             Use -v to get more diff
+
+tests/contracts/test_store_spend_model.py:481: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_spend] _
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'trigger_removed_spend'
+scratch = <tests.test_stop_state_roles.World object at 0x7ff98bfd3a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw2/test_the_attack_battery_kills_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff98cea8440>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_path, monkeypatch):
+        mutate, expect = MUTANTS[name]
+        changed = _world_with(tmp_path, monkeypatch, mutate)
+        assert changed or name == "control", (
+            "the mutation did not change the SQL: it would prove nothing"
+        )
+        w = scratch
+        w.migrate(release_role=w.release)
+        if expect == "release breaks":
+            rt = w.store(w.runtime)
+            rid = _reserve(rt, "1.00")
+            _expire(w, rid)
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                _release(w)
+            return
+        opened, settled = seed(w)
+        # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+>       went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_guard_mutants.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_guard_pg.py:99: in lowering_attacks
+    db.execute(stmt, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7ff975f288c0>
+query = 'UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s'
+params = ('agent-a', datetime.date(2025, 1, 31)), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "spend" violates check constraint "spend_usd_range"
+E           DETAIL:  Failing row contains (agent-a, 2025-01-31, -0.5).
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: CheckViolation
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_all_counters] _
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'trigger_removed_all_counters'
+scratch = <tests.test_stop_state_roles.World object at 0x7ff98bb65180>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw2/test_the_attack_battery_kills_2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff98ced0910>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_path, monkeypatch):
+        mutate, expect = MUTANTS[name]
+        changed = _world_with(tmp_path, monkeypatch, mutate)
+        assert changed or name == "control", (
+            "the mutation did not change the SQL: it would prove nothing"
+        )
+        w = scratch
+        w.migrate(release_role=w.release)
+        if expect == "release breaks":
+            rt = w.store(w.runtime)
+            rid = _reserve(rt, "1.00")
+            _expire(w, rid)
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                _release(w)
+            return
+        opened, settled = seed(w)
+        # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+>       went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_guard_mutants.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_guard_pg.py:99: in lowering_attacks
+    db.execute(stmt, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7ff975f7f020>
+query = 'UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s'
+params = ('agent-a', datetime.date(2025, 1, 31)), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "spend" violates check constraint "spend_usd_range"
+E           DETAIL:  Failing row contains (agent-a, 2025-01-31, -0.5).
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: CheckViolation
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_attack_battery_kills_every_mutant_of_the_guard[release_owner_check_removed] _
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'release_owner_check_removed'
+scratch = <tests.test_stop_state_roles.World object at 0x7ff98bb67120>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw2/test_the_attack_battery_kills_4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff98ced2190>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_path, monkeypatch):
+        mutate, expect = MUTANTS[name]
+        changed = _world_with(tmp_path, monkeypatch, mutate)
+        assert changed or name == "control", (
+            "the mutation did not change the SQL: it would prove nothing"
+        )
+        w = scratch
+        w.migrate(release_role=w.release)
+        if expect == "release breaks":
+            rt = w.store(w.runtime)
+            rid = _reserve(rt, "1.00")
+            _expire(w, rid)
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                _release(w)
+            return
+        opened, settled = seed(w)
+        # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+>       went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_guard_mutants.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_guard_pg.py:99: in lowering_attacks
+    db.execute(stmt, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7ff975f6a6c0>
+query = 'UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s'
+params = ('agent-a', datetime.date(2025, 1, 31)), prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "spend" violates check constraint "spend_usd_range"
+E           DETAIL:  Failing row contains (agent-a, 2025-01-31, -0.5).
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: CheckViolation
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+__ test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres[seed23] ___
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+both = (<hadavin_sdk.store.memory.MemoryStore object at 0x7f5a455d7b90>, <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f5a45b05cd0>)
+seed = 23
+
+    @pytest.mark.parametrize("seed", AGREE_SEEDS, ids=[f"seed{s}" for s in AGREE_SEEDS])
+    def test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres(both, seed):
+        """No model in the comparison: the two traces (what every call returned or raised, and every counter, run
+        cost and row after it) are compared with each other."""
+        memory, postgres = both
+        runs, steps, _ = _script(seed, OPS)
+        on_memory = _trace(memory, seed, runs, steps)
+        on_postgres = _trace(postgres, seed, runs, steps)
+        for i, (m, p) in enumerate(zip(on_memory, on_postgres, strict=True)):
+            tag = f"seed={seed} op={i} {steps[i][0]!r}"
+>           assert m[0] == p[0], f"{tag}: outcome memory={m[0]!r} postgres={p[0]!r}"
+E           AssertionError: seed=23 op=0 ('expire', (), 0): outcome memory=('count', 0) postgres=('ValueError',)
+E           assert ('count', 0) == ('ValueError',)
+E             
+E             At index 0 diff: 'count' != 'ValueError'
+E             Left contains one more item: 0
+E             Use -v to get more diff
+
+tests/contracts/test_store_spend_model.py:594: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____________________ test_no_vendor_brand_string_is_tracked ____________________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    def test_no_vendor_brand_string_is_tracked():
+        """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
+        bad = []
+        for rel in _tracked():
+            if rel in SELF:
+                continue
+            try:
+                raw = (ROOT / rel).read_bytes()
+            except OSError as exc:
+                bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+                continue
+            if b"\0" in raw:  # binary: covered by the hash test
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
+                continue
+            bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
+>       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'; handover/core-b/board-body.md: 'Port.io'; handover/core-b/STATUS-BOARD.md: 'Port.io'; handover/core-b/inputs/evidence-bpg.md: 'Port.io'; handover/core-b/inputs/evidence-bpg-first-error-lines.txt: 'Port.io'
+E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'", "handover/core-b/board-body.md: 'Port.io'", "handover/core-b/STATUS-BOARD.md...over/core-b/inputs/evidence-bpg.md: 'Port.io'", "handover/core-b/inputs/evidence-bpg-first-error-lines.txt: 'Port.io'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+____ test_the_battery_kills_every_mutant[f_reserve_p_day_cap_check_removed] ____
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'f_reserve_p_day_cap_check_removed'
+scratch = <tests.test_stop_state_roles.World object at 0x7fbb389c9020>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw1/test_the_battery_kills_every_m29')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb29ff35b0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: (IF )[^;]*?( THEN\s+RAISE EXCEPTION 'invalid argument: p_day_cap')
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+___ test_the_battery_kills_every_mutant[f_reserve_p_month_cap_check_removed] ___
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'f_reserve_p_month_cap_check_removed'
+scratch = <tests.test_stop_state_roles.World object at 0x7fbb389c8ec0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw1/test_the_battery_kills_every_m30')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb29ff3cb0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: (IF )[^;]*?( THEN\s+RAISE EXCEPTION 'invalid argument: p_month_cap')
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+___________ test_the_battery_kills_every_mutant[i_day_cap_weakened] ____________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_day_cap_weakened'
+scratch = <tests.test_stop_state_roles.World object at 0x7fbb288e1650>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw1/test_the_battery_kills_every_m46')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb29f9c7c0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: s\.usd < p_day_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+__________ test_the_battery_kills_every_mutant[i_month_cap_weakened] ___________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_month_cap_weakened'
+scratch = <tests.test_stop_state_roles.World object at 0x7fbb288e3e30>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw1/test_the_battery_kills_every_m47')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb29f9d4e0>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: m\.usd < p_month_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+_____ test_the_battery_kills_every_mutant[i_sum_check_dropped_on_the_day] ______
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_sum_check_dropped_on_the_day'
+scratch = <tests.test_stop_state_roles.World object at 0x7fbb389c9020>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw1/test_the_battery_kills_every_m48')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb29f9f230>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve:  AND s\.usd \+ p_usd <= p_day_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+___________ test_the_battery_kills_every_mutant[i_month_cap_ignored] ___________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+name = 'i_month_cap_ignored'
+scratch = <tests.test_stop_state_roles.World object at 0x7fbb389c9230>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw1/test_the_battery_kills_every_m49')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb297a9550>
+
+    @pytest.mark.parametrize("name", list(MUTANTS))
+    def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
+        mutate, post, pre, killers, static_too = MUTANTS[name]
+        assert killers <= set(BATTERY), f"{name}: unknown check {killers - set(BATTERY)}"
+        mutated = None
+        if mutate is not None:
+>           original, mutated = _apply_text_mutation(tmp_path, monkeypatch, mutate)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_money_definer_mutants.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_money_definer_mutants.py:449: in _apply_text_mutation
+    mutated = mutate(text)
+              ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = "-- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions b...\n    RETURN 'differs';\nEND\n$fn$;\nREVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;\n"
+
+    def mutate(text: str) -> str:
+        start = text.index(f"CREATE OR REPLACE FUNCTION {NAMES[fn]}(")
+        end = text.index("$fn$;", text.index("$fn$", text.index("$fn$", start) + 1)) + 5
+        chunk = text[start:end]
+        new, n = re.subn(pattern, repl, chunk, count=1, flags=flags)
+>       assert n == 1, f"mutant pattern did not match in {fn}: {pattern}"
+E       AssertionError: mutant pattern did not match in reserve: AND m\.usd < p_month_cap AND m\.usd \+ p_usd <= p_month_cap
+E       assert 0 == 1
+
+tests/test_money_definer_mutants.py:47: AssertionError
+__________ test_s2_migrate_refuses_a_member_of_the_reset_role[LOGIN] ___________
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a45dedde0>
+options = 'LOGIN'
+
+    @pytest.mark.parametrize("options", ["LOGIN NOINHERIT", "LOGIN"])
+    def test_s2_migrate_refuses_a_member_of_the_reset_role(w, options):
+        member = w.new_role("mb", options)
+        w.grant("GRANT {} TO {}", w.reset, member)
+>       _refused_naming(w, member)
+
+tests/test_stop_state_roles.py:1216: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a45dedde0>
+role = 'sb_mb_ff21365fa9', call = None
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_mb_ff21365fa9 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_mb_ff21365fa9 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed __
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a45dec520>
+
+    def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(w):
+        """The check reads this schema's grants only. A role with nothing here, a member of the (superuser) owner and
+        a member of a predefined role that can write every table are outside the guarantee and never refuse a migrate.
+        (Before 2026-11-20 the member of pg_write_all_data and the member of the owner were refused.)"""
+        owner = w.run("SELECT current_user")[0][0]
+        w.new_role("st")
+        of_owner, writer = w.new_role("mw", "LOGIN NOINHERIT"), w.new_role("wa")
+        w.grant("GRANT {} TO {}", owner, of_owner)
+        w.grant("GRANT pg_write_all_data TO {}", writer)
+        try:
+            assert _who(w.scoped, w.reset) == []
+>           assert w.migrate() == []
+                   ^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_stop_state_roles.py:94: in migrate
+    return migrate(self.scoped, **{**roles, **kw})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=sb_s_248d1c6719'"
+runtime_role = 'sb_rt_248d1c6719', portal_role = 'sb_po_248d1c6719'
+purge_role = 'sb_pu_248d1c6719', reset_role = 'sb_rs_248d1c6719'
+release_role = None, no_roles = False, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+            raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+        if not named and not no_roles:
+            raise ConfigError(
+                "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
+                "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+                "schema without checking any role (the first install, before the roles exist)"
+            )
+        applied = []
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+            _ensure_ledger(db)
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := sorted(done - {p.stem for p in files}):
+                raise ConfigError(
+                    f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                    "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                    "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                    "run migrate again"
+                )
+            texts = {
+                p: _read_migration(p) for p in files
+            }  # each file read ONCE: what is hashed is what runs
+            _check_released({p: t[1] for p, t in texts.items()})
+            if reset_draft is not None:
+                _reset_draft(db, reset_draft, files)
+                done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+            for path in files:
+                if path.stem in done:
+                    continue
+                text, digest = texts[path]
+                db.execute(text)  # a file shipped in this package
+                db.execute(
+                    "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                    (path.stem, digest),
+                )
+                applied.append(path.stem)
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal, purge, reset and release roles must not be members of each other"
+                        )
+            if unmapped := _unmapped_functions(db):
+                raise ConfigError(
+                    "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
+                    + ", ".join(unmapped[:20])
+                )
+            if problems := _owner_problems(db, named):
+                raise ConfigError("; ".join(problems))
+            if (
+                named
+                and db.execute(
+                    "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
+                    "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                    (RELEASE_FUNCTION.split("(")[0],),
+                ).fetchone()[0]
+            ):
+                owner_note = (
+                    "the hadavin_* functions are owned by a superuser: allowed (test servers and some managed "
+                    "services), but a superuser owner is a wider key than a plain owner role"
+                )
+                _LOG.warning("migrate: %s", owner_note)
+                if notes is not None:
+                    notes.append(owner_note)
+            _seed_limits(db)
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+                    raise ConfigError(
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if reset_role:
+                _apply_grants(db, reset_role, lambda g: g.reset)
+                if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):
+                    raise ConfigError(
+                        "the reset role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if release_role:
+                _apply_grants(db, release_role, lambda g: g.release)
+                if bad := effective_problems(db, release_role, lambda g: g.release if g else ""):
+                    raise ConfigError(
+                        "the release role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            _pin_money_guard(db)
+            _apply_release_function(db, release_role, [r for r in named if r != release_role])
+            _apply_money_functions(
+                db,
+                {
+                    "runtime": runtime_role,
+                    "purge": purge_role,
+                    "release": release_role,
+                    "reset": reset_role,
+                    "portal": portal_role,
+                },
+            )
+            if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
+                raise ConfigError(
+                    "roles not named in this command can run the money functions, or will for future functions: "
+                    + "; ".join(extra_exec[:20])
+                )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+            if any(roles) and (writers := _money_table_writers(db)):
+>               raise ConfigError(
+                    "a role other than the owner can write a money table (only the definer functions may): "
+                    + "; ".join(writers[:20])
+                )
+E               hadavin_sdk.errors.ConfigError: a role other than the owner can write a money table (only the definer functions may): role sb_wa_248d1c6719 can DELETE spend; role sb_wa_248d1c6719 can INSERT spend; role sb_wa_248d1c6719 can UPDATE spend; role sb_wa_248d1c6719 can DELETE spend_month; role sb_wa_248d1c6719 can INSERT spend_month; role sb_wa_248d1c6719 can UPDATE spend_month; role sb_wa_248d1c6719 can DELETE spend_reservations; role sb_wa_248d1c6719 can INSERT spend_reservations; role sb_wa_248d1c6719 can UPDATE spend_reservations
+
+src/hadavin_sdk/store/migrate.py:1387: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer _
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a45decd60>
+
+    def test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer(
+        w,
+    ):
+        two, _owner, rt2, rs2 = _second_schema(w)
+        stray, member = w.new_role("x5", "NOLOGIN"), w.new_role("y5")
+        with psycopg.connect(two, autocommit=True) as db:
+            db.execute(sql.SQL("GRANT UPDATE ON kill_switch TO {}").format(sql.Identifier(stray)))
+        w.grant("GRANT {} TO {}", rs2, member)
+        assert _who(two, rs2) == sorted([stray, member])
+        assert _who(w.scoped, w.reset) == []  # the other schema's roles are not this schema's business
+        assert w.migrate() == []
+>       with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_y5_59a17b50d4 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_y5_59a17b50d4 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1293: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+________________ test_s2_a_grant_to_public_is_listed_as_public _________________
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a45def280>
+
+    def test_s2_a_grant_to_public_is_listed_as_public(w):
+        w.do("GRANT INSERT ON kill_switch_clears TO PUBLIC")
+        assert _who(w.scoped, w.reset) == ["PUBLIC"]
+>       names = _refused_naming(w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a45def280>
+role = 'PUBLIC'
+call = <function test_s2_a_grant_to_public_is_listed_as_public.<locals>.<lambda> at 0x7f5a468168e0>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_rt_fd70ac0f3e (not named in this command) can run hadavin_reserve_spend(text, text, date, numeric, text); role sb_rt_fd70ac0f3e (not named in this command) can run hadavin_settle_spend(text, numeric, text); role sb_rt_fd70ac0f3e (not named in this command) can run hadavin_expire_spend_reservations(integer); role sb_pu_fd70ac0f3e (not named in this command) can run hadavin_purge_spend_reservations(timestamptz); role sb_rt_fd70ac0f3e (not named in this command) can run hadavin_add_spend(text, date, numeric); role sb_rt_fd70ac0f3e (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_________________ test_the_shared_retry_helper_names_no_vendor _________________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    def test_the_shared_retry_helper_names_no_vendor():
+        source = inspect.getsource(retry)
+        for vendor in ("botocore", "Throttling", "anthropic", "google", "EndpointConnection"):
+>           assert vendor not in source, vendor
+E           AssertionError: anthropic
+E           assert 'anthropic' not in '"""Bounded ...(settings)\n'
+E             
+E             'anthropic' is contained here:
+E               here. The anthropic kind
+E             ?           +++++++++
+E               narrows the same way unless it is built for the direct Claude API (``direct_api``): on Vertex or Foundry a
+E               gateway can answer after the model started.
+E               """...
+E             
+E             ...Full output truncated, use '-vv' to show
+
+tests/test_p5p6_followups.py:305: AssertionError
+___________ test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade ___________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7ff988e19de0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff98d7fb000>
+
+    def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
+        old = w.new_schema("up")
+        files = migrate_mod._migration_files()
+        with (
+            monkeypatch.context() as m
+        ):  # the release before step B: five files and no stop rows in the map
+            m.setattr(migrate_mod, "_migration_files", lambda: files[:5])
+            for name in [
+                k for k in GRANTS if k.startswith("kill_switch_") or k == "spend_reservations"
+            ]:
+                m.delitem(GRANTS, name)
+>           assert migrate(old, no_roles=True)[-1].startswith("0005_")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:477: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/pg_gate.py:58: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=sb_up_f0bbd8e1ef'"
+runtime_role = None, portal_role = None, purge_role = None, reset_role = None
+release_role = None, no_roles = True, iam_auth = False, region = None
+sslmode = None, sslrootcert = None, accepted_admin_roles = ()
+on_role_change = None, notes = None, accept_changed_draft = ()
+reset_draft = None
+
+    def migrate(
+        dsn: str,
+        *,
+        runtime_role: str | None = None,
+        portal_role: str | None = None,
+        purge_role: str | None = None,
+        reset_role: str | None = None,
+        release_role: str | None = None,
+        no_roles: bool = False,
+        iam_auth: bool = False,
+        region: str | None = None,
+        sslmode: str | None = None,
+        sslrootcert: str | None = None,
+        accepted_admin_roles: tuple[str, ...] = (),
+        on_role_change: Callable[[str], None] | None = None,
+        notes: list[str] | None = None,
+        accept_changed_draft: tuple[str, ...] = (),
+        reset_draft: str | None = None,
+    ) -> list[str]:
+        """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+        privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
+        relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+        old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+        a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+        role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+        clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+        `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+        `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+        character, no space at either end, compared as exact text)
+        the operator vouches for (cannot grant the reset role to itself; for
+        example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+        nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+        them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
+        name that is also a named role is refused.
+        `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+        operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+        to the file's (the database is known to match). Both refuse a released version."""
+        roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+        for role in roles:
+            if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
+                raise ConfigError(f"not a plain database role name: {role!r}")
+        named = [r for r in roles if r is not None]
+        if len(set(named)) != len(named):
+            raise ConfigError(
+                "the runtime, portal, purge, reset and release roles must be different roles"
+            )
+        if no_roles and named:
+            raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
+        bad_accepted = (
+            "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+            "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+            f"{accepted_admin_roles!r}"
+        )
+        if isinstance(accepted_admin_roles, str):
+            raise ConfigError(bad_accepted)
+        accepted = tuple(accepted_admin_roles)
+        if not all(_accepted_name_ok(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if any(_accepted_name_forbidden(a) for a in accepted):
+            raise ConfigError(bad_accepted)
+        if accepted and not named:
+            raise ConfigError(
+                "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+            )
+        if overlap := sorted(set(accepted) & set(named)):
+            raise ConfigError(
+                f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+            )
+        files = _migration_files()
+        if problems := check_ledger(files) + check_grants(files):
+>           raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+E           hadavin_sdk.errors.ConfigError: migrations are inconsistent: GRANTS names hadavin_caps, which no migration creates; GRANTS names hadavin_limits, which no migration creates; FUNCTION_GRANTS names hadavin_add_spend(text, date, numeric), which no migration creates; FUNCTION_GRANTS names hadavin_cap_matches(text, numeric, numeric), which no migration creates; FUNCTION_GRANTS names hadavin_expire_spend_reservations(integer), which no migration creates; FUNCTION_GRANTS names hadavin_purge_spend_reservations(timestamptz), which no migration creates; FUNCTION_GRANTS names hadavin_release_expired_spend(text, date), which no migration creates; FUNCTION_GRANTS names hadavin_reserve_spend(text, text, date, numeric, text), which no migration creates; FUNCTION_GRANTS names hadavin_set_cap(text, numeric, numeric, text), which no migration creates; FUNCTION_GRANTS names hadavin_settle_spend(text, numeric, text), which no migration creates
+
+src/hadavin_sdk/store/migrate.py:1265: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[oserror] __
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a4687bee0>
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw0/test_cli_migrate_a_fully_broke0/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5a475da350>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f5a45b8dad0>
+kind = 'oserror'
+
+    @pytest.mark.parametrize("kind", ["oserror", "closed"])
+    def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
+        w, cfg_dir, monkeypatch, capsys, kind
+    ):
+        """EVERY stdout write fails (the accepted-roles note and the "applied" line). A success still exits 0, a refusal
+        still exits 2, and the refusal text still reaches stderr."""
+        _demo(cfg_dir)
+        vouched = f"sb_ac4_{w.sfx}"
+        argv = [
+            "--config",
+            str(cfg_dir),
+            "migrate",
+            "--runtime-role",
+            w.runtime,
+            "--reset-role",
+            w.reset,
+            "--accept-admin-role",
+            vouched,
+        ]
+        monkeypatch.setattr(sys, "stdout", _BrokenOut() if kind == "oserror" else _closed_out())
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.new_schema("bo"))
+        assert cli.main(argv) == 0
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+        assert cli.main(argv) == 2
+        err = capsys.readouterr().err
+>       assert "refused:" in err and third in err
+E       AssertionError: assert ('refused:' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_f9ee53475c (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n' and 'sb_x4_f9ee53475c' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_f9ee53475c (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n')
+
+tests/test_stop_state_roles.py:1732: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+WARNING  hadavin_sdk.store:migrate.py:1407 migrate: accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: sb_ac4_f9ee53475c)
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+__ test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[closed] __
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a46878520>
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw0/test_cli_migrate_a_fully_broke1/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5a4a5d5630>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f5a45b8da50>
+kind = 'closed'
+
+    @pytest.mark.parametrize("kind", ["oserror", "closed"])
+    def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
+        w, cfg_dir, monkeypatch, capsys, kind
+    ):
+        """EVERY stdout write fails (the accepted-roles note and the "applied" line). A success still exits 0, a refusal
+        still exits 2, and the refusal text still reaches stderr."""
+        _demo(cfg_dir)
+        vouched = f"sb_ac4_{w.sfx}"
+        argv = [
+            "--config",
+            str(cfg_dir),
+            "migrate",
+            "--runtime-role",
+            w.runtime,
+            "--reset-role",
+            w.reset,
+            "--accept-admin-role",
+            vouched,
+        ]
+        monkeypatch.setattr(sys, "stdout", _BrokenOut() if kind == "oserror" else _closed_out())
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.new_schema("bo"))
+        assert cli.main(argv) == 0
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+        assert cli.main(argv) == 2
+        err = capsys.readouterr().err
+>       assert "refused:" in err and third in err
+E       AssertionError: assert ('refused:' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_302ee1b19a (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n' and 'sb_x4_302ee1b19a' in 'refused: roles not named in this command can run the money functions, or will for future functions: role sb_pu_302ee1b19a (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n')
+
+tests/test_stop_state_roles.py:1732: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+WARNING  hadavin_sdk.store:migrate.py:1407 migrate: accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: sb_ac4_302ee1b19a)
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_____ test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too _____
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a46879440>
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-1209/popen-gw0/test_cli_migrate_prints_the_ac0/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5a47023070>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f5a44dc3ad0>
+
+    def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
+        w, cfg_dir, monkeypatch, capsys
+    ):
+        _demo(cfg_dir)
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+        third, vouched = w.new_role("x3", "NOLOGIN"), f"sb_ac3_{w.sfx}"
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        argv = [
+            "--config",
+            str(cfg_dir),
+            "migrate",
+            "--runtime-role",
+            w.runtime,
+            "--reset-role",
+            w.reset,
+        ]
+        assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
+        captured = capsys.readouterr()
+>       assert vouched in captured.out and third in captured.err
+E       AssertionError: assert ('sb_ac3_52a69bb752' in 'the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role\n')
+E        +  where 'the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role\n' = CaptureResult(out='the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services),... functions: role sb_pu_52a69bb752 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz)\n').out
+
+tests/test_stop_state_roles.py:1753: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call _
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a468785d0>
+
+    def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
+>       names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1900: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a468785d0>
+role = 'sb_rs_8bed1e4d05'
+call = <function test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call.<locals>.<lambda> at 0x7f5a46886ca0>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_pu_8bed1e4d05 (not named in this command) can run hadavin_purge_spend_reservations(timestamptz); role sb_rs_8bed1e4d05 (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_rs_8bed1e4d05 (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_s2_migrate_naming_one_other_role_runs_the_same_check[portal_role] ____
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a468794f0>
+only = 'portal_role'
+
+    @pytest.mark.parametrize("only", ["portal_role", "purge_role"])
+    def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        role = {"portal_role": w.portal, "purge_role": w.purge}[only]
+>       names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1910: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a468794f0>
+role = 'sb_x4_9ebc5add2b'
+call = <function test_s2_migrate_naming_one_other_role_runs_the_same_check.<locals>.<lambda> at 0x7f5a46815080>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_rt_9ebc5add2b (not named in this command) can run hadavin_reserve_spend(text, text, date, numeric, text); role sb_rt_9ebc5add2b (not named in this command) can run hadavin_settle_spend(text, numeric, text); role sb_rt_9ebc5add2b (not named in this command) can run hadavin_expire_spend_reservations(integer); role sb_pu_9ebc5add2b (not named in this command) can run hadavin_purge_spend_reservations(timestamptz); role sb_rt_9ebc5add2b (not named in this command) can run hadavin_add_spend(text, date, numeric); role sb_rs_9ebc5add2b (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_rs_9ebc5add2b (not named in this command) can run hadavin_cap_matches(text, numeric, numeric); role sb_rt_9ebc5add2b (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_s2_migrate_naming_one_other_role_runs_the_same_check[purge_role] _____
+[gw0] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a46879650>
+only = 'purge_role'
+
+    @pytest.mark.parametrize("only", ["portal_role", "purge_role"])
+    def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
+        third = w.new_role("x4", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+        role = {"portal_role": w.portal, "purge_role": w.purge}[only]
+>       names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:1910: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+w = <tests.test_stop_state_roles.World object at 0x7f5a46879650>
+role = 'sb_x4_85658de93e'
+call = <function test_s2_migrate_naming_one_other_role_runs_the_same_check.<locals>.<lambda> at 0x7f5a46869120>
+
+    def _refused_naming(w, role, call=None):
+        """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+        owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+        before = {r: w.rights(r) for r in w.roles[:4]}
+        assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+>       with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'roles other than the reset role could clear a stop'
+E         Actual message: 'roles not named in this command can run the money functions, or will for future functions: role sb_rt_85658de93e (not named in this command) can run hadavin_reserve_spend(text, text, date, numeric, text); role sb_rt_85658de93e (not named in this command) can run hadavin_settle_spend(text, numeric, text); role sb_rt_85658de93e (not named in this command) can run hadavin_expire_spend_reservations(integer); role sb_rt_85658de93e (not named in this command) can run hadavin_add_spend(text, date, numeric); role sb_rs_85658de93e (not named in this command) can run hadavin_set_cap(text, numeric, numeric, text); role sb_rs_85658de93e (not named in this command) can run hadavin_cap_matches(text, numeric, numeric); role sb_rt_85658de93e (not named in this command) can run hadavin_cap_matches(text, numeric, numeric)'
+
+tests/test_stop_state_roles.py:1179: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+______________ test_an_untouched_log_verifies_and_is_fully_signed ______________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb1eb5bb10>
+
+    def test_an_untouched_log_verifies_and_is_fully_signed(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+______________ test_rows_cannot_be_updated_or_deleted_through_sql ______________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb1eb86710>
+
+    def test_rows_cannot_be_updated_or_deleted_through_sql(key):
+>       db = _log(key)._db.conn
+             ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_________________________ test_an_edited_row_is_found __________________________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb243dad50>
+
+    def test_an_edited_row_is_found(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_________________________ test_a_deleted_row_is_found __________________________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb1eba8bd0>
+
+    def test_a_deleted_row_is_found(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:149: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_ test_rewriting_a_row_and_recomputing_every_later_hash_is_caught_by_the_signature _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb2426cb50>
+
+    def test_rewriting_a_row_and_recomputing_every_later_hash_is_caught_by_the_signature(key):
+        """The chain is internally consistent again afterwards; only the signed checkpoint remembers."""
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+____________ test_a_checkpoint_signed_with_another_key_is_rejected _____________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb29017e00>
+
+    def test_a_checkpoint_signed_with_another_key_is_rejected(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+__________ test_cutting_the_tail_but_keeping_its_checkpoint_is_found ___________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb29031860>
+
+    def test_cutting_the_tail_but_keeping_its_checkpoint_is_found(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:174: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_________ test_rows_after_the_last_checkpoint_are_reported_as_unsigned _________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb242057f0>
+
+    def test_rows_after_the_last_checkpoint_are_reported_as_unsigned(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+___________ test_a_checkpoint_is_written_automatically_every_n_rows ____________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb242211f0>
+
+    def test_a_checkpoint_is_written_automatically_every_n_rows(key):
+>       log = _log(key, rows=7, every=3)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:188: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_______________ test_a_damaged_database_is_a_finding_not_a_crash _______________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb24223a70>
+
+    def test_a_damaged_database_is_a_finding_not_a_crash(key):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:194: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+__________ test_audit_verify_exits_0_when_intact_and_1_when_tampered ___________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb242239b0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fbb2728fcd0>
+
+    def test_audit_verify_exits_0_when_intact_and_1_when_tampered(key, capsys):
+>       log = _log(key)
+              ^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:217: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_ test_a_history_rewritten_and_re_signed_with_the_key_is_caught_by_its_anchors _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb24221910>
+bucket = <botocore.client.S3 object at 0x7fbb24f646e0>
+
+    def test_a_history_rewritten_and_re_signed_with_the_key_is_caught_by_its_anchors(key, bucket):
+>       log = _log(key, rows=3, anchor=S3Anchor(BUCKET, bucket))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:277: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_ test_a_checkpoint_that_was_never_anchored_or_an_anchor_with_no_checkpoint_is_reported _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb24f9dd90>
+
+    def test_a_checkpoint_that_was_never_anchored_or_an_anchor_with_no_checkpoint_is_reported(key):
+>       log = _log(key, rows=1)
+              ^^^^^^^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:289: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+______ test_checkpoints_are_signed_by_kms_and_verify_with_its_public_key _______
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    def test_checkpoints_are_signed_by_kms_and_verify_with_its_public_key():
+        client = kms_stub()
+>       log = _log(KmsSigner(KEY_ALIAS, client), rows=1)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:302: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+________ test_appends_and_reads_from_many_threads_keep_one_whole_chain _________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb264f9a90>
+
+    def test_appends_and_reads_from_many_threads_keep_one_whole_chain(key):
+        log = audit.ChainAudit(audit._Db.memory(), key, None, 25)
+    
+        def work(n):
+            for i in range(50):
+                key_ = log.write_intent(_event(f"run-{n}", i))
+                log.events(f"run-{n}")
+                assert log.verify_object(key_)
+    
+        with ThreadPoolExecutor(8) as pool:
+>           list(pool.map(work, range(8)))
+
+tests/warden_port/test_audit_chain.py:384: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:619: in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:317: in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:449: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/warden_port/test_audit_chain.py:379: in work
+    key_ = log.write_intent(_event(f"run-{n}", i))
+                            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-0', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+____________ test_each_anchor_is_locked_dated_and_never_overwritten ____________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb1d659310>
+bucket = <botocore.client.S3 object at 0x7fbb1d6c7230>
+
+    def test_each_anchor_is_locked_dated_and_never_overwritten(key, bucket):
+        puts = []
+        real_put = bucket.put_object
+    
+        def spy(**kw):
+            puts.append(kw)
+            return real_put(**kw)
+    
+        bucket.put_object = spy
+        anchor = S3Anchor(BUCKET, bucket, retain=timedelta(days=1))
+>       log = _log(key, rows=2, anchor=anchor)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:443: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+______________ test_a_deleted_tail_is_detected_against_the_anchor ______________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb1c211eb0>
+bucket = <botocore.client.S3 object at 0x7fbb1670d6a0>
+
+    def test_a_deleted_tail_is_detected_against_the_anchor(key, bucket):
+>       log = _log(key, rows=3, anchor=S3Anchor(BUCKET, bucket))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:465: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/warden_port/test_audit_chain.py:79: in _log
+    log.write_intent(_event(i=i))
+                     ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_ test_a_checkpoint_that_cannot_be_signed_or_anchored_fails_open_and_is_retried _
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb1d659310>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7fbb167cfbd0>
+
+    def test_a_checkpoint_that_cannot_be_signed_or_anchored_fails_open_and_is_retried(key, caplog):
+        class Flaky:
+            def __init__(self, fail):
+                self.fail, self.puts = fail, {}
+    
+            def put(self, seq, head, sig, **_meta):
+                if self.fail:
+                    raise ConnectionError("anchor store down")
+                self.puts[seq] = (head, sig)
+    
+            def all(self):
+                return dict(self.puts)
+    
+        anchor = Flaky(fail=True)
+        log = audit.ChainAudit(audit._Db.memory(), key, anchor, 2)
+        real_sign = key.sign
+        key.sign = lambda m: (_ for _ in ()).throw(TimeoutError("kms down"))
+        with caplog.at_level(logging.ERROR):
+>           log.write_intent(_event(i=0))
+                             ^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:491: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_________ test_an_outcome_that_cannot_be_appended_waits_in_the_outbox __________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb164160f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb1d632890>
+
+    def test_an_outcome_that_cannot_be_appended_waits_in_the_outbox(key, monkeypatch):
+        log = audit.ChainAudit(audit._Db.memory(), key)
+>       first, later = _event(i=0), _event(i=1)
+                       ^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_____________ test_a_new_event_does_not_overtake_a_parked_outcome ______________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb16415d30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbb1d632ac0>
+
+    def test_a_new_event_does_not_overtake_a_parked_outcome(key, monkeypatch):
+        """Step A (audit/chain.py `_drain_older_first`): the next append first drains the rows this process parked,
+        so the older outcome lands in the chain BEFORE the newer intent. The first version of this test expected the
+        reverse (the intent first, the outcome by the tick), which is the overtaking that was fixed on purpose."""
+        log = audit.ChainAudit(audit._Db.memory(), key)
+>       first, later = _event(i=0), _event(i=1)
+                       ^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:525: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_______________ test_an_unsigned_chain_still_verifies_its_links ________________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+    def test_an_unsigned_chain_still_verifies_its_links():
+        log = audit.ChainAudit(audit._Db.memory())
+>       log.write_intent(_event())
+                         ^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:538: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+___ test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate ____
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+pg_chain = (<hadavin_sdk.audit.chain.ChainAudit object at 0x7fbb1ec88f30>, <psycopg.Connection [IDLE] (host=127.0.0.1 port=55433 database=postgres) at 0x7fbb1640ea80>)
+
+    def test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate(pg_chain):
+        import psycopg
+    
+        log, conn = pg_chain
+>       keys = [log.write_intent(_event(i=i)) for i in range(4)]
+                                 ^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:629: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+_________ test_postgres_appends_from_many_threads_keep_one_whole_chain _________
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+pg_chain = (<hadavin_sdk.audit.chain.ChainAudit object at 0x7fbb1ecf73f0>, <psycopg.Connection [IDLE] (host=127.0.0.1 port=55433 database=postgres) at 0x7fbb1640e5d0>)
+
+    def test_postgres_appends_from_many_threads_keep_one_whole_chain(pg_chain):
+        log, _ = pg_chain
+    
+        def work(n):
+            for i in range(10):
+                log.write_intent(_event(f"run-{n}", i))
+    
+        with ThreadPoolExecutor(4) as pool:
+>           list(pool.map(work, range(4)))
+
+tests/warden_port/test_audit_chain.py:654: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:619: in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:317: in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:449: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/root/.local/share/uv/python/cpython-3.13.12-linux-x86_64-gnu/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/warden_port/test_audit_chain.py:651: in work
+    log.write_intent(_event(f"run-{n}", i))
+                     ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-0', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+____ test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it ____
+[gw1] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+key = <hadavin_sdk.audit.signer.LocalSigner object at 0x7fbb16415bb0>
+
+    def test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it(key):
+        """As in production: `migrate` (migration role) grants the runtime role, which then builds the store and
+        the chain through the table and appends, checkpoints, drains the outbox and verifies, but cannot UPDATE or
+        DELETE a chain row even before the append-only trigger runs."""
+        import psycopg
+        from psycopg import sql
+        from psycopg.conninfo import conninfo_to_dict, make_conninfo
+    
+        from hadavin_sdk.backends.table import PostgresSettings
+        from hadavin_sdk.store.migrate import migrate
+    
+        for dsn in pg_schema(migrated=False):
+            role = "rt_" + uuid.uuid4().hex[:10]
+            with psycopg.connect(dsn, autocommit=True) as db:
+                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            try:
+                migrate(dsn, runtime_role=role)
+                options = conninfo_to_dict(dsn).get("options")
+                runtime_dsn = make_conninfo(dsn, user=role, options=options)
+                settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
+                store = make("store", settings, FakeSecretProvider({"pg-dsn": runtime_dsn}))
+                try:
+                    assert store._db.execute("SELECT current_user").fetchone()[0] == role
+                    chain = ChainSettings(kind="chain", checkpoint_every=2)
+                    log = make("audit", chain, store=store, signer=key)
+>                   first = _event(i=0)
+                            ^^^^^^^^^^^
+
+tests/warden_port/test_audit_chain.py:684: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_id = 'run-1', i = 0
+
+    def _event(run_id="run-1", i=0):
+>       return AuditEvent(
+            run_id=run_id,
+            domain="step",
+            operation=f"n{i}",
+            principal="p",
+            source="s",
+            result="ünïcode ok",
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for AuditEvent
+E       result
+E         String should match pattern '^[A-Za-z0-9_.:@/+=#~, -]*$' [type=string_pattern_mismatch, input_value='ünïcode ok', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+
+tests/warden_port/test_audit_chain.py:66: ValidationError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner ________
+[gw2] linux -- Python 3.13.12 /tmp/ca-b-run/.venv/bin/python
+
+w = <tests.test_stop_state_roles.World object at 0x7ff988e1b5f0>
+
+    def test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner(w):
+        owner = w.run("SELECT current_user")[0][0]
+        member = w.new_role("mo", "NOLOGIN NOINHERIT")
+        w.grant("GRANT {} TO {}", owner, member)
+        try:
+>           with pytest.raises(
+                ConfigError, match="reset role holds more than the grant map.*member of"
+            ):
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'reset role holds more than the grant map.*member of'
+E             Actual message: 'sb_mo_8160bfee2c is a member of postgres, the owner of the hadavin_* functions: remove the membership'
+
+tests/test_stop_state_roles.py:667: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+FAILED tests/test_k1b_cli.py::test_end_to_end_replay_then_score - AssertionEr...
+FAILED tests/contracts/test_store_spend_model.py::test_a_random_sequence_matches_the_model_after_every_call[postgres-seed23]
+FAILED tests/test_money_guard_mutants.py::test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_spend]
+FAILED tests/test_money_guard_mutants.py::test_the_attack_battery_kills_every_mutant_of_the_guard[trigger_removed_all_counters]
+FAILED tests/test_money_guard_mutants.py::test_the_attack_battery_kills_every_mutant_of_the_guard[release_owner_check_removed]
+FAILED tests/contracts/test_store_spend_model.py::test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres[seed23]
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[f_reserve_p_day_cap_check_removed]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[f_reserve_p_month_cap_check_removed]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_day_cap_weakened]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_month_cap_weakened]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_sum_check_dropped_on_the_day]
+FAILED tests/test_money_definer_mutants.py::test_the_battery_kills_every_mutant[i_month_cap_ignored]
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_refuses_a_member_of_the_reset_role[LOGIN]
+FAILED tests/test_stop_state_roles.py::test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed
+FAILED tests/test_stop_state_roles.py::test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer
+FAILED tests/test_stop_state_roles.py::test_s2_a_grant_to_public_is_listed_as_public
+FAILED tests/test_p5p6_followups.py::test_the_shared_retry_helper_names_no_vendor
+FAILED tests/test_stop_state_roles.py::test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade
+FAILED tests/test_stop_state_roles.py::test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[oserror]
+FAILED tests/test_stop_state_roles.py::test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code[closed]
+FAILED tests/test_stop_state_roles.py::test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_naming_one_other_role_runs_the_same_check[portal_role]
+FAILED tests/test_stop_state_roles.py::test_s2_migrate_naming_one_other_role_runs_the_same_check[purge_role]
+FAILED tests/warden_port/test_audit_chain.py::test_an_untouched_log_verifies_and_is_fully_signed
+FAILED tests/warden_port/test_audit_chain.py::test_rows_cannot_be_updated_or_deleted_through_sql
+FAILED tests/warden_port/test_audit_chain.py::test_an_edited_row_is_found - p...
+FAILED tests/warden_port/test_audit_chain.py::test_a_deleted_row_is_found - p...
+FAILED tests/warden_port/test_audit_chain.py::test_rewriting_a_row_and_recomputing_every_later_hash_is_caught_by_the_signature
+FAILED tests/warden_port/test_audit_chain.py::test_a_checkpoint_signed_with_another_key_is_rejected
+FAILED tests/warden_port/test_audit_chain.py::test_cutting_the_tail_but_keeping_its_checkpoint_is_found
+FAILED tests/warden_port/test_audit_chain.py::test_rows_after_the_last_checkpoint_are_reported_as_unsigned
+FAILED tests/warden_port/test_audit_chain.py::test_a_checkpoint_is_written_automatically_every_n_rows
+FAILED tests/warden_port/test_audit_chain.py::test_a_damaged_database_is_a_finding_not_a_crash
+FAILED tests/warden_port/test_audit_chain.py::test_audit_verify_exits_0_when_intact_and_1_when_tampered
+FAILED tests/warden_port/test_audit_chain.py::test_a_history_rewritten_and_re_signed_with_the_key_is_caught_by_its_anchors
+FAILED tests/warden_port/test_audit_chain.py::test_a_checkpoint_that_was_never_anchored_or_an_anchor_with_no_checkpoint_is_reported
+FAILED tests/warden_port/test_audit_chain.py::test_checkpoints_are_signed_by_kms_and_verify_with_its_public_key
+FAILED tests/warden_port/test_audit_chain.py::test_appends_and_reads_from_many_threads_keep_one_whole_chain
+FAILED tests/warden_port/test_audit_chain.py::test_each_anchor_is_locked_dated_and_never_overwritten
+FAILED tests/warden_port/test_audit_chain.py::test_a_deleted_tail_is_detected_against_the_anchor
+FAILED tests/warden_port/test_audit_chain.py::test_a_checkpoint_that_cannot_be_signed_or_anchored_fails_open_and_is_retried
+FAILED tests/warden_port/test_audit_chain.py::test_an_outcome_that_cannot_be_appended_waits_in_the_outbox
+FAILED tests/warden_port/test_audit_chain.py::test_a_new_event_does_not_overtake_a_parked_outcome
+FAILED tests/warden_port/test_audit_chain.py::test_an_unsigned_chain_still_verifies_its_links
+FAILED tests/warden_port/test_audit_chain.py::test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate
+FAILED tests/warden_port/test_audit_chain.py::test_postgres_appends_from_many_threads_keep_one_whole_chain
+FAILED tests/warden_port/test_audit_chain.py::test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it
+FAILED tests/test_stop_state_roles.py::test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner
+ERROR tests/test_step_b_e7_migration_0009.py::test_planted_stop_years_are_refused[kill_switch_clears-20000-01-01]
+51 failed, 13742 passed, 12 skipped, 18 xfailed, 1 error in 535.42s (0:08:55)
