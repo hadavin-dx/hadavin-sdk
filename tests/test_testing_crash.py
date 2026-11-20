@@ -493,10 +493,10 @@ def test_e6_a_flag_with_another_point_or_a_bad_count_never_fires(tmp_path, no_re
     counts fail if the count pattern allowed a zero first or if the `#` check were dropped."""
     flag = tmp_path / "flag"
     flag.write_text(content, encoding="utf-8")
-    with CrashPoints(mode="exit", flag_path=flag) as cp:
-        thing = cp.wrap(Thing(), "thing", ["step"])
-        assert thing.step() == 1 and thing.step() == 2
-        assert cp.armed() is None and cp.fired == ()
+    cp = CrashPoints(mode="exit", flag_path=flag)  # no `with`: leaving it would delete the flag
+    thing = cp.wrap(Thing(), "thing", ["step"])
+    assert thing.step() == 1 and thing.step() == 2 and cp.fired == ()
+    assert cp.armed() == (content if content == "thing.other:before" else None)
     assert flag.read_text(encoding="utf-8") == content
 
 
@@ -608,6 +608,7 @@ def stub_unlink(monkeypatch, tmp_path, refusals):
     """Path.unlink refuses `refusals` times (None: always) with PermissionError, then works.
     Sleeping is recorded, not done. Returns the call counter and the pauses."""
     real, calls, pauses = Path.unlink, [], []
+    monkeypatch.setattr(crash_mod.time, "sleep", pauses.append)
 
     def flaky(self, *args, **kwargs):
         calls.append(1)
@@ -616,8 +617,7 @@ def stub_unlink(monkeypatch, tmp_path, refusals):
         real(self, *args, **kwargs)
 
     monkeypatch.setattr(Path, "unlink", flaky)
-    monkeypatch.setattr(crash_mod.time, "sleep", pauses.append)
-    return calls, pauses
+    return calls, pauses, lambda: monkeypatch.setattr(Path, "unlink", real)
 
 
 def test_the_unlink_retry_is_20_tries_at_20_ms():
@@ -629,13 +629,13 @@ def test_a_delete_refused_for_every_try_but_the_last_works_without_error(tmp_pat
     """Leaving the block: the delete is refused for every try but the last; the number of calls is
     the tries constant and the only error is the usual 'never fired'."""
     flag = tmp_path / "flag"
-    calls, pauses = stub_unlink(monkeypatch, tmp_path, crash_mod._UNLINK_TRIES - 1)
+    calls, pauses, restore = stub_unlink(monkeypatch, tmp_path, crash_mod._UNLINK_TRIES - 1)
     with (
         pytest.raises(RuntimeError, match="never fired"),
         CrashPoints(mode="exit", flag_path=flag) as cp,
     ):
         cp.arm(POINT)
-    monkeypatch.undo()
+    restore()
     assert len(calls) == crash_mod._UNLINK_TRIES and not flag.exists()
     assert pauses == [crash_mod._UNLINK_PAUSE_S] * (crash_mod._UNLINK_TRIES - 1)
 
@@ -644,13 +644,13 @@ def test_a_delete_refused_every_time_is_tried_the_tries_constant_then_named(tmp_
     """Leaving the block: every try refused; the calls equal the tries constant and the error names
     the path."""
     flag = tmp_path / "flag"
-    calls, _ = stub_unlink(monkeypatch, tmp_path, None)
+    calls, _, restore = stub_unlink(monkeypatch, tmp_path, None)
     with (
         pytest.raises(RuntimeError, match="could not be deleted") as caught,
         CrashPoints(mode="exit", flag_path=flag) as cp,
     ):
         cp.arm(POINT)
-    monkeypatch.undo()
+    restore()
     assert len(calls) == crash_mod._UNLINK_TRIES and str(flag) in str(caught.value)
     flag.unlink()
 
@@ -662,10 +662,10 @@ def test_hit_retries_a_refused_delete_and_crashes_at_this_call(tmp_path, no_real
     cp = CrashPoints(mode="exit", flag_path=flag)
     thing = cp.wrap(Thing(), "thing", ["step"])
     cp.arm(POINT)
-    calls, _ = stub_unlink(monkeypatch, tmp_path, 2)
+    calls, _, restore = stub_unlink(monkeypatch, tmp_path, 2)
     with pytest.raises(Killed):
         thing.step()
-    monkeypatch.undo()
+    restore()
     assert len(calls) == 3 and not flag.exists() and cp.fired == (POINT,)
     assert thing.step() == 1  # the flag is gone: one arm, one crash
 
@@ -679,9 +679,9 @@ def test_hit_with_a_delete_refused_every_time_does_not_crash_and_leaves_the_flag
     cp = CrashPoints(mode="exit", flag_path=flag)
     thing = cp.wrap(Thing(), "thing", ["step"])
     cp.arm(POINT)
-    calls, _ = stub_unlink(monkeypatch, tmp_path, None)
+    calls, _, restore = stub_unlink(monkeypatch, tmp_path, None)
     assert thing.step() == 1 and cp.fired == ()
-    monkeypatch.undo()
+    restore()
     assert len(calls) == crash_mod._UNLINK_TRIES and flag.read_text(encoding="utf-8") == POINT
     with pytest.raises(Killed):  # the next matching call tries again and now crashes
         thing.step()
