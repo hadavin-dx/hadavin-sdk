@@ -63,7 +63,9 @@ class CrashPoints:
 
     def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None:
         if _GATE not in os.environ:
-            raise RuntimeError("CrashPoints is a test tool: it can only be built inside a pytest run")
+            raise RuntimeError(
+                "CrashPoints is a test tool: it can only be built inside a pytest run"
+            )
         if mode not in ("raise", "exit"):
             raise ValueError(f"unknown mode: {mode!r}")
         if mode == "exit" and flag_path is None:
@@ -97,7 +99,9 @@ class CrashPoints:
     def arm(self, point: str, *, nth: int = 1) -> None:
         """Arm one point: its `nth` matching call from now on crashes, once."""
         if not isinstance(point, str) or not _POINT.fullmatch(point):
-            raise ValueError("a point is <name>.<method>:before or <name>.<method>:after, lower case")
+            raise ValueError(
+                "a point is <name>.<method>:before or <name>.<method>:after, lower case"
+            )
         if not isinstance(nth, int) or not 1 <= nth < _NTH_LIMIT:
             raise ValueError(f"nth must be 1 or more: {nth!r}")
         with self._lock:
@@ -125,7 +129,9 @@ class CrashPoints:
             self._seen[point] = self._seen.get(point, 0) + 1
             if self._seen[point] < current[1]:
                 return
-            if not self._take():  # disarm BEFORE the crash; if another process took the flag, no crash
+            if (
+                not self._take()
+            ):  # disarm BEFORE the crash; if another process took the flag, no crash
                 return
             self._fired.append(point)
             if self._mode == "raise":
