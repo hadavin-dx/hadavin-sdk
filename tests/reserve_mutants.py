@@ -300,13 +300,13 @@ HAND = [
     Hand("H8 the delta sign is flipped", SQL11, S_DELTA, "    v_delta := rec.reserved_usd - rec.settled_usd;",
         f"{CONTRACT}::{SETTLE}[postgres-0]", TOTALS),
     Hand("H9 settle books on today's day", SQL11, S_DAYROW, "WHERE s.agent_id = rec.agent_id AND s.day = current_date;",
-        f"{CONTRACT}::{CLOCK}[postgres-0.40]", TOTALS),
+        f"{CONTRACT}::{CLOCK}[postgres-0.40]", "spend counter row missing"),
     Hand("H9 (no row for today) settle books on today's day", SQL11, S_DAYROW,
         "WHERE s.agent_id = rec.agent_id AND s.day = current_date;",
         f"{CONTRACT}::{NEXT_DAY}[postgres-0.40]", "spend counter row missing"),
     Hand("H10 the month key is taken from today", SQL11, S_MONTHROW,
         "m.month = pg_catalog.date_trunc('month', current_date)::date;",
-        f"{CONTRACT}::{CLOCK}[postgres-0.40]", TOTALS),
+        f"{CONTRACT}::{CLOCK}[postgres-0.40]", "spend counter row missing"),
     Hand("H11 expire sets settled_usd to 0", SQL11, "SET status = 'expired', settled_usd = r.reserved_usd,",
         "SET status = 'expired', settled_usd = 0,",
         f"{CONTRACT}::{EXPIRE_ZERO}{PGP}", "CheckViolation"),
@@ -349,7 +349,7 @@ HAND = [
         f"{CONTRACT}::{DUP_ID}{PGP}", "UniqueViolation"),
     Hand("H25 a cap refusal is not mapped to SpendCapExceeded", PG, 'if code == "HD001":',
         'if code == "00000":',
-        f"{CONTRACT}::{EXACT}{PGP}", "HD001"),
+        f"{CONTRACT}::{REFUSED}{PGP}", "HD001"),
 ]  # fmt: skip
 
 # Forms of a ticket mutant that change nothing in the built code: (name, why).
