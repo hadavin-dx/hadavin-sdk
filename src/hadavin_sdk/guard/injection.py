@@ -69,10 +69,6 @@ def _holds(window: str, need_kept: int, need_letters: int) -> bool:
     characters) holds nothing."""
     # A mark on both sides: a view that drops everything of ``window`` (the tag characters, which read as letters in one view only) is then still a
     # view (of the marks, with no letter), not a view that is left out because it is empty, so it counts as zero.
-    # The RAW text is read too (``_score`` squashes it to ASCII a-z only), so the window must hold the letters in the raw spelling as well: a full-width or
-    # look-alike letter counts in a fold view but not in the raw squash, and padding of them aimed at a boundary would otherwise hide a phrase from the raw read.
-    if len(_SQUASH.sub("", window.lower())) < need_letters:
-        return False
     views = textnorm.scan_views_no_value("|" + window + "|")
     if not views:
         return False
@@ -175,6 +171,12 @@ class RegexDetector:
                 squashed = _SQUASH.sub("", view.lower())
                 if any(s in squashed for s in _SQUASHED):
                     return 1.0
+        if len(text) > defaults.TEXTNORM_MAX_CHARS:
+            # After the pieces (a boundary that cannot be proven still fails closed in them first): the raw squash (ASCII a-z only) is read over the WHOLE text, as the old whole-text read did: a piece boundary cannot split it, however much
+            # look-alike or full-width padding a writer puts between `ignore` and `previous...` (the pieces' letter counts are those of the fold views).
+            raw = _SQUASH.sub("", text.lower())
+            if any(s in raw for s in _SQUASHED):
+                return 1.0
         return 0.0
 
     def check(self, text: str, source: str) -> Verdict:

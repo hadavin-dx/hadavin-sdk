@@ -17,6 +17,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from hadavin_sdk import tools as tools_module
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard import model_gate, runmap
 from hadavin_sdk.guard.model_gate import (
@@ -113,7 +114,9 @@ def worst(route, system, messages, tools, documents, output_schema) -> Decimal:
     return WORST
 
 
-def build(client=None, *, meter=None, sink=None, mapping=NO_MAP, worst_case=worst, log=None, **bind):
+def build(
+    client=None, *, meter=None, sink=None, mapping=NO_MAP, worst_case=worst, log=None, **bind
+):
     """(bound gate, client, meter, sink) sharing one call log."""
     log = [] if log is None else log
     client = Client(log) if client is None else client
@@ -126,7 +129,9 @@ def build(client=None, *, meter=None, sink=None, mapping=NO_MAP, worst_case=wors
     return gate.bind("agent-1", "run-1", mapping=mapping, **bind), client, meter, sink
 
 
-def refused(bound, client, meter, sink, messages=CLEAN, documents=None, mapping=None):  # mapping: only to compare
+def refused(
+    bound, client, meter, sink, messages=CLEAN, documents=None, mapping=None
+):  # mapping: only to compare
     """A hostile input: UnmaskedInput, zero client calls, zero reservations, map unchanged, one refused row."""
     before = copy.deepcopy(dict(mapping)) if mapping is not None else None
     with pytest.raises(UnmaskedInput) as caught:
@@ -647,29 +652,82 @@ class SpendRefused(RuntimeError):
 
 
 @pytest.mark.parametrize(
-    ("error", "code"),
-    [
-        (SpendRefused("daily_budget"), "daily_budget"),
-        (SpendRefused("kill_switch"), "kill_switch"),
-        (KeyError("agent-1"), "reserve_refused"),
-        (RuntimeError(f"store down {TOKEN}"), "reserve_refused"),
-        (
-            SpendRefused(f"free text {TOKEN}"),
-            "reserve_refused",
-        ),  # not shaped like a code: never copied
-    ],
-    ids=["daily_budget", "kill_switch", "unknown-agent", "runtime-error", "reason-is-text"],
+    "error",
+    [SpendRefused("daily_budget"), SpendRefused("kill_switch"), SpendRefused("usd_cap")],
+    ids=["daily_budget", "kill_switch", "usd_cap"],
 )
-def test_t12_reserve_raises_no_client_call_and_the_same_error_comes_out(error, code):
+def test_t12_a_spend_refusal_passes_unchanged_and_no_call_is_made(error):
     bound, client, meter, sink = build(meter=Meter(reserve_raises=error))
-    with pytest.raises(type(error)) as caught:
+    with pytest.raises(SpendRefused) as caught:
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value is error
     assert client.sent == [], "a client call without a reservation"
     assert meter.settles == []
-    assert sink.codes() == [("refused", code)]
+    assert sink.codes() == [("refused", error.reason)]
     assert sink.rows[0].object_ref is None  # no reservation was made
     assert not isinstance(error, ProviderError | GateRefused)
+
+
+PRE_CALL_ERRORS = [
+    KeyError("agent-1"),
+    RuntimeError(f"store down {TOKEN}"),
+    OSError(f"connection refused {TOKEN}"),
+    ValueError(KEY),
+    TypeError("bad"),
+    SpendRefused(
+        f"free text {TOKEN}"
+    ),  # a reason that is not one of the six: not a SpendRefused to the gate
+]
+
+
+@pytest.mark.parametrize(
+    "error", PRE_CALL_ERRORS, ids=lambda e: type(e).__name__ + str(len(e.args))
+)
+def test_o17_5_a_reserve_error_that_is_not_a_spend_refusal_is_one_gate_exception_with_a_code_only(
+    error,
+):
+    """ORDER 017 item 5. Before: the meter's error came out as it was (KeyError, store errors), so the caller
+    could not tell `no call was made` from a client failure. Now every such failure is `GateRefused` with the
+    code `reserve_refused`, no text, no cause and no context (raised outside the `except`)."""
+    bound, client, meter, sink = build(meter=Meter(reserve_raises=error))
+    with pytest.raises(GateRefused) as caught:
+        bound.chat(CLEAN, system="s", route="main")
+    exc = caught.value
+    assert (
+        type(exc) is GateRefused
+        and exc.code == "reserve_refused"
+        and exc.args == ("reserve_refused",)
+    )
+    assert exc.__cause__ is None and exc.__context__ is None and not exc.__suppress_context__
+    assert TOKEN not in repr(exc) and KEY not in repr(exc)
+    assert client.sent == [] and meter.settles == [] and not isinstance(exc, ProviderError)
+    assert sink.codes() == [("refused", "reserve_refused")] and sink.rows[0].object_ref is None
+
+
+def test_o17_5_a_keyboard_interrupt_from_reserve_or_worst_case_is_not_turned_into_a_gate_error():
+    for kwargs in (
+        {"meter": Meter(reserve_raises=KeyboardInterrupt())},
+        {"worst_case": lambda *args: (_ for _ in ()).throw(KeyboardInterrupt())},
+    ):
+        bound, client, _, _ = build(**kwargs)
+        with pytest.raises(KeyboardInterrupt):
+            bound.chat(CLEAN, system="s", route="main")
+        assert client.sent == []
+
+
+def test_o17_5_errors_of_the_client_pass_unchanged():
+    errors = [
+        ProviderError("x"),
+        ProviderExhausted("y"),
+        ValueError("z"),
+        TimeoutError(),
+        Marked("m"),
+    ]
+    for error in errors:
+        bound, _, _, _ = build(Client(raises=error))
+        with pytest.raises(type(error)) as caught:
+            bound.chat(CLEAN, system="s", route="main")
+        assert caught.value is error
 
 
 def test_m4_only_the_published_reasons_become_an_audit_code():
@@ -701,7 +759,9 @@ def test_m4_only_the_published_reasons_become_an_audit_code():
         error = OSError("network")
         error.reason = reason
         bound, client, _, sink = build(meter=Meter(reserve_raises=error))
-        with pytest.raises(OSError):
+        with pytest.raises(
+            GateRefused
+        ):  # not a SpendRefused: one gate exception with a code (ORDER 017 item 5)
             bound.chat(CLEAN, system="s", route="main")
         assert sink.codes() == [("refused", "reserve_refused")], (
             "a reason that is not published was copied"
@@ -779,16 +839,16 @@ def test_e4_note_enforces_the_allowlist_a_code_outside_it_is_never_written():
     )
 
 
-def test_d2_worst_case_raising_has_its_own_code_and_its_error_comes_out_unchanged():
+def test_d2_worst_case_raising_has_its_own_code_and_comes_out_as_the_gate_exception():
     def cannot(*args):
         raise LookupError("no such route")
 
     bound, client, meter, sink = build(worst_case=cannot)
-    with pytest.raises(LookupError):
+    with pytest.raises(GateRefused) as caught:  # ORDER 017 item 5: was the LookupError itself
         bound.chat(CLEAN, system="s", route="nope")
-    assert (
-        client.sent == [] and meter.reserved == {}
-    )  # a raising worst_case is not a meter refusal:
+    assert caught.value.code == "worst_case_failed" and caught.value.args == ("worst_case_failed",)
+    assert caught.value.__cause__ is None and caught.value.__context__ is None
+    assert client.sent == [] and meter.reserved == {}  # a raising worst_case is not a meter refusal
     assert sink.codes() == [("refused", "worst_case_failed")]
 
 
@@ -1295,6 +1355,7 @@ def test_d3_a_reservation_id_that_is_not_a_non_empty_str_means_no_call(bad_id):
     with pytest.raises(model_gate.ReservationInvalid) as caught:
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value.args == ("reservation_invalid",) and caught.value.__cause__ is None
+    assert caught.value.__context__ is None and isinstance(caught.value, GateRefused)
     assert client.sent == [] and meter.settles == []
     assert sink.codes() == [("refused", "reservation_invalid")] and sink.rows[0].object_ref is None
 
@@ -1422,7 +1483,15 @@ def gate_source_problems(source: str) -> list[str]:
                 and all(isinstance(a, ast.Constant) for a in node.exc.args)
                 and node.cause is None
             )
-            if not (bare_or_fixed or fixed_type_error):
+            # `raise GateRefused(failure)`: the one local that holds a fixed code (set from CODE_ constants)
+            code_only = (
+                isinstance(node.exc, ast.Call)
+                and ast.unparse(node.exc.func) == "GateRefused"
+                and [ast.unparse(a) for a in node.exc.args] == ["failure"]
+                and not node.exc.keywords
+                and node.cause is None
+            )
+            if not (bare_or_fixed or fixed_type_error or code_only):
                 problems.append(f"line {line}: a raise that could carry text")
         elif isinstance(node, ast.Call) and ast.unparse(node.func) == "AuditEvent":
             row = {k.arg: ast.unparse(k.value) for k in node.keywords}
@@ -1474,12 +1543,12 @@ def test_i9_the_module_has_no_logger_no_exception_text_and_no_module_state():
         ("        if self._audit is None:\n            return\n", "        if self._audit is None:\n            return\n        import logging\n"),
         ("        mapping = self._mapping\n", "        mapping = self._mapping\n        print(messages)\n"),
         ("            code = CODE_SETTLE_FAILED\n", "            code = CODE_SETTLE_FAILED\n            self.last = exc.__cause__\n"),
-        ("            reason = getattr(exc, \"reason\", None)\n", "            reason = getattr(exc, \"args\", None)\n"),
-        ("            reason = getattr(exc, \"reason\", None)\n", "            reason = getattr(exc, \"__cause__\", None)\n"),
-        ("            reason = getattr(exc, \"reason\", None)\n", "            reason = getattr(exc, \"reason\", None)\n            self.seen = sys.exception()\n"),
-        ("            reason = getattr(exc, \"reason\", None)\n", "            reason = getattr(exc, \"reason\", None)\n            self.seen = sys.exc_info()\n"),
-        ("            reason = getattr(exc, \"reason\", None)\n", "            reason = getattr(exc, \"reason\", None)\n            sys.stderr.write(\"x\")\n"),
-        ("            reason = getattr(exc, \"reason\", None)\n", "            reason = getattr(exc, \"reason\", None)\n            self.seen = \"{}\".format(exc)\n"),
+        ("                reason = getattr(exc, \"reason\", None)\n", "                reason = getattr(exc, \"args\", None)\n"),
+        ("                reason = getattr(exc, \"reason\", None)\n", "                reason = getattr(exc, \"__cause__\", None)\n"),
+        ("                reason = getattr(exc, \"reason\", None)\n", "                reason = getattr(exc, \"reason\", None)\n                self.seen = sys.exception()\n"),
+        ("                reason = getattr(exc, \"reason\", None)\n", "                reason = getattr(exc, \"reason\", None)\n                self.seen = sys.exc_info()\n"),
+        ("                reason = getattr(exc, \"reason\", None)\n", "                reason = getattr(exc, \"reason\", None)\n                sys.stderr.write(\"x\")\n"),
+        ("                reason = getattr(exc, \"reason\", None)\n", "                reason = getattr(exc, \"reason\", None)\n                self.seen = \"{}\".format(exc)\n"),
         ("        mapping = self._mapping\n", "        mapping = self._mapping\n        open(\"/tmp/x\", \"w\")\n"),
         ("AUDIT_DOMAIN = \"llm\"\n", "AUDIT_DOMAIN = \"llm\"\nSEEN = []\n"),
         ("AUDIT_DOMAIN = \"llm\"\n", "AUDIT_DOMAIN = \"llm\"\nSEEN = dict()\n"),
@@ -1515,12 +1584,38 @@ def test_t19_an_unbound_gate_has_no_chat_and_a_bound_one_has_the_protocol_signat
 
 
 def test_bind_has_the_published_signature():
+    """ORDER 017 item 1: `mapping` is a REQUIRED keyword (no default) and `NO_MAP` is the named way to say no map."""
     params = inspect.signature(ModelGate.bind).parameters
     assert list(params) == ["self", "agent_id", "run_id", "mapping", "principal", "source"]
-    assert [params[n].default for n in ("mapping", "principal", "source")] == [None, None, "gate"]
+    assert params["mapping"].default is inspect.Parameter.empty, "mapping must have no default"
+    assert [params[n].default for n in ("principal", "source")] == [None, "gate"]
     assert all(
         params[n].kind is inspect.Parameter.KEYWORD_ONLY for n in ("mapping", "principal", "source")
     )
+    assert repr(NO_MAP) == "NO_MAP" and not isinstance(NO_MAP, dict)
+
+
+def test_o17_1_bind_without_mapping_is_a_type_error_and_so_is_none_or_a_non_mapping():
+    gate = ModelGate(Client(), meter=Meter(), audit=Sink(), worst_case=worst)
+    with pytest.raises(TypeError):
+        gate.bind("agent-1", "run-1")  # the keyword is required
+    for bad in (None, "map", 5, [("a", "b")], object(), False):
+        with pytest.raises(TypeError) as caught:
+            gate.bind("agent-1", "run-1", mapping=bad)
+        assert caught.value.args == ("mapping must be a Mapping (the run's map) or NO_MAP",)
+
+
+def test_o17_1_no_map_is_marked_in_the_audit_row_decision_field_and_a_map_is_not():
+    """The marker is `AuditEvent.decision` (models.py; a free `str | None` field the gate's rows never used):
+    `no_map` for a gate bound with NO_MAP, `map_enforced` for one with a map (an empty map included)."""
+    for mapping, mode in (
+        (NO_MAP, "no_map"),
+        ({}, "map_enforced"),
+        (runmap.RunMap(), "map_enforced"),
+    ):
+        bound, _, _, sink = build(mapping=mapping)
+        bound.chat(CLEAN, system="s", route="main")
+        assert sink.rows[0].decision == mode
 
 
 def test_a_gate_is_never_wrapped_twice():
@@ -1542,7 +1637,7 @@ def test_t20_system_and_tools_are_not_touched():
 
 def test_d1_every_audit_row_says_whether_the_map_was_enforced():
     """D1: `decision` is `map_enforced` or `no_map` on every row of a bound gate: ok, failed and refused."""
-    for mapping, mode in ((runmap.RunMap(), "map_enforced"), (None, "no_map")):
+    for mapping, mode in ((runmap.RunMap(), "map_enforced"), (NO_MAP, "no_map")):
         for client, meter, content in (
             (Client(), Meter(), "fine"),  # ok
             (Client(raises=ProviderError("x")), Meter(), "fine"),  # failed
@@ -1574,7 +1669,7 @@ def test_d5_bind_refuses_ids_that_are_not_str_at_bind_not_later_in_a_lost_row(ar
     silently. It is a TypeError at `bind` now (a programming error at install time, with a fixed message)."""
     gate = ModelGate(Client(), meter=Meter(), audit=Sink(), worst_case=worst)
     with pytest.raises(TypeError) as caught:
-        gate.bind(**args)
+        gate.bind(mapping=NO_MAP, **args)
     assert caught.value.__cause__ is None
     assert caught.value.args[0] in {
         "agent_id, run_id and source must be str",
@@ -1714,6 +1809,197 @@ def test_d8_every_test_the_module_docstring_names_exists():
         assert re.search(r"\b[TE]::test_", block) or "Not pinned" in block, block[:60]
 
 
+# --- ORDER 017 item 6: the trusted framing of a tool result -------------------------------------------------------
+
+CALL_ID = "run_ab12:1"
+TOOL_NAME = "read_logs"
+
+
+def _framed(text: str, call_id: str = CALL_ID, tool: str = TOOL_NAME) -> str:
+    """The content the agent loop builds (runtime/agent_loop.py `<<TOOL RESULT call_id=... tool=...>>`)."""
+    return f"<<TOOL RESULT call_id={call_id} tool={tool}>>\n{text}\n{tools_module.END_MARKER}"
+
+
+def _learned(planted: str) -> runmap.RunMap:
+    """The map after a hostile document planted a value, through the REAL producer function."""
+    mapping = runmap.RunMap()
+    runmap.redact_untrusted(f"ordinary line\n{planted}\nanother line", mapping)
+    return mapping
+
+
+@pytest.mark.parametrize(
+    ("planted", "value"),
+    [
+        ("password=RESULT", "RESULT"),
+        ("password=TOOL", "TOOL"),
+        ("token=END", "END"),
+        ("password=tool", "tool"),
+        ("secret=call_id", "call_id"),
+        ("user_id=read_logs", TOOL_NAME),
+        (f"password={CALL_ID}", CALL_ID),
+    ],
+    ids=["RESULT", "TOOL", "END", "tool", "call_id", "tool-name", "call-id"],
+)
+def test_o17_6_reproduction_a_planted_value_that_equals_a_framing_word_rewrites_the_trusted_marker(
+    planted, value
+):
+    """REPRODUCED 2026-11-20 with the real producers (`redact_untrusted`) and the real framing format: the document
+    plants a value, the run's map learns it, and `enforce_map` (the gate's replace, before this fix) rewrote the
+    marker the agent loop wrote: `<<TOOL <SECRET_1> call_id=...>>`. The system prompt tells the model what the
+    marker looks like; a rewritten marker hides where the data starts and ends."""
+    mapping = _learned(planted)
+    assert value in mapping.values(), "the producer did not learn the planted value"
+    content = _framed("ERROR x")
+    rewritten = runmap.enforce_map(content, mapping)
+    assert (
+        rewritten != content
+        and "<SECRET_" in rewritten.split("\n")[0] + rewritten.split("\n")[-1]
+        or ("<TENANT_" in rewritten)
+    )  # FAIL-BEFORE: the plain replace damages the framing
+    # through the gate: the call is refused, with a code only, before any reservation
+    bound, client, meter, sink = build(mapping=mapping)
+    with pytest.raises(model_gate.FramingRefused) as caught:
+        bound.chat(
+            [*CLEAN, {"role": "user", "content": content}],
+            system="s",
+            route="main",
+            tools=[{"name": TOOL_NAME}],
+        )
+    exc = caught.value
+    assert isinstance(exc, GateRefused) and exc.code == "framing_refused"
+    assert exc.args == ("framing_refused",) and exc.__cause__ is None and exc.__context__ is None
+    assert client.sent == [] and meter.reserved == {} and meter.settles == []
+    assert sink.codes() == [("refused", "framing_refused")] and sink.rows[0].object_ref is None
+
+
+def test_o17_6_a_tool_name_from_the_tools_list_or_an_assistant_line_counts_too():
+    """Counted only in a call that carries tool-result framing (a decision: a planted word must not stop a run
+    that uses no tools)."""
+    mapping = _learned(f"user_id={TOOL_NAME}")
+    other = _framed(
+        "x", tool="other_tool"
+    )  # framing with a different tool: the NAME comes from the tools list
+    for kwargs in (
+        {
+            "tools": [{"name": TOOL_NAME, "description": "reads logs"}],
+            "messages": [{"role": "user", "content": other}],
+        },
+        {"messages": [{"role": "assistant", "content": f'tool {TOOL_NAME} {{"name": "app"}}'}]},
+    ):
+        messages = kwargs.pop("messages")
+        bound, client, _meter, sink = build(mapping=mapping)
+        with pytest.raises(model_gate.FramingRefused):
+            bound.chat(messages, system="s", route="main", **kwargs)
+        assert client.sent == [] and sink.codes() == [("refused", "framing_refused")]
+    # the same value in a call with no framing and a tools list: an ordinary known value, replaced
+    bound, client, _, _ = build(mapping=mapping)
+    bound.chat(
+        [{"role": "user", "content": f"see {TOOL_NAME}"}],
+        system="s",
+        route="main",
+        tools=[{"name": TOOL_NAME}],
+    )
+    assert client.sent[0]["messages"][0]["content"] == "see <TENANT_1>"
+
+
+@pytest.mark.parametrize(
+    "planted",
+    [
+        "password=ESULT",
+        "password=run_ab12",
+        "api_key=OOL RESUL",
+        f"password={CALL_ID}7",
+        "secret=ll_id=r",
+    ],
+    ids=[
+        "piece-of-RESULT",
+        "piece-of-call-id",
+        "piece-with-space",
+        "longer-than-call-id",
+        "piece-of-call_id",
+    ],
+)
+def test_o17_6_a_value_that_only_lies_inside_a_framing_token_leaves_the_token_alone(planted):
+    """Not equal to a word, so no refusal: the framing tokens are protected from the sweep instead. The data
+    between them is enforced as always."""
+    mapping = _learned(planted)
+    value = next(iter(mapping.values()))
+    assert value not in model_gate.FRAMING_WORDS
+    body = f"saw {value} here"
+    content = _framed(body)
+    assert (
+        runmap.enforce_map(content, mapping) != content or value not in content
+    )  # the plain replace may damage it
+    bound, client, _, sink = build(mapping=mapping)
+    messages = [*CLEAN, {"role": "user", "content": content}]
+    bound.chat(messages, system="s", route="main")
+    sent = client.sent[0]["messages"][1]["content"]
+    first, _, rest = sent.partition("\n")
+    assert first == _framed("").split("\n")[0], "the start marker was rewritten"
+    assert sent.endswith("\n" + tools_module.END_MARKER), "the end marker was rewritten"
+    assert value not in rest.removesuffix(tools_module.END_MARKER), "the data was not enforced"
+    assert sink.codes() == [("ok", None)]
+
+
+def test_o17_6_the_assistant_line_and_the_data_are_enforced_but_the_markers_are_exact():
+    mapping = runmap.RunMap({"<IPV4_1>": IP, "<SECRET_1>": "ESULT"})
+    messages = [
+        *CLEAN,
+        {"role": "assistant", "content": f'tool {TOOL_NAME} {{"host": "{IP}"}}'},
+        {"role": "user", "content": _framed(f"peer {IP} said ESULT\nsecond {IP}")},
+        {"role": "user", "content": _framed("more", call_id="run_ab12:2") + "\n" + _framed(IP)},
+    ]
+    bound, client, _, _ = build(mapping=mapping)
+    bound.chat(messages, system="s", route="main")
+    sent = client.sent[0]["messages"]
+    assert sent[1]["content"] == f'tool {TOOL_NAME} {{"host": "<IPV4_1>"}}'
+    assert sent[2]["content"] == _framed("peer <IPV4_1> said <SECRET_1>\nsecond <IPV4_1>")
+    assert sent[3]["content"] == _framed("more", call_id="run_ab12:2") + "\n" + _framed("<IPV4_1>")
+
+
+def test_o17_6_no_map_means_no_framing_check_and_a_text_without_framing_is_enforced_whole():
+    mapping = _learned("password=RESULT")
+    bound, client, _, _ = build(mapping=NO_MAP)
+    bound.chat([{"role": "user", "content": _framed("x")}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == _framed("x")
+    bound, client, _, _ = build(mapping=mapping)  # RESULT known, but no framing token in the call
+    bound.chat([{"role": "user", "content": "the RESULT of the run"}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == "the <SECRET_1> of the run"
+
+
+def test_o17_6_the_framing_words_are_the_ones_the_agent_loop_writes():
+    assert model_gate.FRAMING_WORDS == {"TOOL", "RESULT", "END", "call_id", "tool"}
+    assert tools_module.START_MARKER in _framed("x") and tools_module.END_MARKER in _framed("x")
+    source = (
+        Path(model_gate.__file__)
+        .parents[1]
+        .joinpath("runtime", "agent_loop.py")
+        .read_text(encoding="utf-8")
+    )
+    assert "<<TOOL RESULT call_id={call_id} tool={call.name}>>" in source, (
+        "the framing format changed"
+    )
+
+
+# --- ORDER 017 item 2: a reply whose cost is absent is not settled --------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "cost", [None, "0.5", 0.5, 1, Decimal("NaN"), Decimal("Infinity"), Decimal(-1)]
+)
+def test_o17_2_a_reply_whose_cost_is_absent_or_not_a_usable_number_is_cost_unknown_and_not_settled(
+    cost,
+):
+    client = Client()
+    client.reply = Reply.model_construct(text="done", cost_usd=cost, model_id="fake-model")
+    bound, _, meter, sink = build(client)
+    assert (
+        bound.chat(CLEAN, system="s", route="main") is client.reply
+    )  # the call happened: the reply is returned
+    assert meter.settles == [] and meter.open() == {"res_1"}
+    assert sink.codes() == [("ok", "cost_unknown")]
+
+
 def test_the_exceptions_carry_a_stable_code_and_are_not_provider_errors():
     assert issubclass(UnmaskedInput, GateRefused) and issubclass(GateRefused, RuntimeError)
     assert not issubclass(GateRefused, ProviderError)
@@ -1760,7 +2046,9 @@ def test_the_gate_in_front_of_fake_llm_keeps_the_worst_case_booked_when_the_reco
     }
     llm = FakeLLM(tmp_path, routes)
     meter, sink = Meter(), Sink()
-    bound = ModelGate(llm, meter=meter, audit=sink, worst_case=worst).bind("agent-1", "run-1", mapping=NO_MAP)
+    bound = ModelGate(llm, meter=meter, audit=sink, worst_case=worst).bind(
+        "agent-1", "run-1", mapping=NO_MAP
+    )
     with pytest.raises(UnknownRecording):
         bound.chat(CLEAN, system="s", route="main", documents=[b"a clean doc"])
     assert len(llm.calls) == 1 and meter.settles == [] and meter.open() == {"res_1"}
