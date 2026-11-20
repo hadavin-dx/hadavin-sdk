@@ -2,4 +2,12 @@ warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be remo
 bringing up nodes...
 bringing up nodes...
 
-......
+........................................................................ [  0%]
+........................................................................ [  1%]
+.................................................s.................sssss [  1%]
+ssssssssssssssssssssssssssssssssssssssssssss.sssssssssssssssssssssssssss [  2%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [  2%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [  3%]
+sssssssssssssssssssssssssssssssssssssssssssss........................... [  3%]
+........................................................................ [  4%]
+........................
