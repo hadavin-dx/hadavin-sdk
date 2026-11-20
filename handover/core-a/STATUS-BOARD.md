@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:42:09Z
+UPDATED_UTC: 2026-11-20T16:43:20Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 3
-CAPACITY: load 2.28 of 4 cores (1-minute average), mem 1.5/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 1
+CAPACITY: load 2.35 of 4 cores (1-minute average), mem 1.6/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 56G 20%; 662M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 17:45 rev-b-9b76 + docs-for-c + integ3 + door-money running; then: fresh review of docs-for-c's changes, push core/integration-dryrun from integ3, apply door-merged-support-2.patch after review
-PUSHED_UTC: 2026-11-20T16:41:40Z (the push before this board)
+PUSHED_UTC: 2026-11-20T16:42:15Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,24 +106,24 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| door-money | builder in /home/user/wt/doorm | sonnet | rev-door Majors: static per-point money end state (reservation rows, status, totals, no double booking on the retry) for RESERVES mode + RESERVES guard + documented widening limit; red proofs; second patch | 17:35 | 30 min | 5 | running | - | 0 | rev-door Majors |
 | integ3 | builder (scratch worktree /home/user/wt/integ3, never pushed) | sonnet | INTEGRATION DRY-RUN 3: core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (+ my fix branches), PG16 runs of contracts/triggers/grants; INTEGRATION-DRYRUN-2.md kept current | 17:45 | 50 min | 5 | running | - | 0 | lead 16:38 |
-| rev-docs-c | fresh independent reviewer (codebase-details), read-only | sonnet | review of the 3 CHANGELOG sentence splits: meaning identical to the code, pinned phrases, markdown | 17:55 | 10 min | 5 | running | 1 | 0 | fresh review of each diff |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 37662s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 37662s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 37662s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 37662s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 37662s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 37662s ago | running | matched by name in ps |
-| 21952 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 21953 | uv run pytest tests/contracts -n 2 -q -p no:cacheprovider -rfE | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 21957 | /home/user/wt/integ3/.venv/bin/python /home/user/wt/integ3/.venv/bin/p | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 22644 | postgres: postgres postgres 127.0.0.1(33504) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 22645 | postgres: postgres postgres 127.0.0.1(33514) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 37733s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 37733s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 37733s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 37733s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 37733s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 37733s ago | running | matched by name in ps |
+| 21952 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 88s ago | running | matched by name in ps |
+| 21953 | uv run pytest tests/contracts -n 2 -q -p no:cacheprovider -rfE | core-a session or its agent | 88s ago | running | matched by name in ps |
+| 21957 | /home/user/wt/integ3/.venv/bin/python /home/user/wt/integ3/.venv/bin/p | core-a session or its agent | 88s ago | running | matched by name in ps |
+| 26736 | postgres: postgres postgres 127.0.0.1(36468) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 26738 | postgres: postgres postgres 127.0.0.1(36490) CREATE INDEX | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 26739 | postgres: postgres postgres 127.0.0.1(36506) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 26740 | postgres: postgres postgres 127.0.0.1(36510) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -185,6 +185,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 16:58 (1) DOCS: the reviewer found one real problem in my CHANGELOG edit ('in one case' made a new exclusivity claim: the code refuses an oversize decoded view for EVERY tool result, secret or not) and I restored the original condition: wip/core-a-for-c-docs 8df581d45 is the head to merge (core-c). (2) DOOR: patch 2 landed: tests/triggers/crash_money.py asserts, per crash point, the MONEY end state (reservation rows booked/settled, open hold stays open, day total = sum of rows, a restarted run never re-books) from the call tables, plus a RESERVES wiring guard and the documented limit (the child's seeding widens max_day_skew/min_expiry_age): merged tree 455 passed (matrix+paths+postgres), cloud/core-a alone 84 passed; red proofs: retry re-reserve gives two rows, settle no-op leaves an open row. Applied to cloud/core-a and pushed with the board. Running: integ3 only.
 - 16:52 DOCS LANE (your item 1): core-c's DOCS3 commit 035c923f4 had ALREADY closed most of the round-2 findings: re-verified against the code: Blocker 1 holds; Blocker 2 holds for CHANGELOG.md lines 1-299 only (300-806 still carry P1a/P1b/G-codes/ORDER and several phrases are PINNED by tests: left); Majors 3,5,6,8,9,10 already fixed; Major 7 (sentences > 30 words) fixed by me: 3 CHANGELOG sentences split (lines 114/120/139); Major 4 (brand strings): no hit in the root docs; I removed the banned-string list from handover/core-c/evidence/DOCS3-notes.md. Branch wip/core-a-for-c-docs pushed (one commit on d53d6e7d1); table in handover/core-a/DOCS-FOR-C.md; core-c told in handover/core-c/requests/from-core-a-review.md. Fresh review rev-docs-c checks the 3 splits keep the meaning. Open: CHANGELOG 300+ cleanup, 6 nits, K50/K75/K76 re-read. Running: integ3, door-money, rev-docs-c.
 - 16:50 core-b 9b7610007 reviewed (reviews/rev-b-9b76.md; handover/core-b/requests/xr-from-core-a-3.md): no Blocker. FIXED: my NOINHERIT bypass (recursive closure over pg_auth_members: my probe, nested groups, pg_write_all_data, PUBLIC and a superuser role reachable by SET ROLE are all caught) and the all-or-nothing owner skip (now per table); TRIGGER added; 3 queries per check. NOT FIXED and WORSE: 0011_money_definer.sql edited in place AGAIN (p_day -> p_day window): an already-migrated DB keeps the old text, `_money_error` then loses the clock hint silently, check_m1_add_spend_window fails there, and the add_spend day window never reaches such DBs: needs a NEW migration or the reset-draft rule stated. d7d37db36: the B2 settle helper cannot raise; the hold stays open at the worst case on every failure path. 943a9161b: core-b's T1 has 17 tests (my wip/core-a-t1-merge e4b0c2331 has 26 with the stricter cases): compare before choosing. Running: integ3, docs-for-c, door-money.
 - 17:45 LEAD 16:38 taken, 4 agents: (1) docs-for-c (wip/core-a-for-c-docs on core-c d53d6e7d1: finds core-c's root-docs round-2 findings (2 Blockers + 7 Majors) in handover/core-c, verifies each against the CODE, fixes docs only, table in handover/core-a/DOCS-FOR-C.md; I tell core-c to merge when pushed); (2) rev-b-9b76: core-b f66eb784d (role closure, per-table owners: the answer to my rev-b-newest2 Majors 1+2) + d7d37db36 + 943a9161b; NOTE ec67808ec is DOCS ONLY (no src/tests diff): nothing to review there; core-b ALSO ported core-a's extra T1 cases itself (943a9161b): my wip/core-a-t1-merge may now duplicate it: integ3 compares; findings will go to handover/core-b/requests/xr-from-core-a-3.md; (3) integ3: dry-run 3 on core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (the heads moved from the ones you named: ec67808ec/0e33c0641 are older), plus my fix branches (contract-fix, door-merged, grants), PG16 counts, INTEGRATION-DRYRUN-2.md kept current; (4) door-money (the crash matrix money-state assertions). Load 0.1 -> expect ~4 with integ3's triggers run: heavy = 2 (integ3 triggers + door-money).
