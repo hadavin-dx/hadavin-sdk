@@ -137,10 +137,15 @@ def rt_conn(w: World, role: str | None = None):
     return w.as_(role or w.runtime)
 
 
+# not in NAMES/TYPES (those are the five booking functions the other checks zip over)
+_EXTRA = {"set_cap": ("hadavin_set_cap", ("text", "numeric", "numeric", "text"))}
+
+
 def _call_sql(w: World, key: str) -> sql.Composed:
-    casts = [sql.SQL("%s::" + t) for t in TYPES[key]]
+    name, types = _EXTRA[key] if key in _EXTRA else (NAMES[key], TYPES[key])
+    casts = [sql.SQL("%s::" + t) for t in types]
     return sql.SQL("SELECT * FROM {}.{}({})").format(
-        sql.Identifier(w.schema), sql.Identifier(NAMES[key]), sql.SQL(", ").join(casts)
+        sql.Identifier(w.schema), sql.Identifier(name), sql.SQL(", ").join(casts)
     )
 
 
@@ -394,18 +399,6 @@ def check_hostile_arguments(w):
         (
             "reserve",
             ("r", "ag", DAY, D(1), BIG, BIG, None),
-            "p_day_cap",
-            [(4, None), (4, D(-1)), (4, D("NaN")), (4, D("Infinity")), (4, D("0.0000000000001"))],
-        ),
-        (
-            "reserve",
-            ("r", "ag", DAY, D(1), BIG, BIG, None),
-            "p_month_cap",
-            [(5, None), (5, D(-1)), (5, D("NaN")), (5, D("Infinity")), (5, D("0.0000000000001"))],
-        ),
-        (
-            "reserve",
-            ("r", "ag", DAY, D(1), BIG, BIG, None),
             "p_run_id",
             [(6, ""), (6, "a" * 201), (6, "a\nb"), (6, "a\x01")],
         ),
@@ -428,7 +421,7 @@ def check_hostile_arguments(w):
                 (1, D(10**9)),
             ],
         ),
-        ("settle", ("r", D(1), "ag"), "p_agent", [(2, ""), (2, "a" * 201), (2, "a\nb")]),
+        ("settle", ("r", D(1), "ag"), "p_agent", [(2, None), (2, ""), (2, "a" * 201), (2, "a\nb")]),
         ("expire", (0,), "p_age_s", [(0, None), (0, -1), (0, 10**7 + 1), (0, 2**31 - 1)]),
         (
             "purge",
@@ -647,7 +640,10 @@ def check_limits_are_read_not_hardcoded(w):
     put("max_amount", 10**9)
     put("max_decimals", 2)
     assert refused(w, "add", "ag", DAY, D("0.001"))[0] == "22023"
-    assert refused(w, "reserve", "l3", "ag", DAY, D(1), D("5.001"), BIG, None)[0] == "22023"
+    # the caps are not arguments of reserve any more: the scale limit is enforced by hadavin_set_cap (reset login)
+    with w.as_(w.reset) as rdb:
+        state, _ = refused(w, "set_cap", "ag", D("5.001"), D(1), "op", db=rdb)
+    assert state == "22023"
     assert call(w, "add", "ag", DAY, D("0.01"))
     put("max_decimals", 12)
     put("max_id_chars", 5)
@@ -822,7 +818,7 @@ def test_month_cap_refuses_and_rolls_the_day_back(w):
 
 def test_duplicate_reservation_id_is_23505_and_books_nothing_twice(w):
     reserve(w, "dup", usd="1")
-    assert refused(w, "reserve", "dup", "ag", DAY, D(1), BIG, BIG, None)[0] == "23505"
+    assert refused(w, "reserve", "dup", "ag", DAY, D(2), BIG, BIG, None)[0] == "23505"
     assert refused(w, "reserve", "dup", "other", DAY, D(1), BIG, BIG, None)[0] == "23505"
     assert counters(w) == (1, 1) and w.count("spend_reservations") == 1
 
@@ -860,11 +856,15 @@ def test_settle_by_another_agent_and_by_an_unknown_id_is_the_same_hd002(w):
     assert w.run("SELECT status FROM spend_reservations") == [("open",)]
 
 
-def test_settle_with_a_null_agent_settles_any_agents_hold_the_documented_residual(w):
-    """HONEST RESIDUAL named in 0011's header: p_agent NULL means any agent. Do not 'fix' this silently."""
+def test_settle_with_a_null_agent_is_refused_and_settles_nothing(w):
+    """M2 (lead): p_agent is required; there is no agent-less settle that could close any agent's hold."""
     reserve(w, "o1", agent="victim", usd="5")
-    row = call(w, "settle", "o1", D(0), None)[0]
-    assert (row[1], row[9]) == ("victim", True) and counters(w, "victim") == (0, 0)
+    state, message = refused(w, "settle", "o1", D(0), None)
+    assert state == "22023" and "p_agent" in message
+    assert counters(w, "victim") == (5, 5) and w.run("SELECT status FROM spend_reservations") == [
+        ("open",)
+    ]
+    assert refused(w, "settle", "o1", D(0), "other")[0] == "HD002"  # another agent's id: not found
 
 
 def test_the_runtime_can_lower_only_by_settling_a_named_open_hold_once(w):
@@ -875,7 +875,7 @@ def test_the_runtime_can_lower_only_by_settling_a_named_open_hold_once(w):
     for _ in range(3):
         assert settle(w, "h", "0")[9] is False
     assert counters(w) == (90, 90)
-    assert refused(w, "settle", "unknown-guess", D(0), None)[0] == "HD002"
+    assert refused(w, "settle", "unknown-guess", D(0), "ag")[0] == "HD002"
 
 
 def test_missing_counter_row_is_hd003_and_the_claim_rolls_back(w):
@@ -1026,9 +1026,7 @@ def _script(seed, n):
                 )
             )
         elif kind == "settle":
-            ops.append(
-                ("settle", rnd.choice(IDS), D(rnd.choice(AMOUNTS)), rnd.choice((*AGENTS, None)))
-            )
+            ops.append(("settle", rnd.choice(IDS), D(rnd.choice(AMOUNTS)), rnd.choice(AGENTS)))
         elif kind == "add":
             ops.append(("add", rnd.choice(AGENTS), rnd.choice(DAYS), D(rnd.choice(AMOUNTS))))
         else:

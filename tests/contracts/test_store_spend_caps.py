@@ -102,9 +102,12 @@ def test_the_order_of_the_checks(store):
         _reserve(store, taken, day_cap=low, month_cap=nan)
     # a taken id wins over a passed cap
     with pytest.raises(StaleState):
-        _reserve(store, taken, day_cap=low, month_cap=low)
+        _reserve(store, taken, usd=2 * ONE, day_cap=low, month_cap=low)
     with pytest.raises(StaleState):
-        _reserve(store, taken)
+        _reserve(store, taken, usd=2 * ONE)
+    _reserve(
+        store, taken, day_cap=low, month_cap=low
+    )  # the same arguments are a retry: success, even past a cap
     # a free id reaches the comparison: the day is checked before the month
     with pytest.raises(SpendCapExceeded) as caught:
         _reserve(store, new_id("res"), day_cap=low, month_cap=low)

@@ -470,10 +470,14 @@ def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
         monkeypatch.context() as m
     ):  # the release before step B: five files and no stop rows in the map
         m.setattr(migrate_mod, "_migration_files", lambda: files[:5])
-        for name in [
-            k for k in GRANTS if k.startswith("kill_switch_") or k == "spend_reservations"
-        ]:
+        created, _ = migrate_mod._scan(files[:5])
+        for name in [k for k in GRANTS if k not in created]:  # every relation a later file creates
             m.delitem(GRANTS, name)
+        made = migrate_mod._functions_created(files[:5])
+        for sig in [
+            s for s in migrate_mod.FUNCTION_GRANTS if migrate_mod._signature_key(s) not in made
+        ]:
+            m.delitem(migrate_mod.FUNCTION_GRANTS, sig)
         assert migrate(old, no_roles=True)[-1].startswith("0005_")
     with psycopg.connect(old, autocommit=True) as db:
         assert db.execute("SELECT to_regclass('kill_switch_stops')").fetchone()[0] is None
@@ -665,7 +669,8 @@ def test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner(w):
     w.grant("GRANT {} TO {}", owner, member)
     try:
         with pytest.raises(
-            ConfigError, match="reset role holds more than the grant map.*member of"
+            ConfigError,
+            match="is a member of .*the owner of the hadavin_\\* functions: remove the membership",
         ):
             w.migrate(reset_role=member)
     finally:
@@ -999,7 +1004,11 @@ def test_e9_a_stop_state_that_turns_unreadable_at_any_later_read_means_no_card_a
         run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
         assert len(reads) >= k, f"read {k} was never made"
         seen[k] = (run.state, run.reason_code)
-    assert seen == dict.fromkeys(range(2, total + 1), (RunState.NEEDS_PERSON, "limits_unavailable"))
+    # the read inside the spend reservation (B2) reports its refusal as limits.<reason>: still no card and no action
+    assert {k: v[0] for k, v in seen.items()} == dict.fromkeys(
+        range(2, total + 1), RunState.NEEDS_PERSON
+    )
+    assert {v[1] for v in seen.values()} <= {"limits_unavailable", "limits.limits_unavailable"}
     assert fake_system.creates == 0
 
 
@@ -1170,20 +1179,30 @@ def test_s1_a_search_path_that_names_no_schema_is_refused_at_connect(w):
 # ---- S2 (invariant 7): who else can clear ----------------------------------------------------------------------------
 
 
-def _refused_naming(w, role, call=None):
+_STOP_REFUSAL = "roles other than the reset role could clear a stop"
+_MONEY_REFUSAL = "roles not named in this command can run the money functions"
+
+
+def _refused_naming(w, role, call=None, reset=None):
     """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
-    owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+    owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there.
+
+    Two true refusals can apply and the money one runs first: a role that inherits the execute right of a named role,
+    or any role when a role of an earlier call is left unnamed, is refused as an unnamed money executor. Then `role`
+    must still be what the stop check lists (`_who(..., reset)`), and the return is None (no stop-check names)."""
     w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
     before = {r: w.rights(r) for r in w.roles[:4]}
     assert "DELETE" in before[w.runtime]["kill_switch_stops"]
-    with pytest.raises(
-        ConfigError, match="roles other than the reset role could clear a stop"
-    ) as e:
+    with pytest.raises(ConfigError, match=f"{_STOP_REFUSAL}|{_MONEY_REFUSAL}") as e:
         (call or w.migrate)()
-    names = str(e.value).split("could clear a stop", 1)[1].split(". Name the runtime")[0]
-    assert role in names, f"{role} is not named in: {e.value}"
+    text = str(e.value)
     assert {r: w.rights(r) for r in w.roles[:4]} == before
-    return names
+    if _STOP_REFUSAL in text:
+        names = text.split("could clear a stop", 1)[1].split(". Name the runtime")[0]
+        assert role in names, f"{role} is not named in: {e.value}"
+        return names
+    assert role in text or role in _who(w.scoped, reset), f"{role} is not named in: {e.value}"
+    return None
 
 
 S2_STRAY = {
@@ -1249,17 +1268,28 @@ def _who(scoped, reset, accepted=()):
 def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(w):
     """The check reads this schema's grants only. A role with nothing here, a member of the (superuser) owner and
     a member of a predefined role that can write every table are outside the guarantee and never refuse a migrate.
-    (Before 2026-11-20 the member of pg_write_all_data and the member of the owner were refused.)"""
+    (Before 2026-11-20 the member of pg_write_all_data and the member of the owner were refused by the stop check; the
+    member of pg_write_all_data is now refused by the money-table writer check, not by this one.)"""
     owner = w.run("SELECT current_user")[0][0]
     w.new_role("st")
     of_owner, writer = w.new_role("mw", "LOGIN NOINHERIT"), w.new_role("wa")
-    w.grant("GRANT {} TO {}", owner, of_owner)
-    w.grant("GRANT pg_write_all_data TO {}", writer)
-    try:
-        assert _who(w.scoped, w.reset) == []
-        assert w.migrate() == []
-    finally:
-        w.grant("REVOKE {} FROM {}", owner, of_owner)
+    # A member of pg_write_all_data writes every table of the SERVER: another worker's migrate with named roles would
+    # refuse it as a writer of the money tables. The exclusive gate (cross-process) keeps those migrates out while the
+    # membership exists; it is revoked before the gate is released.
+    with pg_gate.exclusive():
+        w.grant("GRANT {} TO {}", owner, of_owner)
+        w.grant("GRANT pg_write_all_data TO {}", writer)
+        try:
+            assert _who(w.scoped, w.reset) == []
+            # a member of pg_write_all_data can write the money tables: refused as such (step 4), not by the stop
+            # check; a member of the owner is outside the guarantee
+            with pytest.raises(ConfigError, match=f"can write a money table.*{writer}"):
+                w.migrate()
+            w.grant("REVOKE pg_write_all_data FROM {}", writer)
+            assert w.migrate() == []
+        finally:
+            w.grant("REVOKE {} FROM {}", owner, of_owner)
+            w.grant("REVOKE pg_write_all_data FROM {}", writer)
 
 
 def _second_schema(w):
@@ -1290,7 +1320,9 @@ def test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_t
     assert _who(two, rs2) == sorted([stray, member])
     assert _who(w.scoped, w.reset) == []  # the other schema's roles are not this schema's business
     assert w.migrate() == []
-    with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop"):
+    with pytest.raises(
+        ConfigError, match=f"{_STOP_REFUSAL}|{_MONEY_REFUSAL}"
+    ):  # the member inherits rs2's rights
         migrate(two, runtime_role=rt2, reset_role=rs2)
     here = w.new_role("x6", "NOLOGIN")
     w.grant("GRANT INSERT ON kill_switch_clears TO {}", here)
@@ -1310,8 +1342,11 @@ def test_s2_a_member_of_an_owner_that_is_not_a_superuser_is_not_listed(w):
 def test_s2_a_grant_to_public_is_listed_as_public(w):
     w.do("GRANT INSERT ON kill_switch_clears TO PUBLIC")
     assert _who(w.scoped, w.reset) == ["PUBLIC"]
-    names = _refused_naming(w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset))
-    assert w.runtime not in names  # one name, not every role of the server
+    names = _refused_naming(
+        w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset), reset=w.reset
+    )
+    if names is not None:  # (the unnamed runtime role is refused first as a money executor)
+        assert w.runtime not in names  # one name, not every role of the server
     w.do("REVOKE INSERT ON kill_switch_clears FROM PUBLIC")
     w.do('GRANT UPDATE ("on") ON kill_switch TO PUBLIC')
     assert _who(w.scoped, w.reset) == ["PUBLIC"]
@@ -1718,6 +1753,10 @@ def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--purge-role",
+        w.purge,
+        "--portal-role",
+        w.portal,
         "--accept-admin-role",
         vouched,
     ]
@@ -1747,6 +1786,10 @@ def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--purge-role",
+        w.purge,
+        "--portal-role",
+        w.portal,
     ]
     assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
     captured = capsys.readouterr()
@@ -1897,7 +1940,14 @@ def test_s2_members_of_the_reset_role_are_listed_even_when_it_holds_no_right_yet
 
 
 def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
+    for role in (
+        w.reset,
+        w.portal,
+        w.purge,
+    ):  # else the money check (an unnamed executor) refuses first
+        w.grant("REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA {} FROM {}", w.schema, role)
     names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))
+    assert names is not None, "the stop check itself must be the refusal"
     assert w.runtime not in names
     assert w.rights(w.reset)["kill_switch_clears"] == {"SELECT", "INSERT"}
 
@@ -1908,7 +1958,9 @@ def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
     w.grant("GRANT UPDATE ON kill_switch TO {}", third)
     role = {"portal_role": w.portal, "purge_role": w.purge}[only]
     names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
-    assert w.reset in names  # no reset role named: nobody but the owner is excluded
+    assert w.reset in (
+        names or _who(w.scoped, None)
+    )  # no reset role named: nobody but the owner is excluded
 
 
 def test_s2_the_four_roles_named_in_one_command_with_no_stray_right_pass(w):
@@ -2089,16 +2141,45 @@ def test_b4_a_reset_ref_equal_to_the_runtime_secret_name_is_refused_before_any_c
 # ---- S12: the ts of a stop -------------------------------------------------------------------------------------------
 
 
+def _schema_through_0006(w, monkeypatch):
+    """A fresh schema with the migrations up to 0006 only (the release before 0009 added the ts range CHECK), made as
+    the owner. Migration 0009's range CHECK refuses an infinite ts as well, so on the full schema it masks the 0006
+    `isfinite` CHECK: only this schema shows that one."""
+    schema = w.new_schema("t6")
+    files = migrate_mod._migration_files()
+    upto = [f for f in files if f.stem <= "0006_stop_state"]
+    assert upto[-1].stem == "0006_stop_state"
+    with monkeypatch.context() as m:
+        m.setattr(migrate_mod, "_migration_files", lambda: upto)
+        created, _ = migrate_mod._scan(upto)
+        for name in [k for k in GRANTS if k not in created]:
+            m.delitem(GRANTS, name)
+        made = migrate_mod._functions_created(upto)
+        for sig in [
+            f for f in migrate_mod.FUNCTION_GRANTS if migrate_mod._signature_key(f) not in made
+        ]:
+            m.delitem(migrate_mod.FUNCTION_GRANTS, sig)
+        assert migrate(schema, no_roles=True)[-1] == "0006_stop_state"
+    return schema
+
+
 @pytest.mark.parametrize("ts", ["infinity", "-infinity"])
-def test_s12_a_stop_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
+def test_s12_a_stop_row_cannot_carry_an_infinite_ts_even_by_hand(w, monkeypatch, ts):
     assert w.exists("kill_switch_stops")
     with w.as_(w.runtime) as db, pytest.raises(errors.CheckViolation):
         db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("agent:x", ts))
     assert w.count("kill_switch_stops") == 0
+    # the 0006 isfinite CHECK on its own (0009's range CHECK would refuse it on the full schema too)
+    old = _schema_through_0006(w, monkeypatch)
+    with psycopg.connect(old, autocommit=True) as db:
+        with pytest.raises(errors.CheckViolation) as e:
+            db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("agent:x", ts))
+        assert e.value.diag.constraint_name == "kill_switch_stops_ts_check"
+        assert db.execute("SELECT count(*) FROM kill_switch_stops").fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("ts", ["infinity", "-infinity"])
-def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
+def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, monkeypatch, ts):
     _stop(w)
     with w.as_(w.reset) as db, pytest.raises(errors.CheckViolation):
         db.execute(
@@ -2106,6 +2187,16 @@ def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
             ("admin:x", ts),
         )
     assert w.count("kill_switch_clears") == 0 and w.read().on is True
+    old = _schema_through_0006(w, monkeypatch)
+    with psycopg.connect(old, autocommit=True) as db:
+        db.execute('INSERT INTO kill_switch_stops ("by") VALUES (%s)', ("agent:x",))
+        with pytest.raises(errors.CheckViolation) as e:
+            db.execute(
+                'INSERT INTO kill_switch_clears (stop_id, "by", ts) SELECT id, %s, %s FROM kill_switch_stops',
+                ("admin:x", ts),
+            )
+        assert e.value.diag.constraint_name == "kill_switch_clears_ts_check"
+        assert db.execute("SELECT count(*) FROM kill_switch_clears").fetchone()[0] == 0
 
 
 # 0009 refuses a planted year outside 2000..2100 (the ts CHECK): the in-range edges are the dates a runtime can still plant

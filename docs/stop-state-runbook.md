@@ -177,6 +177,8 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   function; only the owner reads or writes `hadavin_limits`.
 
 ## Release expired spend holds
+
+After a provider outage: the live loop keeps the hold of a failed model call (ProviderError, ProviderExhausted, a crash) at the worst case, and the tick only MARKS it expired; the day and month counters do not move until the operator runs `release_expired_spend`. Enough failed runs make the agent hit `daily_budget` or `monthly_budget`: run the release below.
 A hold nobody settled (a crash, a lost connection) is marked expired by the tick and stays booked at its worst case, so
 an agent can sit at its cap. The one sanctioned way to free it is the release command, under its own login (not the
 runtime and not the reset login):
@@ -237,9 +239,9 @@ The runtime login has no right on that table and cannot run `hadavin_set_cap`; o
 The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
 Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
 
-Status: exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+Status: exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
 The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
-This does NOT mean a run cannot exceed a cap today: the live path still calls `Limits.blocked()` before a model call and books the cost after it (it does not reserve), so concurrent runs can each pass the check and overshoot by up to (concurrent runs x one call's cost). This wall is true from step 4 of the money-definer change (migration 0011 plus the grant flip in `migrate`): the runtime
+The live loop's main model call reserves before and settles after (B2), so concurrent runs cannot overshoot the cap for that call; the ungated sites (see the CHANGELOG money block) can.
 login holds no INSERT, UPDATE or DELETE on `spend`, `spend_month` or `spend_reservations`, SELECT on the two
 counters only, and nothing on the reservations; every booking is a SECURITY DEFINER function it may EXECUTE. The
 purge login holds no table right either and may only EXECUTE the purge function.

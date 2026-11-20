@@ -1,0 +1,24 @@
+ERROR collecting tests/test_money_definer_mutants.py ## E   ValueError: too many values to unpack (expected 5)
+ERROR collecting tests/test_money_definer_mutants.py ## E   ValueError: too many values to unpack (expected 5)
+ERROR collecting tests/test_money_definer_pg.py ## E   ValueError: too many values to unpack (expected 5)
+ERROR collecting tests/test_money_definer_pg.py ## E   ValueError: too many values to unpack (expected 5)
+ERROR collecting tests/test_money_definer_mutants.py ## E   ValueError: too many values to unpack (expected 5)
+ERROR collecting tests/test_money_definer_pg.py ## E   ValueError: too many values to unpack (expected 5)
+test_n1_audit_drain_is_the_last_tick_step ## E       AssertionError: assert ['expire_rese... 'check_caps'] == ['audit_drain...reservations']
+test_e6_two_ticks_at_once_write_each_of_fifty_rows_exactly_once ## E           assert [1, 1] == [0, 0]
+test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step ## E           AssertionError: assert 1 == 0
+test_cross_process_an_event_parked_only_in_memory_dies_with_its_process ## E       AssertionError: purge_evidence tool_calls=0 redaction_maps=0 held_runs=0 spend_reservations=0
+test_the_refusal_log_line_names_the_error_class_and_not_its_message ## E       AssertionError: assert ('RuntimeError' in 'WARNING  hadavin_sdk.limits:limits.py:198 reserve refused: limits_unavailable error_kind=RuntimeError detail=host=db user=u\n' and 'host=db' not in '
+test_m2_the_header_states_the_expire_then_release_residual ## E       assert ('release' in "-- money definer functions (ticket f-money-definer, option b of e13). this file adds the security definer functions b...s';\n    if not found then raise exception 'limit 
+test_no_vendor_brand_string_is_tracked ## E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'
+test_the_step_is_the_last_one_and_comes_after_audit_drain ## E       AssertionError: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources', ...]
+test_the_step_uses_the_longer_age_while_a_run_could_still_be_working ## E       AssertionError: assert 'open' == 'expired'
+test_a_failing_store_marks_the_step_failed_and_the_other_steps_still_run ## E           AssertionError: assert 0 == 1
+test_the_step_runs_as_the_runtime_login_and_expires_only_old_rows ## E       AssertionError: assert {'res-b318eec...0.25'), None)} == {'res-b318eec...0.25'), None)}
+test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade ## E           hadavin_sdk.errors.ConfigError: migrations are inconsistent: GRANTS names hadavin_caps, which no migration creates; GRANTS names hadavin_limits, which no migration creates; FUNCTION_GRANTS
+test_migrate_refuses_a_reset_role_that_is_a_member_of_the_owner ## E           AssertionError: Regex pattern did not match.
+test_s2_migrate_refuses_a_member_of_the_reset_role[LOGIN] ## E       AssertionError: Regex pattern did not match.
+test_s2_migrate_naming_one_other_role_runs_the_same_check[portal_role] ## E       AssertionError: Regex pattern did not match.
+test_s2_migrate_naming_one_other_role_runs_the_same_check[purge_role] ## E       AssertionError: Regex pattern did not match.
+test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too ## E       AssertionError: assert ('sb_ac3_c12da4fc78' in 'the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a 
+test_s2_a_grant_to_public_is_listed_as_public ## E       AssertionError: Regex pattern did not match.

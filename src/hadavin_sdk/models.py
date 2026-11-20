@@ -218,19 +218,19 @@ class ApprovalDecision(Shape):
 # Audit rows carry identifiers and codes, never prose: a bounded length (a btree index row on `run_id` refuses
 # a long value with 54000 at write time, far too late) and a charset without whitespace or control characters.
 AUDIT_FIELD_MAX = 128
-AUDIT_FIELD_PATTERN = r"^[\w.:@/+=#~, -]*$"
+AUDIT_FIELD_PATTERN = r"^[A-Za-z0-9_.:@/+=#~, -]*$"
 _AUDIT_TOKEN = re.compile(AUDIT_FIELD_PATTERN)
 
 
 def audit_ref(text: str | None) -> str | None:
     """A free-form reference (a list of cited calls, an executor's external id) as an audit `object_ref`: the text
     itself when it fits the field, else `sha256:<hex prefix>` of it (the row never carries prose)."""
-    if text is None or (len(text) <= AUDIT_FIELD_MAX and _AUDIT_TOKEN.match(text)):
+    if text is None or (len(text) <= AUDIT_FIELD_MAX and _AUDIT_TOKEN.fullmatch(text)):
         return text
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
 
 
-_AUDIT_BAD = re.compile(r"[^\w.:@/+=#~, -]")
+_AUDIT_BAD = re.compile(r"[^A-Za-z0-9_.:@/+=#~, -]", re.ASCII)
 
 
 def audit_code(text: object) -> str:

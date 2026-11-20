@@ -68,7 +68,7 @@ ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;
 
 -- hadavin_reserve_spend: book the worst case of one model call on the day and month counters, in the transaction that
 -- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
--- back with the caller's transaction). A duplicate id is the native unique_violation (23505).
+-- back with the caller's transaction). A duplicate id with different arguments is a unique_violation (23505); the same arguments are a retry and succeed.
 CREATE OR REPLACE FUNCTION hadavin_reserve_spend(
     p_id TEXT, p_agent TEXT, p_day DATE, p_usd NUMERIC, p_run_id TEXT
 )
@@ -129,8 +129,19 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'caps' USING ERRCODE = 'HD005'; END IF;
     v_month := pg_catalog.date_trunc('month', p_day)::date;
 
+    -- idempotent: a retry of a committed reserve (same id, agent, day, amount, run) finds its own row and returns success
+    -- without booking again; any difference is a collision and stays the native unique_violation (23505).
     INSERT INTO spend_reservations (reservation_id, agent_id, day, run_id, reserved_usd)
-    VALUES (p_id, p_agent, p_day, p_run_id, p_usd);
+    VALUES (p_id, p_agent, p_day, p_run_id, p_usd)
+    ON CONFLICT (reservation_id) DO NOTHING;
+    IF NOT FOUND THEN
+        PERFORM 1 FROM spend_reservations r
+         WHERE r.reservation_id = p_id AND r.agent_id = p_agent AND r.day = p_day
+           AND r.reserved_usd = p_usd AND r.run_id IS NOT DISTINCT FROM p_run_id
+           AND r.status = 'open';  -- a settled, expired or released hold is not a live hold: no success
+        IF FOUND THEN RETURN; END IF;
+        RAISE EXCEPTION 'reservation exists' USING ERRCODE = '23505';
+    END IF;
     INSERT INTO spend (agent_id, day, usd) VALUES (p_agent, p_day, 0) ON CONFLICT DO NOTHING;
     -- strictly day before month: seed and book the day, then the month; a refusal raises and everything rolls back
     UPDATE spend s SET usd = s.usd + p_usd
@@ -153,8 +164,8 @@ REVOKE ALL ON FUNCTION hadavin_reserve_spend(TEXT, TEXT, DATE, NUMERIC, TEXT) FR
 -- booked on the counters: the actual amount, or for a row that was expired the larger of the actual and the reserved amount
 -- (after expiry the booking never goes down). The counters move by settled - reserved on the row's own day and month,
 -- day first. The run cost is added as the actual amount (a missing run row is ignored). An unknown id or another agent's id
--- (when p_agent is given) is HD002, the same error for both; a missing counter row is HD003. p_agent NULL means "any
--- agent" (the documented residual).
+-- is HD002, the same error for both; a missing counter row is HD003. p_agent is required: NULL is refused (22023), there
+-- is no agent-less settle.
 CREATE OR REPLACE FUNCTION hadavin_settle_spend(p_id TEXT, p_actual NUMERIC, p_agent TEXT)
 RETURNS TABLE (
     reservation_id TEXT, agent_id TEXT, day DATE, run_id TEXT, reserved_usd NUMERIC, settled_usd NUMERIC,
@@ -187,19 +198,19 @@ BEGIN
     IF p_actual IS NULL OR NOT (p_actual >= 0 AND p_actual < v_max_amount) OR pg_catalog.scale(p_actual) > v_max_decimals THEN
         RAISE EXCEPTION 'invalid argument: p_actual' USING ERRCODE = '22023';
     END IF;
-    IF p_agent IS NOT NULL AND (pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
-                                OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]') THEN
+    IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+       OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]' THEN
         RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
     END IF;
 
     -- the claim: the lock reads the status BEFORE the change (after a lock wait READ COMMITTED re-checks the row, so a
     -- concurrent settle or expire cannot be misread)
     SELECT r.status INTO v_was FROM spend_reservations r
-     WHERE r.reservation_id = p_id AND (p_agent IS NULL OR r.agent_id = p_agent) AND r.status IN ('open', 'expired')
+     WHERE r.reservation_id = p_id AND r.agent_id = p_agent AND r.status IN ('open', 'expired')
        FOR UPDATE;
     IF NOT FOUND THEN
         SELECT * INTO rec FROM spend_reservations r WHERE r.reservation_id = p_id;
-        IF NOT FOUND OR (p_agent IS NOT NULL AND rec.agent_id <> p_agent) THEN
+        IF NOT FOUND OR rec.agent_id <> p_agent THEN
             RAISE EXCEPTION 'reservation not found' USING ERRCODE = 'HD002';
         END IF;
         reservation_id := rec.reservation_id; agent_id := rec.agent_id; day := rec.day; run_id := rec.run_id;
@@ -371,6 +382,8 @@ DECLARE
     v_max_amount NUMERIC;
     v_max_decimals NUMERIC;
     v_max_id NUMERIC;
+    v_skew NUMERIC;
+    v_today DATE;
     v_month DATE;
 BEGIN
     SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
@@ -379,12 +392,19 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
     SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_skew FROM hadavin_limits l WHERE l.name = 'max_day_skew';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_day_skew missing' USING ERRCODE = 'HD004'; END IF;
 
     IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
        OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]' THEN
         RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
     END IF;
     IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) OR p_day < DATE '1970-01-01' OR p_day > DATE '9999-12-31' THEN
+        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    -- the same booking-day window as hadavin_reserve_spend (review m1): no far-day counter rows from the runtime
+    v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
+    IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
         RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
     END IF;
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN

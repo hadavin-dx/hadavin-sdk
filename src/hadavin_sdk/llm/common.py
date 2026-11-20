@@ -323,6 +323,30 @@ class Answer:
     stop: str | None
 
 
+def priced(routes: dict[str, Any]) -> dict[str, Any]:
+    """The routes, if every price is a plain Decimal that `config.Route` accepts (finite, not negative, at most the
+    ceiling, at most 6 decimals: that one rule is reused, not copied) and is above 0. `Route.model_construct` and a
+    hand-built route skip the config check, and a zero price makes every reply cost 0 so no spend cap could fire:
+    a real (non-fake) client refuses them at build and again before each call. Names route and field, never the
+    price."""
+    from hadavin_sdk.config import (
+        Route,
+    )  # here: config imports the backends, which import this package
+
+    for name, route in routes.items():
+        for field in ("input_usd_per_mtok", "output_usd_per_mtok"):
+            v = getattr(route, field, None)
+            try:
+                if type(v) is not Decimal:  # no float, str, bool or Decimal subclass
+                    raise ValueError("a price must be a Decimal")
+                Route._price(v)
+                if v == 0:
+                    raise ValueError("a price must be above 0")
+            except (ValueError, ArithmeticError, AttributeError) as exc:
+                raise ConfigError(f"route {name!r}: {field}: {exc}") from None
+    return routes
+
+
 class NetworkLLM:
     """The ``chat`` every network kind shares: the route, the tool list and bounded retries around one request
     and the parse of its answer, so a malformed answer is a ``ProviderError``, never a stray KeyError that
@@ -336,7 +360,7 @@ class NetworkLLM:
         max_attempts: int,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
-        self.routes, self.max_attempts, self._sleep = routes, max_attempts, sleep
+        self.routes, self.max_attempts, self._sleep = priced(routes), max_attempts, sleep
 
     def chat(
         self,
@@ -348,7 +372,8 @@ class NetworkLLM:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
-        r = self.routes[route]
+        r = self.routes[route]  # read once: the object checked is the object priced
+        priced({route: r})  # `llm.routes = ...` after build must not skip the check
         specs, forced = tools_for(tools, output_schema)
         return self._chat(r, system, turns(messages, documents), specs, forced, output_schema)
 

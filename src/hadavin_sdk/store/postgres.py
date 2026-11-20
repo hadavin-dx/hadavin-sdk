@@ -314,6 +314,70 @@ def own_stop_rights_problems(conn: psycopg.Connection, schema: str) -> list[str]
     return problems
 
 
+_MONEY_TABLES = ("spend", "spend_month", "spend_reservations", "hadavin_caps", "hadavin_limits")
+_MONEY_WRITE_RIGHTS = ("INSERT", "UPDATE", "DELETE", "TRUNCATE")
+# The functions the runtime login must NOT run: the cap setter (reset role) and the two the release / purge roles run.
+_MONEY_FORBIDDEN_FUNCTIONS = (
+    "hadavin_set_cap(text, numeric, numeric, text)",
+    "hadavin_release_expired_spend(text, date)",
+    "hadavin_purge_spend_reservations(timestamptz)",
+)
+
+
+_RUNTIME_MARK_FUNCTION = "hadavin_reserve_spend(text, text, date, numeric, text)"
+
+
+def _may_execute(conn: psycopg.Connection, schema: str, signature: str) -> bool:
+    return bool(
+        conn.execute(
+            "SELECT p IS NOT NULL AND pg_catalog.has_function_privilege(current_user, p, 'EXECUTE') "
+            "FROM (SELECT pg_catalog.to_regprocedure(pg_catalog.quote_ident(%s) || '.' || %s) AS p) q",
+            (schema, signature),
+        ).fetchone()[0]
+    )
+
+
+def own_money_rights_problems(conn: psycopg.Connection, schema: str) -> list[str]:
+    """What the CURRENT login can do on the money tables (INSERT, UPDATE, DELETE, TRUNCATE, at table or column level,
+    however it got it) and which money functions it may EXECUTE although only the owner-side roles may (set_cap,
+    release, purge). Strings like `UPDATE on spend` or `EXECUTE on hadavin_set_cap`. [] for a superuser or a member of
+    the tables' owner (the dev setup, outside the guarantee: same convention as `own_stop_rights_problems`)."""
+    me = conn.execute(
+        "SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user"
+    ).fetchone()
+    if me is None or me[0]:
+        return []
+    rows = conn.execute(
+        "SELECT c.oid, c.relname, pg_catalog.pg_has_role(current_user, c.relowner, 'MEMBER') "
+        "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = %s AND c.relkind IN ('r','p') AND c.relname = ANY(%s)",
+        (schema, list(_MONEY_TABLES)),
+    ).fetchall()
+    if any(owns for _, _, owns in rows):
+        return []
+    problems = []
+    for oid, name, _ in sorted(rows, key=lambda r: r[1]):
+        for right in _MONEY_WRITE_RIGHTS:
+            held = conn.execute(
+                "SELECT pg_catalog.has_table_privilege(%s, %s)", (oid, right)
+            ).fetchone()[0]
+            if not held and right in ("INSERT", "UPDATE"):  # a column grant gives these two
+                held = conn.execute(
+                    "SELECT pg_catalog.has_any_column_privilege(%s, %s)", (oid, right)
+                ).fetchone()[0]
+            if held:
+                problems.append(f"{right} on {name}")
+    # The function rights are judged only for a login that acts as the runtime (it may EXECUTE the booking): the
+    # purge, release and reset logins build a store too and legitimately hold their own function.
+    if not _may_execute(conn, schema, _RUNTIME_MARK_FUNCTION):
+        return problems
+    for signature in _MONEY_FORBIDDEN_FUNCTIONS:
+        held = _may_execute(conn, schema, signature)
+        if held:
+            problems.append(f"EXECUTE on {signature.split('(')[0]}")
+    return problems
+
+
 def build(settings, deps) -> PostgresStore:
     """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
     password_source(
@@ -348,6 +412,16 @@ def build(settings, deps) -> PostgresStore:
                 + "). A login that can write there can clear a stop. Revoke them from the login and from the "
                 "roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login "
                 "(it resets the grants and refuses what stays)"
+            )
+        if getattr(settings, "_login_role", "runtime") == "runtime" and (
+            problems := own_money_rights_problems(conn, schema)
+        ):
+            raise ConfigError(
+                "store postgres: this login holds rights on the money tables or functions that only the owner side "
+                "may hold ("
+                + "; ".join(problems)
+                + "). A login that can write there can lower a booked amount or change a cap. Run hadavin-sdk "
+                "migrate with --runtime-role naming this login (it resets the grants and refuses what stays)"
             )
     except BaseException:
         conn.close()
@@ -404,7 +478,9 @@ def _money_error(
         # OperationalError (looks like a lost connection), so it is named here and fails closed
         return ConfigError(f"store postgres: unexpected money function error ({code})")
     if code == "22023":  # the function refused an argument the Python check let through
-        return ValueError("spend argument refused by the database")
+        # only a fixed token for the day argument is passed on, never the message: Limits turns it into the clock hint
+        day = " (p_day)" if "p_day" in str(exc.diag.message_primary or "") else ""
+        return ValueError("spend argument refused by the database" + day)
     return exc
 
 
@@ -641,6 +717,8 @@ class PostgresStore:
         """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency. The
         bookings are done by the definer function `hadavin_add_spend` (the function is the authority; the Python
         check is the early, friendly refusal)."""
+        check_store_id(agent_id, "agent_id")  # the same early refusals as the memory store
+        check_spend_day(day)
         usd = clean_spend_amount(usd)  # a bad amount is a ValueError before any SQL; -0 becomes 0
         try:
             with self._lock, self._db.transaction():
@@ -943,12 +1021,11 @@ class PostgresStore:
             raise _money_error(exc, reservation_id) from None
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
-        if agent_id is not None:
-            check_store_id(agent_id, "agent_id")
+        check_store_id(agent_id, "agent_id")
         try:
             with self._lock, self._db.transaction():
                 # The claim comes first, inside the function: a second caller waits on the row lock, finds the

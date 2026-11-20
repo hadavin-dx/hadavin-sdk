@@ -68,8 +68,8 @@ def _event(run_id="run-1", i=0):
         domain="step",
         operation=f"n{i}",
         principal="p",
-        source="s",
-        result="ünïcode ok",
+        source="ünïcode-s",
+        result="ok",
     )
 
 

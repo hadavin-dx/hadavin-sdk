@@ -42,9 +42,9 @@ class StoreSpend(Protocol):
         ...
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
-        """(ORDER 020 m2: with agent_id, another agent's reservation is NotFound.) The stored row and `applied` (true only for the call that changed it). NotFound for an unknown id;
+        """(agent_id is REQUIRED, keyword-only; another agent's reservation is NotFound.) The stored row and `applied` (true only for the call that changed it). NotFound for an unknown id;
         ValueError for a bad amount. Also adds the actual amount to the run's cost when the row has a run."""
         ...
 

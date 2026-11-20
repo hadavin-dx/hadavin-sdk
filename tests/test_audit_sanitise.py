@@ -69,7 +69,33 @@ def test_note_never_raises_on_a_refused_event(tmp_path):
     run = handle(rt)
     rt._note(run, "x", "y", result="r", object_ref=None, error_code="e", rule_id=5)  # type: ignore[arg-type]
     rt._note(run, "x", "y", bogus_field="z")
-    assert [e for e in _events(rt, run) if e.error_code == "audit_event_refused"]
+    refused = [e for e in _events(rt, run) if e.rule_id == "audit_event_refused"]
+    assert len(refused) == 2
+    assert refused[0].error_code == "e" and refused[0].result == "r"
+    assert refused[0].object_ref == "unknown" or refused[0].object_ref is None
+
+
+def test_note_fallback_keeps_fields_and_logs_only_the_exception_type(tmp_path, caplog):
+    rt, _ = build_runtime(k5_cfg(tmp_path), StopLLM("end_turn"))
+    run = handle(rt)
+    with caplog.at_level("WARNING"):
+        rt._note(
+            run,
+            "x",
+            "yyy",
+            bogus_field="secret text",  # an unknown field refuses the event, so the fallback runs
+            error_code="kept code",
+            object_ref="ref:1",
+            inputs_hash="ab" * 32,
+            output_hash="cd" * 32,
+            decision="allow",
+        )
+    row = next(e for e in _events(rt, run) if e.domain == "x")
+    assert (row.error_code, row.object_ref, row.decision) == ("kept code", "ref:1", "allow")
+    assert (row.inputs_hash, row.output_hash) == ("ab" * 32, "cd" * 32)
+    assert row.rule_id == "audit_event_refused"
+    assert any("ValidationError" in r.getMessage() for r in caplog.records)
+    assert not any("secret text" in r.getMessage() for r in caplog.records)
 
 
 def test_mutant_raw_helper_is_killed(tmp_path, monkeypatch):
@@ -78,5 +104,19 @@ def test_mutant_raw_helper_is_killed(tmp_path, monkeypatch):
     from hadavin_sdk.runtime import agent_loop
 
     monkeypatch.setattr(agent_loop, "audit_code", lambda text: text)
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception):  # noqa: B017 - an assertion or the refused event
         test_executor_ref_and_code_with_spaces_and_newlines_are_audited(tmp_path)
+
+
+@pytest.mark.parametrize("text", ["a²b", "½", "①", "é ü", "x\n", "٣"])
+def test_audit_code_output_is_always_accepted_by_audit_event(text):
+    out = audit_code(text)
+    AuditEvent(run_id="r", domain="d", operation="o", principal=out, source="s", result=out)
+    assert out.isascii()
+
+
+def test_audit_ref_refuses_a_trailing_newline_as_a_token():
+    from hadavin_sdk.models import audit_ref
+
+    assert audit_ref("abc\n").startswith("sha256:")
+    assert audit_ref("abc") == "abc"
