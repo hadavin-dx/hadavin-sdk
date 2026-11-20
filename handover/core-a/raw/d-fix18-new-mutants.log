@@ -5,3 +5,21 @@
 # sha256 915d60690d9f304eb3dac4295f6d58ee77fcb78d0d30b0646ba663c7276df6d0  src/hadavin_sdk/triggers/worker.py
 # sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
 # sha256 1917f2cb81f44457405ca5a0d474b31e66299756e9ce3af9427c62bc669fd4d4  tests/endpoint_mutants.py
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/run_new.py", line 11, in <module>
+    em.main()
+    ~~~~~~~^^
+  File "/home/user/hadavin-sdk/tests/endpoint_mutants.py", line 1431, in main
+    res = run_mutants(
+        ROOT,
+    ...<7 lines>...
+        baseline_timeout=900,
+    )
+  File "/home/user/hadavin-sdk/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines,
+    )  # fmt: skip
+  File "/home/user/hadavin-sdk/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests
