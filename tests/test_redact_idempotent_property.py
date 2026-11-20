@@ -61,11 +61,31 @@ R = sys.modules["hadavin_sdk.guard.redact"]
 
 # Built for this file while looking for what ONE extra pass cannot settle (the corpora above had no such input).
 _V = "abcd" + "9x"
+_JWT = (
+    "eyJ" + "hbGciOiJIUzI1NiJ9" + "." + "eyJzdWIiOiJ1c2VyMSJ9" + "." + "c2lnbmF0dXJlMTIzNDU2Nzg5"
+)  # made up
 CONSTRUCTED = [
     # 0: a chain of three. Pass 1 finds the password; its sweep frees the bank code from the letters glued to it;
     # round 1 finds the code; the second sweep writes the code's placeholder before the account; round 2 reads the
     # account; round 3 changes nothing and ends the loop (a fixed point; see `_Redactor.settle`).
     f"password={_V}\nBSB: {g7.BSB}{_V}\npaid {g7.BSB}/{g7.ACCOUNT}",
+    # 1 (round 6, design M-A): the P x S shape: a cookie jar that grows by one cookie per line (the newest first, so every line's prefix ends with the
+    # one before it), every line ending in the same signed suffix; then the same lines again as `echo` copies the first sweep leaves
+    # (`tests/test_redact_settle_loop.py::_jar_log` builds the large one; here 12 lines of a 40-character suffix).
+    "\n".join(
+        [
+            "Cookie: "
+            + ";".join(f"a{(k - j) % 10}=1" for j in range(k))
+            + f"; sid={_JWT}~{'sig' * 13}"
+            for k in range(1, 13)
+        ]
+        + [
+            "echo "
+            + ";".join(f"a{(k - j) % 10}=1" for j in range(k))
+            + f"; sid={_JWT}~{'sig' * 13}"
+            for k in range(1, 13)
+        ]
+    ),
 ]
 
 
@@ -262,6 +282,6 @@ def test_the_constructed_chain_is_one_call_and_check_reports_a_refusal_as_refuse
     assert check(CONSTRUCTED[0])[0] == "refused"  # never a silent leak
 
 
-EXPECTED_INPUTS = 1835
+EXPECTED_INPUTS = 1836
 P1C_GAP2 = 44  # the p1c probe's gap2 and gap3 cases, pinned: a probe that shrinks must be looked at
 P1C_GAP3 = 43  # measured 2026-11-20: a corpus that grows or shrinks must be looked at
