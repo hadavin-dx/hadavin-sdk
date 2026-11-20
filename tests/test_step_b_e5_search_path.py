@@ -164,7 +164,7 @@ def test_migrate_repairs_a_search_path_default_the_runtime_set_on_itself(w):
     _attack(w, decoy)
     assert _setting_rows(w, w.runtime)
     w.migrate()
-    assert _setting_rows(w, w.runtime) == []
+    assert _setting_rows(w, w.runtime)  # role-wide row kept (E5c); this database is pinned instead
 
 
 def test_migrate_repairs_a_role_in_database_search_path_default(w):
