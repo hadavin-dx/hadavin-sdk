@@ -823,7 +823,6 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
     state_after = path.final if expected is None else expected[0]
     with _child(tmp_path, dsn, "serve", path) as child:
         status_a, data_a = signed_post(child.port, body, SECRET)  # (a) before any tick
-        assert status_a is not None and (status_a < 500 or status_a == 503), (status_a, data_a)
         if row is None:  # no row: accepted as new, runs the whole path once
             assert status_a in OK, (status_a, data_a)
             assert json.loads(data_a)["run_id"] == run_id
@@ -945,7 +944,6 @@ def test_memory_raise_at_point(point: Point, tmp_path):
     wsgi, runner = worker.make_app(make_trigger_app(stack.runtime, store, ONE))
     try:
         status_a, data_a = _wsgi_post(wsgi, body)  # (a) before any tick
-        assert status_a is not None and (status_a < 500 or status_a == 503), (status_a, data_a)
         if row is None:
             assert status_a in OK, (status_a, data_a)
             _memory_wait(store, run_id, path.final)

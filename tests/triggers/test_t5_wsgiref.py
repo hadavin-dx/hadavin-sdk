@@ -142,7 +142,7 @@ def exchange(port: int, data: bytes, *, half_close: bool = False) -> Seen:
         try:
             while part := sock.recv(65536):
                 raw += part
-        except ConnectionResetError:
+        except (ConnectionResetError, ConnectionAbortedError):  # Windows aborts where Linux resets
             end = "reset"
         except TimeoutError:
             end = "client timeout"
@@ -231,6 +231,7 @@ def check_quiet(seen: Seen, capsys, caplog) -> None:
             assert b"content-type" not in seen.head.lower()
         assert b"python" not in seen.head.lower() and b"wsgiserver" not in seen.head.lower()
         assert b"\r\nserver:" not in seen.head.lower()
+    assert _signatures, "no signature was recorded: the check for a signature in the output is empty"
     captured = capsys.readouterr()
     for name, text in (
         ("answer", seen.raw.decode("latin-1")),
@@ -281,10 +282,10 @@ def test_signed_request_over_the_socket_is_acked_with_run_id_and_state_only(caps
 
 def test_fewer_bytes_than_content_length_then_half_close_is_400_empty(capsys, caplog):
     start = FakeStart()
-    with serving(make_wsgi(start)) as server:
+    with serving(make_wsgi(start), 4.0) as server:
         seen = drive_short_then_half_close(server.server_port)
     assert seen.status_line.endswith(b" 400 Bad Request") and seen.end == "closed", seen
-    assert seen.seconds < SOCKET_TIMEOUT_S  # answered at the end of the stream, not at the timeout
+    assert seen.seconds < 2.0  # answered at the end of the stream, not at the timeout of 4 s
     assert start.calls == []
     check_quiet(seen, capsys, caplog)
 

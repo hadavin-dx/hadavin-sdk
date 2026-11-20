@@ -134,6 +134,8 @@ def refused(result, status):
     assert out == b""
     assert headers["Content-Length"] == "0"
     assert "Content-Type" not in headers
+    # the exact header set of a refusal (ticket H10): nothing that names a reason or the server
+    assert {name.title() for name in headers} <= {"Content-Length", "Allow", "Retry-After"}, headers
 
 
 # ---- derive_run_id, trigger_ref ----

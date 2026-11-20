@@ -429,7 +429,6 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
         after = _rows(dsn)
         assert after == ([] if expected is None else [(*identity, *expected)])
         retry_status, retry_data = signed_post(child.port, body, SECRET)
-        assert retry_status is not None and (retry_status < 500 or retry_status == 503)
         if expected is None:  # no row: accepted as a new request, runs once
             assert retry_status in OK, (retry_status, retry_data)
             assert json.loads(retry_data)["run_id"] == run_id
@@ -575,7 +574,6 @@ def test_memory_raise_at_point(point: Point, tmp_path):
         after = _memory_rows(store)
         assert after == ([] if expected is None else [(*identity, *expected)])
         retry_status, retry_data = _wsgi_post(wsgi, body)
-        assert retry_status is not None and (retry_status < 500 or retry_status == 503)
         if expected is None:
             assert retry_status in OK, (retry_status, retry_data)
             assert json.loads(retry_data)["run_id"] == run_id

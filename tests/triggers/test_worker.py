@@ -1194,3 +1194,96 @@ def test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_pool_is
     assert submitted == []
     assert [r for r in caplog.records if r.levelno >= 40] == []
     assert rt.store._runs == {} and rt.llm.calls == 0
+
+
+# --- d-fix2: Runner and make_app validation, and the 409 rule on agent and principal ------------------------
+
+
+@pytest.mark.parametrize("bad", [2.0, True, False, float("nan"), float("inf"), "2", None])
+def test_max_running_that_is_not_a_whole_number_is_refused_in_runner_and_make_app(rt, bad):
+    with pytest.raises(ValueError, match="whole number"):
+        Runner(rt, rt.store, max_running=bad)
+    with pytest.raises(ConfigError, match="whole number"):
+        worker.make_app(_app(rt, _settings(max_running=bad)))
+
+
+@pytest.mark.parametrize(
+    ("bad", "words"),
+    [
+        (True, "must be a number"),
+        (False, "must be a number"),
+        ("5", "must be a number"),
+        (None, "must be a number"),
+        (float("nan"), "at most 30"),
+        (float("inf"), "at most 30"),
+        (0, "at most 30"),
+        (-1.0, "at most 30"),
+        (30.5, "at most 30"),
+    ],
+)
+def test_ack_wait_s_that_is_not_a_usable_number_is_refused_in_runner_and_make_app(rt, bad, words):
+    with pytest.raises(ValueError, match=words):
+        Runner(rt, rt.store, ack_wait_s=bad)
+    with pytest.raises(ConfigError, match=words):
+        worker.make_app(_app(rt, _settings(ack_wait_s=bad)))
+
+
+@pytest.mark.parametrize("bad", ["0.05", None, True, [0.05]])
+def test_a_poll_s_that_is_not_a_number_is_a_value_error_not_a_type_error(rt, bad):
+    with pytest.raises(ValueError, match="poll_s must be a number"):
+        Runner(rt, rt.store, poll_s=bad)
+    with pytest.raises(ConfigError, match="poll_s must be a number"):
+        worker.make_app(_app(rt, _settings()), poll_s=bad)
+
+
+@pytest.mark.parametrize("other", ["agent_id", "principal_id"])
+def test_same_key_and_ref_but_another_agent_or_principal_is_409(other):
+    """T-1: the row is for the same key and document, so the trigger_ref matches; it was written for another
+    agent (or principal), so it is not this sender's run: 409, and nothing is written."""
+    req = _req(1)
+    store = MemoryStore()
+    _insert(
+        store,
+        run_id=req.run_id,
+        trigger_kind="event",
+        trigger_ref=req.trigger_ref,
+        **{
+            "agent_id": AGENT,
+            "principal_id": PRINCIPAL,
+            other: "someone-else",
+        },
+    )
+    fake = FakeRuntime(store, lambda store, **kw: None)
+    with Runner(fake, store) as runner:
+        assert runner.start(req) == (409, {})
+    assert len(store._runs) == 1
+
+
+def test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker():
+    from hadavin_sdk import defaults
+
+    for ours, theirs in (
+        (worker.MAX_RUNNING_CEILING, "TRIGGER_MAX_RUNNING_CEILING"),
+        (worker.ACK_WAIT_S, "TRIGGER_ACK_WAIT_S"),
+        (worker.ACK_WAIT_S_CEILING, "TRIGGER_ACK_WAIT_S_CEILING"),
+    ):
+        if hasattr(defaults, theirs):  # only on a tree that has core-b's defaults
+            assert ours == getattr(defaults, theirs), theirs
+        elif os.environ.get("HADAVIN_REQUIRE_PG") == "1":
+            pytest.fail(f"HADAVIN_REQUIRE_PG=1: defaults.{theirs} is not on this tree")
+
+
+def test_the_logging_of_the_worker_is_set_on_the_sdk_logger_only():
+    import logging
+
+    root, sdk = logging.getLogger(), logging.getLogger("hadavin_sdk")
+    before = (root.level, list(root.handlers), sdk.level, list(sdk.handlers))
+    try:
+        worker._log_to_stderr()
+        worker._log_to_stderr()  # twice: one handler
+        assert (root.level, root.handlers) == (before[0], before[1])
+        assert sdk.level == logging.INFO
+        assert len([h for h in sdk.handlers if getattr(h, "_trigger_worker", False)]) == 1
+    finally:
+        sdk.setLevel(before[2])
+        sdk.handlers[:] = before[3]
