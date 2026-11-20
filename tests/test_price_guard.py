@@ -1,9 +1,11 @@
-"""H6 of the price constraint: a route whose price is not a positive finite Decimal within the ceiling is refused
-when a real (non-fake) llm client is built, even if the Route skipped the config check (`model_construct`, or a
-valid `Route(...)` with price 0 as the ask-your-data demo config builds it). The fake client is exempt."""
+"""H6 of the price constraint: a route whose price is not a positive finite Decimal within the config rule is
+refused when a real (non-fake) llm client is built and again before each call, even if the Route skipped the config
+check (`model_construct`, or a valid `Route(...)` with price 0 as the ask-your-data demo config builds it). The fake
+client is exempt. Every real kind is covered, so a kind that skips `NetworkLLM.__init__` fails here."""
 
 from __future__ import annotations
 
+import importlib
 from decimal import Decimal
 from pathlib import Path
 
@@ -12,7 +14,6 @@ import pytest
 from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.llm.anthropic import AnthropicLLM
 from hadavin_sdk.llm.common import NetworkLLM
 from hadavin_sdk.llm.fake import FakeLLM
 
@@ -23,9 +24,36 @@ BAD = [
     Decimal("-0"),
     Decimal(-1),
     Decimal("NaN"),
+    Decimal("sNaN"),
     Decimal("Infinity"),
+    Decimal("-Infinity"),
     Decimal(CEIL) + 1,
+    Decimal("1E-30"),  # the config rule allows at most 6 decimals
+    Decimal("0.0000001"),
 ]
+
+
+class _Sub(Decimal):
+    pass
+
+
+# Every kind: (module, class name, builder from routes). A new NetworkLLM kind makes the enumeration test fail
+# until it is listed here.
+KINDS = {
+    "anthropic": ("AnthropicLLM", lambda c, r: c(object(), r, 3)),
+    "bedrock": ("BedrockLLM", lambda c, r: c(object(), r, 3)),
+    "gemini": ("GeminiLLM", lambda c, r: c(lambda: "k", r, 30.0, 3)),
+    "openai_compat": (
+        "OpenAICompatLLM",
+        lambda c, r: c("https://llm.example/v1", None, r, 30.0, 3),
+    ),
+}
+
+
+def kind(name):
+    cls_name, build = KINDS[name]
+    cls = getattr(importlib.import_module(f"hadavin_sdk.llm.{name}"), cls_name)
+    return lambda routes: build(cls, routes)
 
 
 def route(**over):
@@ -33,34 +61,56 @@ def route(**over):
     return Route.model_construct(**v)
 
 
+def test_every_real_kind_is_listed():
+    for name in KINDS:
+        importlib.import_module(f"hadavin_sdk.llm.{name}")
+    found = {
+        c.__name__
+        for c in NetworkLLM.__subclasses__()
+        if c.__module__.startswith("hadavin_sdk.llm.")
+    }
+    assert found == {cls for cls, _ in KINDS.values()}
+
+
+@pytest.mark.parametrize("name", KINDS)
 @pytest.mark.parametrize("field", [IN, OUT])
 @pytest.mark.parametrize("bad", BAD, ids=str)
-def test_real_client_refuses_a_bad_price(field, bad):
+def test_every_real_kind_refuses_a_bad_price_at_build(name, field, bad):
     with pytest.raises(ConfigError, match=field):
-        AnthropicLLM(object(), {"r": route(**{field: bad})}, 3)
+        kind(name)({"r": route(**{field: bad})})
 
 
-@pytest.mark.parametrize("bad", [0, 1.5, "3", None])
-def test_real_client_refuses_a_price_that_is_not_a_decimal(bad):
-    with pytest.raises(ConfigError):
-        NetworkLLM({"r": route(**{IN: bad})}, 3)
+@pytest.mark.parametrize("name", KINDS)
+def test_every_real_kind_accepts_prices_in_range(name):
+    for p in (Decimal("0.000001"), Decimal(3), Decimal(CEIL)):
+        assert kind(name)({"r": route(**{IN: p, OUT: p})}).routes["r"].model_id == "m-1"
+
+
+@pytest.mark.parametrize("field", [IN, OUT])
+@pytest.mark.parametrize("bad", [0, 1.5, "3", None, True, _Sub(3)], ids=repr)
+def test_a_price_that_is_not_a_plain_decimal_is_refused(field, bad):
+    with pytest.raises(ConfigError, match=field):
+        NetworkLLM({"r": route(**{field: bad})}, 3)
 
 
 def test_a_valid_zero_price_route_as_the_demo_config_builds_it_is_refused():
     r = Route(model_id="m-1", input_usd_per_mtok=0, output_usd_per_mtok=1, max_tokens=10)
     with pytest.raises(ConfigError, match=IN):
-        AnthropicLLM(object(), {"demo": r}, 3)
+        kind("anthropic")({"demo": r})
 
 
-def test_the_error_names_the_route_and_never_the_price():
+def test_the_error_names_the_route_and_field_and_never_the_price():
     with pytest.raises(ConfigError) as e:
-        NetworkLLM({"ok": route(), "bad-route": route(**{OUT: Decimal("-7.25")})}, 3)
-    assert "bad-route" in str(e.value) and "7.25" not in str(e.value)
+        NetworkLLM({"ok": route(), "bad-route": route(**{OUT: Decimal("-7.123456")})}, 3)
+    assert "bad-route" in str(e.value) and OUT in str(e.value) and "7.123456" not in str(e.value)
 
 
-@pytest.mark.parametrize("p", [Decimal("0.000001"), Decimal(3), Decimal(CEIL)])
-def test_real_client_accepts_prices_in_range(p):
-    assert NetworkLLM({"r": route(**{IN: p, OUT: p})}, 3).routes["r"].model_id == "m-1"
+@pytest.mark.parametrize("name", KINDS)
+def test_routes_swapped_after_build_are_refused_before_the_call(name):
+    llm = kind(name)({"r": route()})
+    llm.routes = {"r": route(**{IN: Decimal(0)})}
+    with pytest.raises(ConfigError, match=IN):
+        llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
 
 
 @pytest.mark.parametrize("bad", BAD, ids=str)
