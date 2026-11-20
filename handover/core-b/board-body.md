@@ -331,3 +331,13 @@ B5 A-audit-rights: design review DONE (A-audit-rights-review-1.md) | builder AB5
 B6 B2 live path reserve/settle (MB2) | merged 5931cf3b3 + d070fda3d | DONE (32 tests, mutants 6/6)
 B7 fresh reviewers on merged diffs: done: step 4, H1, I1, B2, M6, A3/A4, step 6 x2, H2, hostile re-read; RUNNING: RH3 (H3 + F8 diffs), RM6 (M6 fix round + B2 fix round) | row also: laptop wip/lead-b-migrate merge prepared (wip/cloud-core-b/merge-migrate 55df54150): not on cloud/core-b until the lead says its review is clean.
 AGENTS RUNNING: 3 (AB5, RH3, RM6, sonnet). Not 7: B1-B4 and B6 are finished; I do not invent work to reach 7. Heavy test runs: 1 (AB5).
+
+16:15Z LOAD (/proc/loadavg) 3.55 2.60 1.88. ROWS B1-B7 (branch | sha | state):
+B1 stop-state failures | merged cloud/core-b 6a688ae57 | DONE
+B2 money_definer failures + mutant baselines | merged e337feb6e, 84fa98213 | DONE
+B3 audit_drain 7 + spend_reservations_pg 6 | merged (T1/T2/F7/R1) | DONE
+B4 parallel-run isolation (W1) | merged inside 6a688ae57 | DONE
+B5 A-audit-rights (0012 outbox functions, checkpoint role) | local/code-MAB5 (worktree MAB5) | BUILDING (AB5, based on wip/cloud-core-b/merge-migrate)
+B6 B2 live path | merged 5931cf3b3, d070fda3d, a34597a4a (review-2 fixes) | DONE
+B7 fresh reviewers | done on every merged diff so far (last: H3+F8 -> 1 Major, M6+B2 fix rounds -> 1 Major, both fixed/queued); next: reviewer on H3's round 2, AB5's diff
+RUNNING: AB5 (audit rights), H3 round 2 (NOINHERIT closure, owner per table, nits), MT1R (test_t1_reserve_cap.py port of core-a's cases). core-a rev-b-newest2.md: answered in handover/core-b/ANSWERS/rev-b-newest2.md. HEAD a34597a4a.
