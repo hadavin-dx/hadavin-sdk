@@ -1,22 +1,29 @@
-UPDATED_UTC: 2026-11-20T16:06:57Z
+UPDATED_UTC: 2026-11-20T16:07:32Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:17Z load 0.2. Agents 1: DOCS builder ad19c825 (SECURITY/CHANGELOG/README from v7, running). NOT idle. F-install builders are NOT to be started: all three are already in src on cloud/core-c, evidence: guard/model_gate.py:285 MODE_NO_MAP + :130-135 NO_MAP/mapping required keyword (request 3); :303-311 usd_cap in SPEND_REASONS (sixth reason); :214 + :340 refused_before_response honoured on ProviderExhausted (settle at 0). Tests: test_model_gate.py + test_gate_mutants_picked_up.py 274 passed; gate_mutants 139/140 (R8 equivalent). Remaining for no-overspend: core-b's retry layer must SET the mark and core-b must install the gate in the Runtime (their lane). K5 = Q17, lead must say which item.
+STATE: 16:22Z OWNER ORDER 16:09 rows (agents 2: docs builder ad19c825, G13c reviewer a60a4532; load 0.2):
+C1 NO_MAP request 3 (mapping REQUIRED in bind) | branch cloud/core-c | sha c11fafb99 | DONE+MERGED, tests/mutants in gate_mutants 139/140
+C2 usd_cap in SPEND_REASONS | cloud/core-c | c11fafb99 | DONE+MERGED
+C3 gate honours mark on ProviderExhausted | cloud/core-c | bfc13e45e (+e05cee9f0 raising-mark fix) | DONE+MERGED; inert until core-b's retry layer SETS the mark
+C4 K5 | Q17 asked the lead which K5 item; core-a's K5 branch (tools.py:996 + K5 test) is merged | no builder possible without the answer | BLOCKED on lead
+C5 ONE merged head | cloud/core-c 443ef0b69 | g2/g3 content already in (REC-notes) | DONE; suites idle: non-perf 16071 passed, perf 96 passed
+C6 grant tests | core-a's file == core-c's, 28 fail on core-b head; re-pin wip/cloud-core-c/grants b55d21865 | DONE (117 passed PG16), core-b/core-a to take it
+Next package (queue): fresh reviewers per merged builder diff in sequence: G13c (running), then G12c, G9b, G4c; docs root pass running; G11 waits E16.
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 1
-CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 1, heavy agents 0
+AGENTS_RUNNING: 2
+CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 2, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 51; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:01:49+00:00
+PUSHED_UTC: 2026-11-20T16:07:00+00:00
 
-(21:36 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:37 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -33,6 +40,7 @@ PUSHED_UTC: 2026-11-20T16:01:49+00:00
 | grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | done | 1 | 0 | light, 1 pytest |
 | core-a-rev | reviewer | claude-sonnet-5-5 | FRESH read-only result review of core-a newest src/tests commits (last 3 h) and wip/core-a-for-ci, for-c-e19 | 15:43 | 15:55 | 1 | done | 1 | 0 | EGM codebase |
 | ad19c825 | builder | claude-sonnet-5-5 | DOCS root pass: SECURITY.md/CHANGELOG.md/README.md from v7 drafts + G13c/G12c/G9b/G4c facts; /tmp/core-c-docs wip/cloud-core-c/docs | 16:13 | 16:40 | 1 | running | 1 | 0 | docs only |
+| a60a4532 | reviewer | claude-sonnet-5-5 | FRESH egm result review of G13c merged diff (5d8c8ca04) on plain-file snapshot | 16:21 | 16:35 | 1 | running | 1 | 0 | EGM |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
