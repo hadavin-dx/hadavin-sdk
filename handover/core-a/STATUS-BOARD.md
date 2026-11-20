@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:51:38Z
+UPDATED_UTC: 2026-11-20T05:52:11Z
 SESSION: core-a
 ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 20
 ITEMS_OPEN: 3
 PERCENT: 90
 AGENTS_RUNNING: 2
-CAPACITY: load 0.44 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.55 of 4 cores (1-minute average), mem 0.8/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.3G 60G 14%; 348M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); the flaky T5 test is fixed in code and passed twice since
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: agents land one by one: check each, commit; then mutant script on the final code, my files once more, REPORT.md block
-PUSHED_UTC: 2026-11-20T05:51:28Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:51:41Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -65,7 +65,10 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| none | | | | | |
+| 25622 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 31s ago | running | matched by name in ps |
+| 25623 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 31s ago | running | matched by name in ps |
+| 26402 | uv run --all-extras --group test pytest -q -p no:cacheprovider -p t4fa | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 26408 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 3s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
