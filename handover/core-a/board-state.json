@@ -720,17 +720,17 @@
    "reason": "lead verdicts E1a/E1b 09:29"
   },
   {
-   "id": "E-rev6",
-   "role": "fresh reviewer (codebase-details)",
+   "id": "E-fix6",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "step E round 6: adversarial review of the behaviour change in crash.py __exit__ (lead: no cap, repeat until a fresh pass finds none)",
-   "started UTC": "09:36",
-   "expected end": "15 min",
+   "what exactly it is doing": "step E round-6 Major (directory flag on Windows) and nits, then tests and callers once; round 7 fresh review follows",
+   "started UTC": "09:37",
+   "expected end": "20 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "6, no cap (lead ruling)",
+   "review round n of cap": "6 fix (no cap)",
    "retries so far": 0,
-   "reason": "behaviour changed after round 5"
+   "reason": "after E-rev6"
   }
  ],
  "tests": [
@@ -2463,6 +2463,19 @@
    "review round n of cap": "fixes after round 5 (a clean pass: rounds end per lead rule)",
    "retries so far": 0,
    "reason": "7 nits done; crash.py behaviour changed (_look, __exit__ still deletes after a refused read): test_testing_crash 107 passed 2 skipped, callers (crash matrices, PG) 429 passed; two earlier iterations killed pytest (own edit bugs, fixed)"
+  },
+  {
+   "id": "E-rev6",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "step E round 6: adversarial review of the behaviour change in crash.py __exit__ (lead: no cap, repeat until a fresh pass finds none)",
+   "started UTC": "09:36",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "6, no cap (lead ruling)",
+   "retries so far": 0,
+   "reason": "round 6: 0 Blocker, 1 Major (Windows only, from knowledge of the Windows error for read_text on a directory), 6 nits (false 'never fired' if the child fires between look and delete; tests; a hash in the mutant header)"
   }
  ]
 }
