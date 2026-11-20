@@ -12,7 +12,7 @@ reason in ``expect``. Not collected by pytest. Run from the repo root:
     uv run --all-extras --group test python tests/redact_mutants.py N8         # only mutants whose name contains the text
 
 Good means KILLED, or CRASH with the declared exception class. Exit 1 if any mutant is not good, 2 if a filter selects none.
-G9 numbering: there is no mutant G9-6 (dropped before the first build; the numbers were not reused, G9 result review 2, N4). G9b adds G9-31 .. G9-37.
+G9 numbering: there is no mutant G9-6 (dropped before the first build; the numbers were not reused, G9 result review 2, N4). G9b adds G9-31 .. G9-37, G9c G9-38 .. G9-44.
 N1 (the early U+2044 return of `_char_class`) and N14 (the slash replace of the alignment) are gone: both covered dead code, which was deleted after the
 exhaustive proof in tests/test_redact_g3_port.py (G1 Q9 review F3). tests/test_redact_mutants_meta.py pins the count and checks every killer.
 R2 ("the check after stage 1 is removed") is killed by BUDGET-1b (the spy counter is 1 instead of 0); it is not declared equivalent.
@@ -127,8 +127,8 @@ M = [
       "test_attacks_are_still_withheld_whole_and_never_emitted_folded", "ssert"),
     m("N9 the map stores the folded spelling again", RD, "written = body[start:stop]", "written = folded[s:e]", F1,
       "test_map_1_the_map_holds_the_written_spelling", "ssert"),
-    m("N10 the reverse-map key is the folded value", RD, "self.reverse[full] if full in self.reverse else self._place(label, full, written)",
-      "self.reverse[fold(full)] if fold(full) in self.reverse else self._place(label, full, written)", F1,
+    m("N10 the reverse-map key is the folded value", RD, "self._held(label, full) or self._place(label, full, written)",
+      "self._held(label, fold(full)) or self._place(label, full, written)", F1,
       "test_map_4_two_occurrences_get_two_placeholders_in_both_orders", "ssert"),
     m("N11 the mid-line check reads only index 0", RD, "if not i & 4095:", "if i == 0:", FB,
       "test_mid_1_the_budget_is_checked_in_the_middle_of_a_line", "DID NOT RAISE"),
@@ -163,8 +163,8 @@ M = [
       "[*self.mapping.items(), *((ph, k) for k, ph in alias.items() if k not in stored)],", "list(self.mapping.items()),", F1,
       "test_sweep_1_a_clear_copy_after_a_written_variant_gets_the_same_placeholder", "ssert"),
     m("AL-3 _mask_in_place registers through the alias", RD,
-      "self.reverse[full] if full in self.reverse else self._place(label, full, written)",
-      "self.reverse[full] if full in self.reverse else (self.alias.get(fold(full)) or self._place(label, full, written))", F1,
+      "self._held(label, full) or self._place(label, full, written)",
+      "self._held(label, full) or self.alias.get(fold(full)) or self._place(label, full, written)", F1,
       "test_map_4_two_occurrences_get_two_placeholders_in_both_orders", "ssert"),
     # ---- review round w3: every view of a line is scanned (marks dropped, U+0345 dropped), control characters, grown blocks ----
     m("W1 no marks-dropped or iota view is scanned by _fold_scan", RD, "all_specs = list(dict.fromkeys(sp for one in specs_of for sp in one))", "all_specs = []", FM,
@@ -332,7 +332,7 @@ M += [
     g9("G9-14 the count reads no clock",
        "if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:", "if False:",
        "test_g9_the_count_reads_the_clock_each_time_it_passes_a_multiple_of_1024", "DID NOT RAISE"),
-    g9("G9-15 the occurrences not counted", "self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)", "self._spend(work, 0, deadline)",
+    g9("G9-15 the occurrences not counted", "        self._spend(work, pending, deadline)\n        starts", "        self._spend(work, 0, deadline)\n        starts",
        "test_g9_the_read_back_counts_its_pieces_and_its_occurrences", "[16]"),
     g9("G9-16 the finder groups read no clock",
        "# between finder groups: a pass of a finder over E is not counted\n                self._over_budget(deadline)",
@@ -349,8 +349,8 @@ M += [
        "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[104104]"),
     g9("G9-21 the anchored check removed", "hits += self._deep_hits(out, toks, deep, deadline, work)", "hits += []",
        "test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check", "1100"),
-    g9("G9-22 the anchored comparisons not counted", "self._spend(work, 2 * len(w) + 2, deadline)", "self._spend(work, 0, deadline)",
-       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "[199560]"),
+    g9("G9-22 the anchored comparisons not counted", "self._spend(work, 2 * (len(w) // _COMPARE_SHARE + 1), deadline)", "self._spend(work, 0, deadline)",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(a) "),
     g9("G9-23 the read-back reach removed", "keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)",
        "keep = self._longest - 1",
        "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[40002]"),
@@ -376,18 +376,32 @@ M += [
        "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "<TENANT_1>"),
     g9("G9-32 no rebuild of the rules after a secret union upgrades a held value", "                if keep_rules:\n", "                if current:\n",
        "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "a standalone copy is still swept"),
-    g9("G9-33 the occurrences not charged as they are found", "                self._spend(work, _OCC_CHARGE_EVERY, deadline)\n", "                pass\n",
+    g9("G9-33 the occurrences not charged as they are found", "                self._spend(work, pending, deadline)\n                pending = 0\n", "                pending = 0\n",
        "test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists", "DID NOT RAISE"),
-    g9("G9-34 the remainder of the occurrences not charged", "self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)", "self._spend(work, 0, deadline)",
+    g9("G9-34 the remainder of the occurrences not charged", "        self._spend(work, pending, deadline)\n        starts", "        self._spend(work, 0, deadline)\n        starts",
        "test_g9b_the_remainder_of_the_occurrences_is_charged_after_the_scans", "[14]"),
     g9("G9-35 the text read back again for every place of the anchor", "                    if read is None:\n", "                    if True:\n",
+       "test_g9c_each_term_of_the_anchored_check_is_charged", "read back"),
+    g9("G9-36 a further place costs a whole comparison", "self._spend(work, len(w) // _COMPARE_SHARE + _COMPARE_UNITS, deadline)", "self._spend(work, 2 * len(w) + 2, deadline)",
        "test_g9b_a_long_periodic_secret_beside_its_own_period_in_a_12k_document_is_not_refused", "SpelledWorkTooMuch",
        allow_crash=True, crash_type="InputTooLarge"),
-    g9("G9-36 a further place costs a whole comparison", "self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)", "self._spend(work, 2 * len(w) + 2, deadline)",
-       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "SpelledWorkTooMuch",
-       allow_crash=True, crash_type="InputTooLarge"),
-    g9("G9-37 a further place costs nothing", "self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)", "self._spend(work, 0, deadline)",
-       "test_g9b_the_periodic_limit_is_stated_with_numbers", "DID NOT RAISE"),
+    g9("G9-37 a further place costs nothing", "self._spend(work, len(w) // _COMPARE_SHARE + _COMPARE_UNITS, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9c_each_term_of_the_anchored_check_is_charged", "_COMPARE_UNITS"),
+    g9("G9-38 a place of the anchor found costs nothing", "self._spend(work, place_units, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9c_each_term_of_the_anchored_check_is_charged", "_ANCHOR_SHARE"),
+    g9("G9-39 an accepted occurrence costs one unit", "pending += _OCC_UNITS", "pending += 1",
+       "test_g9c_memory_per_occurrence_is_bounded_so_the_limit_bounds_memory", "peak traced"),
+    g9("G9-40 the loop over the occurrences reads no clock", "                # G9c M1a: the loop over the occurrences reads the clock too\n                self._over_budget(deadline)", "                pass",
+       "test_g9c_the_loop_over_the_occurrences_reads_the_clock", "DID NOT RAISE"),
+    g9("G9-41 a rejected call costs nothing", "pending += _REJECT_UNITS", "pending += 0",
+       "test_g9c_rejected_calls_are_charged_a_chain_of_identifier_values_is_refused", "DID NOT RAISE"),
+    g9("G9-42 the total charge is the remainder of a block", "        self._spend(work, pending, deadline)\n        starts", "        self._spend(work, pending % 7, deadline)\n        starts",
+       "test_g9c_the_total_charge_is_the_characters_plus_units_per_accepted_occurrence", "AssertionError: ["),
+    g9("G9-43 a secret find reuses a non-secret placeholder", "        if got is not None and label in SECRET_KINDS and _kind(got) not in SECRET_KINDS:\n            return None\n", "",
+       "test_g9c_a_secret_find_never_reuses_a_non_secret_placeholder", "assert"),
+    g9("G9-44 a chunk read back costs nothing", "self._spend(work, chunk_units, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9c_each_term_of_the_anchored_check_is_charged", "_CHUNK_UNITS"),
+
 ]  # fmt: skip
 
 

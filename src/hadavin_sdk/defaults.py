@@ -126,13 +126,24 @@ REDACT_BUDGET_S = 6.0
 # `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost (SECURITY wording). G9 (E10): the count is per
 # `_Redactor.sweep` CALL, shared by its passes: the spelled scans, the read-backs (one unit per character put back, one per occurrence),
 # the anchored check of rules longer than the reach, and the value of every union, counted before it is built.
-# G9b (G9 result review 2, M3) STATED LIMIT of the anchored check on a PERIODIC long value. Units are not time: measured on the Linux test machine
-# (thread CPU), `S + "a" + S` with S = `ab` x n costs 0.01 to 0.02 microseconds per unit, so here the count, not the clock, refuses. Units,
-# measured: len(S) 2,000: 0.54 million; 4,000: 1.74 million (8,001 characters of text), 1.94 million (12,002 characters, three copies); 8,000: 4.50
-# million, REFUSED; 16,000: 11.5 million. So a periodic registered secret of up to about 7,000 characters beside its own period is accepted, one of
-# 8,000 or more is refused (`SpelledWorkTooMuch`: fail closed, the document is lost). The read-back at an edge is made once per (edge, rule)
-# (`2 * len(rule) + 2` units); each further place of the anchor costs `len(rule) // 32 + 1` (`_COMPARE_SHARE`). Before G9b every place paid a
-# whole comparison: S of 4,000 characters in 12,000 characters of text needed 11.9 million units and was refused.
+# G9b/G9c (G9 result reviews 2 and 3, M1, M3) UNITS AND TIME, measured on the Linux test machine (thread CPU, `time.thread_time()`). The unit is
+# about 0.1 microsecond of the anchored check and the read-back. Read-back (`_overlaps`): 3 units per accepted occurrence (a tuple, two bisects, a
+# slice, a hit: ~3 us measured at ~1.2 million occurrences) and 1 per rejected call, charged every 256 units AS FOUND and the loop over the
+# occurrences reads the clock; a nested chain of 30 secrets at 90 percent of the limit (3.57 million units, 1.19 million occurrences) takes 1.8 s of
+# CPU and 159 MB at peak (tracemalloc; ~134 bytes per tuple; G9b's "82 MB" was a figure of the refused run, not of a run at the limit), a chain of
+# 200 secrets 3.63 million units, 1.6 s and 160 MB. A chain of identifier-kind (not secret) values is rejected almost everywhere (a touching
+# neighbour): refused after 0.3 s (G9b: ~1e8 uncharged calls). Anchored check (`_deep_hits`), units measured against time: a place of the anchor
+# found in the rule `len(anchor) // 32 + 1` (2.9 us measured at 1,025 characters of a periodic rule: G9b charged 1,025); the first comparison of an edge
+# and rule `2 * (len(rule) // 1024 + 1)` plus 5 per chunk read back (`_expand` costs 0.44 us per chunk, a token put back is one chunk; G9b charged per
+# character: a 1,100-character rule beside 275 four-character keys cost ~120 us for ~2,200 units); each further place `len(rule) // 1024 + 3` (0.3 us
+# at 1,100 and at 8,000 characters). Measured: `_deep_hits` 0.109 us per unit (1.17 million units: 0.127 s). STATED LIMIT on a PERIODIC long value, `S + "a" + S`,
+# S = `ab` x n: units 0.03 million at len(S) 2,000; 0.08 million at 4,000; 0.18 at 8,000; 0.45 at 16,000; 1.17 at 32,000; 3.34 at 64,000 (accepted); 4.05
+# million at 72,000 (REFUSED, `SpelledWorkTooMuch`). G9b's limit (7,000 accepted, 8,000 refused) was set by over-charged terms (0.01 us per unit),
+# not by time, and is now about 70,000 characters. WHAT THE UNITS DO NOT COUNT: at those sizes most of the CPU is `_Redactor._sweep_once` (the
+# literal sweep of the value itself, quadratic in the rule's length for a periodic value, not part of this count): 2.1 s of CPU at len(S) 64,000 (0.33 s
+# of it `_deep_hits`), about 4.4 s at 96,000; the deadline (`REDACT_BUDGET_S`) bounds that, as before. Period 1 (`x` x n): the anchored check is
+# cheap (82,000 units at n = 20,000, 0.3 s of CPU in the literal sweep); G9b's remark that it refuses at about 5,000 does not hold. No per-edge cap: the
+# per-unit time stays near 0.1 us up to the limit.
 # CPU OR WALL: the clock of every limit here (`REDACT_BUDGET_S`, the deadlines of `_Redactor`) is `time.thread_time()`, CPU time of the thread. The
 # "10 s" of the E17 note ("no refusal (10 s under load)") is a WALL figure of the measuring run on a loaded machine, not a CPU budget and not a
 # limit of this module; the CPU budget is `REDACT_BUDGET_S` (6.0).

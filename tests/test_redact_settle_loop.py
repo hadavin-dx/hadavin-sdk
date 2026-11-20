@@ -2160,14 +2160,14 @@ def test_g9_the_finder_groups_read_the_deadline_between_them():
 
 
 def test_g9_the_read_back_counts_its_pieces_and_its_occurrences():
-    """The units of one read-back, exactly: one per character of E (`x abcdefghijkl y`, 16), one per occurrence found (`abcdefgh`,
+    """The units of one read-back, exactly: one per character of E (`x abcdefghijkl y`, 16), `_OCC_UNITS` per occurrence found (`abcdefgh`,
     `efghijkl`: 2); the finder passes are not counted (design M5, v3). The union's characters are counted by `_close` (mutant G9-15)."""
     r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
     r.sweep("")
     assert len(r._finders) == 1 and not r._slow
     work = [0]
     assert [s[:2] for s in r._overlaps("x <SECRET_1>ijkl y", None, work)] == [(2, 16)]
-    assert work == [16 + 2], work
+    assert work == [16 + 2 * R._OCC_UNITS], work
 
 
 def test_g9_a_union_is_counted_with_its_whole_value_before_it_is_built():
@@ -2285,20 +2285,31 @@ def test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check():
     )
 
 
-def test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count():
+def test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count(
+    monkeypatch,
+):
     """The anchored check compares the rule at every place its anchor is found, at every edge; a PERIODIC long value (`x` x 1,100) beside
-    readable text of the same period finds its anchor at 76 places per edge. Since G9b M3 the first comparison of an edge pays
-    `2 x len(w) + 2` (the read-back, made once per edge and rule) and each further place `len(w) // 32 + 1` = 35: the 30 cut edges
-    of 30 copies cost 265,620 units (exact), and 1,500 copies (about 4 million occurrences' worth of comparisons) are refused
-    (`SpelledWorkTooMuch`), not walked (stated in defaults.py; mutants G9-22, G9-35, G9-36)."""
+    readable text of the same period finds its anchor at 76 places per edge. Since G9b M3 the first comparison of an edge pays for the
+    read-back (once per edge and rule) and each further place a share of the rule (G9c: `len // 1024 + 3`; the place found `len(anchor) // 32 + 1`).
+    The cost is LINEAR in the copies (each copy adds the same units: derived, not pinned) and the limit refuses exactly past it: the
+    call with its units as the limit is accepted, with one less refused (mutants G9-22, G9-35, G9-36, G9-37, G9-38)."""
     r = _registering({"<SECRET_1>": "x" * 1_100})
     # `<SECRET_9>` is not a key: the run of `<SECRET_1>` touches readable text on its right only, so it is cut at the reach there
     unit = "<SECRET_9><SECRET_1>" + "x" * 200 + " end\n"
-    work = [0]
-    r._overlaps(unit * 30, None, work)
-    assert work == [265_620], work
+
+    def units(copies: int) -> int:
+        work = [0]
+        r._overlaps(unit * copies, None, work)
+        return work[0]
+
+    step = units(3) - units(2)
+    assert step > 0 and units(30) - units(29) == step, (step, units(30), units(29))
+    total = units(30)
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", total)
+    r._overlaps(unit * 30, None, [0])  # at the limit: accepted
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", total - 1)
     with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
-        r.sweep(unit * 1_500)
+        r._overlaps(unit * 30, None, [0])
 
 
 def test_g9_constants_hold_sane_values():
@@ -2312,10 +2323,25 @@ def test_g9_constants_hold_sane_values():
     assert defaults.SPELLED_MAX_UNION_CHARS >= defaults.MAX_REDACT_CHARS
 
 
+def _deep_units(first: int, rule: int, anchor: int, chunks: int, further: int = 0) -> int:
+    """G9c: the units of the anchored check at ONE edge and rule, from the module's own constants: `first` (the sum of the fixed terms the
+    caller states: the edge, the anchor search, the window scan), the place found (`anchor // _ANCHOR_SHARE + 1`), the first comparison
+    (`2 * (rule // _COMPARE_SHARE + 1)` and `_CHUNK_UNITS` per chunk) and `further` more places (`rule // _COMPARE_SHARE + _COMPARE_UNITS`)."""
+    return (
+        first
+        + anchor // R._ANCHOR_SHARE
+        + 1
+        + 2 * (rule // R._COMPARE_SHARE + 1)
+        + R._CHUNK_UNITS * chunks
+        + further * (rule // R._COMPARE_SHARE + R._COMPARE_UNITS)
+    )
+
+
 def test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it():
     """E17 + G9 result review (design M1, M2): `_deep_hits` searches the anchor of an edge only in the window `[lo, hi)` of the long rule
     whose comparison could succeed (the text that can be read back on each side of the edge bounds it), and counts the scan of that window
-    (`hi - lo` units, once per distinct window). Exact units (not a timing), `_overlaps` on a swept text, no clock:
+    (`hi - lo` units, once per distinct window). Exact units (not a timing), `_overlaps` on a swept text, no clock, derived from the module's constants
+    (`_deep_units`; the comments give the G9b figures with the same shape: 6,169 / 7,270 / 6,379 before G9c's recalibration):
     (a) `x<SECRET_2>`, SECRET_2 = `x` x 1,030 (the rule, 1,030 long, anchor = the free `x` + 1,024 of the run = 1,025 characters): the
     window is [0, 1,025) (hi = 1 - 1 + 1,025), one place, one comparison. Units: E 1,026 (the text read back) + 1 (edge, rule) + 1,030 (the
     anchor searched in the rule) + 1,025 (the window scan) + 1,025 (a place found) + 2,062 (2 x 1,030 + 2, the comparison) = 6,169; the
@@ -2329,19 +2355,21 @@ def test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_i
     work = [0]
     hits = r._overlaps("x<SECRET_2>", None, work)
     assert hits == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")], f"(a) hit {hits}"
-    assert work == [6_169], f"(a) {work}"
+    assert work == [_deep_units(1_026 + 1 + 1_030 + 1_025, 1_030, 1_025, 2)], f"(a) {work}"
     r = R._Redactor({"<SECRET_1>": "x" * 1_100, "<SECRET_2>": word})
     r.sweep("")
     work = [0]
     hits = r._overlaps("x<SECRET_2>", None, work)
     assert hits == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")], f"(b) hit {hits}"
-    assert work == [7_270], f"(b) {work}"
+    assert work == [_deep_units(1_026 + 1 + 1_030 + 1_025, 1_030, 1_025, 2) + 1 + 1_100], (
+        f"(b) {work}"
+    )
     r = R._Redactor({"<SECRET_1>": "x" * 1_100})
     r.sweep("")
     work = [0]
     hits = r._overlaps("<SECRET_1>x", None, work)
     assert hits == [(0, 11, "SECRET", "<SECRET_1>")], f"(c) hit {hits}"
-    assert work == [6_379], f"(c) {work}"
+    assert work == [_deep_units(1_026 + 1 + 1_100 + 1_025, 1_100, 1_025, 2)], f"(c) {work}"
 
 
 def test_g9_the_read_back_judges_a_phone_copy_by_the_sweeps_joins():
@@ -2365,11 +2393,11 @@ def test_g9_a_gate_text_that_mentions_a_long_value_many_times_is_masked_not_refu
     assert runmap.enforce_map(text + value, {"<SECRET_1>": value}) == text + "<SECRET_1>"
 
 
-def _nested_chain(depth: int, copies: int) -> tuple[dict[str, str], str]:
-    """`depth` SECRET values `a` x 4 .. `a` x (depth + 3), each a substring of the next, and `copies` of `<last>x`: read back, every copy is
+def _nested_chain(depth: int, copies: int, kind: str = "SECRET") -> tuple[dict[str, str], str]:
+    """`depth` values of `kind` (SECRET, or an identifier kind such as TENANT: rejected wherever a neighbour touches, G9c M1b) `a` x 4 .. `a` x (depth + 3), each a substring of the next, and `copies` of `<last>x`: read back, every copy is
     `a` x (depth + 3) + `x`, and every rule occurs at every place of every run (about depth^2 / 2 per copy)."""
-    mapping = {f"<SECRET_{k}>": "a" * (k + 3) for k in range(1, depth + 1)}
-    return mapping, f"<SECRET_{depth}>x" * copies
+    mapping = {f"<{kind}_{k}>": "a" * (k + 3) for k in range(1, depth + 1)}
+    return mapping, f"<{kind}_{depth}>x" * copies
 
 
 def test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists(monkeypatch):
@@ -2393,20 +2421,20 @@ def test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists
 
 def test_g9b_the_remainder_of_the_occurrences_is_charged_after_the_scans():
     """G9b M1: the blocks of `_OCC_CHARGE_EVERY` are charged as found and the REMAINDER after the scans: a text with fewer occurrences than
-    one block is charged all at the end, one unit each, as before (3 values, 2 copies: E is 14 characters, 9 occurrences that count, 23
-    units, measured; mutant G9-34 charges the remainder as 0: 14)."""
+    one block is charged all at the end, `_OCC_UNITS` each (3 values, 2 copies: E is 14 characters, 9 occurrences that count: 14 + 27 units;
+    mutant G9-34 charges the remainder as 0: 14)."""
     mapping, text = _nested_chain(3, 2)
     r = R._Redactor(mapping)
     r.sweep("")
     work = [0]
     r._overlaps(text, None, work)
-    assert work == [23], work
+    assert work == [14 + 9 * R._OCC_UNITS], work
 
 
 @pytest.mark.perf
 def test_g9b_the_nested_chain_of_200_secrets_is_refused_in_bounded_time_and_memory():
     """G9b M1, the review's shape: 200 nested secrets, 17,000 copies of `<SECRET_200>x` (221,000 characters), the real limit: refused
-    (`SpelledWorkTooMuch`) after about 4 million occurrences (measured 2.8 s CPU and 82 MB peak under tracemalloc; before the fix: not
+    (`SpelledWorkTooMuch`) after about 1.3 million occurrences (G9c: 3 units each; G9b charged 1 and made ~4 million; before the fix: not
     finished in 120 s)."""
     mapping, text = _nested_chain(200, 17_000)
     r = R._Redactor(mapping)
@@ -2433,12 +2461,186 @@ def test_g9b_a_long_periodic_secret_beside_its_own_period_in_a_12k_document_is_n
     assert r.sweep(s + "a" + s + "a" + s) == "<SECRET_1>a<SECRET_1>a<SECRET_1>"
 
 
-def test_g9b_the_periodic_limit_is_stated_with_numbers():
-    """G9b M3: STATED LIMIT (defaults.py): `S + "a" + S`, S = `ab` x n, costs (units, measured) 0.54 million at len(S) 2,000, 1.7 million at
-    4,000, 4.5 million at 8,000, 11.5 million at 16,000: a 6,000-character S is accepted, an 8,000-character S is refused (limit 4 million).
-    Mutant G9-37 (the further-place charge dropped: the 8,000 case is accepted)."""
-    ok = "ab" * 3_000
-    assert _registering({"<SECRET_1>": ok}).sweep(ok + "a" + ok) == "<SECRET_1>a<SECRET_1>"
-    big = "ab" * 4_000
+def test_g9b_the_periodic_limit_is_stated_with_numbers(monkeypatch):
+    """G9b/G9c M3: STATED LIMIT (defaults.py): `S + "a" + S`, S = `ab` x n, costs (units, measured) 0.08 million at len(S) 4,000, 0.18 at 8,000,
+    1.17 at 32,000, 3.34 at 64,000, 4.05 at 72,000 (refused at 4 million). Here, fast: the units of S of 4,000 and 8,000 characters are measured
+    and the limit set between them: the first accepted, the second refused (mutant G9-37: the further-place charge dropped, G9-38: the
+    place-found charge dropped)."""
+
+    def units(n: int) -> int:
+        s = "ab" * n
+        total = [0]
+        real = R._Redactor._spend
+
+        def spend(self, work, k, deadline):
+            total[0] += k
+            return real(self, work, k, deadline)
+
+        monkeypatch.setattr(R._Redactor, "_spend", spend)
+        try:
+            assert _registering({"<SECRET_1>": s}).sweep(s + "a" + s) == "<SECRET_1>a<SECRET_1>"
+        finally:
+            monkeypatch.setattr(R._Redactor, "_spend", real)
+        return total[0]
+
+    small, big = units(2_000), units(4_000)
+    assert 50_000 < small < big, (small, big)
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", (small + big) // 2)
+    s = "ab" * 2_000
+    assert _registering({"<SECRET_1>": s}).sweep(s + "a" + s) == "<SECRET_1>a<SECRET_1>"
+    s = "ab" * 4_000
     with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
-        _registering({"<SECRET_1>": big}).sweep(big + "a" + big)
+        _registering({"<SECRET_1>": s}).sweep(s + "a" + s)
+
+
+def test_g9c_memory_per_occurrence_is_bounded_so_the_limit_bounds_memory(monkeypatch):
+    """G9c M1a: memory at the limit. Measured (defaults.py): a chain of 30 secrets at 90 percent of the limit (1.19 million occurrences) peaks
+    at 159 MB under tracemalloc, ~134 bytes per occurrence. Fast here: a limit of 400,000 units (about 130,000 occurrences), the call is
+    refused, and the peak is under 250 bytes per occurrence the limit allows (so the real limit stays under ~330 MB). Mutant G9-39 (one unit
+    per occurrence: 3 times the tuples)."""
+    mapping, text = _nested_chain(30, 3_000)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    limit = 400_000
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", limit)
+    tracemalloc.start()
+    try:
+        with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+            r._overlaps(text, None, [0])
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 250 * (limit // R._OCC_UNITS), f"peak traced {peak}"
+
+
+@pytest.mark.perf
+def test_g9c_a_chain_at_ninety_percent_of_the_limit_is_accepted_in_bounded_cpu():
+    """G9c M1a: 90 percent of the real limit (nested chain of 30, 2,500 copies: 3.57 million units, 1.19 million occurrences) is accepted by the
+    count and costs about 1.8 s of CPU (measured); the loop over the occurrences also reads the clock (mutant G9-40)."""
+    mapping, text = _nested_chain(30, 2_500)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    work = [0]
+    started = time.thread_time()
+    r._overlaps(text, None, work)
+    assert time.thread_time() - started < 20
+    assert 0.8 * defaults.SPELLED_MAX_WORK < work[0] <= defaults.SPELLED_MAX_WORK, work
+
+
+def test_g9c_rejected_calls_are_charged_a_chain_of_identifier_values_is_refused(monkeypatch):
+    """G9c M1b: a nested chain of IDENTIFIER-kind values (TENANT, not every-copy) with touching characters is rejected at almost every place
+    (a neighbouring `a` joins): G9b charged only accepted occurrences, so ~1e8 `add` calls (the review's 200 x 17,000 shape) cost minutes with
+    nothing counted. Each rejected call costs `_REJECT_UNITS`. Small shape (60 values, 1,000 copies of `a` x 63 + `x`): only the full-length
+    rule is accepted (once per copy); about 1.8 million calls are rejected. The limit is set to the characters of E plus the accepted
+    occurrences plus 1,000: the call is refused (mutant G9-41: a rejection charged 0: accepted)."""
+    mapping, text = _nested_chain(60, 1_000, "TENANT")
+    r = R._Redactor(mapping)
+    r.sweep("")
+    chars = len(r._read_back(text, None, [0])[0])
+    work = [0]
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", chars + R._OCC_UNITS * 1_000 + 1_000)
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        r._overlaps(text, None, work)
+
+
+@pytest.mark.perf
+def test_g9c_the_review_chain_of_identifier_values_is_refused_in_bounded_time():
+    """G9c M1b, the review's shape with TENANT values: 200 nested, 17,000 copies, the real limit: refused after about 0.3 s of CPU (before:
+    ~1e8 uncharged calls)."""
+    mapping, text = _nested_chain(200, 17_000, "TENANT")
+    r = R._Redactor(mapping)
+    r.sweep("")
+    started = time.thread_time()
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        r._overlaps(text, None, [0])
+    assert time.thread_time() - started < 10
+
+
+def test_g9c_the_total_charge_is_the_characters_plus_units_per_accepted_occurrence():
+    """G9c: the exact work of a read-back with more than one block of occurrences (depth 30, 10 copies: `a` x 33 + `x` ten times, a rule of
+    `a` x (k + 3) occurs 31 - k times per copy: 465 per copy, 4,650 in all, 18 blocks of 256 units and a remainder): the count is the
+    characters of E plus `_OCC_UNITS` per occurrence, whatever the block size (mutants: the remainder as `len(occ) % E`, G9-34, G9-42)."""
+    mapping, text = _nested_chain(30, 10)
+    text = (
+        "k" + text
+    )  # a leading free character: the occurrences that start at index 0 of E when E begins with the token alone are not charged (measured: 2 of the 465; pre-existing, not examined)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    work = [0]
+    r._overlaps(text, None, work)
+    assert work == [341 + R._OCC_UNITS * 465 * 10], work
+
+
+def test_g9c_a_secret_find_never_reuses_a_non_secret_placeholder():
+    """G9c (review Nit): a SECRET-labelled find of a value already held under TENANT registers a SECRET entry of its own, as a SECRET union
+    does (G9b M2); an identifier-labelled find still reuses the held placeholder of any kind. `_register_written` and `_mask_ex` share
+    `_held` (mutant G9-43)."""
+    r = R._Redactor({"<TENANT_1>": "acme-corp-9"})
+    r.sweep("")
+    assert r._held("SECRET", "acme-corp-9") is None
+    assert r._held("TENANT", "acme-corp-9") == "<TENANT_1>"
+    assert r._held("EMAIL", "acme-corp-9") == "<TENANT_1>"
+    assert r._register_written("SECRET", "acme-corp-9") == "<SECRET_1>"
+    assert r.mapping["<SECRET_1>"] == "acme-corp-9" and r.reverse["acme-corp-9"] == "<SECRET_1>"
+    assert (
+        r._register_written("TENANT", "acme-corp-9") == "<SECRET_1>"
+    )  # now held under the SECRET entry
+
+
+def test_g9c_each_term_of_the_anchored_check_is_charged(monkeypatch):
+    """G9c M3: every term of the anchored check's charge counts: raising each constant by 1,000 raises the units of the periodic shape (a place
+    of the anchor found, a further place, a chunk read back). Mutants G9-37, G9-38, G9-44 drop one term each: the constant then has no effect."""
+    r = _registering({"<SECRET_1>": "x" * 1_100})
+    text = "<SECRET_9><SECRET_1>" + "x" * 200 + " end\n"
+
+    def units() -> int:
+        work = [0]
+        r._overlaps(text, None, work)
+        return work[0]
+
+    # the text is read back once per (edge, rule), not once per place of the anchor (mutant G9-35): two `_expand` calls per edge (1 edge per copy)
+    expands = []
+    real_expand = R._Redactor._expand
+
+    def counting(self, *args):
+        expands.append(1)
+        return real_expand(self, *args)
+
+    monkeypatch.setattr(R._Redactor, "_expand", counting)
+    text *= 3
+    base = units()
+    assert len(expands) == 2 * 3, f"read back {len(expands)} times: once per (edge, rule) is 6"
+    monkeypatch.setattr(R._Redactor, "_expand", real_expand)
+    for name, plus in (("_ANCHOR_SHARE", None), ("_COMPARE_UNITS", 1_000), ("_CHUNK_UNITS", 1_000)):
+        with monkeypatch.context() as mp:
+            mp.setattr(R, name, 1 if plus is None else getattr(R, name) + plus)
+            assert units() > base, f"{name} has no effect on the units"
+
+
+def test_g9c_the_loop_over_the_occurrences_reads_the_clock(monkeypatch):
+    """G9c M1a: the loop that turns the occurrences into hits reads the deadline (every `_OCC_CHARGE_EVERY` occurrences), as the finder groups
+    do: a deadline already passed is refused there, with no count involved (mutant G9-40)."""
+    mapping, text = _nested_chain(30, 20)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    calls = []
+    before_loop = len(r._finders) + len(
+        r._slow
+    )  # the reads between the finder groups and of the slow values
+    real = R._Redactor._over_budget
+
+    def over(deadline):
+        calls.append(deadline)
+        if len(calls) > before_loop:
+            raise runmap.InputTooLarge("Budget")
+        return real(deadline)
+
+    monkeypatch.setattr(R._Redactor, "_over_budget", staticmethod(over))
+    # the count reads the clock too (every 1,024 units): without that, only the loop itself can read it after the finder groups
+    monkeypatch.setattr(
+        R._Redactor, "_spend", lambda self, work, n, deadline: work.__setitem__(0, work[0] + n)
+    )
+    far = time.thread_time() + 10_000
+    with pytest.raises(runmap.InputTooLarge, match="Budget"):
+        r._overlaps(text, far, [0])
+    assert len(calls) == before_loop + 1, calls
