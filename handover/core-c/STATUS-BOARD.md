@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:17:35Z
+UPDATED_UTC: 2026-11-20T07:17:56Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 39
 ITEMS_OPEN: 25
 PERCENT: 64
 AGENTS_RUNNING: 8
-CAPACITY: load 1.5 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 8, heavy agents 0
+CAPACITY: load 1.9 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 8, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 70M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T12:46:24+05:30
+PUSHED_UTC: 2026-11-20T07:17:35+00:00
 
 (12:47 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
