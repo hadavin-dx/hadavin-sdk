@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:28:50Z
+UPDATED_UTC: 2026-11-20T09:29:10Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.70 of 4 cores, mem 1/15 GB, disk 51G free, 27% used, agents light 4 heavy 2
-DISK: / 51G free, 27% used; worktrees /tmp/core-b-wt 2.8G
+CAPACITY: load 2.32 of 4 cores, mem 1/15 GB, disk 51G free, 27% used, agents light 4 heavy 2
+DISK: / 51G free, 27% used; worktrees /tmp/core-b-wt 2.9G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T09:28:47Z (previous push; this board is pushed right after writing)
-IST: 14:58 IST
+PUSHED_UTC: 2026-11-20T09:29:07Z (previous push; this board is pushed right after writing)
+IST: 14:59 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -189,3 +189,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 09:17Z STATUS: (1) cherry-pick of wip/lead-fix-B-who-else: DONE through head cd9058083 (round 3), merged with my E5 fixes, review 7 CLEAN; round 4 will be picked when announced. (2) answer files requests/001 to 004 for core-a: DONE, pushed 08:50Z. (3) evidence: batch 7 DONE (fb9a4fb42); batch 8 on the merged head RUNNING (haiku, since 09:13Z). LIVE AGENTS (sonnet/haiku, started now, disjoint, read-only unless noted): hostile re-read of step B whole | hostile re-read of step F money store whole (with a random-sequence property check) | stop-state mutants refresh for the E5 guards (tests only) | evidence batch 8. Blocked: F-install on core-c only.
 
 09:22Z DONE: (a) cherry-pick of wip/lead-fix-B-who-else through cd9058083: DONE; (b) answer files requests/001 to 004: DONE (pushed 08:50Z); (c) E5 fixes: DONE and reviewed CLEAN (B5b review 5, B5a+B5c review 7; PG17-only parts skip here, CI postgres:17 will run them); (d) evidence batch 7: DONE; batch 8 on c4f8b666e (merged head): DONE: 12844 passed, 2 failed (neither core-b's: dblink demo default socket, BRIEF-PREAMBLE vendor string), 0 errors. LIVE AGENTS (sonnet, started 09:15Z): hostile re-read of step B whole | hostile re-read of step F whole | stop-state mutants refresh (tests only).
+
+09:29Z VERDICTS E9, E10, E11, E12 STARTED (deadlines 09:50Z E9, 09:55Z the rest). LIVE AGENTS (sonnet unless noted): A10 audit drain gaps (b retries+backoff, c LIMIT from config, d N-tick quarantine, mutants; since 09:32Z) | F7 purge keeps expired holds + money guard trigger migration 0010 (E11 M3+M4; since 09:35Z) | B6a reset compare-and-clear + start-up rights self-check (E12 Major 1+2; since 09:27Z) | B6b session pins default_transaction_read_only=off / synchronous_commit=on (E12 Low-Medium 5; since 09:35Z) | F6 negative/NaN cost + PG settle context (since 09:25Z) | stop-state mutants refresh (since 09:15Z). QUEUED: B7 migration 0009 (reset table + seq CHECK + ts CHECK + watermark, E12 Medium 3/4/Low 6) behind B6a (same reset code). DONE: core-a told C1 reversed (003.answer.md). E10: P4b2 doc-only: ii-meter table TODO.
