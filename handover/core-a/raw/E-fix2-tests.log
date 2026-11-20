@@ -1,0 +1,6 @@
+E           RuntimeError: crash point left armed, it never fired: thing.step:before
+
+src/hadavin_sdk/testing/crash.py:135: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_testing_crash.py::test_f9_a_flag_that_is_refused_twice_is_deleted_at_the_third_try
+1 failed, 480 passed in 38.60s
