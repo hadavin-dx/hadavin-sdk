@@ -43,7 +43,7 @@ git add "$D" && git commit -q -m "board $NOW
 Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_014pRo36tfL8utoaXvQYNzGy"
 for i in 1 2 3; do
-  git pull -q --rebase origin cloud/core-b && git push -q origin cloud/core-b && { echo "pushed $NOW $(git rev-parse --short HEAD)"; exit 0; }
+  git pull -q --rebase --autostash origin cloud/core-b && git push -q origin cloud/core-b && { echo "pushed $NOW $(git rev-parse --short HEAD)"; exit 0; }
   echo "push try $i failed"
 done
 exit 2
