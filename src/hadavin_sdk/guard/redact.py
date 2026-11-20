@@ -2253,14 +2253,18 @@ class _Redactor:
         searched: set[tuple[str, str]] = set()
         hits: list[tuple[int, int, str]] = []
         for b, right, anchor in deep:
-            n_left = bisect_right(starts, b - 1)  # the tokens that start before b end by b (b is an edge)
+            n_left = bisect_right(
+                starts, b - 1
+            )  # the tokens that start before b end by b (b is an edge)
             can_left = b + grow[n_left]
             can_right = len(out) - b + grow[-1] - grow[n_left]
             for w in self._long:
                 self._spend(work, 1, deadline)
                 if (anchor, w) not in searched:
                     searched.add((anchor, w))
-                    self._spend(work, len(w), deadline)  # one search of the anchor in the rule (the whole rule, at most)
+                    self._spend(
+                        work, len(w), deadline
+                    )  # one search of the anchor in the rule (the whole rule, at most)
                 # the places of the anchor in the rule whose comparison could succeed (see `can_left`, `can_right`): `k` = `j` + `shift`
                 shift = reach if right else 1
                 lo = max(0, len(w) - can_right - shift)
