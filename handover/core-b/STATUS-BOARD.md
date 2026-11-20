@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:56:49Z
+UPDATED_UTC: 2026-11-20T05:58:23Z
 SESSION: core-b
 ORDER: 011
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 13
 ITEMS_OPEN: 7
 PERCENT: 75
-AGENTS_RUNNING: 4
-CAPACITY: load 1.27 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, agents light 0 heavy 4
-DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 707M
+AGENTS_RUNNING: 5
+CAPACITY: load 1.81 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, agents light 2 heavy 3
+DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 735M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: F-store ticket review round 2 NOT clean (3 Blockers, 12 Majors): answered and sent to the builder; step B used its 3 fix rounds, tests for round 3 running; batch run 1: 3 failed (1 mine, fixed); E1 cron refused
 NEXT: land A fix, B fix 3, mutant scripts, F-store; tests for F-store by a different agent; ticket C and F-install review rounds; ONE batch run when F-store is coded
-PUSHED_UTC: 2026-11-20T05:56:05Z (previous push; this board is pushed right after writing)
-IST: 11:26 IST
+PUSHED_UTC: 2026-11-20T05:56:49Z (previous push; this board is pushed right after writing)
+IST: 11:28 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -23,7 +23,8 @@ IST: 11:26 IST
 | B-tests2 | builder (tests) | fable | tests and mutants for step B fix round 3 (temporary tables, who else can clear, reset read-back, unit tests); worktree B-tests | 05:58 | +30 min | UNVERIFIED | running | none | 0 | the fix builder committed no tests for its new checks |
 | abc08a01 | builder | fable | F-store: first build done (513 lines added in 17 files; 569 passed on 13 files, PostgreSQL 16); now applying the round 2 corrections sent at 05:57 and rebasing on the step B fix | 05:50 | +10 min | 85 | running | round 2 done | 0 | lead ORDER 010 GO BUILD F-store |
 | a52e1b89 | builder (fix) | fable | step B fix round 3 (LAST): commit 358361e (193 added, 34 removed in 12 files); 620 passed, 1 failed (vendor-name guard on handover files) on 15 files | 05:50 | done | 100 | done | none | 2 | ticket B review Blocker (temporary tables) and lead ORDER 011 |
-| a71d4b00 | builder (tests) | fable | tests for the step A fix (incl. INSERT revoked from a real runtime login) and 6 mutants; worktree A-tests | 05:53 | +15 min | UNVERIFIED | running | none | 0 | the fix builder did not prove A-1 on a real role |
+| a9b3b5a5, aac315f5 | reviewers (egm) | fable | ticket C round 1 of 1, compared with the built code; the second hunts for ways a zero price still loads | 05:59 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | ORDER 004 item 3 |
+| a71d4b00 | builder (tests) | fable | tests for the step A fix: landed, 27 new cases | 05:53 | done | 100 | done | none | 0 | 150 passed with PostgreSQL (144 passed, 6 skipped without); INSERT revoked from a real runtime login proven; 6 of 6 mutants killed |
 | ade5688d | builder (fix) | fable | step A fix round 1: commit 15c86e5 (chain.py, SECURITY.md) | 05:50 | done | 100 | done | none | 0 | 248 passed on 8 audit test files; A-1 on a real role NOT proven by the builder |
 | adbe69e5 | builder (tests) | fable | tests/audit_drain_mutants.py and tests/price_mutants.py in the runner format; worktree M | 05:50 | +20 min | UNVERIFIED | running | none | 0 | lead ORDER 008: a guarantee with no mutant script counts as not run |
 | a9de240c, a3b14e25 | reviewers (egm) | fable | F-store round 2 of 3: NOT clean (3 Blockers, 12 Majors); report tickets/F-store-review-2.md; answered in the ticket (Q1 to Q10) and sent to the builder | 05:51 | done | 100 | done | 2 of 3 | 0 | five round-1 answers failed |
@@ -53,6 +54,7 @@ IST: 11:26 IST
 | test_stop_state_roles, test_stop_state_loop, test_stage_names, test_no_hardcoded_values | cloud/core-b 7afdab2 | 1 | 218 passed / 0 / 0 | none | done | evidence/B-tests-after-fix.txt; real non-superuser logins on PostgreSQL 16; before the fix: 5 failed, 99 passed (evidence/B-tests-evidence-before-fix.txt) |
 | step B mutants by hand (tests/stop_state_mutants.py --hand) | cloud/core-b 2110ab3 | 2 | 17 killed / 1 SURVIVED | reset: ON CONFLICT is removed | done | evidence/B-mutants-after-fix.log; the survivor needs a two-resets test with the flag row missing (ticket S6); 2 pending mutants (serial id, loop hunk) still not in the list |
 | 8 audit and tick files | local/code-A2 b90e368 (15c86e5) | 1 | 248 passed / 0 / 0 | none | done | step A fix builder, PostgreSQL 16 |
+| tests/test_audit_drain.py after fix round 1 (150 tests) | local/code-A-tests2 929b5d5 | 1 | 150 passed / 0 / 0 | none | done | evidence/A-fix1-tests-evidence.txt |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
 ## QUEUE ITEMS
@@ -65,7 +67,7 @@ IST: 11:26 IST
 | INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
 | REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
-| BUILD A audit drain | RUNNING (fix round 1) | 85 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
+| BUILD A audit drain | DONE except mutant script and batch run 2 | 95 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
 | BUILD F-store | RUNNING | 60 | local commit a6a46e7 (not landed: corrections being applied) | 1 | lead GO BUILD F-store |
 | BUILD B stop state | RUNNING (3 of 3 fix rounds used) | 85 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
 | BUILD C price constraint | DONE except review and batch run | 90 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |

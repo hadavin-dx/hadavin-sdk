@@ -1,0 +1,76 @@
+== pytest WITH HADAVIN_TEST_PG_DSN ==
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 48%]
+........................................................................ [ 96%]
+......                                                                   [100%]
+150 passed in 20.33s
+
+== pytest WITHOUT HADAVIN_TEST_PG_DSN ==
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.....................ssss..........................ss................... [ 48%]
+........................................................................ [ 96%]
+......                                                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_audit_drain.py:472: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:498: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:541: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:555: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:977: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:1009: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+144 passed, 6 skipped in 15.21s
+
+== mutants (source edit, full killer run of tests/test_audit_drain.py + tests/test_stage_names.py with DSN, git checkout restore): all 6 KILLED ==
+### M1 non-outage append failure treated as outage: 9 failed, 141 passed in 19.52s
+FAILED tests/test_audit_drain.py::test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing
+FAILED tests/test_audit_drain.py::test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_only
+FAILED tests/test_audit_drain.py::test_f2_a_sqlite_error_on_append_is_not_an_outage
+FAILED tests/test_audit_drain.py::test_f2_an_outage_does_not_hide_a_refused_row_of_the_same_drain
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts0-audit outbox: 2 unreadable rows kept, 1 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts2-audit outbox: 3 unreadable rows kept, 2 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts3-audit outbox: 4 rows not writable, 1 rows not
+FAILED tests/test_audit_drain.py::test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row
+FAILED tests/test_audit_drain.py::test_f6_pg_in_one_process_the_refused_row_does_not_block_and_is_drained_after_the_grant
+### M2 not-writable row deleted: 10 failed, 140 passed in 19.85s
+FAILED tests/test_audit_drain.py::test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing
+FAILED tests/test_audit_drain.py::test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_only
+FAILED tests/test_audit_drain.py::test_f2_a_sqlite_error_on_append_is_not_an_outage
+FAILED tests/test_audit_drain.py::test_f2_an_outage_does_not_hide_a_refused_row_of_the_same_drain
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts0-audit outbox: 2 unreadable rows kept, 1 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts2-audit outbox: 3 unreadable rows kept, 2 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts3-audit outbox: 4 rows not writable, 1 rows not
+FAILED tests/test_audit_drain.py::test_f4_a_clean_drain_after_a_failed_one_raises_nothing
+FAILED tests/test_audit_drain.py::test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row
+FAILED tests/test_audit_drain.py::test_f6_pg_in_one_process_the_refused_row_does_not_block_and_is_drained_after_the_grant
+### M3 DELETE failure aborts the loop: 5 failed, 145 passed in 21.15s
+FAILED tests/test_audit_drain.py::test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[refused]
+FAILED tests/test_audit_drain.py::test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[outage]
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts0-audit outbox: 2 unreadable rows kept, 1 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts1-audit outbox: 1 unreadable rows kept, 2 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts3-audit outbox: 4 rows not writable, 1 rows not
+### M4 counts dropped from the RuntimeError: 13 failed, 137 passed in 20.36s
+FAILED tests/test_audit_drain.py::test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them
+FAILED tests/test_audit_drain.py::test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing
+FAILED tests/test_audit_drain.py::test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_only
+FAILED tests/test_audit_drain.py::test_f2_a_sqlite_error_on_append_is_not_an_outage
+FAILED tests/test_audit_drain.py::test_f2_an_outage_does_not_hide_a_refused_row_of_the_same_drain
+FAILED tests/test_audit_drain.py::test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[refused]
+FAILED tests/test_audit_drain.py::test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[outage]
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts0-audit outbox: 2 unreadable rows kept, 1 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts1-audit outbox: 1 unreadable rows kept, 2 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts2-audit outbox: 3 unreadable rows kept, 2 rows 
+FAILED tests/test_audit_drain.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts3-audit outbox: 4 rows not writable, 1 rows not
+FAILED tests/test_audit_drain.py::test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row
+FAILED tests/test_audit_drain.py::test_f6_pg_in_one_process_the_refused_row_does_not_block_and_is_drained_after_the_grant
+### M5 _flush_pending stops at a non-outage failure: 6 failed, 144 passed in 21.04s
+FAILED tests/test_audit_drain.py::test_f5_a_flush_moves_a_refused_event_aside_and_writes_the_ones_after_it
+FAILED tests/test_audit_drain.py::test_f5_a_flush_with_every_event_refused_empties_pending_and_raises_nothing
+FAILED tests/test_audit_drain.py::test_f5_reconcile_counts_only_outbox_rows_in_its_error_not_events_moved_aside
+FAILED tests/test_audit_drain.py::test_f7_a_writer_whose_flush_moves_events_aside_returns_its_key[write_intent]
+FAILED tests/test_audit_drain.py::test_f7_a_writer_whose_flush_moves_events_aside_returns_its_key[write_outcome]
+FAILED tests/test_audit_drain.py::test_f7_write_outcome_never_raises_and_write_intent_raises_only_its_two_errors
+### M6 _flush_pending moves an outage failure aside: 5 failed, 145 passed in 20.35s
+FAILED tests/test_audit_drain.py::test_e4_a_flush_stops_at_the_first_failure_and_keeps_the_rest_in_order
+FAILED tests/test_audit_drain.py::test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order[OSError]
+FAILED tests/test_audit_drain.py::test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order[StoreUnavailable]
+FAILED tests/test_audit_drain.py::test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order[OperationalError]
+FAILED tests/test_audit_drain.py::test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order[InterfaceError]
