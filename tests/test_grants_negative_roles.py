@@ -83,7 +83,7 @@ import pytest
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.limits import Limits
-from hadavin_sdk.models import KillSwitch
+from hadavin_sdk.models import KillSwitch, OpenStop, now
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
 
@@ -113,6 +113,9 @@ HOLDS = {
 }
 if STEP_B:
     HOLDS["reset"] = lambda g: _split(g.reset)
+    # The release identity (migration 0008, core-b): it appends to the audit and runs ONE function; its table
+    # rights are `Grant.release` (migrate.py GRANTS, `_apply_grants(db, release_role, lambda g: g.release)`).
+    HOLDS["release"] = lambda g: _split(g.release)
 ROLES = tuple(HOLDS)
 
 # --- the reviewed lists: written by hand, never computed from GRANTS ------------------------------------
@@ -140,10 +143,16 @@ WRITES_BEFORE_STEP_B: dict[str, dict[str, set[str]]] = {
     "purge": {"tool_calls": {"DELETE"}, "redaction_maps": {"DELETE"}},
 }
 
-# Every write privilege after step B (and step F's money store), written by hand on 2026-11-20 from core-b
-# 576f292: migrations 0001 to 0007 and src/hadavin_sdk/store/migrate.py:48-76. REVIEWED: one reason each.
-# "FINDING" marks a privilege that is wider than the job named beside it; see
-# handover/core-c/evidence/B-grants-rework.md. A finding is recorded, not accepted: the list pins what IS.
+# Every write privilege after step B, the money store (0007) and the grants flip of F-money-definer (0008 to
+# 0011), written by hand on 2026-11-20 from core-b dcd189361: src/hadavin_sdk/store/migrate.py GRANTS and
+# migrations 0006 to 0011. REVIEWED: one reason each. "FINDING" marks a privilege that is wider than the job
+# named beside it; see handover/core-c/evidence/B-grants-rework.md. A finding is recorded, not accepted: the
+# list pins what IS.
+# RE-POINTED (core-a, grant tests against core-b's step 4): the runtime login no longer writes any money table
+# (migrate.py GRANTS "spend_reservations" runtime "", "spend" and "spend_month" runtime "SELECT"); every booking
+# is a SECURITY DEFINER function (0011, FUNCTION_GRANTS below). The purge role no longer holds DELETE on
+# spend_reservations: it runs hadavin_purge_spend_reservations (FUNCTION_GRANTS). Two new identities' rows are
+# added: the reset role's two new tables (0009) and the release role (0008).
 WRITES_AFTER_STEP_B: dict[str, dict[str, set[str]]] = {
     "runtime": {
         # INSERT: a run starts. UPDATE: its state moves (the purge role reads state and updated_at).
@@ -158,14 +167,10 @@ WRITES_AFTER_STEP_B: dict[str, dict[str, set[str]]] = {
         "approval_decisions": {"INSERT"},
         # INSERT: park an input that could not be handled; written once.
         "dead_letters": {"INSERT"},
-        # INSERT: book the worst case before a model call. UPDATE: settle or expire the row.
-        # FINDING: UPDATE is table-wide, so the runtime login can rewrite reserved_usd or a closed row; it
-        # already holds UPDATE on the counters themselves (spend, spend_month), so no new power.
-        "spend_reservations": {"INSERT", "UPDATE"},
-        # INSERT: the first charge of a day. UPDATE: add to the day counter.
-        "spend": {"INSERT", "UPDATE"},
-        # INSERT: the first charge of a month. UPDATE: add to the month counter.
-        "spend_month": {"INSERT", "UPDATE"},
+        # NOT here any more (0011, migrate.py GRANTS): spend_reservations (no right at all), spend and
+        # spend_month (SELECT only). The money family is written by the SECURITY DEFINER functions only.
+        # That closes the two findings the earlier list carried (table-wide UPDATE on the reservations and
+        # on the counters). Pinned by test_the_runtime_role_writes_no_money_table_and_books_through_functions.
         # INSERT: a stop is one new row; this is ALL the runtime may write to the stop state.
         # FINDING (small): "by", ts and id are free, so the runtime login can sign a stop with any name.
         "kill_switch_stops": {"INSERT"},
@@ -182,7 +187,8 @@ WRITES_AFTER_STEP_B: dict[str, dict[str, set[str]]] = {
         # INSERT: a new map. UPDATE: the map of a run grows.
         # FINDING (old, also on main): the comment above the row says "append and purge only (no UPDATE)".
         "redaction_maps": {"INSERT", "UPDATE"},
-        # NOT here on purpose: kill_switch (no INSERT, no UPDATE: that is step B) and kill_switch_clears.
+        # NOT here on purpose: kill_switch (no INSERT, no UPDATE: that is step B), kill_switch_clears,
+        # kill_switch_resets, kill_switch_watermark (reset role only, 0009), hadavin_limits, hadavin_caps (owner).
     },
     "portal": {},  # reads only
     "purge": {
@@ -190,10 +196,9 @@ WRITES_AFTER_STEP_B: dict[str, dict[str, set[str]]] = {
         "tool_calls": {"DELETE"},
         # DELETE: maps past their retention (finds the rows by run_id, updated_at).
         "redaction_maps": {"DELETE"},
-        # DELETE: closed reservations past their retention (finds the rows by status, closed_at).
-        # FINDING: the grant is table-wide, so the purge login can also delete an OPEN reservation; only
-        # the WHERE of the purge statement keeps it to closed rows. The counters stay booked (safe side).
-        "spend_reservations": {"DELETE"},
+        # NOT here any more: spend_reservations. Closed holds are purged by hadavin_purge_spend_reservations
+        # (SECURITY DEFINER, FUNCTION_GRANTS), so the finding "the purge login can delete an OPEN reservation"
+        # is gone with the table right.
     },
     "reset": {
         # UPDATE: turn the old one-row flag off (and record who reset).
@@ -202,9 +207,18 @@ WRITES_AFTER_STEP_B: dict[str, dict[str, set[str]]] = {
         "kill_switch": {"UPDATE"},
         # INSERT: one clear per open stop: this IS the reset.
         "kill_switch_clears": {"INSERT"},
+        # INSERT: the reset's own record (who, the ids it cleared, the audit seq); 0009 (migrate.py:94).
+        "kill_switch_resets": {"INSERT"},
+        # INSERT, UPDATE: the watermark of cleared stops moves up (a trigger refuses lowering it); 0009.
+        "kill_switch_watermark": {"INSERT", "UPDATE"},
         # INSERT: the audit intent of the reset, written before the clear.
         # FINDING: the right is "append any audit row", not "append a reset intent" (ticket B names this
         # as a known cost; the runtime login has the same right).
+        "audit_entries": {"INSERT"},
+    },
+    "release": {
+        # INSERT: the audit row of a release (0008); it holds nothing on any money table and releases holds
+        # through hadavin_release_expired_spend only (FUNCTION_GRANTS).
         "audit_entries": {"INSERT"},
     },
 }
@@ -221,6 +235,10 @@ STOP_HOLDS_AFTER_STEP_B: dict[str, dict[str, set[str]]] = {
     "kill_switch_stops": {"runtime": {"SELECT", "INSERT"}, "reset": {"SELECT"}},
     # clears: the runtime reads them (an open stop is one without a clear); the reset role adds them
     "kill_switch_clears": {"runtime": {"SELECT"}, "reset": {"SELECT", "INSERT"}},
+    # 0009: the reset's own record: the runtime holds nothing on it; the reset role reads and appends
+    "kill_switch_resets": {"reset": {"SELECT", "INSERT"}},
+    # 0009: the watermark of cleared stops: the runtime reads it; only the reset role writes it
+    "kill_switch_watermark": {"runtime": {"SELECT"}, "reset": {"SELECT", "INSERT", "UPDATE"}},
 }
 STOP_HOLDS = STOP_HOLDS_AFTER_STEP_B if STEP_B else STOP_HOLDS_BEFORE_STEP_B
 STOP_RELATIONS = tuple(STOP_HOLDS)
@@ -231,6 +249,12 @@ RESET_HOLDS: dict[str, set[str]] = {
     "kill_switch": {"SELECT", "UPDATE"},
     "kill_switch_stops": {"SELECT"},
     "kill_switch_clears": {"SELECT", "INSERT"},
+    "kill_switch_resets": {"SELECT", "INSERT"},  # 0009: its own record of a reset
+    "kill_switch_watermark": {
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+    },  # 0009: moves up to the newest cleared stop
     "audit_entries": {
         "SELECT",
         "INSERT",
@@ -252,15 +276,29 @@ RESET_NEVER = (
     "audit_outbox",
     "tool_calls",
     "redaction_maps",
+    "hadavin_limits",  # 0011: owner only (the definer functions read it as owner)
+    "hadavin_caps",  # 0011: owner only (hadavin_set_cap and hadavin_cap_matches touch it as owner)
 )
+
+# The whole row of the release identity (0008, migrate.py GRANTS `release=`): the audit append and nothing else.
+RELEASE_HOLDS: dict[str, set[str]] = {
+    "audit_entries": {"SELECT", "INSERT"},
+    "audit_checkpoints": {"SELECT"},
+}
 
 AUDIT_HOLDERS_BEFORE_STEP_B = {
     "audit_entries": {"SELECT": {"runtime", "portal"}, "INSERT": {"runtime"}},
     "audit_checkpoints": {"SELECT": {"runtime", "portal"}, "INSERT": {"runtime"}},
 }
 AUDIT_HOLDERS_AFTER_STEP_B = {
-    "audit_entries": {"SELECT": {"runtime", "portal", "reset"}, "INSERT": {"runtime", "reset"}},
-    "audit_checkpoints": {"SELECT": {"runtime", "portal", "reset"}, "INSERT": {"runtime"}},
+    "audit_entries": {
+        "SELECT": {"runtime", "portal", "reset", "release"},
+        "INSERT": {"runtime", "reset", "release"},
+    },
+    "audit_checkpoints": {
+        "SELECT": {"runtime", "portal", "reset", "release"},
+        "INSERT": {"runtime"},
+    },
 }
 AUDIT_HOLDERS = AUDIT_HOLDERS_AFTER_STEP_B if STEP_B else AUDIT_HOLDERS_BEFORE_STEP_B
 
@@ -269,7 +307,9 @@ DELETES_BEFORE_STEP_B = {
     ("purge", "tool_calls"),
     ("purge", "redaction_maps"),
 }
-DELETES_AFTER_STEP_B = DELETES_BEFORE_STEP_B | {("purge", "spend_reservations")}
+# RE-POINTED: ("purge", "spend_reservations") is gone (0011, migrate.py GRANTS "spend_reservations" holds nothing
+# for the purge role); the purge deletes closed holds in hadavin_purge_spend_reservations (FUNCTION_GRANTS).
+DELETES_AFTER_STEP_B = DELETES_BEFORE_STEP_B
 DELETES = DELETES_AFTER_STEP_B if STEP_B else DELETES_BEFORE_STEP_B
 
 # The only column reads of the purge role: what the WHERE of its DELETE needs, never a stored original.
@@ -278,7 +318,9 @@ PURGE_COLS_BEFORE_STEP_B = {
     "tool_calls": ("call_id", "run_id", "created_at"),
     "redaction_maps": ("run_id", "updated_at"),
 }
-PURGE_COLS_AFTER_STEP_B = PURGE_COLS_BEFORE_STEP_B | {"spend_reservations": ("status", "closed_at")}
+# RE-POINTED: no ("status", "closed_at") column read on spend_reservations any more (0011): the purge role runs
+# a SECURITY DEFINER function instead of a DELETE with a WHERE of its own.
+PURGE_COLS_AFTER_STEP_B = PURGE_COLS_BEFORE_STEP_B
 PURGE_COLS = PURGE_COLS_AFTER_STEP_B if STEP_B else PURGE_COLS_BEFORE_STEP_B
 
 PORTAL_NEVER_BEFORE_STEP_B = {
@@ -292,15 +334,21 @@ PORTAL_NEVER_BEFORE_STEP_B = {
 PORTAL_NEVER_AFTER_STEP_B = PORTAL_NEVER_BEFORE_STEP_B | {
     "kill_switch_stops",
     "kill_switch_clears",
+    "kill_switch_resets",
+    "kill_switch_watermark",
     "spend_reservations",
+    "hadavin_limits",
+    "hadavin_caps",
 }
 PORTAL_NEVER = PORTAL_NEVER_AFTER_STEP_B if STEP_B else PORTAL_NEVER_BEFORE_STEP_B
 
 GRANT_FIELDS_BEFORE_STEP_B = {"kind", "runtime", "portal", "purge", "purge_cols"}
-GRANT_FIELDS_AFTER_STEP_B = GRANT_FIELDS_BEFORE_STEP_B | {"reset"}
+GRANT_FIELDS_AFTER_STEP_B = GRANT_FIELDS_BEFORE_STEP_B | {"reset", "release"}
 ROLE_KEYWORDS_BEFORE_STEP_B = {"runtime_role", "portal_role", "purge_role"}
-ROLE_KEYWORDS_AFTER_STEP_B = ROLE_KEYWORDS_BEFORE_STEP_B | {"reset_role"}
-TABLES_AT_LEAST = 18 if STEP_B else 15  # 15 on main; + two stop tables + spend_reservations
+ROLE_KEYWORDS_AFTER_STEP_B = ROLE_KEYWORDS_BEFORE_STEP_B | {"reset_role", "release_role"}
+# 15 on main; + two stop tables + spend_reservations (0006, 0007); + resets and watermark (0009); + hadavin_limits
+# and hadavin_caps (0011) = 22.
+TABLES_AT_LEAST = 22 if STEP_B else 15
 
 
 def _tables() -> list[str]:
@@ -338,8 +386,10 @@ def test_the_feature_test_agrees_with_the_grant_map():
     assert has_field == STEP_B
     assert any(getattr(g, "reset", "") for g in mig.GRANTS.values()) == STEP_B
     assert ("kill_switch_stops" in mig.GRANTS) == STEP_B
-    assert ROLES == (("runtime", "portal", "purge", "reset") if STEP_B else ROLES[:3])
-    assert len(ROLES) == (4 if STEP_B else 3)
+    assert ("release" in {f.name for f in fields(mig.Grant)}) == STEP_B
+    assert ("release_role" in inspect.signature(mig.migrate).parameters) == STEP_B
+    assert ROLES == (("runtime", "portal", "purge", "reset", "release") if STEP_B else ROLES[:3])
+    assert len(ROLES) == (5 if STEP_B else 3)
 
 
 def test_the_identities_are_the_ones_this_file_knows():
@@ -371,20 +421,34 @@ def test_every_write_privilege_is_on_the_reviewed_list():
 def test_the_two_reviewed_lists_differ_only_where_step_b_and_the_money_store_say():
     """The review of the second list in one place: what changed for the three old roles, and nothing else."""
     before, after = WRITES_BEFORE_STEP_B, WRITES_AFTER_STEP_B
-    assert set(before) == {"runtime", "portal", "purge"} and set(after) == {*before, "reset"}
+    assert set(before) == {"runtime", "portal", "purge"} and set(after) == {
+        *before,
+        "reset",
+        "release",
+    }
     changed = {t for t in {*before["runtime"], *after["runtime"]} if before["runtime"].get(t) != after["runtime"].get(t)}  # fmt: skip
-    assert changed == {"kill_switch", "kill_switch_stops", "spend_reservations"}
+    # step B moves the stop (kill_switch out, kill_switch_stops in); the money flip (0011) takes the writes on
+    # spend and spend_month away (and the reservations never were in the list on main)
+    assert changed == {"kill_switch", "kill_switch_stops", "spend", "spend_month"}
     assert "kill_switch" not in after["runtime"]  # the whole point of step B
+    assert not {"spend", "spend_month", "spend_reservations"} & set(
+        after["runtime"]
+    )  # the flip of 0011
     assert after["portal"] == before["portal"] == {}
-    assert {t for t in after["purge"] if t not in before["purge"]} == {"spend_reservations"}
-    assert all(after["purge"][t] == before["purge"][t] for t in before["purge"])
+    assert (
+        after["purge"] == before["purge"]
+    )  # the purge of the reservations is a function now, not a DELETE
     reset_writes = {(t, p) for t, ps in after["reset"].items() for p in ps}
     assert reset_writes == {
         ("kill_switch", "UPDATE"),
         ("kill_switch_clears", "INSERT"),
+        ("kill_switch_resets", "INSERT"),
+        ("kill_switch_watermark", "INSERT"),
+        ("kill_switch_watermark", "UPDATE"),
         ("audit_entries", "INSERT"),
     }
     assert after["reset"] == {t: ps - {"SELECT"} for t, ps in RESET_HOLDS.items() if ps - {"SELECT"}}  # fmt: skip
+    assert after["release"] == {t: ps - {"SELECT"} for t, ps in RELEASE_HOLDS.items() if ps - {"SELECT"}}  # fmt: skip
 
 
 @pytest.mark.parametrize("role", ROLES)
@@ -401,7 +465,12 @@ def test_no_grant_uses_a_wildcard_or_a_privilege_outside_the_plain_ones():
     for relation, grant in mig.GRANTS.items():
         assert name.fullmatch(relation), relation
         allowed = {"USAGE", "SELECT"} if grant.kind == "sequence" else set(PRIVILEGES[:4])
-        for text in (grant.runtime, grant.purge, getattr(grant, "reset", "")):
+        for text in (
+            grant.runtime,
+            grant.purge,
+            getattr(grant, "reset", ""),
+            getattr(grant, "release", ""),
+        ):
             tokens = [p.strip() for p in text.split(",")] if text else []
             assert all(tokens), (relation, text)  # no empty item
             assert len(tokens) == len(set(tokens)), (relation, text)
@@ -422,7 +491,7 @@ def test_only_the_reviewed_roles_hold_anything_on_the_stop_state():
         held = {role: {p for p in PRIVILEGES if _matrix()[role, relation, p]} for role in ROLES}
         assert held == {role: reviewed.get(role, set()) for role in ROLES}, relation
         assert _holders(relation, "DELETE", "TRUNCATE") == set(), relation
-        assert _holders(relation, *PRIVILEGES) & {"portal", "purge"} == set(), relation
+        assert _holders(relation, *PRIVILEGES) & {"portal", "purge", "release"} == set(), relation
         assert not mig.GRANTS[relation].purge_cols and not mig.GRANTS[relation].portal, relation
     # no relation of the stop state is missing from the reviewed list (a fourth one must be added by hand)
     assert {t for t in _tables() if t.startswith("kill_switch")} == set(STOP_RELATIONS)
@@ -461,6 +530,7 @@ def test_no_role_but_the_runtime_role_may_use_a_sequence():
             assert _split(grant.runtime) == {"USAGE"}, relation  # nextval only: no setval (UPDATE)
             assert not grant.portal and not grant.purge and not grant.purge_cols, relation
             assert not getattr(grant, "reset", ""), relation
+            assert not getattr(grant, "release", ""), relation
 
 
 def test_a_grant_row_without_its_migration_stops_migrate_before_it_connects(monkeypatch):
@@ -498,7 +568,17 @@ def test_case10_the_real_migrations_and_the_grant_map_agree():
 def test_case10_the_released_manifest_names_every_migration_file():
     """A migration that arrives without its manifest row (or is edited after release) is caught here too."""
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    assert manifest == {path.stem: _sha(path) for path in mig._migration_files()}
+    files = mig._migration_files()
+    stems = {path.stem for path in files}
+    # RE-POINTED (migrate.py UNRELEASED_MIGRATIONS, 0008 to 0011): a file still a draft is NOT in the manifest by
+    # design (it may change until its release; migrate warns while file and ledger disagree). Every other file
+    # must be in it with its exact hash, and nothing may be a draft AND released, or in neither list.
+    assert (
+        mig.UNRELEASED_MIGRATIONS <= stems
+    )  # a draft name that is no file would hide a file from the check
+    assert not set(manifest) & mig.UNRELEASED_MIGRATIONS
+    assert set(manifest) == stems - mig.UNRELEASED_MIGRATIONS
+    assert manifest == {path.stem: _sha(path) for path in files if path.stem in manifest}
 
 
 @needs_step_b
@@ -572,16 +652,78 @@ def test_case2_the_reset_identity_holds_exactly_the_reviewed_cells():
     assert not any({"DELETE", "TRUNCATE"} & HOLDS["reset"](g) for g in mig.GRANTS.values())
 
 
+@needs_step_b
+def test_case2_the_release_identity_holds_exactly_the_reviewed_cells():
+    """0008, migrate.py GRANTS `release=`: the audit append and nothing else, on no money table."""
+    held = {
+        t: HOLDS["release"](mig.GRANTS[t]) for t in _tables() if HOLDS["release"](mig.GRANTS[t])
+    }
+    assert held == RELEASE_HOLDS
+    assert not any(
+        {"UPDATE", "DELETE", "TRUNCATE"} & HOLDS["release"](g) for g in mig.GRANTS.values()
+    )
+    assert not {"spend", "spend_month", "spend_reservations"} & set(held)
+
+
+# Who may EXECUTE each function of ours, written by hand from migrations 0008 and 0011 and migrate.py
+# FUNCTION_GRANTS ("Who may EXECUTE each callable function of ours"). Every other role, PUBLIC included, is refused.
+FUNCTION_HOLDERS: dict[str, set[str]] = {
+    "hadavin_reserve_spend(text, text, date, numeric, text)": {"runtime"},
+    "hadavin_settle_spend(text, numeric, text)": {"runtime"},
+    "hadavin_expire_spend_reservations(integer)": {"runtime"},
+    "hadavin_add_spend(text, date, numeric)": {"runtime"},
+    "hadavin_purge_spend_reservations(timestamptz)": {"purge"},
+    "hadavin_set_cap(text, numeric, numeric, text)": {"reset"},
+    "hadavin_cap_matches(text, numeric, numeric)": {"runtime", "reset"},
+    "hadavin_release_expired_spend(text, date)": {"release"},
+}
+
+
+@needs_step_b
+def test_the_runtime_role_writes_no_money_table_and_books_through_functions():
+    """Pins 0011 (migrate.py GRANTS rows of the money family): the runtime login reads the counters, holds nothing
+    on the reservations or on the limits and caps, and every booking is a function only the named roles run."""
+    runtime = lambda t: HOLDS["runtime"](mig.GRANTS[t])
+    assert runtime("spend") == {"SELECT"} and runtime("spend_month") == {"SELECT"}
+    assert runtime("spend_reservations") == set()
+    assert runtime("hadavin_limits") == set() and runtime("hadavin_caps") == set()
+    for role in ROLES:
+        for table in ("spend_reservations", "hadavin_limits", "hadavin_caps"):
+            assert HOLDS[role](mig.GRANTS[table]) == set(), (role, table)
+        assert not {"INSERT", "UPDATE", "DELETE", "TRUNCATE"} & HOLDS[role](mig.GRANTS["spend"])
+        assert not {"INSERT", "UPDATE", "DELETE", "TRUNCATE"} & HOLDS[role](
+            mig.GRANTS["spend_month"]
+        )
+    held = {
+        mig.MONEY_FUNCTIONS[i]: {
+            r for r in ROLES if getattr(mig.FUNCTION_GRANTS[mig.MONEY_FUNCTIONS[i]], r)
+        }
+        for i in range(len(mig.MONEY_FUNCTIONS))
+    }
+    held[mig.RELEASE_FUNCTION] = {
+        r for r in ROLES if getattr(mig.FUNCTION_GRANTS[mig.RELEASE_FUNCTION], r)
+    }
+    assert held == FUNCTION_HOLDERS
+    assert set(mig.FUNCTION_GRANTS) == set(
+        FUNCTION_HOLDERS
+    )  # a new callable function is written here first
+
+
 # --- stop and reset order (no database; true on both trees) ---------------------------------------
 
 
 class _Recorder:
-    """A store and an audit sink in one: records the order of the calls `Limits` makes."""
+    """A store and an audit sink in one: records the order of the calls `Limits` makes.
+
+    RE-POINTED (src/hadavin_sdk/limits.py `Limits.reset`, core-b step B hardening 0009): a reset is now
+    compare-and-clear: `open_stops()` reads the open stops, the audit intent follows (with their ids), then
+    `clear_stops(by, ids)` clears exactly those ids. `set_kill_switch(on=False)` is no longer the reset."""
 
     def __init__(self, fail: str | None = None):
         self.calls: list[str] = []
         self._fail = fail
         self._state = KillSwitch(on=True, by="before")
+        self._stops = [OpenStop(id=str(uuid.UUID(int=1)), by="before", ts=now())]
 
     def _note(self, call: str) -> None:
         self.calls.append(call)
@@ -593,9 +735,17 @@ class _Recorder:
 
     def set_kill_switch(self, ks) -> None:
         self.calls.append(f"switch:{'on' if ks.on else 'off'}:{ks.by}")
-        if self._fail == "switch":
-            raise PermissionError("the store refused the switch")
         self._state = ks
+
+    def open_stops(self) -> list[OpenStop]:
+        self.calls.append("open_stops")
+        return list(self._stops)
+
+    def clear_stops(self, by, stop_ids, audit_seq=None) -> None:
+        self.calls.append(f"clear:{by}:{len(stop_ids)}")
+        if self._fail == "clear":
+            raise PermissionError("the store refused the clear")
+        self._state = KillSwitch(on=False, by=by)
 
     def write_intent(self, event) -> str:
         self._note(f"intent:{event.operation}:{event.result}:{event.principal}")
@@ -617,26 +767,28 @@ def test_stop_switches_first_and_does_not_wait_for_the_audit_write():
 def test_reset_writes_the_audit_intent_before_it_touches_the_switch():
     both = _Recorder()
     Limits(both, both, None).reset(by="user:a")
-    assert both.calls == ["intent:reset:off:user:a", "switch:off:user:a"]
+    # Pins limits.py `reset`: read the open stops, audit the intent, only then clear exactly those ids.
+    assert both.calls == ["open_stops", "intent:reset:off:user:a", "clear:user:a:1"]
 
 
 def test_reset_leaves_the_switch_alone_when_the_audit_intent_fails():
     both = _Recorder(fail="intent")
     with pytest.raises(AuditUnavailable):
         Limits(both, both, None).reset(by="user:a")
-    assert both.calls == ["intent:reset:off:user:a"]  # no switch call at all
+    assert both.calls == ["open_stops", "intent:reset:off:user:a"]  # no clear call at all
     assert both.get_kill_switch().on is True
 
 
 @needs_step_b
 def test_case8_a_reset_the_store_refuses_is_audited_as_reset_failed():
     """Ticket B invariant 5: the chain then holds `reset` followed by `reset_failed`, and the error leaves."""
-    both = _Recorder(fail="switch")
+    both = _Recorder(fail="clear")
     with pytest.raises(PermissionError):
         Limits(both, both, None).reset(by="user:a")
     assert both.calls == [
+        "open_stops",
         "intent:reset:off:user:a",
-        "switch:off:user:a",
+        "clear:user:a:1",
         "outcome:reset_failed:on:user:a",
     ]
     assert both.get_kill_switch().on is True
@@ -718,7 +870,8 @@ def test_case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only(
     assert store_settings.dsn_secret_name == RESET_REF  # not "pg-dsn", the runtime login
     assert store_settings.purge_dsn_secret_name is None
     assert made[2][2] == {"store": both, "signer": None, "anchor": None}
-    assert both.calls == ["intent:reset:off:user:op", "switch:off:user:op"]
+    # exact: open_stops, the audit intent, then the clear by id (Limits.reset), nothing else (no set_kill_switch(on=False))
+    assert both.calls == ["open_stops", "intent:reset:off:user:op", "clear:user:op:1"]
 
 
 # --- (b) PostgreSQL ----------------------------------------------------------------------------------
@@ -862,9 +1015,15 @@ class _World:
         from hadavin_sdk.backends.factory import make
         from hadavin_sdk.backends.table import PostgresSettings
 
+        settings = PostgresSettings(**STORE_SETTINGS)
+        if role == "reset":
+            # RE-POINTED (store/postgres.py `build`, backends/table.py `_login_role`): a store refuses at start a
+            # login holding stop-write rights (UPDATE on kill_switch, INSERT on kill_switch_clears) unless it is
+            # built as the reset login, which is what cli.py does for `limits reset`.
+            settings._login_role = "reset"
         store = make(
             "store",
-            PostgresSettings(**STORE_SETTINGS),
+            settings,
             FakeSecretProvider({STORE_SETTINGS["dsn_secret_name"]: self.dsn_of(role)}),
         )
         self.stores.append(store)
@@ -939,7 +1098,7 @@ def test_pg_each_role_is_refused_what_the_map_does_not_give(identities, role):
     assert wrong == []
     assert refused + passed == len(tables) * len(PRIVILEGES)
     assert refused >= len(tables)  # TRUNCATE at least, on every table
-    if role in ("runtime", "portal", "reset"):
+    if role in ("runtime", "portal", "reset", "release"):
         assert passed > 0
     if role == "stranger":
         assert passed == 0
@@ -995,7 +1154,9 @@ def test_pg_only_the_runtime_role_may_draw_from_a_sequence(identities, role):
             _refused(db, "SELECT nextval(%s::regclass)", (f"{schema}.{sequence}",))
 
 
-@pytest.mark.parametrize("role", ["portal", "purge"])  # the stranger: see the matrix test above
+@pytest.mark.parametrize(
+    "role", ["portal", "purge", "release"]
+)  # the stranger: see the matrix test above
 def test_pg_no_role_but_the_runtime_and_reset_role_can_read_or_write_the_stop_state(
     identities, role
 ):
@@ -1024,6 +1185,38 @@ def test_pg_no_role_but_the_runtime_and_reset_role_can_read_or_write_the_stop_st
                 q = "SELECT has_any_column_privilege(%s, %s, %s)"
                 assert not db.execute(q, (names[role], relation, privilege)).fetchone()[0]
     assert _stop_is_on(dsn) is False  # the seeded row, untouched
+
+
+@needs_step_b
+def test_pg_the_money_functions_are_definer_functions_only_the_named_roles_run(identities):
+    """Pins 0008 and 0011 (migrate.py FUNCTION_GRANTS): each money function is SECURITY DEFINER and EXECUTE is
+    held by exactly the roles of FUNCTION_HOLDERS; the stranger and PUBLIC hold none. The runtime login holds no
+    write on a money table (the matrix tests above), so these functions are the only way a booking happens."""
+    import psycopg
+
+    dsn, names = identities
+    wrong = []
+    with psycopg.connect(dsn, autocommit=True) as db:
+        for signature, holders in FUNCTION_HOLDERS.items():
+            proc = db.execute(
+                "SELECT p.oid, p.prosecdef FROM pg_proc p WHERE p.oid = to_regprocedure(%s)",
+                (signature,),
+            ).fetchone()
+            assert proc is not None, signature
+            if not proc[1]:
+                wrong.append(f"{signature} is not SECURITY DEFINER")
+            for role, name in names.items():
+                got = db.execute(
+                    "SELECT has_function_privilege(%s, %s, 'EXECUTE')", (name, proc[0])
+                ).fetchone()[0]
+                if got != (role in holders):
+                    wrong.append(f"{role} EXECUTE {signature}: {got}")
+            public = db.execute(
+                "SELECT has_function_privilege('public', %s, 'EXECUTE')", (proc[0],)
+            ).fetchone()[0]
+            if public:
+                wrong.append(f"PUBLIC EXECUTE {signature}")
+    assert wrong == []
 
 
 def test_pg_the_runtime_role_can_switch_the_stop_on(identities):
@@ -1183,8 +1376,8 @@ def test_pg_case1_migrate_refuses_membership_between_the_reset_role_and_another_
 
 @needs_step_b
 def test_pg_case2_the_reset_role_is_refused_everything_outside_its_reviewed_cells(world):
-    """Connected as the reset login. On the 13 tables of RESET_NEVER (and the migration ledger) every one of
-    the five statements is refused; on its own five tables every cell RESET_HOLDS does not name is refused.
+    """Connected as the reset login. On the 15 tables of RESET_NEVER (and the migration ledger) every one of
+    the five statements is refused; on its own seven tables every cell RESET_HOLDS does not name is refused.
     The catalog agrees, column grants included. Then the cells it holds are shown to work."""
     tables, sequences = _catalog(world.dsn)
     schema = _schema(world.dsn)
@@ -1359,6 +1552,8 @@ def test_pg_case11_migrate_again_takes_back_what_was_granted_by_hand_to_the_rese
     extra = [
         ("kill_switch_clears", "DELETE"),
         ("kill_switch_stops", "INSERT"),
+        ("kill_switch_resets", "DELETE"),
+        ("kill_switch_watermark", "DELETE"),
         ("audit_entries", "DELETE"),
         ("runs", "SELECT"),
         ("redaction_maps", "SELECT"),
