@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:56:48Z
+UPDATED_UTC: 2026-11-20T16:01:48Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:12Z agents 0, load 1.0. Perf-marked tests at idle on cloud/core-c 2552bcc95: 96 passed, 1 skipped, 0 failed in 427 s (no INVALID-LOAD: single process, idle). Non-perf suite: 16071 passed, 2 failed (Port.io lead file; k5 recording fixed). (1) grants: answered 16:05: core-a's file == core-c's, fails 28 on core-b head 133803834; the re-pin for that head is wip/cloud-core-c/grants b55d21865, 117 passed on PG16. (2) F-install: NO_MAP r3, usd_cap, mark on ProviderExhausted DONE and merged (no builder to start); K5 = Q17 lead decision. (3) ONE head = cloud/core-c (g2/g3 content already in it, REC-notes.md). Nothing is READY to build without a lead decision except the docs root pass (starting) and G11 (waits E16).
+STATE: 16:15Z AGENTS 1 (docs root pass builder), load 0.1. Of the three lead items: (a) core-a grant tests: DONE/answered: file identical to core-c's, 28 fail on core-b head; re-pinned version wip/cloud-core-c/grants b55d21865 (117 passed PG16); (b) F-install blockers: ALL DONE+MERGED, nothing running (NO_MAP r3, usd_cap, mark on ProviderExhausted; K5 = Q17 lead); (c) one merged head: DONE = cloud/core-c (g2/g3 superseded, REC-notes). Perf 96 passed idle; non-perf 16071 passed, 2 failed (Port.io lead file; k5 fixed).
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 0
-CAPACITY: load 1.0 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
-DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
+AGENTS_RUNNING: 1
+CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 1, heavy agents 0
+DISK: / 54G free, 23% used; git worktrees 51; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T15:52:03+00:00
+PUSHED_UTC: 2026-11-20T15:56:49+00:00
 
-(21:26 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:31 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -32,6 +32,7 @@ PUSHED_UTC: 2026-11-20T15:52:03+00:00
 | rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | done | 1 | 0 |  |
 | grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | done | 1 | 0 | light, 1 pytest |
 | core-a-rev | reviewer | claude-sonnet-5-5 | FRESH read-only result review of core-a newest src/tests commits (last 3 h) and wip/core-a-for-ci, for-c-e19 | 15:43 | 15:55 | 1 | done | 1 | 0 | EGM codebase |
+| ad19c825 | builder | claude-sonnet-5-5 | DOCS root pass: SECURITY.md/CHANGELOG.md/README.md from v7 drafts + G13c/G12c/G9b/G4c facts; /tmp/core-c-docs wip/cloud-core-c/docs | 16:13 | 16:40 | 1 | running | 1 | 0 | docs only |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
