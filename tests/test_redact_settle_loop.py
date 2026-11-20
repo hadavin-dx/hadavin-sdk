@@ -303,7 +303,7 @@ def _best_cpu(fn, repeat: int = 3) -> float:
     return best
 
 
-def test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses():
+def test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses(monkeypatch):
     """5,000 `password=<uuid>.k_i` lines (about 250,000 characters, under the 262,144 cap) make 5,000 spelled forms keyed on `<UUID_n>`.
     Round 3's test swept only the text `find` left (`password=<SECRET_m>`), so it measured 5,000 dict MISSES and never walked the trie
     (round 3 review, nit 2). Here the text also holds, 5,000 times, the placeholder the forms are keyed on followed by the form's tail
@@ -320,6 +320,9 @@ def test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses(
     probe = out + "\n" + copies
     swept = r.sweep(probe)  # builds the finders once, as the first sweep of a call does
     assert swept.count("copy <SECRET_") == 5000, "every copy walks its trie and is replaced whole"
+    monkeypatch.setattr(
+        r, "_overlaps", lambda *a: []
+    )  # G9: both runs time the scan alone (the read-back has its own test)
     with_forms = _best_cpu(lambda: r.sweep(probe))
     held, r._spelled = r._spelled, {}
     without = _best_cpu(lambda: r.sweep(probe))
@@ -375,6 +378,9 @@ def _swept_cpu(probe: str, registered: str) -> float:
     r = R._Redactor(None)
     r.find(registered)
     r.sweep("")  # builds the rules once
+    r._overlaps = (
+        lambda *a: []
+    )  # G9: the scan alone, in both runs of the ratio (the read-back: test_g9_the_read_back_costs_...)
     return _best_cpu(lambda: r.sweep(probe))
 
 
@@ -602,23 +608,6 @@ def test_the_overlap_through_the_whole_call_masks_every_copy_and_restores_it():
     assert mapping["<BEARER_3>"] == "xyz" + SHORT + "ab"
     result = R.redact(text)
     assert result.text == out and result.restore(result.text) == text
-
-
-def test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit():
-    """The part of the overlap that is NOT fixed (stated in `_spelled_sweep`, defaults.py and the ticket): round 2 registers F1 `<SECRET_1>ab`
-    and sweeps `xyz<SECRET_1>ab` to `xyz<F1>`; round 3 registers F2 `xyz<SECRET_1>` (a chain through another line). The text is now
-    `xyz<F1>`: F2 no longer matches it and `xyz`, three characters of a value the map holds, stands readable. Pinned so that a change is looked
-    at; the size of the leak is the literal prefix (or tail) of the later form."""
-    r = R._Redactor({"<SECRET_1>": SHORT})
-    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
-    round2 = r._spelled_sweep("xyz<SECRET_1>ab", None)
-    assert round2 == f"xyz{f1}"
-    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
-    round3 = r._spelled_sweep(round2, None)
-    assert (
-        round3 == f"xyz{f1}" != f2
-    )  # `xyz` stays: nothing re-reads a text an earlier sweep consumed
-    assert r.mapping[f2] == "xyz" + SHORT
 
 
 def test_a_rolled_back_form_is_deleted_not_left_as_a_ghost():
@@ -1370,21 +1359,7 @@ def test_a_registration_always_has_a_token_when_the_value_differs_from_its_text(
         assert bool(r._spelled_at) == (full != original and len(full) >= 4)
 
 
-# --- M-B (a): two compound values that overlap as RAW text -------------------------------------------------------------------------------
-
-
-def test_two_overlapping_values_in_raw_text_leave_the_tail_readable_a_stated_limit():
-    """Round 5 design M-B, reproduced and STATED (not fixed): F1 = V+`ab` and F2 = `xyz`+V are two values of the map; a RAW copy `xyz`+V+`ab`
-    overlaps them. The literal sweep replaces the longest first (`xyz`+V), the rule of F1 no longer matches what is left and `ab` stays. Older
-    than G7 and not limited to compound values: any two stored values that overlap (`abcdefgh` and `efghijkl` in `abcdefghijkl`) are cut the same
-    way. Written forms that overlap in the text are covered (`_place_union`); the raw literal sweep has no overlap detector (E10 in
-    ESCALATIONS.md: a decision for the owner). Pinned so that a change is looked at."""
-    r = R._Redactor({"<SECRET_1>": SHORT})
-    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
-    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
-    assert r.sweep("see xyz" + SHORT + "ab end") == f"see {f2}ab end" != f"see {f1} end"
-    plain = R._Redactor({"<SECRET_1>": "abcd" + "efgh", "<SECRET_2>": "efgh" + "ijkl"})
-    assert plain.sweep("abcd" + "efgh" + "ijkl") == "<SECRET_1>ijkl"
+# --- M-B (a), closed by G9 (tests in the G9 block): two compound values that overlap as RAW text -------------------------------------------------------------------------------
 
 
 # --- M-D: `bank_near` flipping inside `find` of ONE string ------------------------------------------------------------------------------
@@ -1809,3 +1784,504 @@ def test_a_grid_that_grows_at_both_ends_costs_the_product_of_its_sides_per_token
     big.sweep("")
     with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
         big._spelled_sweep(probe, None)
+
+
+# --- G9 (ORDER 023, E10): the sweep to a fixed point over the text read back --------------------------------------------------------
+
+_TOKEN = re.compile(r"<[A-Z][A-Z0-9]*_\d+>")
+_A, _B = "abcd" + "efgh", "efgh" + "ijkl"  # two SECRET values that overlap by `efgh`
+
+
+def _registering(mapping: dict[str, str] | None) -> R._Redactor:
+    """A redactor that may register a union, as `redact` and `redact_many` make it."""
+    r = R._Redactor(mapping)
+    r._may_register = True
+    return r
+
+
+def _passes_per_sweep(monkeypatch) -> list[int]:
+    """Wraps `_Redactor.sweep` and `_Redactor._overlaps` (class level: every redactor a call makes): the passes (read-backs) of each
+    sweep call, in call order. A pass that found nothing but grew the map is followed by another; this counts both."""
+    passes: list[int] = []
+    real_sweep, real_overlaps = R._Redactor.sweep, R._Redactor._overlaps
+
+    def sweep(self, out, deadline=None):
+        passes.append(0)
+        return real_sweep(self, out, deadline)
+
+    def overlaps(self, out, deadline, work):
+        passes[-1] += 1
+        return real_overlaps(self, out, deadline, work)
+
+    monkeypatch.setattr(R._Redactor, "sweep", sweep)
+    monkeypatch.setattr(R._Redactor, "_overlaps", overlaps)
+    return passes
+
+
+def test_g9_an_overlap_completed_only_in_a_later_round_is_masked_whole():
+    """E10 (b), REPLACES the round 3 pin: round 2 sweeps `xyz<SECRET_1>ab` to `xyz<F1>`; round 3 registers F2 `xyz<SECRET_1>`. The read-back of
+    `xyz<F1>` is `xyz` + V + `ab`: F2's value covers `xyz` and part of F1, so the run is registered whole and replaced; nothing of it stays
+    readable. Its number is not pinned (it depends on the order of registration); its value is, and its kind is SECRET (a union that holds a
+    secret takes the SECRET kind, whatever kinds it holds: here BEARER)."""
+    r = _registering({"<SECRET_1>": SHORT})
+    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
+    round2 = r.sweep("xyz<SECRET_1>ab")
+    assert round2 == f"xyz{f1}"
+    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    round3 = r.sweep(round2)
+    assert _TOKEN.fullmatch(round3) and round3 not in (f1, f2), round3
+    assert r.mapping[round3] == "xyz" + SHORT + "ab" and R._kind(round3) == "SECRET"
+    assert r.sweep(round3) == round3
+
+
+def test_g9_two_overlapping_values_in_raw_text_are_masked_whole():
+    """E10 (a), REPLACES the raw pin: `abcdefgh` and `efghijkl` in `abcdefghijkl` (the literal sweep cut the second), and F1 = V+`ab`,
+    F2 = `xyz`+V in a raw `xyz`+V+`ab`. Each run is one new value; the map gains exactly that entry."""
+    plain = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert plain.sweep(_A + "ijkl") == "<SECRET_3>", "E10a: the raw overlap is not one entry"
+    assert plain.mapping == {"<SECRET_1>": _A, "<SECRET_2>": _B, "<SECRET_3>": _A + "ijkl"}
+    r = _registering({"<SECRET_1>": SHORT})
+    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
+    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    out = r.sweep("see xyz" + SHORT + "ab end")
+    union = out.removeprefix("see ").removesuffix(" end")
+    assert _TOKEN.fullmatch(union) and union not in (f1, f2), out
+    assert r.mapping[union] == "xyz" + SHORT + "ab"
+
+
+def test_g9_the_raw_overlap_through_redact_redact_many_and_redact_text():
+    """The natural input (no seeded map): two secrets found by their keys, then a raw `abcdefghijkl`. Before G9: `see <SECRET_1>ijkl`."""
+    lines = ["password=" + _A, "token=" + _B, "see " + _A + "ijkl"]
+    text = "\n".join(lines)
+    expected = ["password=<SECRET_1>", "token=<SECRET_2>", "see <SECRET_3>"]
+    result = R.redact(text)
+    assert result.text == "\n".join(expected)
+    assert result.mapping == {"<SECRET_1>": _A, "<SECRET_2>": _B, "<SECRET_3>": _A + "ijkl"}
+    assert result.restore(result.text) == text
+    many, mapping = R.redact_many(lines)
+    assert many == expected and mapping["<SECRET_3>"] == _A + "ijkl"
+    assert runmap.redact_text(text, runmap.RunMap()) == "\n".join(expected)
+
+
+def test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else():
+    """The read-back puts back a token that is an exact KEY of the map, whoever wrote it (this redactor, an earlier call, the fold scan
+    reusing a placeholder): `<SECRET_1>` came in with the text. A token that is not a key (`<SECRET_9>`) is a separator: nothing is read
+    across it (mutant G9-7)."""
+    r = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("x <SECRET_1>ijkl y") == "x <SECRET_3> y", (
+        "a key given with the text was not read back"
+    )
+    assert r.mapping["<SECRET_3>"] == _A + "ijkl"
+    other = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert other.sweep("x <SECRET_9>ijkl y") == "x <SECRET_9>ijkl y"
+    assert other.sweep("x efgh<SECRET_9>ijkl y") == "x efgh<SECRET_9>ijkl y"
+    assert len(other.mapping) == 2
+    # a value that holds a NUL (the separator's character): its NUL-free alias key is swept by the body, as at the base; no union
+    nul = _registering({"<SECRET_1>": "\0" + "wxyz"})
+    assert nul.sweep("a<SECRET_9>wxyz") == "a<SECRET_9><SECRET_1>" and len(nul.mapping) == 1
+
+
+def test_g9_a_short_run_of_tokens_is_read_back_whole():
+    """A run whose kept head and tail together reach its length is read back WHOLE (no separator in the middle): the value `abcdefgh`
+    spans `ab`, the whole `<SECRET_1>` (`cdef`) and `gh`."""
+    r = _registering({"<SECRET_1>": "cdef", "<SECRET_2>": _A})
+    assert r.sweep("ab<SECRET_1>gh") == "<SECRET_2>", (
+        "the short run was cut"
+    )  # a reverse hit: the run's value is `<SECRET_2>`'s
+    assert len(r.mapping) == 2
+
+
+def test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first():
+    """An input that occurs: `0.5-Xyz9` is a password, `10.100.200.5` an address found by its pattern. The address is replaced first
+    (longer, standalone there) and the secret's tail `-Xyz9` stood readable after `<IPV4_1>`. The run starts with an IPV4 token but holds a
+    secret: its union is a SECRET (swept in every copy, never restored by the gate's side), not an IPV4 (mutant G9-8)."""
+    secret = "0.5" + "-Xyz9"
+    text = f"password={secret}\nhost 10.100.200.5-Xyz9 up"
+    result = R.redact(text)
+    assert result.text == "password=<SECRET_1>\nhost <SECRET_2> up", (
+        "the union of an address and a secret is not a SECRET"
+    )
+    assert result.mapping == {
+        "<SECRET_1>": secret,
+        "<IPV4_1>": "10.100.200.5",
+        "<SECRET_2>": "10.100.200.5-Xyz9",
+    }
+    r = _registering({"<IPV4_1>": "10.100.200.5", "<SECRET_1>": secret})
+    assert r.sweep("10.100.200.5-Xyz9 y") == "<SECRET_2> y"
+
+
+def test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_whatever_its_kind():
+    """Design M3 (v3): the run's value `abcdefghijkl` is already held, under TENANT. The union is that placeholder, as `_place_union` has
+    always answered a held value: no second placeholder for one value, so `reverse` and runmap's `_rules_conflict` are not disturbed. The
+    value was restorable before G9 already (its standalone copies are swept as TENANT_1); stated in section 11 (mutant G9-9)."""
+    r = _registering({"<TENANT_1>": _A + "ijkl", "<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("z" + _A + "ijkl y") == "z<TENANT_1> y", "a held value got a second placeholder"
+    assert len(r.mapping) == 3
+
+
+def test_g9_a_union_of_identifiers_only_is_an_identifier():
+    r = _registering({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    assert r.sweep("acme-prod-01-eu") == "<TENANT_3>"
+    assert r.mapping["<TENANT_3>"] == "acme-prod-01-eu"
+
+
+def test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form():
+    """A G9 union adds ONE entry (its value): no secret-shaped piece of its readable part, no written form. With pieces, the readable tail
+    `hIjK1mNoPq2R` was registered and a hostile chain needed a pass more per link (measured: 3, 4, refused; mutant G9-10)."""
+    s1, s2 = "xY7wV6uT5s" + "R4aB3dE5fG9", "G9" + "hIjK1mNoPq2R"
+    r = _registering({"<SECRET_1>": s1, "<SECRET_2>": s2})
+    assert r.sweep(s1 + "hIjK1mNoPq2R end") == "<SECRET_3> end"
+    assert r.mapping == {"<SECRET_1>": s1, "<SECRET_2>": s2, "<SECRET_3>": s1 + "hIjK1mNoPq2R"}, (
+        "the union registered more than its value"
+    )
+    assert r._spelled == {}
+
+
+def _chain(depth: int) -> str:
+    """The design critic's chain (round 1 M2): S1 ends with `G9`, S2 = `G9hIjK1mNoPq2R`; then `depth` lines `at <the first 12-k
+    characters of hIjK1mNoPq2R><a secret starting with the next one>`: with pieces registered, the piece of pass k straddles line k+1's token."""
+    tail = "hIjK1mNoPq2R"
+    secrets = ["xY7wV6uT5s" + "R4aB3dE5fG9", "G9" + tail]
+    rows = []
+    for k in range(1, depth + 1):
+        x = tail[12 - k] + ["sT7uVw9z", "wQ4eZ5tY", "kL8mN2bV", "pO3iU7yT"][k - 1]
+        secrets.append(x)
+        rows.append(f"at {tail[: 12 - k]}{x} ;")
+    return "\n".join([f"password={s}" for s in secrets] + [f"see {secrets[0]}{tail} end", *rows])
+
+
+def test_g9_the_hostile_chain_settles_in_two_passes(monkeypatch):
+    """The chain that needs 3 passes (depth 1), 4 (depth 2) and is refused (depth 3, 4) when unions register pieces settles in at most
+    2 passes per sweep here, every depth: a union adds only its own value."""
+    passes = _passes_per_sweep(monkeypatch)
+    for depth in range(5):
+        passes.clear()
+        out = R.redact(_chain(depth)).text
+        assert "hIjK1mNoPq2R" not in out and out.count("see <SECRET_") == 1, out
+        assert max(passes) <= 2, (depth, passes)
+
+
+def test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders():
+    """The gate's redactor (L-D1 default): it may not add to the map, so the run is masked with the placeholders of the values that cover
+    its readable part (`<SECRET_1><SECRET_2>`): nothing readable, nothing invented, the map untouched (mutant G9-4)."""
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("x " + _A + "ijkl y") == "x <SECRET_1><SECRET_2> y", (
+        "gate: not masked with existing placeholders"
+    )
+    assert (
+        r.sweep("x <SECRET_1>ijkl y") == "x <SECRET_1><SECRET_2> y"
+    )  # a placeholder already in the text (an earlier call's)
+    assert r.sweep("x <SECRET_1><SECRET_2> y") == "x <SECRET_1><SECRET_2> y"
+    assert r.mapping == {"<SECRET_1>": _A, "<SECRET_2>": _B}
+
+
+def test_g9_a_redactor_that_may_not_register_masks_an_identifier_overlap_with_the_identifiers_placeholders():
+    """Design M4 (v3): a readable character covered only by an identifier is replaced by that identifier's EXISTING placeholder, never a
+    refusal (two identifiers that overlap refused every call carrying them in v2, and the result depended on the map order). Restored, the
+    shared part appears twice (`acme-prod-01` + `prod-01-eu`): stated in 11. Where a secret also covers the character, the secret's
+    placeholder is written (mutant G9-13)."""
+    tenants = R._Redactor({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    assert tenants.sweep("acme-prod-01-eu") == "<TENANT_1><TENANT_2>"
+    assert len(tenants.mapping) == 2
+    for m in (
+        {"<SECRET_1>": "ab-cd", "<TENANT_1>": "cd-ef"},
+        {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd"},
+    ):
+        assert R._Redactor(m).sweep("x ab-cd-ef y") == "x <SECRET_1><TENANT_1> y", (
+            m
+        )  # the same whatever the map order
+    both = R._Redactor({"<SECRET_1>": "ab-cd-ef", "<TENANT_1>": "ef-gh", "<SECRET_2>": "f-gh"})
+    # `-gh` is covered by both: the secret is written
+    assert both.sweep("x ab-cd-ef-gh y") == "x <SECRET_1><SECRET_2> y", (
+        "an identifier was written where a secret covers"
+    )
+
+
+def test_g9_a_sweep_that_settles_in_the_fourth_pass_is_accepted(monkeypatch):
+    r = _registering({"<SECRET_1>": SHORT})
+    calls: list[str] = []
+
+    def overlaps(out, deadline, work):
+        calls.append(out)
+        return [(0, len(out), "SECRET", None)] if len(calls) < defaults.SPELLED_MAX_PASSES else []
+
+    monkeypatch.setattr(r, "_overlaps", overlaps)
+    monkeypatch.setattr(r, "_close", lambda out, spans, deadline, work: out)
+    assert r.sweep("x <SECRET_1> y") == "x <SECRET_1> y"
+    assert len(calls) == defaults.SPELLED_MAX_PASSES == 4
+
+
+def test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused(monkeypatch):
+    r = _registering({"<SECRET_1>": SHORT})
+    calls: list[str] = []
+
+    def overlaps(out, deadline, work):
+        calls.append(out)
+        return [(0, len(out), "SECRET", None)]
+
+    monkeypatch.setattr(r, "_overlaps", overlaps)
+    monkeypatch.setattr(r, "_close", lambda out, spans, deadline, work: out)
+    with pytest.raises(runmap.InputTooLarge, match="SpelledNotSettled"):
+        r.sweep("x <SECRET_1> y")
+    assert len(calls) == 4, f"passes {len(calls)}"
+
+
+def test_g9_a_pass_that_grew_the_map_is_not_the_last(monkeypatch):
+    """Converged means: nothing found AND nothing registered in the pass (a union of written forms in `_spelled_sweep` grows the map
+    after the build the read-back used). Stubbed: the first body registers a value, the read-back finds nothing: a second pass runs."""
+    r = _registering({"<SECRET_1>": SHORT})
+    bodies: list[str] = []
+    real = r._sweep_once
+
+    def body(out, deadline, work):
+        bodies.append(out)
+        if len(bodies) == 1:
+            r._place("SECRET", "qrstuvwx", "qrstuvwx")
+        return real(out, deadline, work)
+
+    monkeypatch.setattr(r, "_sweep_once", body)
+    assert r.sweep("x qrstuvwx y") == "x <SECRET_2> y"
+    assert len(bodies) == 2, f"bodies {len(bodies)}"
+
+
+def test_g9_through_redact_a_refusal_is_raised_not_returned(monkeypatch):
+    """Class-level stubs (every redactor the call makes): a read-back that always finds a run in a text with a `<`."""
+
+    def never(self, out, deadline, work):
+        return [(0, len(out), "SECRET", None)] if "<" in out else []
+
+    monkeypatch.setattr(R._Redactor, "_overlaps", never)
+    monkeypatch.setattr(R._Redactor, "_close", lambda self, out, spans, deadline, work: out)
+    text = "password=" + SHORT + "qrstu"
+    with pytest.raises(runmap.RedactionError, match="SpelledNotSettled"):
+        R.redact(text)
+    with pytest.raises(runmap.RedactionError, match="SpelledNotSettled"):
+        R.redact_many([text, "clean"])
+    with pytest.raises(runmap.RedactionError, match="SpelledNotSettled"):
+        runmap.redact_text(text, runmap.RunMap())
+
+
+def test_g9_an_honest_text_settles_in_one_pass(monkeypatch):
+    r = _registering(None)
+    out = r.find("password=" + SHORT + "qrstu and token=" + SHORT + " and again " + SHORT)
+    calls: list[int] = []
+    real = r._overlaps
+    monkeypatch.setattr(r, "_overlaps", lambda *a: calls.append(1) or real(*a))
+    swept = r.sweep(out)
+    assert SHORT not in swept and len(calls) == 1, (swept, calls)
+
+
+def test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built(monkeypatch):
+    """Forged copies of a key whose value is long (`x<SECRET_1> ` 20,000 times, a 2,000-character value): read back whole E would be 40
+    million characters. Every piece is counted BEFORE it is appended: with the limit at 100,000 the read-back is refused after about 50
+    pieces and never holds more (peak traced memory under 1 MB; counted after building, the peak was 56 MB; mutant G9-5)."""
+    long = ("Qz9" * 700)[:2000]
+    r = R._Redactor({"<SECRET_1>": long})
+    r.sweep("")
+    text = "x<SECRET_1> " * 20_000
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 100_000)
+    tracemalloc.start()
+    try:
+        with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+            r._overlaps(text, None, [0])
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 1_000_000, f"peak traced {peak}"
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        r.sweep(text)
+
+
+def test_g9_the_count_reads_the_clock_each_time_it_passes_a_multiple_of_1024(monkeypatch):
+    """`_spend`, the one count of a sweep call: past `SPELLED_MAX_WORK` it refuses (`SpelledWorkTooMuch`); with a deadline it reads the
+    clock when the count crosses a multiple of `_SPELL_CHECK_EVERY` (1,024), not otherwise (mutant G9-14). A deadline of -1.0 is spent at
+    any reading."""
+    r = R._Redactor(None)
+    with pytest.raises(runmap.InputTooLarge, match="InputTooLarge"):
+        r._spend([1000], 30, -1.0)  # 1,000 -> 1,030: crosses 1,024
+    r._spend([0], 30, -1.0)  # 0 -> 30: no reading
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 100)
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        r._spend([90], 11, None)
+
+
+def test_g9_the_read_back_reads_the_deadline(monkeypatch):
+    """The read-back reads the clock through the count (the body is stubbed so that it reads none; the gate's redactor registers nothing,
+    so no `_build` reads it either). A spent deadline refuses at the first reading; a future one returns the text masked."""
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    r.sweep("")
+    text = " ".join(["w<SECRET_1>ijkl"] * 200)  # read back: about 3,400 characters
+    monkeypatch.setattr(r, "_sweep_once", lambda out, deadline, work: out)
+    readings = _stepping_clock(monkeypatch)
+    with pytest.raises(runmap.InputTooLarge, match="InputTooLarge"):
+        r.sweep(text, 0.5)
+    assert readings["n"] == 1
+    assert r.sweep(text, 1e9) == " ".join(["w<SECRET_1><SECRET_2>"] * 200)
+
+
+def test_g9_the_finder_groups_read_the_deadline_between_them():
+    """Design M5 (v3): a finder pass over E is not counted (a map nested past `_MAX_NESTING` splits into up to 64 groups, and counting
+    E once per group refused honest texts); the deadline is read before each group instead. Here E is too short for the count to read the
+    clock, so only that reading refuses (mutant G9-16)."""
+    comb = "".join(chr(97 + (i * 7) % 26) for i in range(260))
+    nested = {f"<SECRET_{n + 10}>": comb[:n] + "Z" for n in range(4, 261)}
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B, **nested})
+    r.sweep("")
+    assert len(r._finders) >= 2, len(r._finders)
+    with pytest.raises(runmap.InputTooLarge, match="InputTooLarge"):
+        r._overlaps("x <SECRET_1>ijkl y", -1.0, [0])
+    assert [s[:2] for s in r._overlaps("x <SECRET_1>ijkl y", None, [0])] == [(2, 16)]
+
+
+def test_g9_the_read_back_counts_its_pieces_and_its_occurrences():
+    """The units of one read-back, exactly: one per character of E (`x abcdefghijkl y`, 16), one per occurrence found (`abcdefgh`,
+    `efghijkl`: 2); the finder passes are not counted (design M5, v3). The union's characters are counted by `_close` (mutant G9-15)."""
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    r.sweep("")
+    assert len(r._finders) == 1 and not r._slow
+    work = [0]
+    assert [s[:2] for s in r._overlaps("x <SECRET_1>ijkl y", None, work)] == [(2, 16)]
+    assert work == [16 + 2], work
+
+
+def test_g9_a_union_is_counted_with_its_whole_value_before_it_is_built():
+    """Design B1 (v3): `_close` counts the union's VALUE (every token of the run put back), not the run's length in the text: a run of one
+    token of a 1,000-character secret and 7 readable characters costs 1,007 units, not 17 (mutant G9-17)."""
+    long = "".join(f"{n:03d}Q" for n in range(250))  # 1,000 characters
+    r = _registering({"<SECRET_1>": long, "<SECRET_2>": long[-5:] + "XY00001"})
+    work = [0]
+    out = r._close("<SECRET_1>XY00001 end", [(0, 17, "SECRET", None)], None, work)
+    assert out == "<SECRET_3> end" and r.mapping["<SECRET_3>"] == long + "XY00001"
+    assert work == [1007], work
+
+
+def _planted(lines: int, secret: int = 20_000) -> str:
+    """Design B1's shape, scaled: one long secret found by its key, `lines` short secrets that each overlap its tail, and `lines` copies
+    of its placeholder each followed by one of them: every line is a union of the whole long secret and a few characters."""
+    rng = random.Random(29)  # noqa: S311 - a seeded test generator, not a secret
+    t0 = "".join(
+        rng.choice("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789")
+        for _ in range(secret)
+    )
+    keys = [f"token={t0[-5:]}XY{i:05d}" for i in range(lines)]
+    return "\n".join([f"password={t0}", *keys, *(f"<SECRET_1>XY{i:05d}" for i in range(lines))])
+
+
+def test_g9_the_unions_of_one_call_are_limited_in_characters_and_the_call_is_refused(monkeypatch):
+    """Design B1 (v3): the characters of the unions one call registers are counted (`_union_chars`) and the CALL is refused past
+    `defaults.SPELLED_MAX_UNION_CHARS` (`InputTooLarge("SpelledUnionTooMuch")`, nothing shown), as `SPELLED_MAX_CHARS` refuses a registry
+    that grows too big. With the limit at 100,000: 4 unions of 20,007 characters pass, the 5th is refused (mutant G9-18). Measured at the
+    real limit: the 130,000-character secret with 300 such lines held 39 MB of map values in v2 and is refused here (section 9.4)."""
+    monkeypatch.setattr(defaults, "SPELLED_MAX_UNION_CHARS", 100_000)
+    result = R.redact(_planted(4))
+    assert (
+        "XY00003" not in result.text and sum(len(v) == 20_007 for v in result.mapping.values()) == 4
+    )
+    with pytest.raises(runmap.InputTooLarge, match="SpelledUnionTooMuch"):
+        R.redact(_planted(5))
+    with pytest.raises(runmap.InputTooLarge, match="SpelledUnionTooMuch"):
+        runmap.redact_text(_planted(5), runmap.RunMap())
+
+
+def test_g9_a_union_does_not_rebuild_the_finders(monkeypatch):
+    """Design M6 (v3): a G9 union needs no sweep rule (a copy of its value elsewhere holds the overlap that made it; the read-back finds
+    it again and `_place_union` answers from `reverse`), so registering one does not rebuild the finders. A bundle with one overlap per
+    string rebuilt them once per string before (1,000 strings: 85 s instead of 0.5 s, section 9.4; mutant G9-19)."""
+    r = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    r.sweep("")
+    builds: list[int] = []
+    real = r._build
+    monkeypatch.setattr(r, "_build", lambda: builds.append(1) or real())
+    assert r.sweep("x " + _A + "ijkl y") == "x <SECRET_3> y"
+    assert r.sweep("z " + _A + "ijkl " + _A + "ijkl") == "z <SECRET_3> <SECRET_3>"
+    assert builds == [] and len(r.mapping) == 3, f"builds {builds}"
+
+
+@pytest.mark.perf
+def test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads():
+    """The cookie log of 300 prefix lengths, its copies x 4 (the shape the scan's ratio test uses). The read-back of the swept text costs
+    about what a sweep of the raw text it stands for costs (measured 2.1 times on the test machine); a read-back that walked every
+    token's value again per occurrence is far over it. Perf-marked: a ratio of two timings (readiness nit)."""
+    log = _cookie_log(300)
+    probe = "\n".join([_copies_of(log)] * 4)
+    r = R._Redactor(None)
+    r.find(log)
+    r.sweep("")
+    swept = r._sweep_once(probe, None, [0])
+    raw = R._PLACEHOLDER.sub(lambda m: r.mapping.get(m.group(1), m.group(1)), swept)
+    read_back = _best_cpu(lambda: r._overlaps(swept, None, [0]))
+    r._overlaps = lambda *a: []
+    plain = _best_cpu(lambda: r.sweep(raw))
+    assert plain > 0.015, plain
+    assert read_back < 4 * plain + 0.01, (read_back, plain)
+
+
+def test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep():
+    """Found by the whole suite on the v2 prototype (tests/test_k5_fixes4.py, 1.2 s -> 40 s): `x` x 262,143 + ` ` is one HIGHENTROPY token
+    and a space (20,000 here); read back whole, the finder tried the long value at every position of a periodic E (quadratic). A run is read back at
+    most `defaults.SPELLED_READBACK_REACH` (1,024) characters deep on each side that touches readable text; deeper, the anchored check
+    searches its anchor in the long rule ONCE per distinct anchor (units: E = a separator, 1,024 `x`, the space; one per edge and long
+    rule; 20,000 for the search; a second copy of the same edge adds its E and one unit, no second search; mutant G9-20)."""
+    r = R._Redactor({"<HIGHENTROPY_1>": "x" * 20_000})
+    r.sweep("")
+    reach = defaults.SPELLED_READBACK_REACH
+    work = [0]
+    assert r._overlaps("<HIGHENTROPY_1> ", None, work) == []
+    assert work == [(1 + reach + 1) + 1 + 20_000], work
+    work = [0]
+    assert r._overlaps("<HIGHENTROPY_1> <HIGHENTROPY_1> ", None, work) == []
+    # 2 distinct anchors (` ` after a token, ` ` before one): 2 searches, 3 edges
+    assert work == [(1 + reach + 1 + reach + 1 + reach + 1) + 3 + 2 * 20_000], work
+
+
+def test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check():
+    """Design M1 (v3): a value that overlaps a token by more than `SPELLED_READBACK_REACH` characters is found by the anchored check
+    (`_deep_hits`) and masked: on the right of a token, on its left, through a run of two tokens, and at the gate (masked with the existing
+    placeholders). Before v3 the first was a stated limit (`<SECRET_1>TAIL1234`; mutant G9-21)."""
+    base = "".join(f"{n:04x}Qz" for n in range(200))  # 1,200 characters, not periodic
+    tail = "TAIL" + "1234"
+    for depth in (1_100, 1_000):
+        r = _registering({"<SECRET_1>": base, "<SECRET_2>": base[1200 - depth :] + tail})
+        assert r.sweep(base + tail) == "<SECRET_3>", depth
+        assert r.mapping["<SECRET_3>"] == base + tail
+    left = _registering({"<SECRET_1>": base, "<SECRET_2>": "HEAD" + "5678" + base[:1_100]})
+    assert left.sweep("HEAD5678" + base) == "<SECRET_3>"
+    two = _registering(
+        {"<SECRET_1>": base[:600], "<SECRET_2>": base[600:], "<SECRET_3>": base[50:] + tail}
+    )
+    assert two.sweep("<SECRET_1><SECRET_2>" + tail) == "<SECRET_4>"
+    assert (
+        runmap.enforce_map(base + tail, {"<SECRET_1>": base, "<SECRET_2>": base[100:] + tail})
+        == "<SECRET_1><SECRET_2>"
+    )
+
+
+def test_g9_a_long_periodic_value_beside_its_own_period_is_refused_by_the_count():
+    """The anchored check compares the rule at every place its anchor is found, at every edge; a PERIODIC long value (`x` x 1,100) beside
+    readable text of the same period finds its anchor at 76 places, and each comparison at each of the 30 cut edges is counted
+    (`2 x len(w) + 2` units): about 5 million, refused (`SpelledWorkTooMuch`), not walked (stated in 11; mutant G9-22)."""
+    r = _registering({"<SECRET_1>": "x" * 1_100})
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        # `<SECRET_9>` is not a key: the run of `<SECRET_1>` touches readable text on its right only, so it is cut at the reach there
+        r.sweep(("<SECRET_9><SECRET_1>" + "x" * 200 + " end\n") * 30)
+
+
+def test_g9_the_read_back_judges_a_phone_copy_by_the_sweeps_joins():
+    """G8 + G9 (ticket G8 v5, 8.1): the read-back judges a copy by the literal sweep's rule, `redact._joins`: the read-back
+    `x` + `4155550132` is a copy of the known PHONE value (G8's sweep replaces it when it is written raw), `7` + it is not."""
+    phone = "415" + "555" + "0132"
+    r = _registering({"<TENANT_1>": phone[:8], "<PHONE_1>": phone})
+    assert r.sweep("x<TENANT_1>32 y") == "x<PHONE_1> y"
+    assert r.sweep("7<TENANT_1>32 y") == "7<TENANT_1>32 y"
+    assert r.mapping == {"<TENANT_1>": phone[:8], "<PHONE_1>": phone}
+
+
+def test_g9_a_gate_text_that_mentions_a_long_value_many_times_is_masked_not_refused():
+    """Round 2 plan review (design, ticket G4 L26): at the gate a text that writes the placeholder of a long value many times
+    (`step i see <SECRET_1> now.`, each read back next to readable text) is masked as before, not refused: the shared count of
+    G9 v3 does not charge a finder pass per mention (the anchor of the anchored check is searched once). 300 mentions of a
+    5,000-character value (about 2,000 units each, 0.6 million of the 4 million allowed)."""
+    value = "".join(f"{n:04x}Qz" for n in range(700))  # 4,900 characters, not periodic
+    text = "".join(f"step {i} see <SECRET_1> now.\n" for i in range(300))
+    assert runmap.enforce_map(text, {"<SECRET_1>": value}) == text
+    assert runmap.enforce_map(text + value, {"<SECRET_1>": value}) == text + "<SECRET_1>"

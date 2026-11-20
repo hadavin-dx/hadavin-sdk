@@ -1015,6 +1015,7 @@ def redact(
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
     """
     r = _Redactor(mapping, _cache, _deadline)
+    r._may_register = True
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     # No second read after a `bank_near` flip (round 7; round 6 had one as a safety net, which also counted `actions` twice): the flag is read
@@ -1215,9 +1216,14 @@ class _Redactor:
             str, tuple[str, str, str, int]
         ] = {}  # placeholder -> (token, prefix reversed, suffix, prefix id)
         self._next_prefix_id = 0
+        self._may_register = False  # G9: `redact`/`redact_many` set it; any other redactor (the gate's) masks an overlap with existing placeholders
+        self._union_chars = 0  # G9: characters of the unions this redactor registered; refused past `defaults.SPELLED_MAX_UNION_CHARS`
+        self._longest = 0  # G9: the longest rule original (alias keys included)
+        self._long: list[str] = []  # G9: the rule originals longer than the read-back's reach + 1
         self._spelled_chars = 0  # trie nodes (characters of written forms) held now; refused past `defaults.SPELLED_MAX_CHARS`
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
+            self._measure_rules()
             self._built_for = len(self.mapping)
 
     def find(self, text: str) -> str:
@@ -1752,19 +1758,21 @@ class _Redactor:
         )
         return original, placeholder
 
-    def _place(self, label: str, full: str, original: str) -> str:
+    def _place(self, label: str, full: str, original: str, derived: bool = True) -> str:
         """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it."""
         self.counters[label] += 1
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
         self.reverse[full] = placeholder
-        first = _PLACEHOLDER.search(original) if label in SECRET_KINDS else None
+        first = _PLACEHOLDER.search(original) if derived and label in SECRET_KINDS else None
         if first is not None and original != full and len(full) >= 4:
             self._spell(original, first, placeholder, full)
         if self._journal is not None:
             self._journal.append(("map", placeholder, full))
         for piece in (
-            _PIECE.findall(_PLACEHOLDER.sub(" ", original)) if label in SECRET_KINDS else ()
+            _PIECE.findall(_PLACEHOLDER.sub(" ", original))
+            if derived and label in SECRET_KINDS
+            else ()
         ):
             if piece != full and piece not in self.reverse and _secret_shaped(piece):
                 self.counters[label] += 1
@@ -1848,7 +1856,9 @@ class _Redactor:
         if not back_root and not fwd_root:
             del self._spelled[token]
 
-    def _spelled_sweep(self, out: str, deadline: float | None) -> str:
+    def _spelled_sweep(
+        self, out: str, deadline: float | None, shared: list[int] | None = None
+    ) -> str:
         """Replace the written forms of compound secrets (`<SECRET_1>xy`) by their placeholder.
 
         THE RULE: every form that matches in full somewhere in `out` is a candidate (start, end); at one start the longest form is the
@@ -1856,16 +1866,10 @@ class _Redactor:
         covered, and nothing is done. One that begins inside and ENDS BEYOND it (an overlap: `xyz<SECRET_1>` and `<SECRET_1>ab` over
         `xyz<SECRET_1>ab`) fails closed: the span of the whole run of overlapping candidates is registered, on the spot, as an entry of its
         own (a compound value `xyz` + V + `ab`, `_place_union`) and replaced by that placeholder, so no part of it stays readable.
-        What is NOT covered (two OPEN limits, both stated, both pinned in tests/test_redact_settle_loop.py, escalation E10 in ESCALATIONS.md; a plan review
-        of a fixed-point loop for (1) is separate):
-        (1) an overlap that is only complete in a LATER round, when the first form was already swept and replaced by its placeholder before the
-        second form was registered (the text is then `xyz<BEARER_1>` and the second form `xyz<SECRET_1>` no longer matches it). The part of the later form that the earlier
-        placeholder swallowed (its literal prefix or tail, `xyz`) stays readable in the call's result.
-        (2) two compound VALUES that overlap as RAW text (V+`ab` and `xyz`+V, a raw copy `xyz`+V+`ab`): the literal sweep, which runs after this
-        scan, replaces the longest value first (`xyz`+V) and the rule of the other no longer matches what is left, so `ab` stays readable. This is
-        older than G7, is not limited to compound values (any two stored values that overlap are cut the same way, `abcdefgh` and `efghijkl`) and
-        has no detector.
-        "No part of it stays readable" holds only for written forms that overlap inside ONE sweep; with (1) and (2) open, that is the claim.
+        Since G9 (ORDER 023, E10) the two overlaps this scan cannot see, (1) one completed only in a LATER round (`xyz<BEARER_1>`, the
+        second form `xyz<SECRET_1>` registered after the first was swept) and (2) two VALUES that overlap as RAW text (`abcdefgh` and
+        `efghijkl` in `abcdefghijkl`, cut by the literal sweep), are closed by `sweep`'s passes: the text is read back with every key of
+        the map put back (`_overlaps`) and each run is registered whole (`_close`), at most `defaults.SPELLED_MAX_PASSES` times.
 
         Cost: a token of the text walks its prefix trie backwards (as far as the text matches a registered prefix), collecting the ids of the
         prefixes that matched, and, when one did, walks the ONE suffix trie of the token forwards (as far as the text matches a registered
@@ -1882,7 +1886,8 @@ class _Redactor:
         found: list[tuple[int, int, str]] = []
         limit = defaults.SPELLED_MAX_WORK
         work = _SPELL_CHECK_EVERY  # the first token is checked ...
-        done = -_SPELL_CHECK_EVERY  # ... and that first reading is not work done
+        # ... and that first reading is not work done; G9: the count goes on from the sweep's (`shared`)
+        done = -_SPELL_CHECK_EVERY + (shared[0] if shared else 0)
         n = len(out)
         for m in _PLACEHOLDER.finditer(out):
             work += 1
@@ -1958,6 +1963,8 @@ class _Redactor:
                 i += 1
             for pid, (end, placeholder) in best.items():
                 found.append((at - matched[pid], end, placeholder))
+        if shared is not None:
+            shared[0] = done + work
         if not found:
             return out
         found.sort(key=lambda c: (c[0], -c[1]))
@@ -1982,7 +1989,416 @@ class _Redactor:
                     self._work_refused()
                 if deadline is not None:
                     self._over_budget(deadline)
-                placeholder = self._place_union(out[start:end], placeholder)
+                placeholder = self._place_union(out[start:end], _kind(placeholder))
+            pieces += (out[last:start], placeholder)
+            last = end
+            self.actions += 1
+        pieces.append(out[last:])
+        if shared is not None:
+            shared[0] = done + work
+        return "".join(pieces)
+
+    def _ensure_built(self, deadline: float | None) -> None:
+        """The build block `sweep` had inline: rebuild the rules when the map grew, under `deadline`."""
+        if self._built_for != len(self.mapping):
+            self._build_deadline = deadline
+            try:
+                self._build()
+            finally:
+                self._build_deadline = None
+
+    def _measure_rules(self) -> None:
+        """G9: `_longest` (the longest rule original, alias keys included) and `_long` (those longer than the reach + 1, which only the
+        anchored check can find deeper than the reach); set wherever `_rules` is set (`_build`, the cached path of `__init__`)."""
+        self._longest = max(map(len, self._rules), default=0)
+        self._long = [w for w in self._rules if len(w) > defaults.SPELLED_READBACK_REACH + 1]
+
+    def _spend(self, work: list[int], n: int, deadline: float | None) -> None:
+        """G9: add `n` units to the sweep's count; refuse past `defaults.SPELLED_MAX_WORK`; read the deadline each time the count passes a
+        multiple of `_SPELL_CHECK_EVERY`."""
+        before = work[0]
+        work[0] = now = before + n
+        if now > defaults.SPELLED_MAX_WORK:
+            self._work_refused()
+        if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:
+            self._over_budget(deadline)
+
+    def _read_back(
+        self, out: str, deadline: float | None, work: list[int]
+    ) -> (
+        tuple[
+            str,
+            list[tuple[int, int, int, int, str | None]],
+            list[tuple[int, int, str]],
+            list[tuple[int, bool, str]],
+        ]
+        | None
+    ):
+        """G9: (E, segments, tokens, deep) or None. E is the text read back; a segment is (E start, E end, out start, out end, what):
+        `what` None = free text, a placeholder = a token read back (an exact key of `self.mapping`), "" = a separator (`_SEP`: a token
+        that is not a key, or the middle of a long run cut out). A RUN is a maximal sequence of key tokens with no free text between
+        them; on each side where it touches free text it keeps its first (left) / last (right) `keep` characters (`self._longest - 1`,
+        at most `defaults.SPELLED_READBACK_REACH`); the WHOLE run when those two reach its length; a run that touches free text on
+        neither side is one separator. Every piece is counted BEFORE it is appended. `tokens`: every placeholder of `out` as (start,
+        end, token). `deep`: for each cut side of a run that touches free text, when some rule is longer than the reach + 1, (the out
+        position of the edge, True when the free text is on the right, the anchor: the reach's characters of the run at the edge with
+        the free character beside them) for `_deep_hits`. None when no token is read back next to free text."""
+        keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)
+        mapping = self.mapping
+        pieces: list[str] = []
+        segs: list[tuple[int, int, int, int, str | None]] = []
+        toks: list[tuple[int, int, str]] = []
+        deep: list[tuple[int, bool, str]] = []
+        e = 0
+        touched = False
+
+        def put(piece: str, o0: int, o1: int, what: str | None) -> None:
+            nonlocal e
+            self._spend(work, len(piece), deadline)  # counted before it is held
+            pieces.append(piece)
+            segs.append((e, e + len(piece), o0, o1, what))
+            e += len(piece)
+
+        run: list[tuple[str, int, int]] = []  # (token, out start, out end)
+        run_left = False
+
+        def flush(right: bool) -> None:
+            nonlocal touched
+            if not run:
+                return
+            lk, rk = (keep if run_left else 0), (keep if right else 0)
+            total = sum(len(mapping[tok]) for tok, _, _ in run)
+            if not lk and not rk:
+                put(_SEP, run[0][1], run[-1][2], "")
+            elif lk + rk >= total:  # the short run: read back whole
+                touched = True
+                for tok, o0, o1 in run:
+                    put(mapping[tok], o0, o1, tok)
+            else:  # head, a separator, tail
+                touched = True
+                head: list[str] = []
+                taken = 0
+                for tok, o0, o1 in run:
+                    if taken >= lk:
+                        break
+                    cut = mapping[tok][: lk - taken]
+                    put(cut, o0, o1, tok)
+                    head.append(cut)
+                    taken += len(cut)
+                put(_SEP, run[0][1], run[-1][2], "")
+                tail: list[tuple[str, int, int, str]] = []
+                taken = 0
+                for tok, o0, o1 in reversed(run):
+                    if taken >= rk:
+                        break
+                    value = mapping[tok]
+                    cut = value[len(value) - min(len(value), rk - taken) :]
+                    tail.append((cut, o0, o1, tok))
+                    taken += len(cut)
+                for cut, o0, o1, tok in reversed(tail):
+                    put(cut, o0, o1, tok)
+                # a rule longer than the reach + 1 may cover more of the run than was put back
+                if self._long:
+                    if lk:
+                        deep.append((run[0][1], False, out[run[0][1] - 1] + "".join(head)))
+                    if rk:
+                        deep.append(
+                            (
+                                run[-1][2],
+                                True,
+                                "".join(c for c, _, _, _ in reversed(tail)) + out[run[-1][2]],
+                            )
+                        )
+            run.clear()
+
+        last, left = 0, False
+        for m in _PLACEHOLDER.finditer(out):  # streamed: no split list of the whole text
+            a, b = m.span()
+            tok = m.group(1)
+            toks.append((a, b, tok))
+            if a > last:
+                flush(True)
+                put(out[last:a], last, a, None)
+                left = True
+            if tok in mapping:
+                if not run:
+                    run_left = left
+                run.append((tok, a, b))
+            else:
+                flush(False)
+                put(_SEP, a, b, "")
+            left = False
+            last = b
+        if last < len(out):
+            flush(True)
+            put(out[last:], last, len(out), None)
+        else:
+            flush(False)
+        return ("".join(pieces), segs, toks, deep) if touched else None
+
+    def _overlaps(
+        self, out: str, deadline: float | None, work: list[int]
+    ) -> list[tuple[int, int, str, str | None]]:
+        """G9: [(start, end, kind, masked)], sorted, disjoint. out[start:end] is one run: every occurrence in E (`_read_back`; deeper
+        than the reach: `_deep_hits`) of a rule original (an identifier only where no character of
+        `_joins(placeholder)` touches it IN E: an ASCII letter or digit; for a PHONE value a digit) that covers
+        at least one free character AND part of at least one token and no separator, merged when they overlap in `out`; tokens are taken
+        whole, free text as far as the occurrences reach. `kind`: SECRET when any token of the run or any occurrence is of a secret kind,
+        else the first token's kind. `masked`: only for a redactor that may not register (`_masked`), else None. Units: one per
+        character of E (as it is built), one per occurrence; the finder groups and slow values read the deadline, uncounted."""
+        if "<" not in out:
+            return []
+        # a union of written forms in this pass's `_spelled_sweep` grew the map
+        self._ensure_built(deadline)
+        if not (self._finders or self._slow):
+            return []
+        rb = self._read_back(out, deadline, work)
+        if rb is None:
+            return []
+        E, segs, toks, deep = rb
+        rules = self._rules
+        occ: list[tuple[int, int, str]] = []
+
+        def add(word: str, at: int) -> None:
+            rule = rules.get(word)
+            if rule is None:
+                return
+            end = at + len(word)
+            joins = _joins(rule[1])  # G8: the literal sweep's rule; a digit only, for a PHONE value
+            if rule[2] is not _EVERY_COPY and (
+                E[at - 1 : at] in joins or E[end : end + 1] in joins
+            ):
+                return
+            occ.append((at, end, word))
+
+        for finder, prefixes in self._finders:
+            if deadline is not None:
+                # between finder groups: a pass of a finder over E is not counted
+                self._over_budget(deadline)
+            for m in finder.finditer(E):
+                w = m.group(1)
+                add(w, m.start())
+                for p in prefixes.get(w, ()):
+                    add(p, m.start())
+        for w in self._slow:
+            if deadline is not None:
+                self._over_budget(deadline)
+            j = E.find(w)
+            while j >= 0:
+                add(w, j)
+                j = E.find(w, j + 1)
+        self._spend(work, len(occ), deadline)
+        starts = [s[0] for s in segs]
+        hits: list[tuple[int, int, str]] = []  # (out start, out end, the occurrence's placeholder)
+        for a, b, w in occ:
+            i0 = bisect_right(starts, a) - 1
+            i1 = bisect_right(starts, b - 1) - 1
+            covered = segs[i0 : i1 + 1]
+            if any(s[4] == "" for s in covered):
+                continue  # crosses a separator
+            if all(s[4] is None for s in covered) or all(s[4] for s in covered):
+                continue  # free text only (the literal sweep's) or tokens only (nothing readable)
+            s0, s1 = segs[i0], segs[i1]
+            oa = s0[2] if s0[4] else s0[2] + (a - s0[0])
+            ob = s1[3] if s1[4] else s1[2] + (b - s1[0])
+            hits.append((oa, ob, rules[w][1]))
+        if deep:
+            hits += self._deep_hits(out, toks, deep, deadline, work)
+        if not hits:
+            return []
+        hits.sort()
+        groups: list[list] = []  # [start, end, [hits]]
+        for h in hits:
+            if groups and h[0] < groups[-1][1]:
+                groups[-1][1] = max(groups[-1][1], h[1])
+                groups[-1][2].append(h)
+            else:
+                groups.append([h[0], h[1], [h]])
+        result: list[tuple[int, int, str, str | None]] = []
+        for start, end, members in groups:
+            inside = [(m.start(), m.group(1)) for m in _PLACEHOLDER.finditer(out, start, end)]
+            secret = any(_kind(tok) in SECRET_KINDS for _, tok in inside) or any(
+                _kind(h[2]) in SECRET_KINDS for h in members
+            )
+            kind = "SECRET" if secret else _kind(inside[0][1])
+            masked = None if self._may_register else self._masked(start, end, inside, members)
+            result.append((start, end, kind, masked))
+        return result
+
+    def _deep_hits(
+        self,
+        out: str,
+        toks: list[tuple[int, int, str]],
+        deep: list[tuple[int, bool, str]],
+        deadline: float | None,
+        work: list[int],
+    ) -> list[tuple[int, int, str]]:
+        """G9: the occurrences of the rules longer than the reach + 1 (`self._long`) that reach DEEPER than the reach into a cut run.
+        Such an occurrence holds the anchor of its edge (the reach's characters of the run there and the free character beside them),
+        so the anchor is searched in the rule (once per distinct anchor and rule: `len(w)` units, `len(anchor)` more per place found); at each
+        place the rule is compared whole with the text read back on both sides of the edge (`_expand`; `2 * len(w) + 2` units per
+        comparison). One unit per (edge, long rule). Returns hits as `_overlaps` makes them: (out start, out end, placeholder)."""
+        reach = defaults.SPELLED_READBACK_REACH
+        rules = self._rules
+        starts = [t[0] for t in toks]
+        found: dict[tuple[str, str], list[int]] = {}
+        hits: list[tuple[int, int, str]] = []
+        for b, right, anchor in deep:
+            for w in self._long:
+                self._spend(work, 1, deadline)
+                at = found.get((anchor, w))
+                if at is None:
+                    self._spend(work, len(w), deadline)  # one search of the anchor in the rule
+                    at = []
+                    j = w.find(anchor)
+                    while j >= 0:
+                        self._spend(work, len(anchor), deadline)  # a further search starts there
+                        at.append(j)
+                        j = w.find(anchor, j + 1)
+                    found[(anchor, w)] = at
+                for j in at:
+                    k = j + reach if right else j + 1  # the characters of `w` before the edge
+                    self._spend(work, 2 * len(w) + 2, deadline)
+                    lt, lch = self._expand(out, toks, starts, b, k + 1, True)
+                    rt, rch = self._expand(out, toks, starts, b, len(w) - k + 1, False)
+                    if len(lt) < k or len(rt) < len(w) - k:
+                        continue  # the text read back ends (or a token that is not a key stands) before the rule would
+                    if lt[len(lt) - k :] != w[:k] or rt[: len(w) - k] != w[k:]:
+                        continue
+                    before, after = (
+                        lt[len(lt) - k - 1 : len(lt) - k],
+                        rt[len(w) - k : len(w) - k + 1],
+                    )
+                    joins = _joins(rules[w][1])  # G8: the literal sweep's rule
+                    if rules[w][2] is not _EVERY_COPY and (before in joins or after in joins):
+                        continue
+                    hits.append(
+                        (
+                            _out_at(lch, len(lt) - k, False),
+                            _out_at(rch, len(w) - k - 1, True),
+                            rules[w][1],
+                        )
+                    )
+        return hits
+
+    def _expand(
+        self,
+        out: str,
+        toks: list[tuple[int, int, str]],
+        starts: list[int],
+        b: int,
+        n: int,
+        left: bool,
+    ) -> tuple[str, list[tuple[int, int, int, bool]]]:
+        """G9: up to `n` characters of `out` read back (every key token put back whole) that end at out position `b` (`left`) or start
+        there; it stops at a token that is not a key and at the end of the text. Returns (text, chunks): a chunk is (offset in text,
+        out start, out end, is a token), in text order. The caller counts the characters (`_deep_hits`)."""
+        mapping = self.mapping
+        got = 0
+        # (piece, out start, out end, token), in walking order
+        chunks: list[tuple[str, int, int, bool]] = []
+        if left:
+            # the last token that starts before b (tokens never straddle b: b is an edge)
+            i = bisect_right(starts, b - 1) - 1
+            pos = b
+            while got < n:
+                ta, tb, tok = toks[i] if i >= 0 else (0, 0, "")
+                free = out[max(tb, pos - (n - got)) : pos]
+                if free:
+                    chunks.append((free, pos - len(free), pos, False))
+                    got += len(free)
+                if got >= n or i < 0 or tok not in mapping:
+                    break
+                value = mapping[tok]
+                piece = value[len(value) - min(len(value), n - got) :]
+                chunks.append((piece, ta, tb, True))
+                got += len(piece)
+                pos, i = ta, i - 1
+            chunks.reverse()
+        else:
+            i = bisect_right(starts, b - 1)  # the first token that starts at or after b
+            pos = b
+            while got < n:
+                ta, tb, tok = toks[i] if i < len(toks) else (len(out), len(out), "")
+                free = out[pos : min(ta, pos + (n - got))]
+                if free:
+                    chunks.append((free, pos, pos + len(free), False))
+                    got += len(free)
+                if got >= n or i >= len(toks) or tok not in mapping:
+                    break
+                piece = mapping[tok][: n - got]
+                chunks.append((piece, ta, tb, True))
+                got += len(piece)
+                pos, i = tb, i + 1
+        placed: list[tuple[int, int, int, bool]] = []
+        off = 0
+        for piece, o0, o1, is_tok in chunks:
+            placed.append((off, o0, o1, is_tok))
+            off += len(piece)
+        return "".join(c[0] for c in chunks), placed
+
+    @staticmethod
+    def _masked(
+        start: int, end: int, toks: list[tuple[int, str]], members: list[tuple[int, int, str]]
+    ) -> str:
+        """G9, the gate's form of one run: its tokens as they are; each free stretch replaced by the placeholders of a left-to-right cover
+        of it by the run's occurrences: at each point the SECRET-kind occurrence that covers it and reaches furthest, else the identifier
+        one that does (every free character of a run lies in an occurrence: a run is their union); the same placeholder twice in a row
+        written once. The occurrences are walked once, sorted (linear)."""
+        members = sorted(members)
+        parts: list[str] = []
+        # secret? -> (end, placeholder) of the occurrence reaching furthest among those begun so far
+        best: dict[bool, tuple[int, str] | None] = {True: None, False: None}
+        pos, i = start, 0
+        for t0, t1, tok in [(p, p + len(t), t) for p, t in toks] + [(end, end, "")]:
+            s = pos
+            while s < t0:  # the free stretch [pos, t0)
+                while i < len(members) and members[i][0] <= s:
+                    _, reach_end, placeholder = members[i]
+                    i += 1
+                    secret = _kind(placeholder) in SECRET_KINDS
+                    if best[secret] is None or reach_end > best[secret][0]:
+                        best[secret] = (reach_end, placeholder)
+                cover = best[True] if best[True] is not None and best[True][0] > s else best[False]
+                if not parts or parts[-1] != cover[1]:
+                    parts.append(cover[1])
+                s = cover[0]
+            if tok:
+                parts.append(tok)
+            pos = t1
+        return "".join(parts)
+
+    def _close(
+        self,
+        out: str,
+        spans: list[tuple[int, int, str, str | None]],
+        deadline: float | None,
+        work: list[int],
+    ) -> str:
+        """G9: replace each run of `_overlaps`. A redactor that may register: the run's value registered whole under its kind
+        (`_place_union(..., derived=False)`: no written form, no pieces), its characters counted BEFORE the value is built; the rules
+        are not rebuilt for it (every copy of its value holds the overlap that made it, which the read-back finds again and
+        `_place_union` answers from `reverse`). Any other (the gate's): the run's masked form."""
+        pieces: list[str] = []
+        last = 0
+        for start, end, kind, masked in spans:
+            if self._may_register:
+                size = (
+                    end
+                    - start
+                    + sum(
+                        len(self.mapping.get(m.group(1), m.group(1))) - (m.end() - m.start())
+                        for m in _PLACEHOLDER.finditer(out, start, end)
+                    )
+                )
+                self._spend(work, size, deadline)  # the union's value, before it is built
+                current = self._built_for == len(self.mapping)
+                placeholder = self._place_union(out[start:end], kind, derived=False)
+                if current:  # a G9 union needs no rule of its own: no rebuild of the finders for it (design M6)
+                    self._built_for = len(self.mapping)
+            else:
+                placeholder = masked
+                self._spend(work, end - start + len(placeholder), deadline)
             pieces += (out[last:start], placeholder)
             last = end
             self.actions += 1
@@ -1995,13 +2411,22 @@ class _Redactor:
 
         raise InputTooLarge("SpelledWorkTooMuch")
 
-    def _place_union(self, union: str, first: str) -> str:
-        """The placeholder of an overlap of written forms: `union` is the text of the whole run (`xyz<SECRET_1>ab`), registered as a compound
-        value of its own (its restored text is the value, its kind the kind of the first form's) unless that value has a placeholder already."""
+    def _place_union(self, union: str, kind: str, derived: bool = True) -> str:
+        """The placeholder of an overlap: `union` is the text of the whole run (`xyz<SECRET_1>ab`), registered under `kind` as a value of
+        its own (its restored text) unless that value has a placeholder already: then that placeholder, whatever its kind (as before G9).
+        `derived=False` (G9's unions): the value only, no written form and no pieces; its characters are counted per call
+        (`self._union_chars`) and the call is refused past `defaults.SPELLED_MAX_UNION_CHARS` (`InputTooLarge("SpelledUnionTooMuch")`,
+        nothing stored by the refused registration)."""
         full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), union)
         if full in self.reverse:
             return self.reverse[full]
-        return self._place(_kind(first), full, union)
+        if not derived:
+            if self._union_chars + len(full) > defaults.SPELLED_MAX_UNION_CHARS:
+                from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+                raise InputTooLarge("SpelledUnionTooMuch")
+            self._union_chars += len(full)
+        return self._place(kind, full, union if derived else full, derived)
 
     def _build(self) -> None:
         # the deadline of the sweep that triggered the build (`sweep` sets it), else the call's own, as before
@@ -2058,6 +2483,7 @@ class _Redactor:
                 )
         except (RecursionError, re.error, OverflowError):
             self._finders, self._slow = [], list(self._rules)  # the exact per-value loop
+        self._measure_rules()
         self._built_for = len(self.mapping)
         if self._cache is not None:
             self._cache["map"] = dict(self.mapping)
@@ -2091,16 +2517,30 @@ class _Redactor:
         # EVERY sweep, the first included. Checked in `_build`, every `_SPELL_CHECK_EVERY` units of work of the spelled-form scan
         # (a token of the text or a step of a trie walk, tokens with no form counted), every 32nd free segment (only when the map holds a value to look for) and before each value
         # replaced (InputTooLarge, nothing returned). A single `str.replace` or one finder pass over one segment is not interrupted.
-        if self._built_for != len(self.mapping):
-            self._build_deadline = deadline
-            try:
-                self._build()
-            finally:
-                self._build_deadline = None
+        # G9 (ORDER 023, E10): the body below runs in PASSES (`_sweep_once`); after each, the text is read back with every key of the map
+        # put back (`_overlaps`) and each run where a rule original covers a readable character and part of a token is replaced
+        # (`_close`). At most `defaults.SPELLED_MAX_PASSES` passes; a text that has not settled is refused, never returned.
+        # ONE work count for every pass of this call: spelled scans, read-backs, occurrences, the anchored check, unions
+        work = [0]
+        for _ in range(defaults.SPELLED_MAX_PASSES):
+            size = len(self.mapping)
+            out = self._sweep_once(out, deadline, work)
+            spans = self._overlaps(out, deadline, work)
+            if not spans and len(self.mapping) == size:
+                return out  # converged: this pass found no overlap and registered nothing
+            if spans:
+                out = self._close(out, spans, deadline, work)
+        from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+        raise InputTooLarge("SpelledNotSettled")
+
+    def _sweep_once(self, out: str, deadline: float | None, work: list[int]) -> str:
+        """One body of the sweep, as `sweep` was before G9: build if the map grew, the written forms, the literal sweep per free segment."""
+        self._ensure_built(deadline)
         # A compound secret found late (`Bearer <SECRET_1>xy` stored as V+xy): the first sweep already cut its other copies to
         # `<SECRET_1>xy`, which the whole value no longer matches. Its placeholder-spelled form goes first, as a literal on the
         # text before it is split at the placeholders (dz-2, cb-M4).
-        out = self._spelled_sweep(out, deadline)
+        out = self._spelled_sweep(out, deadline, work)
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
@@ -2138,6 +2578,18 @@ class _Redactor:
 
 
 _MAX_NESTING = 200
+_SEP = "\0"  # G9: a separator in the read-back text
+
+
+def _out_at(chunks: list[tuple[int, int, int, bool]], x: int, end: bool) -> int:
+    """G9: the out position of character `x` of a text `_Redactor._expand` built: the start (or, for an `end`, the end) of the token it
+    lies in, else its own position (+1 for an `end`)."""
+    off, o0, o1, is_tok = chunks[bisect_right([c[0] for c in chunks], x) - 1]
+    if is_tok:
+        return o1 if end else o0
+    return o0 + (x - off) + (1 if end else 0)
+
+
 # The most rounds (a pattern pass over the strings the previous round changed, then a sweep) `_Redactor.settle` makes after the first
 # sweep. A call is settled when some round within the cap changes no text, so the last CHANGING round that is accepted is round 3 (round
 # 4 confirms). A margin that fails closed, not a derived bound: over the generated compositions of 4 to 8 lines with a pre-seeded map
@@ -2388,6 +2840,7 @@ def redact_many(
     `_deadline`: as for `redact` (CPU clock; InputTooLarge past it). A `bank_near` flip during the first reading (a bank word found only
     in a folded view of string n) re-reads the strings before n only (n itself was read with the flag set), each after a deadline check; the strings after n were read with the flag set."""
     r = _Redactor(mapping, None, _deadline)
+    r._may_register = True
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
     near_before = r.bank_near
     found: list[str] = []

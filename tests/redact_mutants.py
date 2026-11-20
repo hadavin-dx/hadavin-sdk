@@ -271,6 +271,94 @@ M += [
     for cp in Q9_NAMES
 ]
 
+# ---- G9 (ORDER 023, E10): the sweep to a fixed point over the text read back (ticket G9-spelled-fixed-point-v3.md, section 10) ----
+# Mutant built directly with an explicit `pinned=` (as the E9 rows; the PREFIX table is not touched). Every `old` occurs once in redact.py.
+SL = "tests/test_redact_settle_loop.py"
+
+
+def g9(name, old, new, killer, expect):
+    return Mutant(
+        name,
+        RD,
+        old,
+        new,
+        expect,
+        test_file=SL,
+        only_test=killer,
+        pinned=f"tests/test_redact_settle_loop::{killer}",
+    )
+
+
+M += [
+    g9("G9-1 one pass more than the bound", "for _ in range(defaults.SPELLED_MAX_PASSES):",
+       "for _ in range(defaults.SPELLED_MAX_PASSES + 1):",
+       "test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused", "passes 5"),
+    g9("G9-2 the read-back removed", "            spans = self._overlaps(out, deadline, work)\n", "            spans = []\n",
+       "test_g9_two_overlapping_values_in_raw_text_are_masked_whole", "E10a: the raw overlap is not one entry"),
+    g9("G9-3 the refusal returns the text", '        raise InputTooLarge("SpelledNotSettled")', "        return out",
+       "test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused", "DID NOT RAISE"),
+    g9("G9-4 the gate registers", "            if self._may_register:\n", "            if True:\n",
+       "test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders",
+       "gate: not masked with existing placeholders"),
+    g9("G9-5 the pieces of the read-back not counted", "self._spend(work, len(piece), deadline)  # counted before it is held",
+       "self._spend(work, 0, deadline)  # counted before it is held",
+       "test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built", "DID NOT RAISE"),
+    g9("G9-7 the seeded keys not read back", "            if tok in mapping:\n",
+       '            if tok in mapping and int(tok[:-1].rsplit("_", 1)[1]) > 2:\n',
+       "test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else",
+       "a key given with the text was not read back"),
+    g9("G9-8 the union takes the first token's kind", 'kind = "SECRET" if secret else _kind(inside[0][1])',
+       "kind = _kind(inside[0][1])",
+       "test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first",
+       "the union of an address and a secret is not a SECRET"),
+    g9("G9-9 a held value registered again", "        if full in self.reverse:\n            return self.reverse[full]\n        if not derived:",
+       "        if not derived:",
+       "test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_whatever_its_kind",
+       "a held value got a second placeholder"),
+    g9("G9-10 the union registers pieces and its written form", "self._place_union(out[start:end], kind, derived=False)",
+       "self._place_union(out[start:end], kind, derived=True)",
+       "test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form", "the union registered more than its value"),
+    g9("G9-11 converged ignores map growth", "if not spans and len(self.mapping) == size:", "if not spans:",
+       "test_g9_a_pass_that_grew_the_map_is_not_the_last", "bodies 1"),
+    g9("G9-12 a short run cut in the middle", "elif lk + rk >= total:", "elif False:",
+       "test_g9_a_short_run_of_tokens_is_read_back_whole", "the short run was cut"),
+    g9("G9-13 the gate covers with identifiers first",
+       "cover = best[True] if best[True] is not None and best[True][0] > s else best[False]",
+       "cover = best[False] if best[False] is not None and best[False][0] > s else best[True]",
+       "test_g9_a_redactor_that_may_not_register_masks_an_identifier_overlap_with_the_identifiers_placeholders",
+       "an identifier was written where a secret covers"),
+    g9("G9-14 the count reads no clock",
+       "if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:", "if False:",
+       "test_g9_the_count_reads_the_clock_each_time_it_passes_a_multiple_of_1024", "DID NOT RAISE"),
+    g9("G9-15 the occurrences not counted", "self._spend(work, len(occ), deadline)", "self._spend(work, 0, deadline)",
+       "test_g9_the_read_back_counts_its_pieces_and_its_occurrences", "[16]"),
+    g9("G9-16 the finder groups read no clock",
+       "# between finder groups: a pass of a finder over E is not counted\n                self._over_budget(deadline)",
+       "# between finder groups: a pass of a finder over E is not counted\n                pass",
+       "test_g9_the_finder_groups_read_the_deadline_between_them", "DID NOT RAISE"),
+    g9("G9-17 the union counted by its length in the text", "self._spend(work, size, deadline)  # the union's value, before it is built",
+       "self._spend(work, end - start, deadline)  # the union's value, before it is built",
+       "test_g9_a_union_is_counted_with_its_whole_value_before_it_is_built", "[17]"),
+    g9("G9-18 the unions of a call not limited", "if self._union_chars + len(full) > defaults.SPELLED_MAX_UNION_CHARS:", "if False:",
+       "test_g9_the_unions_of_one_call_are_limited_in_characters_and_the_call_is_refused", "DID NOT RAISE"),
+    g9("G9-19 a union rebuilds the finders", "                    self._built_for = len(self.mapping)\n            else:",
+       "                    pass\n            else:", "test_g9_a_union_does_not_rebuild_the_finders", "builds [1"),
+    g9("G9-20 the anchor searched again at every edge", "found[(anchor, w)] = at", "pass",
+       "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[63079]"),
+    g9("G9-21 the anchored check removed", "hits += self._deep_hits(out, toks, deep, deadline, work)", "hits += []",
+       "test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check", "1100"),
+    g9("G9-22 the anchored comparisons not counted", "self._spend(work, 2 * len(w) + 2, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9_a_long_periodic_value_beside_its_own_period_is_refused_by_the_count", "DID NOT RAISE"),
+    g9("G9-23 the read-back reach removed", "keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)",
+       "keep = self._longest - 1",
+       "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[40002]"),
+    g9("G9-24 the read-back ignores the sweep's joins",
+       "            joins = _joins(rule[1])  # G8: the literal sweep's rule; a digit only, for a PHONE value\n",
+       "            joins = _ALNUM\n",
+       "test_g9_the_read_back_judges_a_phone_copy_by_the_sweeps_joins", "<PHONE_1>"),
+]  # fmt: skip
+
+
 if __name__ == "__main__":
     only = sys.argv[1:]
     if only and not any(o in mm.name for mm in M for o in only):
@@ -290,7 +378,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [F1, FB, FS, FP, FZ, FM, "tests/test_redact_own_output_hardening.py", G3],
+        [F1, FB, FS, FP, FZ, FM, "tests/test_redact_own_output_hardening.py", G3, SL],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,

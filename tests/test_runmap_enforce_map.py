@@ -176,24 +176,51 @@ def test_a_placeholder_inserted_in_this_pass_is_not_rewritten_by_a_later_shorter
         assert "<<" not in out and ">_" not in out
 
 
-def test_stated_limit_partial_overlap_leaves_a_tail():
-    """Trap 3, STATED LIMIT. `abcd` and `cdef` are both known and the text holds `abcdef`: neither contains
-    the other, so only one can be replaced and the rest of the other stays readable. Which one: the longer,
-    and for equal length the one that comes first in the map. A held-back value (a piece of one of the
-    map's placeholders) is the exception: it loses to a value that is not held back even when it is longer
-    (lead review round 2, m-new-3)."""
-    assert _enforce("abcdef", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"}) == "<SECRET_1>ef"
-    assert _enforce("abcdef", {"<SECRET_2>": "cdef", "<SECRET_1>": "abcd"}) == "ab<SECRET_2>"
-    assert _enforce("abcdefg", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdefg"}) == "ab<SECRET_2>"
-    # two identifiers: each is touched by a letter of the other, so NEITHER is replaced in the overlap ...
+def test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders():
+    """Trap 3, closed by G9 (E10). `abcd` and `cdef` are both known and the text holds `abcdef`: neither contains the other, so the sweep
+    replaces one and the other's rest stood readable (`<SECRET_1>ef`, `ab<SECRET_2>`: the stated limit pinned here before G9). The text read
+    back with the map's placeholders put back still holds the other value across the placeholder; the gate may not add an entry, so the
+    readable rest is replaced by the EXISTING placeholder of the value that covers it: `<SECRET_1><SECRET_2>` whatever the map order. The map
+    is not written (`_enforce` asserts it) and nothing readable is left. The same for an earlier call's output read with a value learned
+    since. A held-back value is not in the main sweep's map, so its rest stays HERE; the gate's net finds it (`held_value_left`)."""
+    assert (
+        _enforce("abcdef", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"}) == "<SECRET_1><SECRET_2>"
+    )
+    assert (
+        _enforce("abcdef", {"<SECRET_2>": "cdef", "<SECRET_1>": "abcd"}) == "<SECRET_1><SECRET_2>"
+    )
+    assert (
+        _enforce("abcdefg", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdefg"}) == "<SECRET_1><SECRET_2>"
+    )
+    assert (
+        _enforce("x <SECRET_1>ef y", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"})
+        == "x <SECRET_1><SECRET_2> y"
+    )
+    # two identifiers: each is touched by a letter of the other, so NEITHER is replaced in the overlap, and read back neither stands alone
     identifiers = {"<TENANT_1>": "abcd", "<TENANT_2>": "cdef"}
     assert _enforce("abcdef", identifiers) == "abcdef"
     # ... while each standalone copy still is
     assert _enforce("abcdef abcd cdef", identifiers) == "abcdef <TENANT_1> <TENANT_2>"
-    # the held-back value `SECRET_1` (8 characters) loses to the shorter `ET_1zz9` (7)
+    # the held-back value `SECRET_1` (8 characters) loses to the shorter `ET_1zz9` (7) in the sweep; the net sees the rest
     held_back = {"<SECRET_1>": "SECRET_1", "<SECRET_2>": "ET_1zz9"}
     assert _enforce("SECRET_1zz9", held_back) == "SECR<SECRET_2>"
+    assert runmap.held_value_left("SECR<SECRET_2>", runmap.snapshot(held_back))
     assert _enforce("SECRET_1 zz9", held_back) == "<SECRET_1> zz9"
+
+
+def test_trap3_an_overlap_of_two_identifiers_is_masked_with_their_placeholders():
+    """G9, L-D1 (CHANGED in G9 v3, design M4): a readable character covered only by an identifier is replaced by that identifier's EXISTING
+    placeholder: no refusal (v2 refused the text, and which pair refused depended on the map order), the map is not written. Restored,
+    the shared part of the two identifiers appears twice (a stated limit of the gate, model_gate's docstring). A secret and an identifier
+    give the same text in either map order."""
+    identifiers = {"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"}
+    assert _enforce("acme-prod-01-eu", identifiers) == "<TENANT_1><TENANT_2>"
+    assert _enforce("acme-prod-01 and prod-01-eu", identifiers) == "<TENANT_1> and <TENANT_2>"
+    for m in (
+        {"<SECRET_1>": "ab-cd", "<TENANT_1>": "cd-ef"},
+        {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd"},
+    ):
+        assert _enforce("x ab-cd-ef y", m) == "x <SECRET_1><TENANT_1> y", m
 
 
 def test_seed_entries_of_the_map_are_harmless():

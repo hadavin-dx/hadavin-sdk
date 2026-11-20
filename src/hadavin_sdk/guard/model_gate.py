@@ -35,9 +35,14 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   E::test_stated_limit_a_known_value_written_inside_angle_brackets_reads_as_a_placeholder
   E::test_r3_n7_stated_limit_digits_of_any_script_count_as_digits_and_as_placeholder_digits
 - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in `abcdef`):
-  one is replaced and the tail of the other stays (`<A_1>ef`); two identifiers there are both left. A value that
-  is a piece of one of the map's placeholders loses to any other value, even a shorter one.
-  E::test_stated_limit_partial_overlap_leaves_a_tail
+  since G9 the text read back with the map's placeholders put back is checked, and the readable rest is replaced
+  by the EXISTING placeholder of a value that covers it, a secret's where one does, else the identifier's
+  (`<SECRET_1><SECRET_2>`, `<TENANT_1><TENANT_2>`; the map is not written; restored, the shared part of two
+  identifiers appears twice). Two identifiers that touch each other there are both left. A value that is a piece
+  of one of the map's placeholders is not in the main sweep: its rest stays and the net (`held_value_left`)
+  refuses the call.
+  E::test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders
+  E::test_trap3_an_overlap_of_two_identifiers_is_masked_with_their_placeholders
 - A known value that begins with the tail of a placeholder (`>abc`) or ends with the head of one (`xyz<`) is
   replaced only where it stands clear of every placeholder: beside a placeholder written in the same call its
   tail stays readable (`<SECRET_1>abc`), but the placeholder is never cut open.
