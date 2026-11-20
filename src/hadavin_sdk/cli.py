@@ -171,6 +171,11 @@ def _main(argv: list[str] | None = None) -> int:
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
+        "--validate-constraints",
+        action="store_true",
+        help="only VALIDATE the stop-year constraints 0009 left NOT VALID (run as the owner, after any planted row is dealt with)",
+    )
+    mig.add_argument(
         "--no-roles",
         action="store_true",
         help="apply the schema naming no role (no role is granted or checked; do NOT use it on an existing deployment: old grants stay and nothing is checked); without it a migrate that names no role is refused",
@@ -247,16 +252,17 @@ def _main(argv: list[str] | None = None) -> int:
     if args.cmd == "migrate":
         return _migrate(
             cfg,
-            args.runtime_role,
-            args.portal_role,
-            args.purge_role,
-            args.reset_role,
-            args.release_role,
-            args.no_roles,
-            tuple(args.accept_admin_role),
-            args.caps_role,
-            tuple(args.accept_changed_draft),
-            args.reset_draft,
+            runtime_role=args.runtime_role,
+            portal_role=args.portal_role,
+            purge_role=args.purge_role,
+            reset_role=args.reset_role,
+            release_role=args.release_role,
+            caps_role=args.caps_role,
+            no_roles=args.no_roles,
+            accepted_admin_roles=tuple(args.accept_admin_role),
+            accept_changed_draft=tuple(args.accept_changed_draft),
+            reset_draft=args.reset_draft,
+            validate_constraints=args.validate_constraints,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -505,7 +511,8 @@ def _say(text: str) -> None:
 
 def _migrate(
     cfg,
-    runtime_role: str | None,
+    *,  # keyword only: a role name must never bind to a flag by position (no_roles, validate_constraints)
+    runtime_role: str | None = None,
     portal_role: str | None = None,
     purge_role: str | None = None,
     reset_role: str | None = None,
@@ -515,6 +522,7 @@ def _migrate(
     caps_role: str | None = None,
     accept_changed_draft: tuple[str, ...] = (),
     reset_draft: str | None = None,
+    validate_constraints: bool = False,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -527,8 +535,23 @@ def _migrate(
     if not dsn:
         print("refused: set HADAVIN_MIGRATE_DSN to the migration role's DSN", file=sys.stderr)
         return 2
-    if not no_roles and not any(
-        (runtime_role, portal_role, purge_role, reset_role, release_role, caps_role)
+    if validate_constraints and (
+        no_roles
+        or accepted_admin_roles
+        or accept_changed_draft
+        or reset_draft is not None
+        or any((runtime_role, portal_role, purge_role, reset_role, release_role, caps_role))
+    ):
+        print(
+            "refused: --validate-constraints only validates; do not combine it with a role flag, --no-roles, --accept-admin-role, "
+            "--accept-changed-draft or --reset-draft",
+            file=sys.stderr,
+        )
+        return 2
+    if not (
+        validate_constraints
+        or no_roles
+        or any((runtime_role, portal_role, purge_role, reset_role, release_role, caps_role))
     ):
         print(
             "refused: no role is named, so the check of who could clear a stop would be skipped; name the "
@@ -536,10 +559,24 @@ def _migrate(
             file=sys.stderr,
         )
         return 2
-    from hadavin_sdk.store.migrate import migrate
+    from hadavin_sdk.store.migrate import StopTablesBusy, migrate, validate_stop_constraints
     from hadavin_sdk.store.postgres import ca_file
 
     ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    if validate_constraints:
+        try:
+            done = validate_stop_constraints(
+                dsn,
+                iam_auth=store.iam_auth,
+                region=store.region,
+                sslmode=store.sslmode,
+                sslrootcert=ca,
+            )
+        except StopTablesBusy as exc:  # a condition to retry, not a refusal: exit 75, not 2
+            print(f"retry later: {exc}", file=sys.stderr)
+            return 75
+        _say(f"validated: {', '.join(done) or 'nothing (none was NOT VALID)'}")
+        return 0
     notes: list[str] = []
     try:
         applied = migrate(
@@ -561,6 +598,9 @@ def _migrate(
             notes=notes,
             on_role_change=lambda note: print(f"changed: {note}", file=sys.stderr),
         )
+    except StopTablesBusy as exc:  # the whole run was rolled back: retry later, not a refusal
+        print(f"retry later: {exc} (nothing was applied)", file=sys.stderr)
+        return 75
     finally:  # printed on a refusal too: the CI log is the record of who vouched
         for note in notes:
             _say(note)

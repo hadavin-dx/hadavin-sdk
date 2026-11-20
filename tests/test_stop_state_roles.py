@@ -277,7 +277,6 @@ def test_the_reset_role_holds_exactly_the_rights_of_the_ticket(w):
         "kill_switch_stops": {"SELECT"},
         "kill_switch_clears": {"SELECT", "INSERT"},
         "kill_switch_resets": {"SELECT", "INSERT"},  # 0009: the reset's own record
-        "kill_switch_watermark": {"SELECT", "INSERT", "UPDATE"},  # 0009
         "audit_entries": {"SELECT", "INSERT"},
         "audit_checkpoints": {"SELECT"},
     }
@@ -292,9 +291,7 @@ def test_the_other_roles_hold_exactly_their_rights_on_the_stop_relations(w):
         "kill_switch": {"SELECT"},
         "kill_switch_stops": {"SELECT", "INSERT"},
         "kill_switch_clears": {"SELECT"},
-        "kill_switch_watermark": {
-            "SELECT"
-        },  # 0009: read only; no right at all on kill_switch_resets
+        # 0009: no right at all on kill_switch_resets
     }
     for role in (w.portal, w.purge):
         assert not stop & set(w.rights(role)), role

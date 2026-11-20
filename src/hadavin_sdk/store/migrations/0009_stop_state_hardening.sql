@@ -1,5 +1,6 @@
--- Stop state hardening (step B, E12 Medium 3, Medium 4, Low 6). Schema only: the code that writes the reset
--- record and reads the watermark is a follow-up (tickets/B-stop-state.md, "B7 follow-up").
+-- Stop state hardening (step B, E12 Medium 3, Medium 4, Low 6). The reset record is written by
+-- `PostgresStore.clear_stops`. There is no watermark table: nothing ever read it (the gate read counts stops against
+-- clears, see `get_kill_switch`), so it was dead schema and a second truth next to the clears (review N3).
 --
 -- (1) The reset's own audit record. `kill_switch_resets` holds one row per reset, written ONLY by the reset role
 -- (INSERT; the runtime role holds nothing on it). It is the record that survives if the audit chain row of the reset
@@ -12,26 +13,19 @@ CREATE TABLE kill_switch_resets (
     audit_seq   BIGINT
 );
 
--- (2) A watermark so the gate read need not scan every stop ever made. One row (id is always true). The runtime
--- role READS it; only the reset role writes it: `through` is the newest stop time the last reset cleared. The
--- trigger below refuses a move backwards (a lower watermark would show cleared stops to the reader as open) and a
--- delete. Reader change: follow-up.
-CREATE TABLE kill_switch_watermark (
-    id      BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (id),
-    through TIMESTAMPTZ NOT NULL CHECK (isfinite(through) AND through BETWEEN '2000-01-01' AND '2100-01-01'),
-    at      TIMESTAMPTZ NOT NULL DEFAULT now() CHECK (isfinite(at) AND at BETWEEN '2000-01-01' AND '2100-01-01')
-);
--- the "open stops" read: WHERE ts > watermark ORDER BY ts, served by an index instead of a scan
+-- (2) The oldest-open-stop read (`ORDER BY s.ts, s.id`) is served by an index instead of a sort.
 CREATE INDEX kill_switch_stops_by_ts ON kill_switch_stops (ts);
 
 -- (3) Planted years (0100 BC, 20000) are refused on the stop tables. isfinite() alone left them valid.
 -- The constraints are NOT VALID: they are enforced for every NEW row, but the rows already there are not checked, so
 -- this migration cannot fail on a database that already holds a planted ts (the stop tables are append-only: such a row
--- could not be removed below a superuser, and the upgrade would be stuck). An operator validates later, once any such
--- row has been dealt with (docs/stop-state-runbook.md, "After the upgrade"):
---   ALTER TABLE kill_switch_stops  VALIDATE CONSTRAINT kill_switch_stops_ts_range;
---   ALTER TABLE kill_switch_clears VALIDATE CONSTRAINT kill_switch_clears_ts_range;
--- (VALIDATE fails, naming the constraint, while a bad row exists; it takes a SHARE UPDATE EXCLUSIVE lock only.)
+-- could not be removed below a superuser, and the upgrade would be stuck).
+-- This file never validates them (`ALTER TABLE ... VALIDATE CONSTRAINT` fails the upgrade on a planted row, and a
+-- conditional one needs a DO block, which the repo's statement lexer refuses). `migrate` does it right after the files
+-- (`settle_stop_constraints`): every constraint whose table holds no row outside the range is validated, silently,
+-- so a clean database ends validated; a database holding a planted row still upgrades and `migrate` warns, once per
+-- run, until the operator has dealt with the row and runs `hadavin-sdk migrate --validate-constraints`
+-- (`validate_constraints`; docs/stop-state-runbook.md, "After the upgrade").
 -- ADD CONSTRAINT takes a short ACCESS EXCLUSIVE lock on the (small) stop tables, and so does the index above.
 ALTER TABLE kill_switch_stops ADD CONSTRAINT kill_switch_stops_ts_range
     CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID;
@@ -41,21 +35,6 @@ ALTER TABLE kill_switch_clears ADD CONSTRAINT kill_switch_clears_ts_range
 CREATE OR REPLACE TRIGGER kill_switch_resets_append_only BEFORE UPDATE OR DELETE ON kill_switch_resets
     FOR EACH ROW EXECUTE FUNCTION hadavin_audit_append_only();
 CREATE OR REPLACE TRIGGER kill_switch_resets_no_truncate BEFORE TRUNCATE ON kill_switch_resets
-    FOR EACH STATEMENT EXECUTE FUNCTION hadavin_audit_append_only();
-
-CREATE OR REPLACE FUNCTION hadavin_watermark_guard() RETURNS trigger LANGUAGE plpgsql
-SET search_path = pg_catalog, pg_temp
-AS $fn$
-BEGIN
-    IF TG_OP = 'UPDATE' AND NEW.through >= OLD.through THEN
-        RETURN NEW;
-    END IF;
-    RAISE EXCEPTION 'the kill switch watermark only moves forward';
-END
-$fn$;
-CREATE OR REPLACE TRIGGER kill_switch_watermark_guard BEFORE UPDATE OR DELETE ON kill_switch_watermark
-    FOR EACH ROW EXECUTE FUNCTION hadavin_watermark_guard();
-CREATE OR REPLACE TRIGGER kill_switch_watermark_no_truncate BEFORE TRUNCATE ON kill_switch_watermark
     FOR EACH STATEMENT EXECUTE FUNCTION hadavin_audit_append_only();
 
 -- (1b) The second guard for a planted audit seq, and the same for audit_checkpoints. The chain (audit/chain.py

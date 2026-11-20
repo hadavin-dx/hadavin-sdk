@@ -123,7 +123,6 @@ RESET_ROWS = {
     "audit_entries": "SELECT, INSERT",
     "audit_checkpoints": "SELECT",
     "kill_switch_resets": "SELECT, INSERT",  # 0009: the reset's own append-only record
-    "kill_switch_watermark": "SELECT, INSERT, UPDATE",  # 0009: written by the reset only
 }
 
 
@@ -326,3 +325,120 @@ def test_b4_a_reset_ref_equal_to_the_runtime_secret_name_exits_2_and_builds_noth
         "backends.store.dsn_secret_name"
     )
     assert "The kill switch was not changed." in err
+
+
+def test_cli_validate_constraints_runs_only_the_validate_step(cfg_dir, monkeypatch):
+    """`migrate --validate-constraints` needs no role, calls the validate step and never `migrate`."""
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+    seen = []
+
+    def no_migrate(*a, **k):
+        raise AssertionError("migrate ran")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", no_migrate)
+    monkeypatch.setattr(
+        "hadavin_sdk.store.migrate.validate_stop_constraints",
+        lambda dsn, **kw: seen.append(dsn) or ["kill_switch_stops_ts_range"],
+    )
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--validate-constraints"]) == 0
+    assert seen == ["postgresql://unused"]
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        ["--runtime-role", "rt"],
+        ["--no-roles"],
+        ["--accept-admin-role", "x"],
+        ["--accept-changed-draft", "0009_stop_state_hardening"],
+        ["--reset-draft", "0009_stop_state_hardening"],
+        ["--reset-draft", ""],
+    ],
+)
+def test_cli_validate_constraints_refuses_to_be_combined_with_role_flags(
+    cfg_dir, monkeypatch, extra
+):
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+
+    def boom(*a, **k):
+        raise AssertionError("ran")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", boom)
+    monkeypatch.setattr("hadavin_sdk.store.migrate.validate_stop_constraints", boom)
+    argv = ["--config", str(cfg_dir), "migrate", "--validate-constraints", *extra]
+    assert cli.main(argv) == 2
+
+
+def test_cli_validate_constraints_exits_75_for_a_busy_table_not_2(cfg_dir, monkeypatch):
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+
+    def busy(*a, **k):
+        raise migrate_mod.StopTablesBusy("locked by a long transaction")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.validate_stop_constraints", busy)
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--validate-constraints"]) == 75
+
+
+def test_cli_passes_every_migrate_flag_by_keyword(cfg_dir, monkeypatch):
+    """A role name must never bind to `no_roles` or `validate_constraints` by position (a parallel branch adds a
+    parameter to `_migrate`): every value is passed by keyword and the signature has no positional slot."""
+    import inspect
+
+    seen = {}
+
+    def fake(cfg, *args, **kw):
+        seen["args"], seen["kw"] = args, kw
+        return 0
+
+    monkeypatch.setattr(cli, "_migrate", fake)
+    argv = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        *("--runtime-role", "rt", "--portal-role", "pt", "--purge-role", "pu"),
+        *("--reset-role", "rs", "--release-role", "re", "--accept-admin-role", "aa"),
+        *("--accept-changed-draft", "0009_x", "--reset-draft", "0010_y"),
+    ]
+    assert cli.main(argv) == 0
+    assert seen["args"] == ()
+    assert seen["kw"] == {
+        "runtime_role": "rt",
+        "portal_role": "pt",
+        "purge_role": "pu",
+        "reset_role": "rs",
+        "release_role": "re",
+        "no_roles": False,
+        "accepted_admin_roles": ("aa",),
+        "accept_changed_draft": ("0009_x",),
+        "reset_draft": "0010_y",
+        "validate_constraints": False,
+    }
+    monkeypatch.undo()
+    params = list(inspect.signature(cli._migrate).parameters.values())[1:]
+    assert all(p.kind is inspect.Parameter.KEYWORD_ONLY for p in params)
+
+
+def test_cli_migrate_exits_75_when_the_stop_tables_are_busy(cfg_dir, monkeypatch):
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+
+    def busy(*a, **k):
+        raise migrate_mod.StopTablesBusy("locked by a long transaction")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", busy)
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--no-roles"]) == 75

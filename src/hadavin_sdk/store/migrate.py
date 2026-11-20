@@ -7,6 +7,7 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -17,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from psycopg import errors, sql
+from psycopg import errors, pq, sql
 
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
@@ -93,10 +94,8 @@ GRANTS: dict[str, Grant] = {
     "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
     "kill_switch_stops": Grant("table", _APPEND, reset="SELECT"),
     "kill_switch_clears": Grant("table", "SELECT", reset=_APPEND),
-    # Stop state hardening (0009): the reset's own record (the runtime role holds nothing on it) and the watermark
-    # of cleared stops (the runtime role reads it; only the reset role writes it).
+    # Stop state hardening (0009): the reset's own record (the runtime role holds nothing on it).
     "kill_switch_resets": Grant("table", "", reset=_APPEND),
-    "kill_switch_watermark": Grant("table", "SELECT", reset="SELECT, INSERT, UPDATE"),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant(
         "table", _APPEND, portal=True, reset=_APPEND, release=_APPEND, caps=_APPEND
@@ -163,7 +162,6 @@ FUNCTION_GRANTS: dict[str, FunctionGrant] = {
 EXCLUDED_FUNCTIONS = (
     *TRIPWIRE_FUNCTIONS,
     "hadavin_audit_append_only()",
-    "hadavin_watermark_guard()",
 )
 # The relations the owner check compares with the function owner: a definer function that cannot write one of
 # them fails every call with insufficient_privilege.
@@ -412,7 +410,7 @@ def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
         what = sql.SQL(
             "SEQUENCE" if grant.kind == "sequence" else "TABLE"
         )  # a view is granted as a table
-        rel = sql.Identifier(name)
+        rel = sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(name))
         db.execute(sql.SQL("REVOKE ALL ON {} {} FROM {}").format(what, rel, role))
         if wanted := privileges(grant):
             db.execute(sql.SQL("GRANT {} ON {} {} TO {}").format(sql.SQL(wanted), what, rel, role))
@@ -623,6 +621,184 @@ def _check_stop_relations(db) -> None:
             f"{missing or 'none'}, names that resolve to another relation {shadowed or 'none'}). Run migrate "
             "with a search_path whose first existing schema holds the stop tables"
         )
+
+
+def _in_schema(db, table: str) -> sql.Composable:
+    """`current_schema()`.`table` as a quoted identifier pair (a bare name follows the search_path: see `_qualified`)."""
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    return sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(table))
+
+
+# The constraints 0009 adds NOT VALID (so an upgrade never fails on a planted row): (table, constraint).
+NOT_VALID_BY_DESIGN = (
+    ("kill_switch_stops", "kill_switch_stops_ts_range"),
+    ("kill_switch_clears", "kill_switch_clears_ts_range"),
+)
+
+
+def not_valid_constraints(db) -> list[tuple[str, str]]:
+    """The `NOT_VALID_BY_DESIGN` constraints of `current_schema()` that are still NOT VALID (review N2)."""
+    rows = db.execute(
+        "SELECT c.relname, k.conname FROM pg_catalog.pg_constraint k "
+        "JOIN pg_catalog.pg_class c ON c.oid = k.conrelid "
+        "JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = pg_catalog.current_schema() AND NOT k.convalidated"
+    ).fetchall()
+    return [pair for pair in NOT_VALID_BY_DESIGN if tuple(pair) in {tuple(r) for r in rows}]
+
+
+def planted_ts_rows(db) -> list[tuple[str, str]]:
+    """Of the constraints still NOT VALID, those whose table holds a row outside the year range (the same test as
+    the constraint). Only these need an operator: a NOT VALID constraint with no such row is harmless."""
+    return [
+        (table, name)
+        for table, name in not_valid_constraints(db)
+        if db.execute(
+            sql.SQL(
+                "SELECT EXISTS (SELECT 1 FROM {} WHERE NOT (ts BETWEEN '2000-01-01' AND '2100-01-01'))"
+            ).format(_in_schema(db, table))
+        ).fetchone()[0]
+    ]
+
+
+def earlier_0009_leftovers(db) -> list[str]:
+    """The watermark table and its guard function that an EARLIER, unreleased 0009 made (review N3 removed them)."""
+    found = []
+    if db.execute(
+        "SELECT pg_catalog.to_regclass(pg_catalog.format('%I.kill_switch_watermark', pg_catalog.current_schema()))"
+    ).fetchone()[0]:
+        found.append("kill_switch_watermark")
+    if db.execute(
+        "SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n "
+        "ON n.oid = p.pronamespace WHERE p.proname = 'hadavin_watermark_guard' "
+        "AND n.nspname = pg_catalog.current_schema())"
+    ).fetchone()[0]:
+        found.append("hadavin_watermark_guard()")
+    return found
+
+
+class StopTablesBusy(Exception):
+    """The validate step could not get its lock, or ran out of time (table locked by a long transaction, or very
+    large). A condition to retry, NOT a refusal: the CLI exits 75 for it, 2 for a `ConfigError`."""
+
+
+VALIDATE_LOCK_TIMEOUT = "5s"  # never queue behind a long writer and block the stop tables
+VALIDATE_STATEMENT_TIMEOUT = (
+    "60s"  # the check scans the table once; the stop tables are small (runbook)
+)
+
+
+def _validate_one(db, table: str, name: str) -> None:
+    db.execute(
+        sql.SQL("ALTER TABLE {} VALIDATE CONSTRAINT {}").format(
+            _in_schema(db, table), sql.Identifier(name)
+        )
+    )
+
+
+@contextlib.contextmanager
+def _stop_timeouts(db):
+    """Set the lock and statement timeouts for the validation step only (`set_config(..., true)`, the same effect
+    as `SET LOCAL`), and put the transaction's previous values back afterwards, also when the step raises
+    (`migrate` runs the step inside its one transaction: the grant and function steps after it must not inherit a
+    5 second lock limit). After a DATABASE error the transaction is aborted and refuses any statement: the restore
+    is skipped then (the caller rolls back) so the original error is never replaced by InFailedSqlTransaction."""
+    names = ("lock_timeout", "statement_timeout")
+    old = [db.execute("SELECT pg_catalog.current_setting(%s)", (n,)).fetchone()[0] for n in names]
+    db.execute(
+        "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
+        "pg_catalog.set_config('statement_timeout', %s, true)",
+        (VALIDATE_LOCK_TIMEOUT, VALIDATE_STATEMENT_TIMEOUT),
+    )
+    try:
+        yield
+    finally:
+        if db.info.transaction_status == pq.TransactionStatus.INTRANS:
+            db.execute(
+                "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
+                "pg_catalog.set_config('statement_timeout', %s, true)",
+                old,
+            )
+
+
+def _busy(exc: BaseException, what: str) -> StopTablesBusy:
+    return StopTablesBusy(
+        f"could not {what} ({type(exc).__name__}): the table is locked by a long transaction (waited "
+        f"{VALIDATE_LOCK_TIMEOUT}), the scan took longer than {VALIDATE_STATEMENT_TIMEOUT}, or the connection "
+        "failed; nothing was changed, run it again later"
+    )
+
+
+def _validate_mapped(db, table: str, name: str) -> None:
+    """`_validate_one` with the ONE mapping of its errors, shared by `settle_stop_constraints` (plain `migrate`) and
+    `validate_constraints` (`--validate-constraints`): a planted row (CheckViolation) or a login that is not the
+    table owner (InsufficientPrivilege) is a refusal (ConfigError, exit 2); a lock wait, a time limit or a lost
+    connection (OperationalError) is `StopTablesBusy` (exit 75)."""
+    try:
+        _validate_one(db, table, name)
+    except (errors.CheckViolation, errors.InsufficientPrivilege) as exc:
+        raise ConfigError(
+            f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
+            "2100-01-01, or this login is not the table owner); deal with that first and run it again"
+        ) from None
+    except errors.OperationalError as exc:
+        raise _busy(exc, f"validate {name} on {table}") from None
+
+
+def settle_stop_constraints(db) -> list[tuple[str, str]]:
+    """Run by `migrate` after the files: VALIDATE (silently) every constraint of `NOT_VALID_BY_DESIGN` that is still
+    NOT VALID and whose table holds no row outside the year range, and return the ones that do (the caller warns
+    about those only). This is why 0009 itself is plain SQL with no DO block: the repo's statement lexer refuses
+    DO, and a conditional VALIDATE cannot be written without it. The lock and statement timeouts apply to this
+    step only. Errors are mapped as in `_validate_mapped`; a login that may not read the stop tables is a refusal
+    too (migrate rolls back as a whole in every case). `planted_ts_rows` and the loop each read the catalog list
+    once more: both read the same transaction snapshot, and the list is two names."""
+    with _stop_timeouts(db):
+        try:
+            planted = planted_ts_rows(db)
+            for pair in not_valid_constraints(db):
+                if pair not in planted:
+                    _validate_mapped(db, *pair)
+        except errors.InsufficientPrivilege as exc:
+            raise ConfigError(
+                f"cannot read the stop tables: {type(exc).__name__} (this login is not the table owner); "
+                "run migrate as the owner of the stop tables"
+            ) from None
+        except errors.OperationalError as exc:
+            raise _busy(exc, "validate the stop-year constraints") from None
+    return planted
+
+
+def validate_constraints(db) -> list[str]:
+    """VALIDATE every constraint `not_valid_constraints` lists; return their names. Run as the table owner, as a
+    step of its own (`hadavin-sdk migrate --validate-constraints`): a planted row (CheckViolation) or a login that
+    is not the table owner (InsufficientPrivilege) is a refusal (ConfigError); the stop tables must be in
+    `current_schema()` (else ConfigError); a lock wait, a time limit or a lost connection is `StopTablesBusy`."""
+    missing = [
+        table
+        for table, _ in NOT_VALID_BY_DESIGN
+        if not db.execute(
+            "SELECT pg_catalog.to_regclass(pg_catalog.format('%%I.%%I', pg_catalog.current_schema(), %s::text))",
+            (table,),
+        ).fetchone()[0]
+    ]
+    if missing:
+        raise ConfigError(
+            f"the stop tables are not in the schema this connection uses ({', '.join(missing)} missing): run "
+            "hadavin-sdk migrate first, and check the search_path of HADAVIN_MIGRATE_DSN"
+        )
+    done = []
+    with _stop_timeouts(db):
+        for table, name in not_valid_constraints(db):
+            _validate_mapped(db, table, name)
+            done.append(name)
+    return done
+
+
+def validate_stop_constraints(dsn: str, **connect_args) -> list[str]:
+    """Open the owner's connection and `validate_constraints` in one transaction (the CLI's `--validate-constraints`)."""
+    with connect(dsn, **connect_args) as db, db.transaction():
+        return validate_constraints(db)
 
 
 def who_else_can_clear(
@@ -852,10 +1028,20 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+def _qualified(db, name: str) -> str:
+    """`name` (a function signature or a table name) prefixed with `current_schema()`, quoted: a bare name is
+    resolved through the whole search_path, so with an odd one it finds ANOTHER schema's object of that name and the
+    step would alter, grant on or read it. Every catalog lookup and every ALTER / GRANT / REVOKE on one of OUR
+    objects goes through this."""
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    return '"' + schema.replace('"', '""') + '".' + name
+
+
 def _pin_search_path(db, signature: str) -> None:
     """Pin the search path of one function of ours to pg_catalog, this schema, pg_temp (temp schema LAST): the file
     cannot know the schema, so every migrate run does it again (a hand-run CREATE OR REPLACE resets it)."""
-    fn = sql.SQL(signature)
+    qualified = _qualified(db, signature)
+    fn = sql.SQL(qualified)
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     try:
         db.execute(
@@ -866,7 +1052,7 @@ def _pin_search_path(db, signature: str) -> None:
     except errors.InsufficientPrivilege as exc:
         owner = db.execute(
             "SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid = to_regprocedure(%s)",
-            (signature,),
+            (qualified,),
         ).fetchone()[0]
         raise ConfigError(
             f"cannot pin the search path of {signature}: it is owned by {owner}, and only its owner (or a "
@@ -878,7 +1064,10 @@ def _pin_money_guard(db) -> None:
     """The trigger functions of 0009 (audit seq, checkpoint) and 0010 (money guard): each is pinned like the release
     function's. A database from before the migration that creates one has none, and nothing is done for it."""
     for signature in TRIPWIRE_FUNCTIONS:
-        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
+        if (
+            db.execute("SELECT to_regprocedure(%s)", (_qualified(db, signature),)).fetchone()[0]
+            is not None
+        ):
             _pin_search_path(db, signature)
 
 
@@ -886,7 +1075,10 @@ def _pin_money_functions(db) -> None:
     """The five money functions of 0011, pinned like the tripwire functions on EVERY run (also when 0011 is already
     applied). A database from before 0011 has none, and nothing is done for it."""
     for signature in MONEY_FUNCTIONS:
-        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
+        if (
+            db.execute("SELECT to_regprocedure(%s)", (_qualified(db, signature),)).fetchone()[0]
+            is not None
+        ):
             _pin_search_path(db, signature)
 
 
@@ -947,7 +1139,7 @@ def _unmapped_rows(db) -> list[tuple[int, str, str, list[str]]]:
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     known = set()
     for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS):
-        row = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        row = db.execute("SELECT to_regprocedure(%s)::oid", (_qualified(db, sig),)).fetchone()[0]
         if row is not None:
             known.add(row)
     return [
@@ -1043,7 +1235,7 @@ def _unnamed_money_executors(db, named: list[str]) -> list[str]:
     problems: list[str] = []
     sigs = list(FUNCTION_GRANTS)
     for sig in sigs:
-        oid = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        oid = db.execute("SELECT to_regprocedure(%s)::oid", (_qualified(db, sig),)).fetchone()[0]
         if oid is None:
             continue
         if db.execute(
@@ -1080,7 +1272,7 @@ def _money_table_writers(db) -> list[str]:
     the definer functions (run as the owner) may write them. Names only."""
     problems: list[str] = []
     for table in ("spend", "spend_month", "spend_reservations"):
-        oid = db.execute("SELECT to_regclass(%s)::oid", (table,)).fetchone()[0]
+        oid = db.execute("SELECT to_regclass(%s)::oid", (_qualified(db, table),)).fetchone()[0]
         if oid is None:
             continue
         if db.execute(
@@ -1103,7 +1295,10 @@ def _money_table_writers(db) -> list[str]:
 def _seed_limits(db) -> None:
     """The rows the money functions read, from the Python constants, on every run (a changed default reaches the
     functions at the next migrate). A database without 0011 has no table, and nothing is done."""
-    if db.execute("SELECT to_regclass('hadavin_limits')").fetchone()[0] is None:
+    if (
+        db.execute("SELECT to_regclass(%s)", (_qualified(db, "hadavin_limits"),)).fetchone()[0]
+        is None
+    ):
         return
     limits = money_limits()
     for name, value in limits.items():
@@ -1123,9 +1318,10 @@ def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
     apply (`_apply_release_function`); it is checked here too."""
     _pin_money_functions(db)
     for signature, grant in FUNCTION_GRANTS.items():
-        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is None:
+        qualified = _qualified(db, signature)
+        if db.execute("SELECT to_regprocedure(%s)", (qualified,)).fetchone()[0] is None:
             continue
-        fn = sql.SQL(signature)
+        fn = sql.SQL(qualified)
         for kind, role in roles.items():
             if not role:
                 continue
@@ -1140,7 +1336,7 @@ def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
             can = (
                 db.execute(
                     "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
-                    (role, signature),
+                    (role, qualified),
                 ).fetchone()[0]
                 if role
                 else False
@@ -1156,9 +1352,10 @@ def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
 def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
     """EXECUTE on the release function: the release role gets it, every other named role loses it, and a named
     role that can still run it (through PUBLIC or a role it is a member of) is refused."""
-    if db.execute("SELECT to_regprocedure(%s)", (RELEASE_FUNCTION,)).fetchone()[0] is None:
+    release = _qualified(db, RELEASE_FUNCTION)
+    if db.execute("SELECT to_regprocedure(%s)", (release,)).fetchone()[0] is None:
         return
-    fn = sql.SQL(RELEASE_FUNCTION)
+    fn = sql.SQL(release)
     # SECURITY DEFINER: the search path is pinned with the catalog first and the temp schema last, so neither a
     # temp table of the caller nor a writable schema can stand in for a money table or a catalog function.
     _pin_search_path(db, RELEASE_FUNCTION)
@@ -1171,7 +1368,7 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
     for role in others:
         if db.execute(
             "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
-            (role, RELEASE_FUNCTION),
+            (role, release),
         ).fetchone()[0]:
             raise ConfigError(f"{role} can run {RELEASE_FUNCTION}: only the release role may")
 
@@ -1430,6 +1627,15 @@ def migrate(
                 "schema_migrations table to the new file name); if its content changed too, drop what it made and "
                 "run migrate again"
             )
+        if left_over := earlier_0009_leftovers(db):
+            raise ConfigError(
+                f"database ran an earlier unreleased 0009 ({', '.join(left_over)} still exist): drop and recreate it "
+                "(or run: DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard() CASCADE;), "
+                "then run migrate again with --accept-changed-draft 0009_stop_state_hardening (the 0009 file changed "
+                "since that database applied it; the validation of the stop-year constraints then runs by itself, "
+                "or use --validate-constraints if migrate warns of a planted row); 0009 is unreleased, so there is "
+                "no 0012 for this"
+            )
         texts = {
             p: _read_migration(p) for p in files
         }  # each file read ONCE: what is hashed is what runs
@@ -1469,7 +1675,8 @@ def migrate(
             named
             and db.execute(
                 "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
-                "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                "WHERE p.pronamespace = (SELECT n.oid FROM pg_catalog.pg_namespace n "
+                "WHERE n.nspname = pg_catalog.current_schema()) AND p.proname = %s",
                 (RELEASE_FUNCTION.split("(")[0],),
             ).fetchone()[0]
         ):
@@ -1481,6 +1688,16 @@ def migrate(
             if notes is not None:
                 notes.append(owner_note)
         _seed_limits(db)
+        if left := settle_stop_constraints(
+            db
+        ):  # validates the clean ones; warns only for a planted row
+            warn = (
+                f"constraints NOT VALID because a row is outside the year range: {', '.join(n for _, n in left)}; "
+                "deal with that row, then run hadavin-sdk migrate --validate-constraints"
+            )
+            _LOG.warning("migrate: %s", warn)
+            if notes is not None:
+                notes.append(warn)
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
             if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):

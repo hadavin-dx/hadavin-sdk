@@ -1,7 +1,9 @@
 """Migration 0009 (stop state hardening, E12 Medium 3, Medium 4, Low 6) against a real PostgreSQL: the reset's own
-record table is writable by the reset role only, a planted audit seq or a planted stop year is refused, the watermark
-table and the stop index exist, and `migrate` applies the file on a fresh schema and on an upgrade from 0008.
-Throwaway schema and roles with unique names, dropped after. Needs HADAVIN_TEST_PG_DSN; skipped without it."""
+record table is writable by the reset role only, a planted audit seq or a planted stop year is refused, the stop index
+exists, there is no watermark table, the stop-year constraints are added NOT VALID by the file and validated by
+`migrate` (silently when no row is bad, with one warning when one is), and `migrate` applies the file on a fresh
+schema and on an upgrade from 0008. Throwaway schema and roles with unique names, dropped after. Needs
+HADAVIN_TEST_PG_DSN; skipped without it."""
 
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ import psycopg
 from psycopg import errors, sql
 from psycopg.conninfo import make_conninfo
 
+from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as migrate_mod
 from hadavin_sdk.store.migrate import GRANTS, migrate
 
@@ -28,7 +31,6 @@ DENIED = errors.InsufficientPrivilege
 FILE_0009 = migrate_mod.MIGRATIONS / "0009_stop_state_hardening.sql"
 NEW_TABLES = (
     "kill_switch_resets",
-    "kill_switch_watermark",
     "hadavin_limits",
     "hadavin_caps",
 )  # 0009 and 0011
@@ -71,8 +73,13 @@ class World:
             db.execute(f"INSERT INTO audit_entries {ROW}", (seq, f"ev-{seq}-{uuid.uuid4().hex}"))
 
 
-def make_world():
+def make_world(mixed=False):
     w = World()
+    if (
+        mixed
+    ):  # a schema name that needs quoting: the catalog names must never be re-parsed from text
+        w.schema = f"E7_Mixed_{w.sfx}"
+        w.scoped = make_conninfo(w.dsn, options=f'-c search_path="{w.schema}"')
     with psycopg.connect(w.dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(w.schema)))
         for r in w.roles:
@@ -126,26 +133,303 @@ def test_runtime_cannot_insert_into_the_reset_record_but_the_reset_role_can(w):
 def test_grant_rows_say_the_same(w):
     assert GRANTS["kill_switch_resets"].runtime == ""
     assert GRANTS["kill_switch_resets"].reset == "SELECT, INSERT"
-    assert GRANTS["kill_switch_watermark"].runtime == "SELECT"
+    assert "kill_switch_watermark" not in GRANTS
 
 
-def test_watermark_is_written_by_the_reset_role_only_and_never_goes_back(w):
-    ins = "INSERT INTO kill_switch_watermark (through) VALUES ('2026-01-02')"
-    with w.as_(w.runtime) as db:
-        with pytest.raises(DENIED):
-            db.execute(ins)
-        assert db.execute("SELECT count(*) FROM kill_switch_watermark").fetchone()[0] == 0
-    with w.as_(w.reset) as db:
-        db.execute(ins)
-        db.execute("UPDATE kill_switch_watermark SET through = '2026-02-01'")
-        with pytest.raises(psycopg.errors.RaiseException):
-            db.execute("UPDATE kill_switch_watermark SET through = '2026-01-01'")
-        with pytest.raises(psycopg.errors.CheckViolation):
-            db.execute("UPDATE kill_switch_watermark SET through = '20000-01-01'")
-        with pytest.raises(psycopg.errors.CheckViolation):
+def test_there_is_no_watermark_table_and_no_guard_function(w):
+    """Review N3: nothing read the watermark, so it is gone (and its trigger function with it)."""
+    rel = w.run("SELECT to_regclass(%s)::text", (f"{w.schema}.kill_switch_watermark",))[0][0]
+    fn = w.run(
+        "SELECT count(*) FROM pg_proc WHERE proname = 'hadavin_watermark_guard' AND pronamespace = %s::regnamespace",
+        (w.schema,),
+    )[0][0]
+    assert (rel, fn) == (None, 0)
+
+
+STOP_YEAR_CONSTRAINTS = ["kill_switch_clears_ts_range", "kill_switch_stops_ts_range"]
+
+
+def _validated(w):
+    """The names of the stop-year constraints PostgreSQL itself calls validated (not our own helper)."""
+    return sorted(
+        r[0]
+        for r in w.run(
+            "SELECT k.conname FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace "
+            "WHERE k.conname = ANY(%s) AND k.convalidated AND n.nspname = %s",
+            (STOP_YEAR_CONSTRAINTS, w.schema),
+        )
+    )
+
+
+def make_not_valid(w, plant=None, tables=("kill_switch_stops", "kill_switch_clears")):
+    """What an upgrade from before 0009 can leave: the check dropped, an optional planted stop ts, the check back
+    NOT VALID."""
+    with w.admin() as db:
+        for table in tables:
+            db.execute(f"ALTER TABLE {table} DROP CONSTRAINT {table}_ts_range")
+        if plant:
+            db.execute("INSERT INTO kill_switch_stops (ts) VALUES (%s)", (plant,))
+        for table in tables:
             db.execute(
-                "INSERT INTO kill_switch_watermark (id, through) VALUES (false, '2026-01-01')"
+                f"ALTER TABLE {table} ADD CONSTRAINT {table}_ts_range "
+                "CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID"
             )
+
+
+def test_a_clean_database_ends_validated_and_migrate_is_silent(w):
+    notes: list[str] = []
+    w.migrate(notes=notes)
+    assert (
+        _validated(w) == STOP_YEAR_CONSTRAINTS
+    )  # the real 0009 validated both, read from pg_constraint
+    assert not any("NOT VALID" in n for n in notes), notes
+
+
+def test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_without_one(w):
+    make_not_valid(w, plant="0100-01-01 BC", tables=("kill_switch_stops",))
+    notes: list[str] = []
+    w.migrate(notes=notes)
+    warned = [n for n in notes if "NOT VALID" in n]
+    assert len(warned) == 1 and "kill_switch_stops_ts_range" in warned[0], notes
+    assert "kill_switch_clears_ts_range" not in warned[0]  # that table has no planted row
+    assert "--validate-constraints" in warned[0]
+    with (
+        w.admin() as db
+    ):  # the owner here is a superuser, which can remove what the append-only trigger guards
+        db.execute("ALTER TABLE kill_switch_stops DISABLE TRIGGER USER")
+        db.execute("DELETE FROM kill_switch_stops WHERE ts < '2000-01-01'")
+        db.execute("ALTER TABLE kill_switch_stops ENABLE TRIGGER USER")
+    again: list[str] = []
+    w.migrate(notes=again)  # no bad row any more: migrate validates it by itself, silently
+    assert not any("NOT VALID" in n for n in again), again
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS
+
+
+def test_the_validate_step_validates_what_is_not_valid(w):
+    make_not_valid(w)
+    assert _validated(w) == []
+    done = migrate_mod.validate_stop_constraints(w.scoped)
+    assert sorted(done) == STOP_YEAR_CONSTRAINTS
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS  # read from pg_constraint, not from our helper
+    assert migrate_mod.validate_stop_constraints(w.scoped) == []  # idempotent
+
+
+def test_the_validate_step_refuses_naming_the_constraint_while_a_planted_row_exists(w):
+    make_not_valid(w, plant="0100-01-01 BC", tables=("kill_switch_stops",))
+    with pytest.raises(ConfigError, match="kill_switch_stops_ts_range"):
+        migrate_mod.validate_stop_constraints(w.scoped)
+    assert "kill_switch_stops_ts_range" not in _validated(w)
+
+
+def test_the_validate_step_gives_up_on_a_locked_table_as_a_retry_condition(w):
+    make_not_valid(w, tables=("kill_switch_stops",))
+    with w.admin() as blocker:
+        blocker.execute(
+            "SET idle_in_transaction_session_timeout = '40s'"
+        )  # the test cannot hang for ever
+        blocker.execute("BEGIN")
+        blocker.execute("LOCK TABLE kill_switch_stops IN ACCESS EXCLUSIVE MODE")
+        with pytest.raises(migrate_mod.StopTablesBusy, match="locked by a long transaction"):
+            migrate_mod.validate_stop_constraints(w.scoped)
+        blocker.execute("ROLLBACK")
+    assert "kill_switch_stops_ts_range" not in _validated(w)  # nothing was changed
+
+
+def test_the_validate_step_refuses_when_the_stop_tables_are_not_in_the_schema():
+    empty = make_world()  # a schema with nothing in it: a wrong search_path looks exactly like this
+    try:
+        with pytest.raises(ConfigError, match="stop tables are not in the schema"):
+            migrate_mod.validate_stop_constraints(empty.scoped)
+    finally:
+        drop_world(empty)
+
+
+def test_migrate_refuses_a_database_that_ran_an_earlier_unreleased_0009(w):
+    with w.admin() as db:
+        db.execute("CREATE TABLE kill_switch_watermark (id BOOLEAN PRIMARY KEY DEFAULT TRUE)")
+    with pytest.raises(
+        ConfigError,
+        match="earlier unreleased 0009.*kill_switch_watermark.*--accept-changed-draft 0009_stop_state_hardening",
+    ):
+        w.migrate()
+    with w.admin() as db:
+        db.execute("DROP TABLE kill_switch_watermark")
+        db.execute(
+            "CREATE FUNCTION hadavin_watermark_guard() RETURNS trigger LANGUAGE plpgsql "
+            "AS $f$ BEGIN RETURN NEW; END $f$"
+        )
+    with pytest.raises(ConfigError, match="hadavin_watermark_guard"):
+        w.migrate()
+
+
+def test_a_mixed_case_schema_is_found_by_the_validate_step_and_the_leftover_check():
+    mixed = make_world(mixed=True)
+    try:
+        mixed.migrate()
+        make_not_valid(mixed)
+        done = migrate_mod.validate_stop_constraints(mixed.scoped)
+        assert (
+            sorted(done) == STOP_YEAR_CONSTRAINTS
+        )  # a re-parsed schema name made this [] ("validated: nothing")
+        with mixed.admin() as db:
+            db.execute(
+                "CREATE FUNCTION hadavin_watermark_guard() RETURNS trigger LANGUAGE plpgsql "
+                "AS $f$ BEGIN RETURN NEW; END $f$"
+            )
+        with pytest.raises(ConfigError, match="hadavin_watermark_guard"):
+            mixed.migrate()  # the leftover check was blind in such a schema
+    finally:
+        drop_world(mixed)
+
+
+OLD_CHECKSUM = "0" * 64  # what a database that applied an earlier 0009 text recorded
+
+
+def _pretend_an_earlier_0009_text_was_applied(w):
+    with w.admin() as db:
+        db.execute(
+            "UPDATE schema_migrations SET checksum = %s WHERE version = '0009_stop_state_hardening'",
+            (OLD_CHECKSUM,),
+        )
+
+
+def test_after_dropping_the_leftovers_migrate_with_accept_changed_draft_succeeds_and_validates(w):
+    _pretend_an_earlier_0009_text_was_applied(w)
+    with w.admin() as db:  # what the earlier 0009 made
+        db.execute("CREATE TABLE kill_switch_watermark (id BOOLEAN PRIMARY KEY DEFAULT TRUE)")
+        db.execute(
+            "CREATE FUNCTION hadavin_watermark_guard() RETURNS trigger LANGUAGE plpgsql "
+            "AS $f$ BEGIN RETURN NEW; END $f$"
+        )
+    make_not_valid(w)  # and its constraints were still NOT VALID
+    with pytest.raises(ConfigError, match="--accept-changed-draft"):
+        w.migrate()
+    with w.admin() as db:  # the documented step 1
+        db.execute("DROP TABLE kill_switch_watermark CASCADE")
+        db.execute("DROP FUNCTION hadavin_watermark_guard() CASCADE")
+    w.migrate(accept_changed_draft=("0009_stop_state_hardening",))  # step 2
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS
+    row = w.run(
+        "SELECT checksum FROM schema_migrations WHERE version = '0009_stop_state_hardening'"
+    )
+    assert row[0][0] not in (None, OLD_CHECKSUM)  # the new text is now the recorded one
+
+
+def test_a_database_that_applied_an_earlier_0009_text_still_settles_while_the_checksum_warns(
+    w, caplog
+):
+    """The round 1 0009 (a DO block) and this one differ, so such a database has an old checksum: migrate warns
+    about the draft and must still run the settle step."""
+    _pretend_an_earlier_0009_text_was_applied(w)
+    make_not_valid(w)
+    with caplog.at_level("WARNING", logger="hadavin_sdk.migrate"):
+        w.migrate()
+    assert "differs from what this database applied" in caplog.text
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS
+
+
+def test_migrate_gives_up_on_a_locked_stop_table_as_a_retry_condition_and_applies_nothing(w):
+    make_not_valid(w, tables=("kill_switch_stops",))
+    before = w.run("SELECT count(*) FROM schema_migrations")[0][0]
+    with w.admin() as blocker:
+        blocker.execute("SET idle_in_transaction_session_timeout = '15s'")  # cannot hang the suite
+        blocker.execute("BEGIN")
+        blocker.execute("LOCK TABLE kill_switch_stops IN ACCESS EXCLUSIVE MODE")
+        with pytest.raises(migrate_mod.StopTablesBusy, match="locked by a long transaction"):
+            w.migrate()
+        blocker.execute("ROLLBACK")
+    assert w.run("SELECT count(*) FROM schema_migrations")[0][0] == before
+    assert "kill_switch_stops_ts_range" not in _validated(w)
+
+
+def test_the_settle_step_puts_the_transaction_timeouts_back(w):
+    make_not_valid(w)
+    with psycopg.connect(w.scoped) as db, db.transaction():
+        show = "SELECT current_setting('lock_timeout'), current_setting('statement_timeout')"
+        before = db.execute(show).fetchone()
+        assert migrate_mod.settle_stop_constraints(db) == []
+        assert db.execute(show).fetchone() == before  # the grant steps after it keep the old limits
+
+
+def test_the_validate_step_separates_a_lost_connection_from_a_refusal(w, monkeypatch):
+    make_not_valid(w, tables=("kill_switch_stops",))
+    for raised, expected in (
+        (
+            psycopg.OperationalError("server closed the connection unexpectedly"),
+            migrate_mod.StopTablesBusy,
+        ),
+        (errors.InsufficientPrivilege("must be owner of table kill_switch_stops"), ConfigError),
+        (errors.CheckViolation("check constraint is violated by some row"), ConfigError),
+    ):
+
+        def boom(db, table, name, raised=raised):
+            raise raised
+
+        with monkeypatch.context() as m:
+            m.setattr(migrate_mod, "_validate_one", boom)
+            with psycopg.connect(w.scoped) as db, db.transaction(), pytest.raises(expected):
+                migrate_mod.validate_constraints(db)
+
+
+def raw_0009_world(plant_stop=False, source=None):
+    """A scratch schema holding 0001-0008 run raw (no migrate, no roles), then the REAL 0009 text (or `source`)."""
+    schema = f"e7_r_{uuid.uuid4().hex[:10]}"
+    dsn = os.environ["HADAVIN_TEST_PG_DSN"]
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+    conn = psycopg.connect(make_conninfo(dsn, options=f"-c search_path={schema}"), autocommit=True)
+    try:
+        for path in migrate_mod._migration_files():
+            if path.name < "0009":
+                conn.execute(path.read_text(encoding="utf-8"))
+        if plant_stop:  # the year check of 0006 lets this through (isfinite only)
+            conn.execute("INSERT INTO kill_switch_stops (ts) VALUES ('0100-01-01 BC')")
+        conn.execute(source if source is not None else FILE_0009.read_text(encoding="utf-8"))
+        return conn, schema
+    except BaseException:
+        conn.close()
+        drop_raw(schema)
+        raise
+
+
+def drop_raw(schema):
+    with psycopg.connect(os.environ["HADAVIN_TEST_PG_DSN"], autocommit=True) as db:
+        db.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema)))
+
+
+def _validated_in(conn):
+    rows = conn.execute(
+        "SELECT k.conname FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace "
+        "WHERE k.conname = ANY(%s) AND k.convalidated AND n.nspname = current_schema()",  # other workers' schemas too
+        (STOP_YEAR_CONSTRAINTS,),
+    ).fetchall()
+    return sorted(r[0] for r in rows)
+
+
+def check_real_0009_then_settle(source=None):
+    """The real 0009 SQL leaves both constraints NOT VALID and never fails on a planted row; `settle_stop_constraints`
+    (what `migrate` runs next) then validates a clean table and leaves the planted one, which it reports."""
+    conn, schema = raw_0009_world(source=source)
+    try:
+        assert _validated_in(conn) == []
+        assert migrate_mod.settle_stop_constraints(conn) == []
+        assert _validated_in(conn) == STOP_YEAR_CONSTRAINTS
+    finally:
+        conn.close()
+        drop_raw(schema)
+    conn, schema = raw_0009_world(plant_stop=True, source=source)  # must not raise
+    try:
+        assert _validated_in(conn) == []
+        planted = migrate_mod.settle_stop_constraints(conn)
+        assert planted == [("kill_switch_stops", "kill_switch_stops_ts_range")]
+        assert _validated_in(conn) == ["kill_switch_clears_ts_range"]
+    finally:
+        conn.close()
+        drop_raw(schema)
+
+
+def test_the_real_0009_survives_a_planted_row_and_migrate_settles_the_constraints():
+    check_real_0009_then_settle()
 
 
 def test_the_open_stops_index_exists(w):
