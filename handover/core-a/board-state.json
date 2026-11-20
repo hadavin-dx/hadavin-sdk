@@ -802,28 +802,15 @@
    "reason": "EGM"
   },
   {
-   "id": "mutant-run-21",
-   "role": "evidence runner",
-   "model": "script",
-   "what exactly it is doing": "full endpoint_mutants.py on the d-fix26 tree (/tmp/mut-run21.log)",
-   "started UTC": "17:41",
-   "expected end": "35 min",
+   "id": "d-fix27",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "config/registry file OSError is fatal (exit 2) not store-down; nits (defaults refs, registry reload, scan)",
+   "started UTC": "17:45",
+   "expected end": "20 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "worker.py changed"
-  },
-  {
-   "id": "rev-dfix26",
-   "role": "reviewer",
-   "model": "sonnet",
-   "what exactly it is doing": "fresh round 3 of d-fix25+d-fix26 (worker.py)",
-   "started UTC": "17:41",
-   "expected end": "12 min",
-   "percent": 10,
-   "state": "running",
-   "review round n of cap": "3 of 5",
+   "review round n of cap": "fix of round 3",
    "retries so far": 0,
    "reason": "EGM"
   }
@@ -1649,6 +1636,19 @@
    "review round n of cap": "fix of round 2",
    "retries so far": 0,
    "reason": "d-fix26: tests/triggers 1139 passed 314 skipped; new file 72 passed (40 red before); check_run_values shared; senders checked before build; fatal config error in degraded start exit 2; 4 earlier tests edited (wording/stubs)"
+  },
+  {
+   "id": "rev-dfix26",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh round 3 of d-fix25+d-fix26 (worker.py)",
+   "started UTC": "17:41",
+   "expected end": "12 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "3 of 5",
+   "retries so far": 0,
+   "reason": "round 3: round-2 Major closed; 1 new Major (OSError on config/registry files treated as store down, retried forever); 4 nits; reviews/rev-dfix26-r3.md; d-fix27 started"
   }
  ]
 }
