@@ -168,7 +168,7 @@ def make_wsgi(settings: TriggerSettings, secrets, start: Start, clock=time.time)
 ```
 POLL_S = 0.05; MAX_WAITING = 128; MAX_RUNNING = 1; ACK_WAIT_S = 5.0              # worker.py:80, 93, 85, 89; constants, not config fields
 class Runner:                                                                     # worker.py:129
-    def __init__(self, runtime, store, max_running=1, ack_wait_s=5.0, *, poll_s=0.05, max_waiting=128)   # 132-165; ValueError unless max_running is a whole number and all are above zero; ack_wait_s at most 30 and not NaN (0 < ack_wait_s <= 30, DC1-7)
+    def __init__(self, runtime, store, max_running=1, ack_wait_s=5.0, *, poll_s=0.05, max_waiting=128)   # 132-165; ValueError unless max_running is a whole number and all are above zero; ack_wait_s at most 30 and not NaN (0 < ack_wait_s <= 30, DC1-7); `poll_s` must be between 0.01 and 1.0 (`POLL_S_MIN`, `POLL_S_MAX`), else ValueError (a ValueError from `Runner` becomes a ConfigError in `make_app`)
     def start(self, req: Accepted) -> tuple[int, dict[str, str]]                  # 206; never raises for a store or loop failure
     def close(self, wait_s=30.0) -> None                                          # 184; a `with` block calls it (178-182)
 def trigger_settings(config) -> settings                                          # 323; ConfigError when config.triggers is None or the config has no such field (d-fix3)
