@@ -8,7 +8,7 @@ Raw output of every command: handover/core-a/raw/capability-raw.txt and raw/capa
 - The project environment installs: `uv run --all-extras --group test python -c "import hadavin_sdk"` printed "import ok 3.13.18" (78 packages installed).
 - ruff 0.17.1 inside the project environment (the pinned one); a system ruff 0.16.9 also exists: use only the `uv run` one.
 - git 2.43.0. Fetch and push to this repo work through the session's git proxy (push to cloud/core-a succeeded 3 times).
-- PostgreSQL 16.15 server programs are installed (/usr/lib/postgresql/16/bin: initdb, pg_ctl, postgres, psql, pgbench) and a `postgres` system user exists (uid 102). They are not on PATH (only psql is). Starting a server was NOT tried yet: it needs a run as the postgres user because PostgreSQL refuses to start as root. UNVERIFIED until a ticket needs it.
+- PostgreSQL 16.15 server programs are installed (/usr/lib/postgresql/16/bin: initdb, pg_ctl, postgres, psql, pgbench) and a `postgres` system user exists (uid 102). They are not on PATH (only psql is). VERIFIED 05:23 UTC: as the postgres user, initdb, start on 127.0.0.1 port 55432, `select version()` (PostgreSQL 16.15) and stop all worked (raw/pg16-start-probe.txt). The probe data folder /tmp/claude-0/pgprobe1 (39M) is left in place: the session's safety check refused my delete command, the owner or lead may remove it.
 
 ## What this container CANNOT run
 - Docker: client 29.10.0 is installed but there is no daemon ("failed to connect to the docker API at unix:///var/run/docker.sock"). No containers, no testcontainers.
@@ -18,4 +18,4 @@ Raw output of every command: handover/core-a/raw/capability-raw.txt and raw/capa
 
 ## What this means for my steps
 - E and D unit tests (fake stores, signed requests) can run here on Python 3.13 and 3.12.
-- Tests that need real PostgreSQL 16 are possible in principle (UNVERIFIED, see above); the evidence campaign on real PostgreSQL 16 stays with the lead on the laptop (ORDER 004 item 6). PostgreSQL 14 and 17 runs: NOT possible here.
+- Tests that need real PostgreSQL 16 can run here (server start verified); the evidence campaign on real PostgreSQL 16 stays with the lead on the laptop (ORDER 004 item 6). PostgreSQL 14 and 17 runs: NOT possible here.

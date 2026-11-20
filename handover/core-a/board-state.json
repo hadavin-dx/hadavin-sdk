@@ -1,9 +1,9 @@
 {
- "order": "004 (002 and 003 standing)",
+ "order": "005 (002 to 004 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "when ticket E lands: cut wip/cloud-core-a/E from origin/main in its own worktree and build E; when ticket D lands: one EGM review round",
- "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches",
+ "next": "ticket E lands: build E on cloud/core-a in separate 'code E:' commits (ORDER 005 item 2); ticket D lands: one EGM review round with 2 reviewers",
+ "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -14,7 +14,7 @@
    "percent": 100,
    "evidence file": "CAPABILITY.md + raw/capability-raw*.txt",
    "tries": 1,
-   "reason": "probe ran once; docker and PostgreSQL 14/17 not available, see file"
+   "reason": "probe ran once; PostgreSQL 16 starts as non-root (verified); docker and PostgreSQL 14/17 not available"
   },
   {
    "item": "Q2",
@@ -128,7 +128,7 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 30,
+   "percent": 45,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -136,12 +136,12 @@
    "role": "builder (ticket writer, no code)",
    "what exactly it is doing": "T2-D: checks every line of the lead draft of ticket D against the code, writes tickets/D-signed-endpoint.md, gives the step H verdict",
    "expected end": "about 15 min after start",
-   "reason": "ORDER 004 item 3"
+   "reason": "ORDER 004 item 3; only 2 agents run because the other open items (H, T3, T4, build E) each wait on one of these two tickets or on core-b's interface"
   },
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 30,
+   "percent": 45,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -149,7 +149,7 @@
    "role": "builder (ticket writer, no code)",
    "what exactly it is doing": "T2-E: writes tickets/E-test-helpers.md (helpers, where they live, guard tests they could break)",
    "expected end": "about 12 min after start",
-   "reason": "ORDER 004 item 3, E is built first"
+   "reason": "ORDER 004 item 3, E is built first; only 2 agents run because the other open items (H, T3, T4, build E) each wait on one of these two tickets or on core-b's interface"
   }
  ],
  "tests": [],
