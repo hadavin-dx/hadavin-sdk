@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:52:10Z
+UPDATED_UTC: 2026-11-20T07:58:16Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 8
-CAPACITY: load 1.2 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 8, heavy agents 0
-DISK: / 59G free, 15% used; git worktrees 8; 99M	/tmp/claude-0;398M	/root/.cache/uv;
+AGENTS_RUNNING: 10
+CAPACITY: load 1.4 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 10, heavy agents 0
+DISK: / 59G free, 15% used; git worktrees 10; 99M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
-NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:51:01+00:00
+NEXT: gate4, g7fix3, g4C, sec4, fold evidence, p1dr2, g8, drift report; then G4 v3 draft, fresh reviews of fixes
+PUSHED_UTC: 2026-11-20T07:53:33+00:00
 
-(13:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:28 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -84,13 +84,16 @@ PUSHED_UTC: 2026-11-20T07:51:01+00:00
 | a997db3c | reviewer | (retired tier, run ended 06:36 UTC) | ORDER 001 dry run, comprehension review of the 3-line paragraph | 04:11 | 04:12 | 100 | done | 1 of 1 | 0 | proof only, finished |
 | (new) g7D | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-design) | 07:50 | 08:05 | 100 | done | 2 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
 | (new) g7C | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-codebase-details): callers, tests, deadline clock | 07:50 | 08:05 | 100 | done | 2 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
-| (new) g4R | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: implementation readiness | 07:55 | 08:10 | 2 | running | 2 | 0 | build P1c only after clean plan review |
+| (new) g4R | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: implementation readiness | 07:55 | 08:10 | 100 | done | 2 | 0 | reported: G4 v2 NOT READY, 2B/9M (G4-review-2.md) |
 | (new) g4C | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: codebase details | 07:55 | 08:10 | 2 | running | 2 | 0 | same |
 | (new) gfix4 | builder | claude-sonnet-5-5 | gate fix round 4 on review round 3 findings (model_gate.py, enforce functions, gate tests, ticket, request 3) | 07:52 | 08:40 | 1 | running | 4 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
 | (new) secC | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: comprehension | 08:00 | 08:12 | 100 | done | 3 | 0 | reported: wording v3 NOT READY (SEC-wording-review-3.md) |
 | (new) secS | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: style | 08:00 | 08:12 | 100 | done | 3 | 0 | reported: wording v3 NOT READY (SEC-wording-review-3.md) |
 | (new) g7fix3 | builder | claude-sonnet-5-5 | G7 fix round 3 (real fixed point, rollback ghost, spelled loop, deadline, stale text, tests) | 07:55 | 08:45 | 1 | running | 3 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
 | (new) sec4 | drafter | claude-opus-5-5 | wording v4 rewrite taking review round 3 (comprehension + style) | 07:58 | 08:30 | 1 | running | 4 | 0 | EGM draft step (opus drafter) |
+| (new) p1dr2 | builder | claude-sonnet-5-5 | P1d-a review items M6 (independent link oracle) and N1 | 08:00 | 08:40 | 1 | running | 1 | 0 | backlog 10: P1d-a M6/N1 |
+| (new) g8 | drafter | claude-opus-5-5 | ticket G8 glued-rest gap (IPv4, phone, IBAN, UUID, host) | 08:00 | 08:35 | 1 | running | 1 | 0 | backlog 10: glued-rest ticket |
+| (new) drift | auditor | claude-sonnet-5-5 | drift report G1-G3 and G7 documents against code at HEAD | 08:00 | 08:30 | 1 | running | 1 | 0 | EGM drift report per item |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
