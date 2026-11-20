@@ -344,10 +344,17 @@ def _sender_secrets(secrets: SecretProvider, names: set[str]) -> Callable[[str],
     def read(name: str) -> str:
         if name not in allowed:
             raise PermissionError("not one of the secret names under triggers.senders")
+        failed = False
+        value = ""
         try:
-            return secrets.get(name)
+            value = secrets.get(name)
         except Exception:  # noqa: BLE001 - a provider's own error may carry the name
+            failed = True
+        # raised AFTER the handler has ended: inside it, `from None` would hide the provider's error from a
+        # traceback but leave it in `__context__`, where its text (and the name) stays reachable
+        if failed:
             raise RuntimeError("sender secret unavailable") from None
+        return value
 
     return read
 

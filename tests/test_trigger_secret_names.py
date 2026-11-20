@@ -330,11 +330,6 @@ def test_without_a_triggers_block_every_name_is_refused(cfg_dir):
     assert provider.calls == []
 
 
-@pytest.mark.xfail(
-    reason="fix round 2 (RuntimeError('sender secret unavailable')) is not in this tree: the reader "
-    "lets the provider's own error through",
-    strict=True,
-)
 def test_a_provider_failure_surfaces_as_a_nameless_runtime_error(built):
     app, _, state = built
     state["fail"] = True

@@ -639,22 +639,23 @@ def test_the_gate_reads_the_mark_on_provider_exhausted():
     assert "ProviderExhausted" in text
 
 
-def test_a_provider_error_raised_by_the_adapters_own_call_is_wrapped_and_gets_the_normal_rule():
-    """N5: no pass-through path. Unmarked unless never sent or status-refused."""
+def test_a_provider_error_raised_by_the_adapters_own_call_passes_through_unmarked():
+    """N5 (corrected after the test writer's finding): `except ProviderError: raise` in with_retry is kept; a
+    ProviderError the adapter's own call raises passes through UNCHANGED and unmarked, whatever it carries
+    (the safe direction: the worst case stays booked). No built adapter raises one."""
     raised = ProviderError("openai_compat: KeyError")
     error, calls, _ = _run([raised])
-    assert error is not raised
-    assert error.__cause__ is raised
+    assert error is raised
     assert error.refused_before_response is False
     assert calls == 1
-    # raised after a never-sent attempt: still no mark (the error itself was neither never sent nor refused)
+    # after a never-sent attempt: still the same object, still unmarked
     raised = ProviderError("openai_compat: KeyError")
     error, calls, _ = _run([_refused(), raised])
-    assert error is not raised and calls == 2
+    assert error is raised and calls == 2
     assert error.refused_before_response is False
-    # a ProviderError carrying a refused status is status-refused
+    # even one that carries a refused status passes through unmarked (it is not with_retry's own error)
     raised = ProviderError("x")
     raised.status_code = 401
     error, _, _ = _run([raised])
-    assert error is not raised
-    assert error.refused_before_response is True
+    assert error is raised
+    assert error.refused_before_response is False

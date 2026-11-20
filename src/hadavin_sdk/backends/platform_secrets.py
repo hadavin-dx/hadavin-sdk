@@ -86,9 +86,12 @@ def check_senders(
         raise ConfigError("; ".join(shared))
     for sender_id, names in senders.items():
         for name in names:
+            unreadable = False
             try:
                 provider.get(name)
             except Exception:  # noqa: BLE001 - any provider failure is a start-up failure
+                unreadable = True
+            if unreadable:  # raised after the handler: the provider's error (and the name) is not in __context__
                 raise ConfigError(
                     f"{sender_field(sender_id)}: a named secret cannot be read at start-up"
                 ) from None
