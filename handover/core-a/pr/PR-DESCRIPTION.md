@@ -51,9 +51,9 @@ A signed HTTP door that starts one agent run per caller key. One worker process 
 - Runs in NEEDS_PERSON "interrupted". [src/hadavin_sdk/triggers/worker.py:36-39]
 - WARNING "trigger conflict events ... not written so far" when the cap is reached or a write is pending; the connection-cap WARNING at most once a minute. [src/hadavin_sdk/triggers/worker.py:408-415; src/hadavin_sdk/triggers/server.py:70]
 
-## Evidence (each number is quoted from the file named; run 20 is not read yet)
+## Evidence (each number is quoted from the file named)
 - Merged tree (core-b 463760813, core-a d1ee703ab, core-c bd7f9d978, then the door test support): `tests/triggers` with `HADAVIN_REQUIRE_PG=1` on PostgreSQL 16: 1374 passed, 4 skipped, 0 failed. [handover/core-a/INTEGRATION-DOOR-FIX.md:25-27]
-- Mutants: the last full run is in `handover/core-a/evidence/mutants-run19.md` (120 of 120 expected at 5a8c83fd3). See that file and run 20 when it lands. [handover/core-a/evidence/mutants-run19.md:2-3]
+- Mutants: the last full run is in `handover/core-a/evidence/mutants-run20.md` (120 of 120 expected at 05d727afb; run 19 gave the same at 5a8c83fd3). [handover/core-a/evidence/mutants-run20.md:2; handover/core-a/evidence/mutants-run19.md:3]
 - Crash matrix: `handover/core-a/CRASH-MATRIX.md` (Part 1 and Part 2), raw logs `raw/D-crash-matrix-pg16.log` and `raw/D-crash-matrix-paths-pg16.log`. [handover/core-a/CRASH-MATRIX.md:3; handover/core-a/CRASH-MATRIX.md:101]
 - Older whole-suite batch on core-a alone, head 6e61005db, `REQUIRE_PG=1 -n 3`: 12 failed, 12366 passed, 458 skipped, 75 xfailed. The 12 are 10 strict-mode tests that need core-b's `TriggerSettings`, the dblink test and the brand-string rule. [handover/core-a/evidence/BATCH10-summary.md:1-20]
 - Reviews: `handover/core-a/reviews/D-code-result-review-1..5.md`, `E-result-review-1..6.md`, `n8n-result-review-1.md`. n8n evidence: `handover/core-a/inputs/evidence-n8n-*.md`. Tested-state notes: `handover/core-a/TESTED-D.md`, `TESTED-n8n-E-T4.md`.
@@ -65,7 +65,7 @@ Stop the worker and remove the `triggers:` block from `config.yaml`: the worker 
 Run from the repo root.
 1. `HADAVIN_REQUIRE_PG=1 .venv/bin/python -m pytest tests/triggers tests/test_testing_crash.py tests/test_mutants_anchors.py -n 3`. [tests/triggers/test_t5_strict_mode.py:1-10]
 2. With a throwaway PostgreSQL, add `HADAVIN_TEST_PG_DSN=<superuser dsn>` to run the database and kill tests. Without it they skip. [tests/triggers/test_t5_postgres.py:1-12]
-3. `.venv/bin/python tests/endpoint_mutants.py` (mutation run, about 4 minutes; it ended with `120 of 120 run are as expected` and exit 0 in run 19). [handover/core-a/evidence/mutants-run19.md:2-3]
+3. `.venv/bin/python tests/endpoint_mutants.py` (mutation run, about 4 minutes; it ended with `120 of 120 run are as expected` and exit 0 in runs 19 and 20). [handover/core-a/evidence/mutants-run19.md:3; handover/core-a/evidence/mutants-run20.md:2]
 4. `ruff check`, `ruff format --check`, `bandit -ll`. [handover/core-a/evidence/BATCH10-summary.md:1-20]
 
 Known state:

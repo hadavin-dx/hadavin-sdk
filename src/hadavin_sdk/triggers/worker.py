@@ -4,7 +4,7 @@
 the run row and that row is for the same agent, principal and `trigger_ref` (same sender, key and document). The
 answer is always decided from the ROW, never from which exception the loop raised. 202 = the run is RECEIVED or
 WORKING, 200 = any later state, 409 = a row exists for the same key but another document (no run is written;
-one `trigger.conflict` audit event with ids and both payload hashes, at most 10 per sender per minute, see `_conflict`),
+one `trigger.conflict` audit event with ids and both payload hashes, at most `triggers.conflict_events_per_minute` per sender per minute (10 only for a directly built Runner), see `_conflict`),
 503 = store not reachable, or no row within `ack_wait_s` (not acknowledged; send again with the same key; it
 may already be running). A request that finds no free slot is not refused at once: it waits for the row like any other, because another
 request for the same key may be writing it right now. While it waits it looks for a free slot and for the row
@@ -49,8 +49,8 @@ The stdlib server is not hardened: by default it listens on 127.0.0.1 only (a ho
 `--allow-non-loopback`, see `check_bind`), and TLS is the job of the proxy in front of it.
 
 Settings: core-b's `config.triggers` (`TriggerSettings`) has `tenant`, `senders` (a mapping of sender id to
-sender; a sender has `secret_names`, `agent_id`, `principal_id`), `max_body_bytes`, `max_running` and
-`ack_wait_s`, and these are read by direct access: a config object without one is a start failure, not a
+sender; a sender has `secret_names`, `agent_id`, `principal_id`), `max_body_bytes`, `max_running`,
+`conflict_events_per_minute` and `ack_wait_s`, and these are read by direct access: a config object without one is a start failure, not a
 default. `host`, `port` and `allow_non_loopback` are command-line options (127.0.0.1, 8081, off); `poll_s` and
 `max_waiting` are the constants `POLL_S` and `MAX_WAITING` (arguments of `make_app` for a test). The secrets are
 read through `App.trigger_secret`.
@@ -570,6 +570,14 @@ def _field(obj: Any, name: str, where: str) -> Any:
         ) from None
 
 
+def check_fields(settings: Any) -> None:
+    """The fields core-b's `TriggerSettings` must have and that are read by direct access: a ConfigError when one is
+    missing. Run by `_build_app` before the store is built, so this error never depends on the store being up."""
+    for name in ("max_running", "conflict_events_per_minute"):
+        if not hasattr(settings, name):
+            raise ConfigError(f"triggers.{name} missing: core-b TriggerSettings required")
+
+
 def trigger_settings(config: Any) -> Any:
     """`config.triggers`, or a ConfigError when the block is missing (or the field is not on the config)."""
     settings = _field(config, "triggers", "config.triggers")
@@ -711,13 +719,8 @@ def make_app(
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
-    if not hasattr(settings, "max_running"):
-        raise ConfigError("triggers.max_running missing: core-b TriggerSettings required")
+    check_fields(settings)
     max_running = settings.max_running
-    if not hasattr(settings, "conflict_events_per_minute"):
-        raise ConfigError(
-            "triggers.conflict_events_per_minute missing: core-b TriggerSettings required"
-        )
     conflict_events_per_minute = settings.conflict_events_per_minute  # the one source (d-fix24)
     ack_wait_s = _field(settings, "ack_wait_s", "triggers.ack_wait_s")
     try:
@@ -886,7 +889,9 @@ def _build_app(args: argparse.Namespace) -> tuple[Any, Runner, Any]:
     from hadavin_sdk.registry import load_registry
 
     config = load_config(args.config_dir)
-    trigger_settings(config)  # before anything is built: no secret read, no connection
+    check_fields(
+        trigger_settings(config)
+    )  # before anything is built: no secret read, no connection
     host = args.host  # an empty --host is refused by `check_bind`, never turned into loopback
     port = args.port if args.port is not None else PORT
     check_port(port)

@@ -88,7 +88,7 @@ In plain words: the worker handles as many runs at a time as `triggers.max_runni
   call; until then two runs side by side could together go over a spending limit (the worker warns at start).
 - A second event that arrives while a run is going is not queued. The worker holds the request for up to
   `ack_wait_s` (default 5 seconds), in case the first run ends in that time, and then answers 503.
-- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:110, 329-331); a request over that gets an immediate 503.
+- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:112, 333-335); a request over that gets an immediate 503.
 ```
 
 NEW:
@@ -106,7 +106,7 @@ In plain words: the worker handles as many runs at a time as `triggers.max_runni
 - A second event that arrives while all `max_running` runs are going is not queued. The worker holds the request for
   up to `ack_wait_s` (default 5 seconds), in case a run ends in that time, and then answers 503. With
   `max_running` 1 this means a second event while one run is going.
-- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:110, 329-331); a request over that gets an immediate 503.
+- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:112, 333-335); a request over that gets an immediate 503.
 ```
 
 ## 5. README-t:3 and the other places that cite files under handover/ (lines 3, 78, 82, 88, 213, 371, 563, 598, 705, 848, 866, 867)

@@ -789,19 +789,6 @@
    "reason": "lead 17:02 order A7-A10"
   },
   {
-   "id": "grantfix2-r2",
-   "role": "builder (tests)",
-   "model": "sonnet",
-   "what exactly it is doing": "fix the 2 Majors + nits of rev-grantfix2 on wip/core-a-grant-fix2",
-   "started UTC": "17:14",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "fix of round 1",
-   "retries so far": 0,
-   "reason": "EGM"
-  },
-  {
    "id": "d-fix25",
    "role": "builder",
    "model": "sonnet",
@@ -811,6 +798,19 @@
    "percent": 5,
    "state": "running",
    "review round n of cap": "fix of round 1",
+   "retries so far": 0,
+   "reason": "EGM"
+  },
+  {
+   "id": "rev-grantfix2-r2",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh result review round 2 of grant-test fix 8d46ca14b",
+   "started UTC": "17:19",
+   "expected end": "10 min",
+   "percent": 10,
+   "state": "running",
+   "review round n of cap": "2 of 3",
    "retries so far": 0,
    "reason": "EGM"
   }
@@ -1532,6 +1532,19 @@
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "reason": "round 1: no Blocker, 2 Major (docstring says 10/min; ConfigError swallowed in degraded start so no exit 2), nits; reviews/rev-dfix22-24.md; fix d-fix25 started"
+  },
+  {
+   "id": "grantfix2-r2",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix the 2 Majors + nits of rev-grantfix2 on wip/core-a-grant-fix2",
+   "started UTC": "17:14",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix of round 1",
+   "retries so far": 0,
+   "reason": "fix round 1 done: wip/core-a-grant-fix2 8d46ca14b, 34 passed PG16 strict, 3 mutants killed, ruff clean"
   }
  ]
 }

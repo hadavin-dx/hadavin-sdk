@@ -677,9 +677,9 @@ In plain words: the worker handles as many runs at a time as `triggers.max_runni
   call; until then two runs side by side could together go over a spending limit (the worker warns at start).
 - A second event that arrives while a run is going is not queued. The worker holds the request for up to
   `ack_wait_s` (default 5 seconds), in case the first run ends in that time, and then answers 503.
-- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:110, 329-331); a request over that gets an immediate 503.
+- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:112, 333-335); a request over that gets an immediate 503.
 - Limit: the request header may be 16384 bytes in total including the blank line (16382 before it; server.py MAX_HEADER_BYTES); more gets 431.
-- 503 also comes when the app raised (endpoint.py ~382-384) and from the degraded worker while the store is down (worker.py ~1050).
+- 503 also comes when the app raised (endpoint.py ~382-384) and from the degraded worker while the store is down (worker.py:966-1038, `_Degraded`).
 - What 503 means: not acknowledged; send again with the same key; it may already be running. (In most cases
   nothing was stored. But a request that gets the free slot just before its wait is over can be answered 503
   although its run has started. The next send with the same key then finds that run and is answered 202 or 200.)
