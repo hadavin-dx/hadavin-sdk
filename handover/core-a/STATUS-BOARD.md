@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T14:41:30Z
+UPDATED_UTC: 2026-11-20T14:43:52Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 2
-CAPACITY: load 0.37 of 4 cores (1-minute average), mem 1.5/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 1
+CAPACITY: load 2.71 of 4 cores (1-minute average), mem 1.5/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 19%; 636M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T14:41:21Z (the push before this board)
+PUSHED_UTC: 2026-11-20T14:41:34Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,25 +107,23 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | cb-run1 | evidence runner (never judges) | sonnet | core-b PG-gated tests on PG16 (my box) vs the lead's NOT-GREEN PG17/PG15 evidence at 7e1b9750d -> evidence/b-run-1.md | 14:40 | 25 min | 5 | running | - | 0 | lead GO 14:40 |
-| rev-c-latest | fresh independent reviewer (codebase-details), read-only | sonnet | core-c fd1fb3e31 G4 tidy (5 mutants), efbc68675 R15 killer, 54c461ff8 p1d_a mutants | 14:40 | 12 min | 5 | running | 1 | 0 | lead GO 14:40 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 30422s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 30422s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 30422s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 30422s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 30422s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 30422s ago | running | matched by name in ps |
-| 26105 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 11s ago | running | matched by name in ps |
-| 26109 | /tmp/ca-b-run/.venv/bin/python /tmp/ca-b-run/.venv/bin/pytest -q -n 3  | core-a session or its agent | 11s ago | running | matched by name in ps |
-| 26183 | postgres: postgres postgres 127.0.0.1(39298) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26186 | postgres: postgres postgres 127.0.0.1(39324) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26188 | postgres: postgres postgres 127.0.0.1(39350) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26189 | postgres: postgres postgres 127.0.0.1(39362) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26204 | postgres: postgres postgres 127.0.0.1(39484) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26205 | postgres: postgres postgres 127.0.0.1(39494) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 30564s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 30564s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 30564s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 30564s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 30564s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 30564s ago | running | matched by name in ps |
+| 15289 | postgres: sb_rt_f4a38ab659 postgres 127.0.0.1(53034) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 15291 | postgres: sb_rt_f4a38ab659 postgres 127.0.0.1(53064) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 15546 | postgres: postgres postgres 127.0.0.1(54886) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 15551 | postgres: postgres postgres 127.0.0.1(54926) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 15557 | postgres: postgres postgres 127.0.0.1(54956) TRUNCATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 26105 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 153s ago | running | matched by name in ps |
+| 26109 | /tmp/ca-b-run/.venv/bin/python /tmp/ca-b-run/.venv/bin/pytest -q -n 3  | core-a session or its agent | 152s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -187,6 +185,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 14:45 core-c newest 3 commits reviewed (reviews/rev-c-latest.md, appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker; ONE Major: the E22 shortcut's trailing-text guard `_ONLY_PLACEHOLDERS.fullmatch` (runmap.py:839) has no mutant: `fullmatch -> match` survives all 5 new tests (feed '<ENCODED_1> password=<S12>'). Real kills: 5 new mutants, R15 killer (old one never reached line 1165), A43 killer. Running: cb-run1 only.
 - 14:40 GO taken: pulled; ORDERS.md/QUEUE.md have NO new commit since ORDER 023 (nothing new READY there). 2 agents: cb-run1 (core-b's PG-gated tests on my PG16 against your laptop's NOT-GREEN PG17/PG15 evidence at 7e1b9750d: do the failures reproduce on 16?) and rev-c-latest (core-c fd1fb3e31, efbc68675, 54c461ff8). README for the E-door-1 default is DONE (n8n/README-trigger.md, reviewed fresh, fixed). Board stays EVERY 5 MIN, not 1: your own 13:53 order (owner: Fable billing) lifted the 1-minute rule for me; tell me if the owner now wants 1 minute again.
 - 14:40 README poll section fixed (formula, approval_missing, wording, test pins tied to code; 93 n8n tests pass). No agents running. All reviews on your lists are delivered; open items are other lanes' decisions (my Major lists in handover/core-c/requests/xr-from-core-a-reviews-2.md and handover/core-b/requests/xr-from-core-a-reviews.md) and the owner's E-door-1. Waiting for new landed commits or orders.
 - 14:37 README poll section reviewed fresh: NO Blocker/Major, no overclaim (every sentence traced to code: re-POST poll, no external read path, 14 RunState names, E-door-1 consistent, numbers recomputed); minor/nits being fixed by readme-fix (two poll-duration formulas disagree, tick's approval_missing NEEDS_PERSON reason omitted, 'not stored' vs per-run redaction map, test pins only 5 phrases).
