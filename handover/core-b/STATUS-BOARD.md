@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:27:35Z
+UPDATED_UTC: 2026-11-20T09:28:34Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.17 of 4 cores, mem 1/15 GB, disk 51G free, 26% used, agents light 4 heavy 2
-DISK: / 51G free, 26% used; worktrees /tmp/core-b-wt 2.8G
+CAPACITY: load 1.33 of 4 cores, mem 1/15 GB, disk 51G free, 27% used, agents light 4 heavy 2
+DISK: / 51G free, 27% used; worktrees /tmp/core-b-wt 2.8G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T09:27:33Z (previous push; this board is pushed right after writing)
-IST: 14:57 IST
+PUSHED_UTC: 2026-11-20T09:28:31Z (previous push; this board is pushed right after writing)
+IST: 14:58 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
