@@ -1,7 +1,7 @@
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a0f43330 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/B-stop-state.md, compared with the built code | 05:43 | +6 min | UNVERIFIED | running | 1 of 1 | 0 | lead: review alongside the build |
+| a0f43330 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/B-stop-state.md: 0 Blockers, 8 Majors, 6 Nits; built source matches the ticket | 05:43 | done | 100 | done | 1 of 1 | 0 | gaps are in the test plan, mutant runner and separate migrate runs |
 | ac4fc2b1 | reviewer (egm-codebase-details) | fable | same round; also hunts for ways the runtime login could still clear or block a stop | 05:43 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | security path |
 | B-tests | builder (tests) | fable | tests/test_stop_state_roles.py with real database logins, and mutants; worktree /tmp/core-b-wt/B-tests | 05:38 | +30 min | UNVERIFIED | running | none | 0 | the B builder proved nothing under a real non-owner login |
 | a87e21e9 | builder (tests) | fable | tests/test_price_constraint.py: commit 737c93c, 246 tests | 05:36 | done | 100 | done | none | 0 | 246 passed; fail-before proven on the old code; 20 of 20 mutants killed; evidence/C-tests-evidence.txt |
@@ -33,6 +33,7 @@
 | 12 files around migrations, store, stop state | local/code-B 8f2fa9e (6662afe) | 1 | 449 passed / 0 / 0 | none | done | step B fix builder, PostgreSQL 16, owner login only |
 | test_k5_producers, test_k5_round9 | cloud/core-b a1c1013 | 1 | 107 passed / 0 / 0 | none | done | producers rows for core-c's gate module |
 | tests/test_price_constraint.py (new, 246 tests) | local/code-C-tests 35304a2 (737c93c) | 1 | 246 passed / 0 / 0 | none | done | evidence/C-tests-evidence.txt |
+| test_stop_state_roles, test_stop_state_loop, test_stage_names, test_no_hardcoded_values | cloud/core-b 7afdab2 | 1 | 218 passed / 0 / 0 | none | done | evidence/B-tests-after-fix.txt; real non-superuser logins on PostgreSQL 16; before the fix: 5 failed, 99 passed (evidence/B-tests-evidence-before-fix.txt) |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
 ## QUEUE ITEMS
@@ -46,7 +47,7 @@
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
 | REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
 | BUILD A audit drain | DONE except the batch run | 90 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
-| BUILD B stop state | RUNNING | 75 | commits 80a07ce, 6662afe (fix round 2), 8bb386f (docs, runbook) | 2 | nothing proven yet under a real reset or runtime login: role tests running; docs and the review round not done |
+| BUILD B stop state | RUNNING | 90 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
 | BUILD C price constraint | DONE except review and batch run | 90 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
 | T3 one EGM review round per ticket | RUNNING | 30 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |

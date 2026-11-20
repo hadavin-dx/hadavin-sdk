@@ -1,0 +1,8 @@
+# step B role tests on 7afdab2 (with fix round 2), 2026-11-20T05:45:37Z, PostgreSQL 16.15, real non-superuser logins
+$ uv run --all-extras --group test pytest -q tests/test_stop_state_roles.py tests/test_stop_state_loop.py tests/test_stage_names.py tests/test_no_hardcoded_values.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+218 passed in 32.11s

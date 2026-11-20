@@ -1,0 +1,278 @@
+### Step B test writer evidence. HEAD under test: 80a07ce1438df1f57710956a74f35c3a822f6064 (builder commit, before fix round 2)
+
+### pytest WITH HADAVIN_TEST_PG_DSN (PostgreSQL 16, real non-superuser logins)
+......F.FF.............................................................. [ 69%]
+............................FF..                                         [100%]
+=================================== FAILURES ===================================
+_____ test_the_other_roles_hold_exactly_their_rights_on_the_stop_relations _____
+
+w = <tests.test_stop_state_roles.World object at 0x7fd3bdb1bbd0>
+
+    def test_the_other_roles_hold_exactly_their_rights_on_the_stop_relations(w):
+        stop = {"kill_switch", "kill_switch_stops", "kill_switch_clears"}
+        runtime = {k: v for k, v in w.rights(w.runtime).items() if k.startswith("kill_switch")}
+>       assert runtime == {
+            "kill_switch": {"SELECT"},
+            "kill_switch_stops": {"SELECT", "INSERT"},
+            "kill_switch_clears": {"SELECT"},
+        }
+E       AssertionError: assert {'kill_switch...': {'SELECT'}} == {'kill_switch...': {'SELECT'}}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'kill_switch_stops_id_seq': {'USAGE'}}
+E         Use -v to get more diff
+
+tests/test_stop_state_roles.py:277: AssertionError
+______ test_the_stop_id_is_a_database_chosen_uuid_and_no_sequence_exists _______
+
+w = <tests.test_stop_state_roles.World object at 0x7fd3bdb8fb50>
+
+    def test_the_stop_id_is_a_database_chosen_uuid_and_no_sequence_exists(w):
+        q = (
+            "SELECT data_type, column_default FROM information_schema.columns "
+            "WHERE table_schema = %s AND table_name = 'kill_switch_stops' AND column_name = 'id'"
+        )
+        kind, default = w.run(q, (w.schema,))[0]
+>       assert kind == "uuid", f"the stop id is {kind}, the ticket asks for a random UUID"
+E       AssertionError: the stop id is bigint, the ticket asks for a random UUID
+E       assert 'bigint' == 'uuid'
+E         
+E         - uuid
+E         + bigint
+
+tests/test_stop_state_roles.py:302: AssertionError
+___________ test_h2_the_runtime_login_cannot_make_a_later_stop_fail ____________
+
+w = <tests.test_stop_state_roles.World object at 0x7fd3bdb8fe50>
+
+    def test_h2_the_runtime_login_cannot_make_a_later_stop_fail(w):
+        """The runtime login may INSERT, so it may also choose ids. Whatever it plants, a reset and then an honest
+        stop must still work and read ON (a serial id lets it plant the ids the sequence hands out next)."""
+        kind = w.run(
+            "SELECT data_type FROM information_schema.columns WHERE table_schema = %s "
+            "AND table_name = 'kill_switch_stops' AND column_name = 'id'",
+            (w.schema,),
+        )[0][0]
+        planted = list(range(1, 201)) if kind != "uuid" else [uuid.uuid4() for _ in range(200)]
+        with w.as_(w.runtime) as db:
+            for i in planted:
+                db.execute('INSERT INTO kill_switch_stops (id, "by") VALUES (%s, %s)', (i, "planted"))
+        w.store(w.reset).set_kill_switch(OFF)
+        assert w.read().on is False
+        rt = w.store(w.runtime)
+        for n in range(3):
+>           rt.set_kill_switch(KillSwitch(on=True, by=f"ops:honest{n}"))
+
+tests/test_stop_state_roles.py:324: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/postgres.py:467: in set_kill_switch
+    self._exec(
+src/hadavin_sdk/store/postgres.py:202: in _exec
+    return self._db.cursor(row_factory=dict_row).execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Cursor [no result] [IDLE] (host=127.0.0.1 port=55439 user=sb_rt_35ca22660b database=hadavin_test) at 0x7fd3bdf86ed0>
+query = 'INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)'
+params = ('ops:honest0', datetime.datetime(2026, 11, 20, 5, 44, 36, 176031, tzinfo=datetime.timezone.utc))
+prepare = None, binary = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> Self:
+        """
+        Execute a query or command to the database.
+        """
+        try:
+            with self._conn.lock:
+                self._conn.wait(
+                    self._execute_gen(query, params, prepare=prepare, binary=binary)
+                )
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "kill_switch_stops_pkey"
+E           DETAIL:  Key (id)=(1) already exists.
+
+.venv/lib/python3.13/site-packages/psycopg/cursor.py:117: UniqueViolation
+___ test_e9_an_unreadable_stop_state_at_the_first_check_means_no_model_call ____
+
+w = <tests.test_stop_state_roles.World object at 0x7fd3bc2d7cd0>
+app = App(config=Config(environment='demo', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00...2510>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fd3bc2f1be0>)
+fake_system = <tests.fixtures.fake_system.FakeSystem object at 0x7fd3bc2f0050>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd3bc1568f0>
+
+    def test_e9_an_unreadable_stop_state_at_the_first_check_means_no_model_call(
+        w, app, fake_system, monkeypatch
+    ):
+        from tests.test_cuj import _doc
+    
+        monkeypatch.setattr(app.store, "get_kill_switch", _unreadable(w))
+>       run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_stop_state_roles.py:935: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/runtime/agent_loop.py:404: in handle
+    if (stopped := self._limits_stop(run, cited)) is not None:
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/runtime/agent_loop.py:251: in _limits_stop
+    blocked = self.limits.blocked(run.agent_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/limits.py:22: in blocked
+    if self.store.get_kill_switch().on:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:445: in get_kill_switch
+    found = self._select(KillSwitch, "kill_switch", "id = 1", ())
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:227: in _select
+    rows = self._exec(query, params).fetchall()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:202: in _exec
+    return self._db.cursor(row_factory=dict_row).execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Cursor [no result] [IDLE] (host=127.0.0.1 port=55439 user=sb_ng_03192a8080 database=hadavin_test) at 0x7fd3bc2df950>
+query = Composed([SQL('SELECT '), Composed([Identifier('schema_version'), SQL(', '), Identifier('on'), SQL(', '), Identifier('by'), SQL(', '), Identifier('ts')]), SQL(' FROM '), Identifier('kill_switch'), SQL(' WHERE '), SQL('id = 1'), SQL('')])
+params = (), prepare = None, binary = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> Self:
+        """
+        Execute a query or command to the database.
+        """
+        try:
+            with self._conn.lock:
+                self._conn.wait(
+                    self._execute_gen(query, params, prepare=prepare, binary=binary)
+                )
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table kill_switch
+
+.venv/lib/python3.13/site-packages/psycopg/cursor.py:117: InsufficientPrivilege
+_______ test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action ________
+
+w = <tests.test_stop_state_roles.World object at 0x7fd3bc2b99c0>
+app = App(config=Config(environment='demo', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00...1090>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fd3bc150550>)
+fake_system = <tests.fixtures.fake_system.FakeSystem object at 0x7fd3bc1502d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd3bb081590>
+
+    def test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action(
+        w, app, fake_system, monkeypatch
+    ):
+        from tests.test_cuj import _approve, _doc, _pending
+    
+        run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
+        monkeypatch.setattr(app.store, "get_kill_switch", _unreadable(w))
+>       _approve(app, _pending(app, run.run_id))
+
+tests/test_stop_state_roles.py:947: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_cuj.py:69: in _approve
+    return app.approvals.decide(
+src/hadavin_sdk/approvals/requests.py:179: in decide
+    self.on_decided(req.run_id, status, d)
+src/hadavin_sdk/app.py:228: in <lambda>
+    lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/runtime/agent_loop.py:803: in on_decided
+    return self.execute(run_id, approval)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/runtime/agent_loop.py:814: in execute
+    stop = self._recheck(run, plan, decision)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/runtime/agent_loop.py:790: in _recheck
+    self.limits.blocked(agent.id),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/limits.py:22: in blocked
+    if self.store.get_kill_switch().on:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:445: in get_kill_switch
+    found = self._select(KillSwitch, "kill_switch", "id = 1", ())
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:227: in _select
+    rows = self._exec(query, params).fetchall()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:202: in _exec
+    return self._db.cursor(row_factory=dict_row).execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Cursor [no result] [IDLE] (host=127.0.0.1 port=55439 user=sb_ng_84609d4a2a database=hadavin_test) at 0x7fd3bc2deb10>
+query = Composed([SQL('SELECT '), Composed([Identifier('schema_version'), SQL(', '), Identifier('on'), SQL(', '), Identifier('by'), SQL(', '), Identifier('ts')]), SQL(' FROM '), Identifier('kill_switch'), SQL(' WHERE '), SQL('id = 1'), SQL('')])
+params = (), prepare = None, binary = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> Self:
+        """
+        Execute a query or command to the database.
+        """
+        try:
+            with self._conn.lock:
+                self._conn.wait(
+                    self._execute_gen(query, params, prepare=prepare, binary=binary)
+                )
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table kill_switch
+
+.venv/lib/python3.13/site-packages/psycopg/cursor.py:117: InsufficientPrivilege
+=========================== short test summary info ============================
+FAILED tests/test_stop_state_roles.py::test_the_other_roles_hold_exactly_their_rights_on_the_stop_relations
+FAILED tests/test_stop_state_roles.py::test_the_stop_id_is_a_database_chosen_uuid_and_no_sequence_exists
+FAILED tests/test_stop_state_roles.py::test_h2_the_runtime_login_cannot_make_a_later_stop_fail
+FAILED tests/test_stop_state_roles.py::test_e9_an_unreadable_stop_state_at_the_first_check_means_no_model_call
+FAILED tests/test_stop_state_roles.py::test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action
+5 failed, 99 passed in 35.19s
+
+### pytest WITHOUT HADAVIN_TEST_PG_DSN (all skipped = NOT RUN)
+SKIPPED [4] tests/test_stop_state_roles.py:891: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:929: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:940: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:956: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:970: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+104 skipped in 0.27s
+
+### mutants: python tests/stop_state_mutants.py --hand (verdict | mutant | file | killer)
+KILLED   | grants: the runtime may append to kill_switch_clears | src/hadavin_sdk/store/migrate.py | test_runtime_login_is_denied_and_the_switch_stays_on
+KILLED   | grants: the runtime is read-write on kill_switch again | src/hadavin_sdk/store/migrate.py | test_runtime_login_is_denied_and_the_switch_stays_on
+KILLED   | grants: the reset role may not append to audit_entries | src/hadavin_sdk/store/migrate.py | test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset
+KILLED   | migrate: the reset block is skipped | src/hadavin_sdk/store/migrate.py | test_n2_a_reset_by_the_reset_login_reads_off
+KILLED   | migrate: effective_problems is not run for the reset role | src/hadavin_sdk/store/migrate.py | test_migrate_refuses_a_public_right_the_reset_role_would_inherit
+KILLED   | migrate: reset_role is left out of the named roles | src/hadavin_sdk/store/migrate.py | test_migrate_refuses_a_reset_role_that_is_the_runtime_role
+KILLED   | migrate: the forbidden role names are not checked | src/hadavin_sdk/store/migrate.py | test_h4_a_role_name_that_is_not_one_plain_role_is_refused_before_any_connection
+KILLED   | read: the NOT EXISTS is dropped (a cleared stop still counts) | src/hadavin_sdk/store/postgres.py | test_n2_a_reset_by_the_reset_login_reads_off
+KILLED   | read: open stops are ignored | src/hadavin_sdk/store/postgres.py | test_n1_a_stop_by_the_runtime_login_reads_on_from_a_second_connection
+KILLED   | read: a flag that is ON reads OFF | src/hadavin_sdk/store/postgres.py | test_e5_a_flag_set_on_by_the_owner_reads_on_and_a_reset_turns_it_off
+KILLED   | read: a missing flag row reads OFF | src/hadavin_sdk/store/postgres.py | test_e6_a_deleted_flag_row_reads_on_and_stays_on_after_a_reset
+KILLED   | reset: ON CONFLICT is removed | src/hadavin_sdk/store/postgres.py | test_e2_a_reset_that_overlaps_an_uncommitted_reset_succeeds
+KILLED   | reset: the flag update and the clears are not one transaction | src/hadavin_sdk/store/postgres.py | test_e8_a_refused_clear_leaves_the_flag_on
+KILLED   | limits: the reset clears before the intent is written | src/hadavin_sdk/limits.py | test_e8_cli_reset_with_the_audit_down_exits_3_and_clears_nothing
+KILLED   | limits: reset_failed is not written | src/hadavin_sdk/limits.py | test_cli_reset_on_the_runtime_dsn_exits_2_stays_on_and_audits_reset_failed
+KILLED   | migration 0006: the append-only triggers are removed | src/hadavin_sdk/store/migrations/0006_stop_state.sql | test_the_owner_is_refused_by_the_append_only_trigger
+KILLED   | cli: the reset ignores reset_credential_ref | src/hadavin_sdk/cli.py | test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset
+KILLED   | cli: the pilot and prod refusal is removed | src/hadavin_sdk/cli.py | test_e10_reset_without_the_ref_is_refused_before_any_connection
+
+### mutants listed, not run (guard not in the source at this HEAD):
+pending (guard not in the source yet): migration 0006: the stop id is a serial number again (BIGSERIAL) -> test_h2_the_runtime_login_cannot_make_a_later_stop_fail
+pending (guard not in the source yet): loop: the limits_unavailable hunk is removed (first check) -> test_e9_an_unreadable_stop_state_at_the_first_check_means_no_model_call
+pending (guard not in the source yet): loop: the limits_unavailable hunk is removed (recheck) -> test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action
