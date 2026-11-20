@@ -20,6 +20,7 @@ from psycopg.conninfo import conninfo_to_dict
 
 from hadavin_sdk.audit import chain as audit
 from hadavin_sdk.audit.signer import LocalSigner
+from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import AuditEvent
 from hadavin_sdk.store import postgres
 from tests.contracts.kinds.store_postgres import pg_schema
@@ -35,8 +36,64 @@ def _event(tag, i):
     )  # fmt: skip
 
 
-def test_the_isolation_is_one_of_the_read_back_pins():
-    assert ("default_transaction_isolation", "'read committed'") in postgres._SESSION_PINS
+class _IgnoresIsolationSets:
+    """A connection whose SETs of the isolation level are silently dropped, as a pooler or proxy might."""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def execute(self, query, *args, **kw):
+        if (
+            isinstance(query, str)
+            and "isolation" in query.lower()
+            and query.lstrip().upper().startswith("SET")
+        ):
+            return self._conn.execute("SELECT 1")
+        return self._conn.execute(query, *args, **kw)
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+
+def _under_repeatable_read_default(dsn, admin):
+    role = conninfo_to_dict(dsn)["user"]
+    with psycopg.connect(admin, autocommit=True) as db:
+        dbname = db.execute("SELECT current_database()").fetchone()[0]
+        db.execute(
+            sql.SQL(
+                "ALTER ROLE {} IN DATABASE {} SET default_transaction_isolation = 'repeatable read'"
+            ).format(sql.Identifier(role), sql.Identifier(dbname))
+        )
+    return role, dbname
+
+
+def test_a_session_that_ignores_the_isolation_set_is_refused_by_the_read_back_pin(monkeypatch):
+    """The SET SESSION CHARACTERISTICS in connect() hides the pin on its own (review ABC-H2-review-1 m1), so the
+    SETs are neutralised here: the read-back pin row is then the only thing that refuses the connection, and
+    removing it from _SESSION_PINS makes the first assertion fail."""
+    admin = os.environ.get("HADAVIN_TEST_PG_DSN")
+    real = psycopg.connect
+
+    for dsn in pg_schema(runtime=True):
+        role, dbname = _under_repeatable_read_default(dsn, admin)
+        try:
+            with (
+                monkeypatch.context() as m,
+                pytest.raises(ConfigError, match="default_transaction_isolation"),
+            ):
+                m.setattr(
+                    postgres.psycopg,
+                    "connect",
+                    lambda *a, **k: _IgnoresIsolationSets(real(*a, **k)),
+                )
+                postgres.connect(dsn)
+        finally:
+            with psycopg.connect(admin, autocommit=True) as db:
+                db.execute(
+                    sql.SQL(
+                        "ALTER ROLE {} IN DATABASE {} RESET default_transaction_isolation"
+                    ).format(sql.Identifier(role), sql.Identifier(dbname))
+                )
 
 
 def test_two_writers_under_a_repeatable_read_role_default_leave_one_gapless_chain():

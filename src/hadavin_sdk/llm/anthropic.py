@@ -78,6 +78,12 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+# An ALLOWlist: only this exact platform value (the Claude API, `table.py`'s "api") gets the wide refused-status
+# list. Vertex, Foundry, an unknown value or a typo all stay narrow: a 413/422 after the model started must not
+# settle at 0 (money under-counted).
+DIRECT_API_PLATFORM = "api"
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
@@ -86,7 +92,7 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
         pinned(dict(deps.routes), floating),
         settings.max_attempts,
         key=key,
-        direct_api=settings.platform not in ("vertex", "foundry"),
+        direct_api=settings.platform == DIRECT_API_PLATFORM,
     )
 
 
