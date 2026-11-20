@@ -52,12 +52,10 @@ from tests.triggers.crash_launcher import AGENT, PRINCIPAL, TENANT, CountingLLM
 from tests.triggers.test_t5_fuzz import (
     A_NEW,
     A_OLD,
-    ALL_SECRETS,
     B_ONLY,
     CLOCK,
     DOC_POOL,
     ENDPOINT_STATUSES,
-    HEX64,
     INPROC,
     KEY_MARK,
     KEY_POOL,
@@ -139,6 +137,16 @@ def delays_short(rng: random.Random) -> float:
     return 0.0 if rng.random() < 0.6 else rng.uniform(0.002, 0.015)
 
 
+REVISION = re.compile(rb"revision (\d+)")
+
+
+def revision_of(document: bytes) -> str:
+    """The model is handed the document after the runtime's redaction (an address is replaced), so
+    its sha256 is not the row's. The revision number in the text is not changed: it is the bucket."""
+    found = REVISION.search(document)
+    return found.group(1).decode() if found else "none"
+
+
 class RecLLM(CountingLLM):
     """The model double: thread safe, counts calls per sha256 of the document it is handed, sleeps a
     seeded random time, and can be held shut with `gate` (a call then waits until it is set)."""
@@ -146,10 +154,11 @@ class RecLLM(CountingLLM):
     def __init__(self, seed: int, delay=delays_mixed, gate: threading.Event | None = None) -> None:
         super().__init__(None, 0.0)
         self.counts: Counter[str] = Counter()
-        self._rl, self._rng, self._delay, self.gate = threading.Lock(), random.Random(seed), delay, gate  # noqa: S311, E501
+        self._rl, self._delay, self.gate = threading.Lock(), delay, gate
+        self._rng = random.Random(seed)  # noqa: S311
 
     def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
-        digest = hashlib.sha256(documents[0]).hexdigest() if documents else "none"
+        digest = revision_of(documents[0]) if documents else "none"
         with self._rl:
             self.counts[digest] += 1
             pause = self._delay(self._rng)
@@ -271,7 +280,7 @@ def make_stack2(
         max_body_bytes=MAX_BODY,
         max_running=max_running,
         ack_wait_s=ack_wait_s,
-        poll_s=0.002,
+        poll_s=0.01,
         max_waiting=max_waiting,
     )
     app = SimpleNamespace(
@@ -536,7 +545,9 @@ def sampling(ctx: Ctx, allowed: dict[str, tuple[str, str]], interval_s: float = 
             for rid, (agent, principal, ref) in rows.items():
                 who = allowed.get(rid)
                 if who is None:
-                    ctx.problem(None, f"I4 mid-flight: a row for a request that was never valid {rid}")
+                    ctx.problem(
+                        None, f"I4 mid-flight: a row for a request that was never valid {rid}"
+                    )
                 elif not ref.startswith(f"{who[0]}/{who[1]}#") or (agent, principal) != (
                     AGENT,
                     PRINCIPAL,
@@ -565,7 +576,9 @@ def settle(ctx: Ctx, timeout_s: float = 30.0) -> None:
                 break
         time.sleep(0.01)
     else:
-        raise AssertionError(f"[{ctx.name} seed={ctx.seed}] I7 loops still running after {timeout_s} s")
+        raise AssertionError(
+            f"[{ctx.name} seed={ctx.seed}] I7 loops still running after {timeout_s} s"
+        )
     taken = 0
     try:
         while taken < ctx.max_running and runner._slots.acquire(blocking=False):
@@ -638,11 +651,21 @@ def analyse(ctx: Ctx, recs: list[Rec], extra_ok: dict[str, tuple[str, str]] | No
             ctx.problem(r.case, f"I5 {r.status} and no row at the end")
         elif (row[2].partition("#")[2] == mine) != (r.status in OK):
             ctx.problem(r.case, f"I3 a {r.status} for a document unlike the row's")
-    hashes = Counter(ref.partition("#")[2] for _, _, ref in rows.values())
     if ctx.llm is not None:
-        for digest, calls in ctx.llm.counts.items():
-            if calls > hashes.get(digest, 0):
-                ctx.problem(None, f"I6 the model was called {calls} times, rows {hashes.get(digest, 0)}")
+        revision = {
+            hashlib.sha256(r.case.document).hexdigest(): revision_of(r.case.document)
+            for r in recs
+            if r.reached
+        }
+        per_revision = Counter(
+            revision.get(ref.partition("#")[2], "?") for _, _, ref in rows.values()
+        )
+        for rev, calls in ctx.llm.counts.items():
+            if calls > per_revision.get(rev, 0):
+                ctx.problem(
+                    None,
+                    f"I6 the model got revision {rev} {calls} times, rows {per_revision.get(rev, 0)}",
+                )
     return rows
 
 
@@ -711,9 +734,7 @@ def run_layer(
     phase=40,
 ) -> dict:
     baseline = {t.ident for t in threading.enumerate()}
-    jobs = build_jobs(
-        seed, count, phase=phase, allow_nul=dsn is None, drop_ts_mutated=moving
-    )
+    jobs = build_jobs(seed, count, phase=phase, allow_nul=dsn is None, drop_ts_mutated=moving)
     clock = Clock(seed, moving)
     llm = RecLLM(seed, delay)
     conns, tl = [], threading.local()
@@ -731,7 +752,9 @@ def run_layer(
                 tl.conn = psycopg.connect(dsn, autocommit=True)
                 with ctx.lock:
                     conns.append(tl.conn)
-            row = tl.conn.execute("SELECT trigger_ref FROM runs WHERE run_id = %s", (rid,)).fetchone()
+            row = tl.conn.execute(
+                "SELECT trigger_ref FROM runs WHERE run_id = %s", (rid,)
+            ).fetchone()
             return row[0] if row else None
 
         def snapshot():
@@ -770,9 +793,7 @@ def run_layer(
         max_waiting=max_waiting,
         clock=clock,
     )
-    valid = {
-        run_id_of(c.sender, c.key): (c.sender, c.key) for c in jobs if c.refusal is None
-    }
+    valid = {run_id_of(c.sender, c.key): (c.sender, c.key) for c in jobs if c.refusal is None}
     valid |= {
         run_id_of(c.sender, c.key): (c.sender, c.key)
         for c in (fresh_case(name, n) for n in range(max_running + 1))
@@ -858,7 +879,9 @@ def test_c1b_the_two_503_paths_held_open_by_hand(tmp_path):
             first = threading.Thread(target=send, args=(0,), name=f"{THREAD_NAME}-c1b-0")
             first.start()
             first.join(10)
-            assert not first.is_alive() and out[0].status in OK, "the holding run was not acknowledged"
+            assert not first.is_alive() and out[0].status in OK, (
+                "the holding run was not acknowledged"
+            )
             for n in (1, 2):
                 t = threading.Thread(target=send, args=(n,), name=f"{THREAD_NAME}-c1b-{n}")
                 t.start()
@@ -1022,7 +1045,9 @@ def test_c4_raw_sockets_8_threads_against_the_quiet_server(tmp_path, capsys):
         rec.t1 = time.monotonic()
         rec.status = seen.status or 0
         rec.reached = wc.expect == "model" and b.refusal is None
-        rec.allowed = frozenset({b.refusal}) if b is not None and b.refusal is not None else frozenset()
+        rec.allowed = (
+            frozenset({b.refusal}) if b is not None and b.refusal is not None else frozenset()
+        )
         model = Model()
         model.expected = lambda case: (
             frozenset({case.refusal}) if case.refusal is not None else ACK_OR_REFUSAL
@@ -1053,7 +1078,7 @@ def test_c4_raw_sockets_8_threads_against_the_quiet_server(tmp_path, capsys):
                     signatures.add(c.made_sig)
                     check_row(ctx, c, seen.status or 0)
                 retry_503s = 0
-                for rec in list(wire_recs):  # I8
+                for rec in wire_recs:  # I8
                     if rec.status == 503 and rec.reached:
                         retry_503s += 1
                         again = exchange(port, next(w for w in jobs if w.base is rec.case))
@@ -1124,7 +1149,9 @@ def test_c6_runner_close_under_load(tmp_path, capsys):
                     except BaseException as exc:  # noqa: BLE001
                         problems.append(exc)
 
-                senders = threading.Thread(target=guarded, name=f"{THREAD_NAME}-c6-main", daemon=True)
+                senders = threading.Thread(
+                    target=guarded, name=f"{THREAD_NAME}-c6-main", daemon=True
+                )
                 senders.start()
                 deadline = time.monotonic() + 30
                 while len(ctx.recs) < 300 and time.monotonic() < deadline:
@@ -1147,7 +1174,9 @@ def test_c6_runner_close_under_load(tmp_path, capsys):
                     late += 1
                     rid = run_id_of(rec.case.sender, rec.case.key)
                     if rid in frozen and rec.status not in OK | {409}:
-                        ctx.problem(rec.case, f"after close a row exists and the answer is {rec.status}")
+                        ctx.problem(
+                            rec.case, f"after close a row exists and the answer is {rec.status}"
+                        )
                     if rid not in frozen:
                         late_503 += 1
                         if rec.status != 503:
