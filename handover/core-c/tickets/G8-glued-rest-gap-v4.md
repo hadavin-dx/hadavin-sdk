@@ -517,8 +517,11 @@ after a phone word, and an IBAN beside `_` (G8). A contiguous digit run glued to
 (hashes and identifiers), and a letter or digit glued before an IBAN, or a digit before an address, is not read as one.
 A copy of a known phone number is swept where a letter or `_` touches it (not a digit).
 ```
-G4 v4 section 15 also adds a paragraph to this docstring (its phase 5): two separate paragraphs, the second lander puts its own
-after the other one (textual merge only). runmap.py `enforce_map` docstring 699 and 718, model_gate.py 12-13: appendix D.
+CHANGED in v4 (M3): place, in G4 v5's words: after the "What this is not" paragraph (which ends with the "(A re-scan inside
+redact() ...)" sentence, redact.py 21-25), before the closing `"""`. G4 v5 section 6 adds its bare-number paragraph and base64
+sentence AFTER this G8 paragraph; under the default order (G8 first) the G4 builder places them (textual merge only). G4 v5's
+paragraph has a PHONE sentence that its Phase 0 (b) re-derives once G8 is merged (G4 v5 section 6, "G8 entries 5-7", which is
+entries 6-8 here). runmap.py `enforce_map` docstring 699 and 718, model_gate.py 12-13: appendix D.
 
 ### 4.4 What stays as it is
 `_sub_glued` stays EMAIL only (rows 74, 75, 77 are masked by plain `sub`); rows 13 and 76 (two values of one kind with nothing

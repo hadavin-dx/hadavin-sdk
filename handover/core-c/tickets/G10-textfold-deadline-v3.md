@@ -179,8 +179,10 @@ round1:491) are untouched (`_one_off` gets no deadline); the `work(*args, **kwar
   value has insertion needles): six readings for T and V, all in `scan_holds` (D-4). A spent deadline raises on a cache hit.
 - Determinism: with `deadline=None` no clock is read; results identical (D-1 over 188 corpus rows x 3, measured). With a deadline the call
   returns EXACTLY what it returns without one, or raises `DeadlinePassed`; WHICH depends on the machine's speed (as for the redactor): stated.
-- Overrun: the longest stretch between two readings, MEASURED (12.2): <PENDING>. The value work (P2 to P2b) is outside the per-pass bound:
-  measured <PENDING> for a value at the weight cap; a protected value comes from the operator's registration, not from the text, so a slow value
+- Overrun: the longest stretch between two readings, MEASURED (12.2): 0.51 to 0.63 s on the 236,879-character text of distinct letters (it is the
+  size rule of a text seen for the first time, between P1 and P2); every other stretch there is shorter (a sweep of 12 expiry offsets over each
+  whole call gave overruns of 0.002 to 0.21 s). The value work (P2 to P2b) is outside that bound: measured 7.19 s for a value of 236,879 distinct
+  letters (0.58 s for 262,144 ASCII letters); a protected value comes from the operator's registration, not from the text, so a slow value
   is the operator's input (stated limit 11).
 - Injection: a text over 262,144 characters is refused by `_checked` from its LENGTH before any per-character work, so the injection read never
   folds more than one piece (`TEXTNORM_INJECTION_CHUNK_CHARS` = 32,768) or one window (at most `TEXTNORM_INJECTION_OVERLAP_MAX_CHARS` = 8,192)
@@ -188,7 +190,9 @@ round1:491) are untouched (`_one_off` gets no deadline); the `work(*args, **kwar
   strings of at most about 32,768 characters each); the next piece's P1 follows. After the last piece the raw squash over the whole text
   (`_SQUASH.sub("", text.lower())`, injection.py:177) runs with no reading. Decision (codebase M1): NO reading in `_score` (D10 below); the
   regex work of a piece sits between two readings and is inside the measured longest stretch; the tail after the last reading ends the call
-  (a reading there could only turn a finished answer into a refusal). Measured: <PENDING>.
+  (a reading there could only turn a finished answer into a refusal). Measured (12.3): the longest stretch of a whole injection read of 2,000,000
+  characters is 0.04 to 0.13 s on six texts, and it is always the tail (last reading to the return); the raw squash alone is 0.097 s; a sweep of 6
+  expiry offsets over the read of the heaviest text gave overruns of 0.001 to 0.017 s.
 - Cost of the readings: one `time.thread_time()` read 0.28 to 0.31 us (v2 12); no measurable change on 262,144 ASCII characters (v2: ratio of
   bests 0.999 for `scan_holds`, 0.994 for `scan_views_no_value`). Not re-measured on the v3 prototype (it adds P2b and moves P7 inside the
   loop; three readings more per call).
@@ -341,11 +345,11 @@ After `TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS` (HEAD :272), exactly:
 ```python
 # INJECTION_BUDGET_S (guard.injection, G10): the CPU seconds of the calling thread (time.thread_time()) one RegexDetector check may spend in the
 # text fold; past it textnorm raises DeadlinePassed and the run is flagged guard_unavailable (fail closed). None: no deadline. A positive number;
-# anything else flags every run. 30.0: about 2x the slowest text of up to 2,097,152 characters measured on the build box (G10 ticket, D4); a
-# machine more than about 2x slower refuses that text. A CPU clock: waiting for the GIL, a lock or I/O does not count; the wall clock is the caller's.
+# anything else flags every run. 30.0: about 1.9x the slowest text of 2,000,000 characters measured on the build box (16.0 s; G10 ticket, D4); a
+# machine more than about 1.9x slower refuses that text. A CPU clock: waiting for the GIL, a lock or I/O does not count; the wall clock is the caller's.
 INJECTION_BUDGET_S = 30.0
 ```
-(The value follows D4 and section 12.3; if the lead picks another value, only the number and "about 2x" change.) The false-hit comment is 8.2.
+(The value follows D4 and section 12.3; if the lead picks another value, only the number and "about 1.9x" change.) The false-hit comment is 8.2.
 
 ## 4. Pins and counts that change (exact; every row VERIFIED by running the edited tests on the prototype, section 14)
 | pin | where (HEAD) | today | after G10 |
@@ -594,20 +598,19 @@ before `TEXTNORM_INSERTION_MIN_CHARS = 12`:
 ```
 (Prototyped in `g10v3/scripts/patch_src.py`; defaults.py is not hashed and no test reads these comment lines: grep of tests for "1% or lower".)
 
-### 8.3 The CHANGELOG item (the builder's; phase 5; appended after CHANGELOG.md:655, the last line of the file)
-```
-(blank line)
+### 8.3 The CHANGELOG item (the builder's; phase 5): append EXACTLY these lines after CHANGELOG.md:655 (the last line of the file), starting with one blank line; `<NEW-HASH>` is the builder's sha256 (prototype `06a3f882986154580b9a90f9f25d41d2207b162a0d02ff74f34f7bc6d2c7c6e3`)
+````markdown
 ### Changed (G10: a deadline for the text fold, the published false-hit rates; ORDER 023, escalation E11)
-- **The fold scan and the injection read stop at a CPU deadline (`guard/textnorm.py`, `guard/injection.py`, `defaults.py`).** <the text of the prototype item, g10v3/files/changelog_item.md, with the overrun numbers of 12.2>
-- **False hits of the fold scan, measured (E11).** <8.4 L43/K50 text, with "per 10,000-character chunk" and the evidence path>
-- **Counts.** New tests in `tests/test_textnorm_deadline.py` (10 tests). ... The list holds 253 mutants in
-  `tests/textnorm_mutants.py` (the 240 of the fold and the 13 of G10; 9 earlier mutants re-pointed ...). Every repository that keeps a byte copy ...:
-  - `src/hadavin_sdk/guard/textnorm.py`: `<the builder's sha256>`
-```
-The exact first and third bullets are in the scratchpad file (`g10v3/files/changelog_item.md`, run green with meta test i and the manifest
-test on the prototype); the line "...The list holds 253 mutants in" must END the line and the next line must start with two spaces and
-`` `tests/textnorm_mutants.py` `` (meta test i). Line numbers re-derived: the fold item's hash line is :651 (not :650, N2); its mutant sentence
-:638-639; both stay unedited as the record.
+- **The fold scan and the injection read stop at a CPU deadline (`guard/textnorm.py`, `guard/injection.py`, `defaults.py`).** `textnorm.scan_holds(*, text, value, deadline=None)` and `textnorm.scan_views_no_value(raw, *, deadline=None)` take a `time.thread_time()` value of the calling thread and read that clock at fixed points between whole passes (never inside one: NFKD and NFKC run over the whole text in one call); past it they raise the new `textnorm.DeadlinePassed` (a `TextnormError`, NOT a `TextTooLong`, so the chunked injection read does not start piece work after the deadline; `textnorm` now has 37 public names). With no deadline (the default) no clock is read and every result is what it was. `RegexDetector.check` takes its deadline from `defaults.INJECTION_BUDGET_S` (30.0 CPU seconds; None: no deadline; a value that is not a positive finite number raises `ValueError` and flags every run); a run past it is flagged `guard_unavailable` (fail closed: the rest of that text is not read for that run). The overrun is the longest stretch between two readings, measured on the build box (G10 ticket, section 12): at most 0.63 s for one call on a 236,879-character text of distinct letters (the size rule of a text seen for the first time is the longest stretch), at most 0.13 s for the injection read of 2,000,000 characters. A CPU clock of the calling thread: waiting for the GIL, a lock or I/O does not count, and a slower machine refuses a text a faster one reads. No redaction path calls `scan_holds` yet; its first consumer passes its own deadline and converts `DeadlinePassed` into its own refusal.
+- **False hits of the fold scan, measured (E11; `handover/core-c/evidence/G1-false-hits-and-cost.md`, run 1 and "Round 2", 2026-11-20, Python 3.13.18, Unicode 15.1.0).** Unit: the share of scans in which `scan_holds` reports a value in a 10,000-character chunk of ordinary Latin text (repository prose and code, standard-library docstrings, generated text) that was drawn at random (random pronounceable strings and a 70-name hand list, not real protected values). Round 2: 4 letters 5.3 %, 5 letters 1.0 %, 6 letters 0.4 %, 8 letters or more 0; a common word of 5 to 10 letters 3.9 %; ASCII ids of 4 to 5 characters 0.22 %; 6 digits 0.007 % (run 1 on an older tree: 5.2, 0.8, 0.25, 0, 4.1, 0.2, 0.005). An UPPER BOUND on false hits: a value that is a whole word of the text counts as a hit. Of all 21,591 Latin hits, 33 % are a whole word, 33 % inside a longer word (`Mary` in `summary`), 34 % across a space or punctuation (`ab12` in `ab 12`); for values of 4 to 5 characters 94 to 99 % of the hits damage a word, for 6-letter names 91 % are the whole name. Non-Latin: one program's real interface text (Russian, 4 to 8 letters, 7.6 %; Chinese, 2 characters drawn by frequency, 5.2 %, 3 to 4 characters 0); Arabic and Devanagari on synthetic text only, real rates unknown. A false hit is the safe side (more masking, or a refusal), never a leak. The "near 1%" of the insertion comment in `defaults.py` is only what the one-inserted-letter match adds; the comment now says so and gives these rates.
+- **Counts.** New tests in `tests/test_textnorm_deadline.py` (10 tests). Changed pins: the public names (37), the `scan_views_no_value` call lint (the keyword `deadline` is allowed), the banned handler names (`DeadlinePassed`), the stub of `_scan_key` in the cap test (it takes the deadline), and the ceiling perf row of `tests/test_textnorm_round2.py` (it runs with `INJECTION_BUDGET_S` set to None: it times the read, the budget has its own tests). The list holds 253 mutants in
+  `tests/textnorm_mutants.py` (the 240 of the fold and the 13 of G10; 241 change behaviour, 12 change only words, by `split_counts`; 9 earlier mutants re-pointed at the edited lines with the same mutation, killer and message). Every repository that keeps a byte copy of these files re-copies `textnorm.py` (the other four pinned files are unchanged) and updates its pin; `INJECTION_BUDGET_S` is not a `TEXTNORM_*` constant and `injection.py` is not copied:
+  - `src/hadavin_sdk/guard/textnorm.py`: `<NEW-HASH>`
+````
+Run green on the prototype: meta test i (the line "...The list holds 253 mutants in" ENDS a line, the next starts with two spaces and
+`` `tests/textnorm_mutants.py` ``) and the manifest test (the hash is in the text). Line numbers re-derived (N2): the fold item's hash line is
+:651; its mutant sentence :638-639; both stay unedited as the record. The numbers of the false-hit bullet: Round 2 (evidence :106 on) and run 1
+(section A); the overrun numbers: this ticket, 12.
 
 ### 8.4 The SECURITY wording (NOT the builder's: the SECURITY wording lane applies it, D9; the lane's reviewer verifies it against this section)
 Into the live draft SECURITY-README-v5.md (or its successor):
@@ -620,7 +623,7 @@ Into the live draft SECURITY-README-v5.md (or its successor):
   Status: STATED. Evidence: MEASURED. Who acts: nobody (the consumer's ticket re-measures)."
 - :625-627 K51 becomes: "**K51. Limited by a CPU budget:** the planted-instruction check stops at `INJECTION_BUDGET_S` (30 CPU seconds of the
   calling thread) and flags the run (`guard_unavailable`) when the fold passes it. Measured before the limit: 3.6 to 9.6 s for 2,000,000
-  characters (evidence G1 B), up to <12.3 worst> s on the drafter's heaviest text (G10 ticket 12.3). A machine about 2x slower than the build box
+  characters (evidence G1 B), up to 16.0 s on the drafter's heaviest text (G10 ticket 12.3). A machine about 1.9x slower than the build box
   flags that text. Only CPU time counts; the wall clock is the caller's. Status: PINNED once G10 lands (tests/test_textnorm_deadline.py).
   Evidence: TESTED. Who acts: nobody." (Until G10 lands, K51 stays OPEN.)
 - Rows :835-836: `| K50 over-matching | STATED | MEASURED | evidence/G1-false-hits-and-cost.md run 1 and Round 2 | nobody |` and
@@ -652,22 +655,23 @@ that fit the box at low load". It does not choose D1-D10; the defaults below are
 | D1 | where the clock is read | inside textnorm.py at the points of 3.4 | only in the callers' loops (no textnorm change) | default: overrun = the longest stretch (12.2), textnorm pins change (4). Fallback: overrun one whole scan (up to 5.8 s), the injection read of one text under the cap stays unbounded, no re-copy |
 | D2 | how the deadline travels | an explicit `deadline=None` argument down the private chain | a `contextvars` scope set by the two entry points | default: more signatures, explicit, as the redactor. Fallback: fewer signatures, hidden state (a scope leaking into a thread copy), the same readings |
 | D3 | which public functions take it | `scan_holds`, `scan_views_no_value` | also `scan_views` | default: the fixbatch:280 pin stays. Fallback: that pin changes; `scan_views` has no caller |
-| D4 | the injection budget | `defaults.INJECTION_BUDGET_S = 30.0` | None (no deadline, E11 half open), or `REDACT_BUDGET_S` (6.0) | default: about <12.3 ratio>x the slowest measured 2,000,000-character text (12.3); a machine that much slower flags that text (`guard_unavailable`). None: the deadline exists, nothing uses it. 6.0: the Cyrillic or Devanagari ceiling text is flagged on this box (a new false abstain) |
+| D4 | the injection budget | `defaults.INJECTION_BUDGET_S = 30.0` | None (no deadline, E11 half open), or `REDACT_BUDGET_S` (6.0) | default: about 1.9x the slowest measured 2,000,000-character text (16.0 s, every other character a distinct non-ASCII letter; 15.8 s Devanagari words with spacing marks mixed with English words; 12.3); a machine that much slower flags that text (`guard_unavailable`), and a hostile text can hold one run for up to 30 s of CPU. A third value, 48.0 (8 x `REDACT_BUDGET_S`, as the bundle cap is 8 x the redaction cap): 3x headroom, 48 s per hostile run. None: the deadline exists, nothing uses it (E11 half open). 6.0: the 1-percent, Devanagari and distinct texts are flagged on this box (a new false abstain) |
 | D5 | readings without a mutant | P1 of `scan_views_no_value`, P2, P3b, P4, P6, P7a, P7b, the second P7c: pinned by the exact sequences of D-3 / D-3b, no mutant of their own | a mutant each (8 more, 261 in all) | default: a removal of one of them is still killed by D-3 (the sequence), but the list does not show it. Fallback: 8 more runs of D-3 (12 s each), longer list |
 | D6 | the error name and message | `DeadlinePassed("the scan passed its deadline")` | a code-style message like the redactor's (`DeadlinePassed("FoldDeadline")`) | default: plain words in the log line of `injection_check`. Fallback: a stable code to grep for; no other change |
 | D7 | the NOT RUN rows | as in section 9 | run the 2,000-value ASCII row now | default: no extra CPU on a loaded box; the row stays extrapolated. Fallback: about 13 minutes of one core at load below 2 |
 | D8 | a reading in the redactor's view building (`_fold_scan`) | not in G10 (redact.py unchanged) | in G10, with a test and mutant KR1 in tests/redact_mutants.py | default: the redactor's first read stays after the view building (about 4 folds of a capped text, ESTIMATED 0.7 s); redact.py stays G4/G8's. Fallback: a redact.py change in another lane's file |
 | D9 | who writes the SECURITY wording | the SECURITY wording lane applies 8.4; the builder writes defaults.py and the CHANGELOG only | the G10 builder edits the SECURITY drafts too | default: the builder's file list has no SECURITY file; the lane's reviewer verifies 8.4. Fallback: two lanes edit one draft (merge risk) |
-| D10 | a reading in `injection._score` | none (the regex work of a piece is between two readings; the tail ends the call) | a reading per piece after its regex loop (injection.py raises `textnorm.DeadlinePassed`; the order137 allow-list gains it) | default: a run can end up to <tail> s after its deadline WITH a complete answer (12.3). Fallback: one more mutant and an allow-list edit; the late answer becomes a refusal |
+| D10 | a reading in `injection._score` | none (the regex work of a piece is between two readings; the tail ends the call) | a reading per piece after its regex loop (injection.py raises `textnorm.DeadlinePassed`; the order137 allow-list gains it) | default: a run can end up to 0.13 s (measured) after its deadline WITH a complete answer (12.3). Fallback: one more mutant and an allow-list edit; the late answer becomes a refusal |
 
 ## 11. Stated limits after G10
 - CPU clock of the CALLING thread only (as the redactor): waiting for the GIL, a lock or I/O does not advance it; a deadline value from another
   thread means nothing. The wall-clock guard stays the caller's; none of the six `injection_check` call sites has one today (for core-b, next to
   the G7 list).
-- Overrun: the longest stretch between two readings, measured <12.2> on the distinct text (the weight of a first-seen text of distinct letters
+- Overrun: the longest stretch between two readings, measured 0.51 to 0.63 s on the distinct text (the weight of a first-seen text of distinct letters
   is the longest unread stretch, between P1 and P2); a call can also end after its deadline WITH a complete answer (the stretch after the last
   reading: the needle loop, or `_score`'s regex tail, D10).
-- The value's work (its needles and scan keys, between P2 and P2b) has no reading inside it: measured <12.2 value> for a value at the weight cap.
+- The value's work (its needles and scan keys, between P2 and P2b) has no reading inside it: measured 7.19 s for a value of 236,879 distinct letters (0.58 s for an ASCII value at the cap). A
+  value comes from the operator's registration; bounding its length is `register_value`'s business (not G10).
 - The outcome depends on the machine: a slow machine refuses a text a fast one scans (fail closed: the injection run is flagged, a DENY caller refuses).
 - A hostile author can force the refusal of the injection check (a text built to be slow, `guard_unavailable`): the run is flagged, the legitimate
   rest of that text is not read for that run.
