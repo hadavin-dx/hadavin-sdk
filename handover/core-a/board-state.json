@@ -2,7 +2,7 @@
  "order": "ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)",
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
- "next": "16:30 T1-merge (wip/core-a-t1-merge) and N3 docs table running; integ-pg finishing; mutant script run 19 running; N1 repeat the dry-run + update INTEGRATION-DRYRUN-2.md the minute core-b pushes the fixes for the 3 Majors; N2 fresh review of core-b's fix when it lands; branch core/integration-dryrun is on origin (6c89f0495)",
+ "next": "16:55 cfix (my stale contract tests) + doorm (144 door failures on the merged tree) + docfix24 + rev-t1 running; then fresh reviews of cfix/doorm diffs; N1 repeat the dry-run + N2 review when core-b pushes the 3-Major fixes",
  "note": "models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "integ-pg",
-   "role": "evidence runner (never judges)",
-   "model": "sonnet",
-   "what exactly it is doing": "strict-PG run on the MERGED scratch tree (PG16 at :55433): tests/triggers (my 10 by-design failures should pass), t5/contracts/grants, the three T1 files -> evidence/integ-pg-run.md",
-   "started UTC": "15:58",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "the dry-run agent looked at the wrong socket"
-  },
-  {
    "id": "docfix24",
    "role": "builder (cloud/core-a)",
    "model": "sonnet",
@@ -785,6 +772,32 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "fresh review of each diff"
+  },
+  {
+   "id": "cfix",
+   "role": "builder (own worktree, nothing pushed by it)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix MY stale contract tests (test_meter.py, test_store_spend_reservations.py) to core-b's current API (settle agent_id, caps from hadavin_caps, no right on spend_reservations) on the merged tree",
+   "started UTC": "16:55",
+   "expected end": "35 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "integ-pg findings: my tests break on the combined tree"
+  },
+  {
+   "id": "doorm",
+   "role": "builder (own worktree, nothing pushed by it)",
+   "model": "sonnet",
+   "what exactly it is doing": "root cause of the 144 trigger-door failures on the merged tree (crash-matrix children never end: suspected missing hadavin_caps seed in the child schema) + fix in test support only",
+   "started UTC": "16:55",
+   "expected end": "35 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "integ-pg findings: my tests break on the combined tree"
   }
  ],
  "tests": [
@@ -1157,6 +1170,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:55 INTEGRATION FINDING (integ-pg on the merged tree 6c89f0495, PG16.15, HADAVIN_REQUIRE_PG=1): MY tests break on the combined tree, so the dry-run is NOT clean: (1) tests/triggers 144 failed / 1218 passed: crash matrix 22 + 120 and t5_postgres 2, first error 'the child did not end within 20 s' (83) / 30 s (8) and `assert () == ('store.add_spend:before',)`: the crash-point children never reach their points; suspected cause: since core-b's live loop reserves before the call, the child's schema has no hadavin_caps rows (core-b seeds them through a conftest wrapper a child process does not get): agent doorm diagnoses with evidence and fixes the TEST SUPPORT (patch for the lead: handover/core-a/pr/door-merged-support.patch); (2) test_meter.py 152 and test_store_spend_reservations.py 156 failures = MY contract tests still use the old `settle` without agent_id (TypeError) and direct rights on spend_reservations (InsufficientPrivilege): agent cfix re-expresses them on core-b's API; (3) test_t1_reserve_cap_core_c 19 + _core_a 6 failures: same causes, SUPERSEDED by the merged T1 (wip/core-a-t1-merge): delete the two copies; (4) test_grants_negative_roles.py 17: core-c's file: take mine (wip/core-a-for-grant-tests, 88 passed on core-b). Also: the lead's literal command `pytest tests/test_t5*.py` matches no file (the t5 tests live in tests/triggers/). Details: handover/core-a/evidence/integ-pg-run.md. AGENTS 4 (cfix, doorm, docfix24, rev-t1).",
   "16:48 DECISION T1 DONE: branch wip/core-a-t1-merge pushed (on core-b fbebb390f; only tests/contracts/test_t1_reserve_cap.py changed): core-b's file is the base, 13 functions / 18 cases of core-a's and core-c's T1 ported (marked 'from core-a T1'/'from core-c T1'), 7 duplicates skipped, 7 -> 25 passed on PG16 (25 skipped without a DSN), ruff clean, mutation sanity on 3 cases (sweep no-op, settle always applied); two stale core-a role cases replaced by the stronger fact (no login has any right on spend_reservations after 0011; purge only via purge_spend_reservations). Text for core-b/core-c appended to handover/core-b/requests/xr-from-core-a-reviews.md and in handover/core-a/T1-MERGE.md: copy the file, delete the _core_a/_core_c copies in the integration. Fresh review rev-t1 running (weakening check).",
   "16:46 MUTANT RUN 19 DONE: `120 of 120 run are as expected; problems: []`, EXIT 0 on cloud/core-a head 5a8c83fd3 (evidence/mutants-run19.md, raw/mutants-run19.log). Run on my own box (no edit needed: your G33d anchor fix is in). Load overlapped (peak 8.6): the verdicts are assertion-based, not timing-based; re-run when load < 4 only if you want a timing-clean figure.",
   "16:42 LOAD NOTE (your 16:16): heavy at once = 2 (full mutant script run 19 + integ-pg -n 3 strict-PG run); the other 2 agents (T1-merge, docfix24) run small pytest sets (-n 2 / -n 0). Any timing-sensitive result recorded while load > 4 is marked INVALID-LOAD in its evidence file (integ-pg and the mutant log record uptime start/end; I will list those that start above 4). I start NO new heavy run until load < 4.",
@@ -4061,6 +4075,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "wip/core-a-t1-merge pushed: core-b's T1 file + core-a/core-c extra cases: 7 -> 25 passed on PG16 (25 skipped without DSN), 13 functions/18 cases ported, duplicates skipped, 2 stale role cases replaced by the stronger 'every direct statement refused; purge only via function'; mutation sanity on 3 cases; T1-MERGE.md"
+  },
+  {
+   "id": "integ-pg",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "strict-PG run on the MERGED scratch tree (PG16 at :55433): tests/triggers (my 10 by-design failures should pass), t5/contracts/grants, the three T1 files -> evidence/integ-pg-run.md",
+   "started UTC": "15:58",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "strict-PG run on the MERGED tree 6c89f0495 (PG16.15, HADAVIN_REQUIRE_PG=1, -n 3, start load 0.31): tests/triggers 144 failed/1218 passed (crash matrix 22+120, t5_postgres 2: 'the child did not end within 20 s' x83, 30 s x8); tests/contracts + meter + store_spend_reservations + grants: 352 failed/1461 passed (test_meter 152, test_store_spend_reservations 156: my contract tests use the OLD settle without agent_id; _core_c T1 19, _core_a T1 6, test_grants_negative_roles 17, model_gate_contract 2); core-b's test_t1_reserve_cap.py 7 passed; evidence/integ-pg-run.md (202 failing ids show 'no E line in log')"
   }
  ]
 }
