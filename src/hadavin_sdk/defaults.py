@@ -170,3 +170,6 @@ AUDIT_PERMANENT_SQLSTATES = ("22", "23", "42501", "54000")
 # Prefix of the event_id an outbox row gets when the chain refuses it for ever (a poison row): the runtime role may
 # INSERT and DELETE but not UPDATE, so "marking" is insert-under-the-new-id then delete-the-old.
 AUDIT_QUARANTINE_PREFIX = "poison:"
+
+# Decimal digits used for money sums and price checks, set locally so a host's own Decimal context cannot round money.
+MONEY_DECIMAL_PRECISION = 60
