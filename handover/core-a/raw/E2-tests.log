@@ -1,2 +1,12 @@
 warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
-............................................
+.......................................................                  [100%]
+============================= slowest 8 durations ==============================
+5.01s call     tests/triggers/test_worker.py::test_a_refused_request_reads_the_store_a_few_times_not_a_hundred
+1.06s call     tests/triggers/test_worker.py::test_pool_full_is_503_and_a_later_retry_is_acked
+0.94s call     tests/triggers/test_worker.py::test_sigterm_stops_a_serving_process_cleanly_with_exit_0
+0.62s call     tests/triggers/test_worker.py::test_a_waiting_request_takes_the_slot_as_soon_as_it_is_free
+0.61s call     tests/triggers/test_worker.py::test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken
+0.61s call     tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[None-expected2]
+0.53s call     tests/triggers/test_worker.py::test_20_parallel_requests_with_distinct_keys_are_acked_or_refused
+0.51s call     tests/triggers/test_worker.py::test_a_waiting_request_is_503_when_the_slot_stays_taken_past_ack_wait
+55 passed in 15.10s
