@@ -1,0 +1,83 @@
+# batch run 1: full suite on 737c93c5c5d3cc8e9d39f28f96dd672c8c5db723 (cloud/core-b code after steps A, B fix 2, C, D-config, producers rows), 2026-11-20T05:41:10Z, python Python 3.13.18, PostgreSQL 16.15 local
+$ uv run --all-extras --group test pytest -q -n 3 -p no:cacheprovider
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fa63e520050>
+query = "SELECT dblink_connect('dbname=postgres')", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+E           	Is the server running locally and accepting connections on that socket?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
+____________________ test_no_vendor_brand_string_is_tracked ____________________
+[gw0] linux -- Python 3.13.18 /tmp/core-b-wt/batch/.venv/bin/python
+
+    def test_no_vendor_brand_string_is_tracked():
+        """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
+        bad = []
+        for rel in _tracked():
+            if rel in SELF:
+                continue
+            try:
+                raw = (ROOT / rel).read_bytes()
+            except OSError as exc:
+                bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+                continue
+            if b"\0" in raw:  # binary: covered by the hash test
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
+                continue
+            bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
+>       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'
+E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+_______________________ test_the_old_stage_word_is_gone ________________________
+[gw1] linux -- Python 3.13.18 /tmp/core-b-wt/batch/.venv/bin/python
+
+    def test_the_old_stage_word_is_gone():
+        found, _ = _scan()
+>       assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
+E       AssertionError: the old stage word is still used as a stage:
+E         tests/test_price_constraint.py:277 [quoted literal] @pytest.mark.parametrize("stage", ["pilot", "demo"])
+E         tests/test_price_constraint.py:360 [quoted literal] @pytest.mark.parametrize("stage", ["demo-real", "pilot", "prod"])
+E       assert not ['tests/test_price_constraint.py:277 [quoted literal] @pytest.mark.parametrize("stage", ["pilot", "demo"])', 'tests/test_price_constraint.py:360 [quoted literal] @pytest.mark.parametrize("stage", ["demo-real", "pilot", "prod"])']
+
+tests/test_stage_names.py:539: AssertionError
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+3 failed, 11129 passed, 1 skipped in 208.03s (0:03:28)
+[exit 1] 2026-11-20T05:44:40Z

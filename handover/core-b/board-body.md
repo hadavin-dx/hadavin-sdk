@@ -20,7 +20,7 @@
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
 |---|---|---|---|---|---|
-| background shell brworijga | batch run 1: full test suite, 3 workers, in worktree /tmp/core-b-wt/batch at 737c93c, log /tmp/core-b-wt/batch-run-1.log | me | 05:43 | running | the ONE batch run after A, B and C are coded (lead order); step B role tests are not in it yet |
+| background shell brworijga | batch run 1: full test suite, 3 workers, worktree /tmp/core-b-wt/batch at 737c93c | me | 05:41 to 05:44 | ended, exit 1 (3 failed) | the ONE batch run after A, B and C are coded (lead order); step B role tests are not in it yet |
 | 4886 | PostgreSQL 16.15 server, 127.0.0.1 port 55439, data in /tmp/core-b-pg, trust login, test data only | me | 05:31 | running | per-file tests of the builders (ORDER 005 item 4); I stop it when the builds end |
 
 ## TESTS
@@ -33,7 +33,7 @@
 | 12 files around migrations, store, stop state | local/code-B 8f2fa9e (6662afe) | 1 | 449 passed / 0 / 0 | none | done | step B fix builder, PostgreSQL 16, owner login only |
 | test_k5_producers, test_k5_round9 | cloud/core-b a1c1013 | 1 | 107 passed / 0 / 0 | none | done | producers rows for core-c's gate module |
 | tests/test_price_constraint.py (new, 246 tests) | local/code-C-tests 35304a2 (737c93c) | 1 | 246 passed / 0 / 0 | none | done | evidence/C-tests-evidence.txt |
-| full suite, batch run 1 | cloud/core-b 737c93c | 1 | running | | RUNNING | recorded, not gated; failures will be listed as INHERITED or NEW |
+| full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
 ## QUEUE ITEMS
 | # | state | % | evidence file | tries | reason |
@@ -59,6 +59,7 @@
 ## LOOPS
 | item | tries | review rounds | last error | reason |
 |---|---|---|---|---|
+| tests/test_price_constraint.py | 2 | 0 | stage-word guard flagged a parameter name | the test writer did not run the guard test; fixed by a rename |
 | step B source | 2 | 0 | serial stop id lets the runtime login block a later stop; test pin test_k5_fixes2 missed; limits-unavailable hunk skipped | built from the lead draft before the ticket check finished (lead order: build at once) |
 | interfaces | 2 | 0 | none | version 1 published before the lead's draft arrived, then replaced by the lead's shape |
 
@@ -71,6 +72,7 @@
 - E1: the session cron was refused twice (second time after the owner's GO). Owner: allow it in the cloud session settings, or accept a board at the end of each tool batch.
 - QUESTIONS.md 1 to 4 (cron fallback, which baseline test fails, step A build without extra GO, local PostgreSQL 16 for my lane run).
 - core-c ESCALATION E2 (strict mask check would refuse normal runs): needs the lead's ruling before ticket F-install can be final.
+- Lead: handover/BRIEF-PREAMBLE.md contains a vendor name that tests/test_no_reference_material.py refuses (rule 15 text). It fails the suite on every cloud branch that carries the handover folder; it is your file, I did not touch it.
 - ESCALATIONS.md E2: F-store ticket review was not clean; three of my answers change the lead's draft design (settle returns row and applied; expired rows are always claimed by the first settle; expiry age from the stuck-run age). Lead: OK or CHANGE before GO BUILD F.
 - interfaces/README.md is now version 2.1 (the gate's two calls are unchanged).
 - inputs/request-from-core-a-001-config-triggers.md: seen; I build it after step C lands (both edit config.py), answer follows in requests/.
