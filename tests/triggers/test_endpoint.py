@@ -414,6 +414,51 @@ def test_check_secrets_refuses_and_names_the_sender_not_the_value(secrets, named
             assert not value or value not in text
 
 
+UNSEEN = {
+    "byte-order mark": "\ufeff",
+    "zero-width space": "\u200b",
+    "zero-width non-joiner": "\u200c",
+    "zero-width joiner": "\u200d",
+    "word joiner": "\u2060",
+}
+
+
+@pytest.mark.parametrize("name", sorted(UNSEEN))
+@pytest.mark.parametrize("place", ["start", "middle", "end"])
+def test_check_secrets_refuses_an_unseen_character_anywhere_in_a_value(name, place):
+    """A secret file saved with a byte-order mark or a zero-width character would never verify (review 2,
+    Minor 12): refused at start, at any place in the value, and the error names only the sender."""
+    char = UNSEEN[name]
+    assert char.strip() == char  # strip() does not cut it, so the whitespace rule cannot catch it
+    assert char in endpoint.UNSEEN_CHARS and len(endpoint.UNSEEN_CHARS) == len(UNSEEN)
+    cut = {"start": 0, "middle": 20, "end": len(STRANGER)}[place]
+    bad = STRANGER[:cut] + char + STRANGER[cut:]
+    secrets = {"sender-a": (NEW_A, bad), "sender-b": (ONLY_B,)}
+    with pytest.raises(ValueError) as info:
+        check_secrets(secrets)
+    text = str(info.value)
+    assert "sender-a" in text and "zero-width" in text and "byte-order mark" in text
+    assert "sender-b" not in text
+    for value in (bad, STRANGER, STRANGER[:20], NEW_A, ONLY_B, char):
+        assert value not in text
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(), secrets, Recorder())
+
+
+def test_check_secrets_refuses_the_same_value_twice_for_one_sender():
+    """Review 2, Minor 12: the second copy would only cost one more HMAC per request and hides a failed
+    secret change. The error names the sender, never the value."""
+    twice = {"sender-a": (OLD_A, fake_secret("a" * 20, "b" * 20)), "sender-b": (ONLY_B,)}
+    with pytest.raises(ValueError) as info:
+        check_secrets(twice)
+    text = str(info.value)
+    assert "sender-a" in text and "the same secret twice" in text
+    assert "sender-b" not in text and OLD_A not in text and ONLY_B not in text
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(), twice, Recorder())
+    check_secrets({"sender-a": (OLD_A, NEW_A), "sender-b": (ONLY_B,)})  # two different values pass
+
+
 def test_make_wsgi_refuses_a_bad_setup():
     start = Recorder()
     with pytest.raises(ValueError):  # T5 8c: A's secret equals B's

@@ -23,6 +23,7 @@ import pytest
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.triggers import endpoint, worker
+from hadavin_sdk.triggers import server as server_module
 
 TENANT, SENDER, AGENT, PRINCIPAL = "tenant-a", "sender-a", "test-agent", "svc:test-agent"
 SECRET = "w" * 20 + "5" * 20  # a fake, built from parts
@@ -355,4 +356,53 @@ def test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only(capsys, c
         seen = drive_signed(server.server_port)
     assert seen.status_line.endswith(b" 503 Service Unavailable") and seen.end == "closed", seen
     assert "RuntimeError" in caplog.text
+    check_quiet(seen, capsys, caplog)
+
+
+class TimeoutStart(FakeStart):
+    """A `start` whose own work timed out (a store call, say): the client was not slow."""
+
+    def __call__(self, req: endpoint.Accepted) -> tuple[int, dict[str, str]]:
+        self.calls.append(req)
+        raise TimeoutError(BOOM_MARK)
+
+
+def timeout_app(environ, start_response):
+    raise TimeoutError(BOOM_MARK)
+
+
+@pytest.mark.parametrize("where", ["start", "application"])
+def test_a_timeout_raised_by_the_code_behind_the_socket_is_503_empty_not_a_slow_client(
+    where, capsys, caplog
+):
+    """Review 2, Minor 2. Request: complete and correctly signed; the timeout is raised by `start`, or by
+    the application itself. Expected: 503 with an empty body, the class name in the log, and no line
+    of the slow-client refusal (400 before the endpoint)."""
+    start = TimeoutStart()
+    with serving(make_wsgi(start) if where == "start" else timeout_app) as server:
+        seen = drive_signed(server.server_port)
+    assert seen.status_line.endswith(b" 503 Service Unavailable") and seen.end == "closed", seen
+    assert seen.raw.count(b"HTTP/1.") == 1  # one answer head, no second one after it
+    assert len(start.calls) == (1 if where == "start" else 0)
+    assert "TimeoutError" in caplog.text
+    assert "refused before the endpoint" not in caplog.text and "status=400" not in caplog.text
+    check_quiet(seen, capsys, caplog)
+
+
+def test_a_timeout_after_the_read_phase_writes_no_stalled_client_answer(monkeypatch, capsys, caplog):
+    """Review 2, Minor 2. A timeout that leaves the application handler (the stdlib lets one through
+    when the answer cannot be written) is not a client that sent too little: no 400 head is written
+    after it, the connection is closed, and the log holds the class name only."""
+
+    def run(self, application):
+        raise TimeoutError(BOOM_MARK)
+
+    monkeypatch.setattr(server_module.QuietWSGIHandler, "run", run)
+    start = FakeStart()
+    with serving(make_wsgi(start)) as server:
+        seen = drive_signed(server.server_port)
+    assert seen.raw == b"" and seen.end == "closed", seen
+    assert start.calls == []
+    assert "connection ended: TimeoutError" in caplog.text
+    assert "refused before the endpoint" not in caplog.text
     check_quiet(seen, capsys, caplog)

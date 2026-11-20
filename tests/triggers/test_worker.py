@@ -10,6 +10,7 @@ import http.client
 import json
 import os
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -828,6 +829,33 @@ def test_main_prints_a_foreign_start_error_by_class_name_only(monkeypatch, capsy
     assert error.__name__ in err and err.startswith("trigger worker: ")
     for private in (fake_secret, "postgresql", "db-host", "Traceback"):
         assert private not in err
+
+
+def test_a_port_in_use_is_a_listen_error_exit_2_not_store_unreachable(monkeypatch, capsys):
+    """Review 2, Minor 6: the bind failure is an OSError, which `main` would report as "store unreachable"
+    (exit 4). The port is taken first by a listening socket of this test."""
+    taken = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):  # Windows: else a second bind of the port passes
+            taken.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        taken.bind((worker.LOOPBACK, 0))
+        taken.listen(1)
+        port = taken.getsockname()[1]
+        with pytest.raises(ConfigError, match=f"cannot listen on {worker.LOOPBACK}:{port}") as refused:
+            worker.make_server(worker.LOOPBACK, port, lambda e, s: [], 5.0)
+        assert "OSError" in str(refused.value)
+        assert refused.value.__cause__ is None and refused.value.__suppress_context__
+
+        def binds(args):
+            return worker.make_server(worker.LOOPBACK, port, lambda e, s: [], 5.0), None
+
+        monkeypatch.setattr(worker, "_prepare", binds)
+        assert worker.main([]) == 2
+    finally:
+        taken.close()
+    err = capsys.readouterr().err
+    assert err == f"trigger worker: config error: cannot listen on {worker.LOOPBACK}:{port} (OSError)\n"
+    assert "store unreachable" not in err and "Traceback" not in err
 
 
 def test_main_prints_the_text_of_a_refusal_written_in_the_worker(monkeypatch, capsys):
