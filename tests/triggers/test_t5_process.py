@@ -25,6 +25,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.triggers import endpoint, worker
 from tests.conftest import make_cfg
 from tests.k5_support import k5_cfg
+from tests.triggers.conftest import require_core_b
 from tests.triggers.crash_launcher import ROOT, TENANT, Child, signed_post, wire_body
 
 SENDER, AGENT, PRINCIPAL = "sender-a", "test-agent", "svc:test-agent"
@@ -57,6 +58,7 @@ def test_d1_main_refuses_to_start_without_a_triggers_block(tmp_path):
     """D1 (ticket H8 through `main`). Start: the worker module as a child process on a copy of the
     fixture config, which has no `triggers` block. Expected: exit code 2, one clear line on stderr,
     nothing on stdout, no traceback, nothing from the environment. Store: none is opened."""
+    require_core_b()  # the real Config must have the `triggers` field
     cfg = make_cfg(tmp_path)
     done = _run_main("--config-dir", str(cfg), "--port", "0")
     assert done.returncode == 2, done.stderr
