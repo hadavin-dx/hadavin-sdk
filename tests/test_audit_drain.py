@@ -327,7 +327,7 @@ def test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them(app, ca
 
 
 def test_h2_a_one_megabyte_body_is_drained_whole(app):
-    log, event = app.audit, _event(result="x" * (1 << 20))
+    log, event = app.audit, _event(decision="x" * (1 << 20))
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(log, "_append", _boom)
         assert log.write_outcome(event) is None
