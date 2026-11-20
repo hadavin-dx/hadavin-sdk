@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:11:56Z
+UPDATED_UTC: 2026-11-20T10:12:09Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: load 1.6 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 7, heavy agents 0
+AGENTS_RUNNING: 6
+CAPACITY: load 2.5 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 6, heavy agents 0
 DISK: / 57G free, 18% used; git worktrees 22; 1.5G	/tmp/claude-0;304M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only. E10 plan review round 1 STARTED 09:59Z (G9 ticket: the lead's loop as stated does not close E10: it must read the text with placeholders put back; design + measurements in the ticket). E12 SUMMARY: redact_mutants.py on merged HEAD 92 of 96 good, 4 survivors (E13) under review. Heavy batches running: 0.
-PUSHED_UTC: 2026-11-20T10:11:53+00:00
+NEXT: ORDER 023 STATUS (10:13Z): E9 (1) DONE (docstring promises fixed: redact.py module docstring, gate.py a4b2ce2), E9 (2) DONE and merged (e8ff6de2b + fix round c4d68c6ef; fresh review round 1 done: 0 Blocker, 2 Major fixed), E9 (3) DONE (is_masked: no consumer, every promise withdrawn). E10: ticket G9 written, plan review ROUND 1 done (NOT READY: 3 Blocker + 13 Major: the lead's loop as stated does not close E10, read-back must use exact map keys, G9 unions must not register pieces, gate should mask the span); v2 drafting; plan review ROUND 2 starts when v2 lands: commit time 10:45Z; round 3 (last) 11:15Z; build starts after a clean review. E11: (a) deadline NOT BUILT: ticket G10 plan review round 1 done (NOT READY: 5 Blocker incl. 3 existing tests that go red); v3 drafting; plan review round 2 by 10:50Z; build after a clean review; (b) rates: published wording drafted in G10 and the split is measured (evidence committed e70aecaa9); (c) Latin split DONE. E12 DONE (92 of 96, the 4 survivors under fix: Q9 review-fix builder), Q16 DONE (349e6ca0c). Other plan reviews: G4 v5 round 5 (readiness NOT READY: 1 Blocker (gate mutant R8 removal turns test_gate_mutants_picked_up red), codebase pending); G8 v3 round 3 (readiness NOT READY narrowly: 5 text Majors; codebase pending).
+PUSHED_UTC: 2026-11-20T10:11:56+00:00
 
-(15:41 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:42 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -25,7 +25,6 @@ PUSHED_UTC: 2026-11-20T10:11:53+00:00
 | a9111b4b | drafter | claude-opus-5-5 | G10 v3 ticket (plan review round 1: 5 Blockers, 3 red tests, overrun bound, D4 measurement) | plan review round 2 next | 09:58 | 10:30 | 1 | running | 3 | 0 | EGM draft step |
 | a8ab20a4 | builder | claude-sonnet-5-5 | Q9 review fixes: DM-1 re-pin, mutant 8 killer, N1/N14 equivalence proof or dead-code removal, undo/composed property, redact_mutants meta test | Q9 fresh review round 1 done (0 Blocker; E13: none is a leak) | 10:04 | 10:40 | 1 | running | 2 | 0 | from G1-mutants-run.md Q9 review |
 | a6219c90 | drafter | claude-opus-5-5 | G9 v2 ticket (plan review round 1: read-back = exact map keys, no pieces for unions, union kind, gate masks the span, hostile 3/5-pass) | plan review round 2 next | 10:07 | 10:40 | 1 | running | 2 | 0 | EGM draft step (max 3 rounds) |
-| abbbf74a | reviewer | claude-sonnet-5-5 | G4 v5 PLAN review round 5 (readiness) | 10:08 | 10:25 | 2 | running | 5 | 0 | build P1c only after a clean plan review |
 | a08a6b6b | reviewer | claude-sonnet-5-5 | G4 v5 PLAN review round 5 (codebase) | 10:08 | 10:25 | 2 | running | 5 | 0 | same |
 | a5a3a5fe | reviewer | claude-sonnet-5-5 | G8 v3 PLAN review round 3 (codebase) | 10:12 | 10:28 | 2 | running | 3 | 0 | same |
 
