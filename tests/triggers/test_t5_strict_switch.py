@@ -46,8 +46,19 @@ def _child(tmp_path: Path, value: str | None) -> subprocess.CompletedProcess[str
     env["PYTHONPATH"] = str(ROOT)
     if value is not None:
         env[STRICT_VARIABLE] = value
-    return subprocess.run(  # noqa: S603 - this interpreter, pytest, no shell
-        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rfs", "-n", "0", "test_child.py"],
+    return subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "-rfs",
+            "-n",
+            "0",
+            "test_child.py",
+        ],
         cwd=tmp_path,
         env=env,
         capture_output=True,
@@ -109,4 +120,4 @@ def test_r42_an_unknown_value_stops_the_session_at_start(tmp_path):
 
 def test_r42_test_worker_and_conftest_use_the_one_function():
     text = (ROOT / "tests" / "triggers" / "test_worker.py").read_text(encoding="utf-8")
-    assert "os.environ.get(\"HADAVIN_REQUIRE_PG\")" not in text and "strict()" in text
+    assert 'os.environ.get("HADAVIN_REQUIRE_PG")' not in text and "strict()" in text

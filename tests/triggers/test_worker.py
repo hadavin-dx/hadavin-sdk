@@ -602,7 +602,7 @@ def test_non_loopback_host_needs_the_switch():
         for allow in (False, True):
             with pytest.raises(ConfigError, match="IP address or localhost"):
                 worker.check_bind(host, allow)
-    for host in ("0.0.0.0", "10.1.2.3"):  # noqa: S104 - the refusal under test
+    for host in ("0.0.0.0", "10.1.2.3"):
         with pytest.raises(ConfigError, match="not loopback"):
             worker.check_bind(host, False)
         with pytest.raises(ConfigError):
@@ -1561,6 +1561,7 @@ def test_d4_start_says_where_it_listens_and_stop_says_it_is_waiting(monkeypatch,
     assert runner.closed
 
 
+# ruff: noqa: S104
 # --- d-fix5: R4-3 bind wiring and defaults, R4-4 Runner.running, R4-6 plain location segments ------------------
 
 
@@ -1603,7 +1604,9 @@ def test_d5_with_the_switch_a_host_that_is_not_loopback_passes_the_bind_check(mo
     binds: list[tuple[str, object]] = []
     real = worker.check_bind
     monkeypatch.setattr(
-        worker, "check_bind", lambda host, allow: (binds.append((host, allow)), real(host, allow))[1]
+        worker,
+        "check_bind",
+        lambda host, allow: (binds.append((host, allow)), real(host, allow))[1],
     )
     assert worker.main(["--host", "0.0.0.0", "--port", "0", "--allow-non-loopback"]) == 3
     err = capsys.readouterr().err
@@ -1616,10 +1619,14 @@ def test_d5_the_defaults_are_host_127_0_0_1_and_port_8081(monkeypatch, capsys):
     _patched_main(monkeypatch, seen)
     parsed: list[object] = []
     real_prepare = worker._prepare
-    monkeypatch.setattr(worker, "_prepare", lambda args: (parsed.append(args), real_prepare(args))[1])
+    monkeypatch.setattr(
+        worker, "_prepare", lambda args: (parsed.append(args), real_prepare(args))[1]
+    )
     checks: list[tuple[str, object]] = []
     real_port, real_bind = worker.check_port, worker.check_bind
-    monkeypatch.setattr(worker, "check_port", lambda p: (checks.append(("port", p)), real_port(p))[1])
+    monkeypatch.setattr(
+        worker, "check_port", lambda p: (checks.append(("port", p)), real_port(p))[1]
+    )
     monkeypatch.setattr(
         worker, "check_bind", lambda h, a: (checks.append(("host", (h, a))), real_bind(h, a))[1]
     )

@@ -420,7 +420,9 @@ def test_e3_two_child_threads_and_one_flag_give_one_kill(tmp_path):
     assert not flag.exists()
 
 
-def test_e3_a_simulated_flag_taken_by_someone_else_means_no_crash(tmp_path, no_real_exit, monkeypatch):
+def test_e3_a_simulated_flag_taken_by_someone_else_means_no_crash(
+    tmp_path, no_real_exit, monkeypatch
+):
     """E3 / invariant 5: if the flag cannot be deleted (another process took it), nothing fires. The race is
     simulated: `Path.unlink` is patched to raise FileNotFoundError."""
     flag = tmp_path / "flag"

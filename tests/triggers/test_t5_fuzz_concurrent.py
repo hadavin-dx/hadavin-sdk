@@ -609,7 +609,9 @@ def retry_503(ctx: Ctx, run_one) -> int:
             again += 1
             if got.status != 503:
                 break
-            settle(ctx)  # the loop of the 503 may still be writing its row: let it end, then send again
+            settle(
+                ctx
+            )  # the loop of the 503 may still be writing its row: let it end, then send again
         if got.status not in OK | {409}:
             ctx.problem(
                 rec.case,

@@ -33,14 +33,13 @@ from hadavin_sdk.models import RunState, now
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime.agent_loop import Runtime
 from hadavin_sdk.store.protocol import NotFound
+from hadavin_sdk.triggers import endpoint, worker
 from tests.conftest import qualify
 from tests.contracts.kinds import (
     KINDS,
     builtin,  # noqa: F401 - registers the memory store kind
     store_postgres,  # noqa: F401 - registers the postgres store kind (skipped without HADAVIN_TEST_PG_DSN)
 )
-
-from hadavin_sdk.triggers import endpoint, worker  # noqa: E402 - plain import: a broken module fails here, it does not skip
 
 S = RunState
 PATH, PREFIX = "/v1/trigger", "X-Hadavin"

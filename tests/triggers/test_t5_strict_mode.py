@@ -47,7 +47,9 @@ def test_strict_a_missing_core_b_config_is_failed_at_test_time_not_a_collection_
     out = done.stdout + done.stderr
     assert done.returncode == 1, out[-2000:]
     assert "FAILED tests/triggers/test_t5_main_start.py::test_1_" in out, out[-2000:]
-    assert "Interrupted" not in out and "FAILED" in out, out[-2000:]  # rc 1 = tests failed; 2 would be an abort
+    assert "Interrupted" not in out and "FAILED" in out, out[
+        -2000:
+    ]  # rc 1 = tests failed; 2 would be an abort
     assert "core-b trigger config" in out
 
 
