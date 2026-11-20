@@ -75,6 +75,15 @@ class _GateError(GateRefused):
     code = "gate_error"
 
 
+class RunEndFailed(RuntimeError):
+    """The store failed twice while the run was being moved to its final state. The message names the run, the
+    state and the reason code only: no store text, no model text."""
+
+    def __init__(self, run_id: str, state: str, reason: str | None) -> None:
+        super().__init__(f"run {run_id} could not be ended as {state} ({reason})")
+        self.run_id, self.state, self.reason_code = run_id, state, reason
+
+
 # How a meter refusal ends a run: the state and reason `_limits_stop` gives for the same cause. Every other
 # reason (limits_unavailable, bad_amount, one this table does not know) is NEEDS_PERSON limits_unavailable.
 _SPEND_STOP = {
@@ -383,10 +392,21 @@ class Runtime:
         redaction failure; any other gate refusal is NEEDS_PERSON with the gate's code."""
         if isinstance(exc, SpendRefused):
             state, reason = _SPEND_STOP.get(exc.reason, (S.NEEDS_PERSON, "limits_unavailable"))
-            return self._to(run, state, reason)
+            return self._end(run, state, reason)
         if isinstance(exc, UnmaskedInput):
             return self._redaction_failed(run, cited)
-        return self._to(run, S.NEEDS_PERSON, exc.code)
+        return self._end(run, S.NEEDS_PERSON, exc.code)
+
+    def _end(self, run: Run, new: RunState, reason: str | None) -> Run:
+        """Write the final state of a run. A store fault is retried once; if both writes fail the run would be
+        left WORKING, so the failure is raised as the named `RunEndFailed` (never the store's own error text)."""
+        failure: Exception | None = None
+        for _attempt in range(2):
+            try:
+                return self._to(run, new, reason)
+            except Exception as exc:  # noqa: BLE001 - retried once, then named
+                failure = exc
+        raise RunEndFailed(run.run_id, new.value, reason) from failure
 
     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
         cur = self.store.get_run(run.run_id)
@@ -550,6 +570,10 @@ class Runtime:
                     "provider_exhausted" if isinstance(exc, ProviderExhausted) else "provider_error"
                 )
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
+            except Exception:  # noqa: BLE001 - any other client fault: a final state, never WORKING
+                # The reason is a fixed code: the exception text may hold the prompt or a document value.
+                self._note(run, "llm", "chat", result="failed", error_code="model_error")
+                return self._abstain(run, S.NEEDS_PERSON, "model_error", cited)
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",
@@ -682,7 +706,7 @@ class Runtime:
 
     def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
         """End a run that proposed nothing and post the abstain card (every level), so a miss can be labelled."""
-        run = self._to(run, new, reason)
+        run = self._end(run, new, reason)
         # No channel wired (demo slice-1): nothing to post or audit.
         if self.hooks.post_card is None:
             return run
