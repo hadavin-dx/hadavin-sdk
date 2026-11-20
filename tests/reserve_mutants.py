@@ -262,6 +262,9 @@ class Hand:
     new: str
     node: str  # the pytest node id of the killer
     expect: str  # must be in the killer's output
+    more: tuple[
+        tuple[str, str], ...
+    ] = ()  # further (old, new) edits of the same file, for a guard that is held twice
 
 
 S_DAY = "WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < v_day_cap AND s.usd + p_usd <= v_day_cap;"
@@ -278,8 +281,9 @@ S_CHECK_THEN_BOOK = (
 S_DELTA = "    v_delta := rec.settled_usd - rec.reserved_usd;"
 S_AGE = "AND r.created_at <= pg_catalog.clock_timestamp() - pg_catalog.make_interval(secs => p_age_s::double precision);"
 S_CLAIM_STATUS = " AND r.status IN ('open', 'expired')\n       FOR UPDATE;"
-S_DAYROW = "WHERE s.agent_id = rec.agent_id AND s.day = rec.day;"
-S_MONTHROW = "m.month = pg_catalog.date_trunc('month', rec.day)::date;"
+S_DAYROW = "WHERE s.agent_id = rec.agent_id AND s.day = rec.day AND s.usd + v_delta >= 0;"
+S_MONTHROW = "m.month = pg_catalog.date_trunc('month', rec.day)::date"
+S_PIN = '    ("default_transaction_isolation", "\'read committed\'"),\n'
 S_ISOLATION = '    conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")\n'
 TOTALS = "assert _totals(store) == (D(actual), D(actual))"
 PGP = "[postgres]"
@@ -300,16 +304,16 @@ HAND = [
     Hand("H5 the cap is checked by a SELECT, then an unconditional UPDATE books", SQL11, S_DAY_BLOCK, S_CHECK_THEN_BOOK,
         f"{T1}::{T1_CAP3}", "'granted': "),
     Hand("H7 the settle claim has no status test", SQL11, S_CLAIM_STATUS, "\n       FOR UPDATE;",
-        f"{CONTRACT}::{TWICE}[postgres-0.40]", "assert applied_again is False"),
+        f"{CONTRACT}::{TWICE}[postgres-0.40]", "spend counter row missing"),
     Hand("H8 the delta sign is flipped", SQL11, S_DELTA, "    v_delta := rec.reserved_usd - rec.settled_usd;",
         f"{CONTRACT}::{SETTLE}[postgres-0]", TOTALS),
-    Hand("H9 settle books on today's day", SQL11, S_DAYROW, "WHERE s.agent_id = rec.agent_id AND s.day = current_date;",
+    Hand("H9 settle books on today's day", SQL11, S_DAYROW, "WHERE s.agent_id = rec.agent_id AND s.day = current_date AND s.usd + v_delta >= 0;",
         f"{CONTRACT}::{CLOCK}[postgres-0.40]", "spend counter row missing"),
     Hand("H9 (no row for today) settle books on today's day", SQL11, S_DAYROW,
-        "WHERE s.agent_id = rec.agent_id AND s.day = current_date;",
+        "WHERE s.agent_id = rec.agent_id AND s.day = current_date AND s.usd + v_delta >= 0;",
         f"{CONTRACT}::{NEXT_DAY}[postgres-0.40]", "spend counter row missing"),
     Hand("H10 the month key is taken from today", SQL11, S_MONTHROW,
-        "m.month = pg_catalog.date_trunc('month', current_date)::date;",
+        "m.month = pg_catalog.date_trunc('month', current_date)::date",
         f"{CONTRACT}::{CLOCK}[postgres-0.40]", "spend counter row missing"),
     Hand("H11 expire sets settled_usd to 0", SQL11, "SET status = 'expired', settled_usd = r.reserved_usd,",
         "SET status = 'expired', settled_usd = 0,",
@@ -321,9 +325,9 @@ HAND = [
     Hand("H14 the actual amount is clamped to the reserved one", SQL11, "ELSE p_actual END",
         "ELSE LEAST(p_actual, r.reserved_usd) END",
         f"{CONTRACT}::{SETTLE}[postgres-1.75]", "Decimal('1.75')"),
-    Hand("H17 the runtime grant gains DELETE", MIG, '"spend_reservations": Grant("table", _RW, purge="DELETE"',
-        '"spend_reservations": Grant("table", _RW + ", DELETE", purge="DELETE"',
-        f"{PGT}::{NO_DELETE}", NOT_RAISED),
+    Hand("H17 the runtime grant gains DELETE", MIG, '"spend_reservations": Grant("table", ""),',
+        '"spend_reservations": Grant("table", "DELETE"),',
+        f"{PGT}::{NO_DELETE}", "can DELETE spend_reservations"),
     Hand("H19 purge deletes open rows", SQL11, "WHERE r.status = 'settled' AND r.closed_at < p_before;",
         "WHERE r.status = 'open' OR r.closed_at < p_before;",
         f"{CONTRACT}::{PURGE_OPEN}{PGP}", "assert 2 == 1"),
@@ -342,8 +346,10 @@ HAND = [
     Hand("H21b the claim reads the status without the row lock", SQL11, S_CLAIM_STATUS,
         " AND r.status IN ('open', 'expired');",
         f"{PGT}::{WAITED}[0.25-1.00]", "Decimal('0.25')"),
+    # connect() holds the isolation twice (SET SESSION CHARACTERISTICS, and the pin `default_transaction_isolation`
+    # read back by SHOW): either alone is redundant, so the mutant removes both
     Hand("H22 the session isolation SET is removed", PG, S_ISOLATION, "",
-        f"{T1}::{T1_RR}", "SerializationFailure"),
+        f"{T1}::{T1_RR}", "SerializationFailure", more=((S_PIN, ""),)),
     Hand("H23 the money call is not schema-qualified", PG,
         "sql.Identifier(self._schema), sql.Identifier(function), sql.SQL(placeholders)",
         "sql.Identifier(function), sql.Identifier(function), sql.SQL(placeholders)",
@@ -401,11 +407,14 @@ def run_by_hand(only: list[str]) -> list[tuple[str, str]]:
             clean[m.node] = _killer(m.node)[0] == 0
         if not clean[m.node]:
             verdict = "BASELINE FAILS (the killer fails on the clean tree)"
-        elif text.count(m.old) != 1:
-            verdict = f"NOT APPLIED (the old text is in the file {text.count(m.old)} times)"
+        elif miss := [o for o, _ in ((m.old, m.new), *m.more) if text.count(o) != 1]:
+            verdict = f"NOT APPLIED (the old text is in the file {text.count(miss[0])} times)"
         else:
             try:
-                path.write_bytes(text.replace(m.old, m.new).encode("utf-8"))
+                mutated = text
+                for old, new in ((m.old, m.new), *m.more):
+                    mutated = mutated.replace(old, new)
+                path.write_bytes(mutated.encode("utf-8"))
                 code, out = _killer(m.node)
             finally:
                 path.write_bytes(before)
