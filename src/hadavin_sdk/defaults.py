@@ -69,7 +69,7 @@ CUT_MARGIN = 8192
 # over the strings the previous round changed plus a sweep; the loop ends on a round that changes no text, at most 4 rounds, then the
 # call is refused as NotSettled), inside `_build` (every 512th stored value) and inside EVERY sweep of a call, the FIRST included
 # (`redact` and `redact_many` pass the call's deadline since G7 fix round 4): every 32nd free segment (only when the map holds a value), every value replaced, and every 1,024th
-# unit of work of the compound-form scan (a placeholder token of the text, with or without a form, a step of the backward prefix walk, a step of the forward suffix walk, or an entry looked up at a suffix terminal) and the registration of a union (one per character). A spent
+# unit of work of the compound-form scan (a placeholder token of the text, with or without a form, a step of the backward prefix walk, a step of the forward suffix walk, or an entry looked up at a suffix terminal) and the registration of a union (one per character). Since G4 the budget is also read once before each base64 unit that is decoded or masked unread (`runmap._ScanBudget.clock`). A spent
 # budget raises InputTooLarge, a round is never skipped (that would fail open). A direct `sweep()` call with no deadline is not checked, and
 # a `redact()` or `redact_many()` with no `_deadline` has no total bound at all (the fold scan restarts a fresh 6 s allowance on each `find`).
 # NOT checked: a direct pass of the pattern table (`find` over a string, and the loop over the strings of one round), `_views`
@@ -96,7 +96,7 @@ CUT_MARGIN = 8192
 # more for its tag-stripped view only when tags were there, and a check read of its result (at most 3 calls, none when pass 1
 # changed nothing); the check reads share ONE budget (`channel.settled`, CPU seconds since `clean` began; a card over it, or a
 # read the redactor refuses, shows `SETTLE_NOTE`). Measured 2026-11-20 on the test machine: a 174-character card 1.3 ms ->
-# 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
+# 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms. Since G4, a call whose text holds a decodable base64 unit that pass one did not hold runs `redact()` a second time per scanned spelling, and one scan of the decoded texts.
 REDACT_BUDGET_S = 6.0
 # The scan of the written forms of compound secrets (`guard.redact._Redactor._spelled_sweep`; a secret found whole after its first copy was cut,
 # `<SECRET_1>xy`, or a value with a placeholder inside it, `a=1; sid=<JWT_1>`) looks each placeholder token of a text up in two tries of the forms
@@ -145,6 +145,22 @@ SPELLED_READBACK_REACH = 1024
 # refused (`InputTooLarge("SpelledUnionTooMuch")`, nothing shown). Each union's value is also counted in the sweep's work before it is
 # built. A planted 130,000-character secret beside many short overlaps made ~130,000 characters of map per overlap before this limit.
 SPELLED_MAX_UNION_CHARS = 1_000_000
+# shortest base64 run (padding not counted) the redactor decodes; 12 characters are 9 bytes
+B64_MIN_CHARS = 12
+# shortest first line of a wrapped base64 block; every line but the last has its length
+B64_WRAP_MIN_CHARS = 16
+# share of printable characters a decoded run needs to count as text
+B64_PRINTABLE_SHARE = 0.90
+# share of zero bytes at the odd (LE) or even (BE) positions that reads a decoded run as UTF-16
+B64_UTF16_ZERO_SHARE = 0.90
+# decodable, not held base64 units per redact_text call (all views, all depths; a wrapped block counts once, its lines tried alone do not count); one more is refused (InputTooLarge)
+B64_MAX_UNITS = MAX_MAP_ENTRIES
+# decoded characters per redact_text call, and again for the lines of blocks tried alone; past either the call is refused (InputTooLarge)
+B64_MAX_DECODED_CHARS = MAX_REDACT_CHARS
+# longest base64 unit that is decoded; a longer one that pass one did not hold is masked unread
+B64_MAX_UNIT_CHARS = 1 << 16
+# levels of base64 decoded and read; a unit found at this depth is masked unread
+B64_MAX_DEPTH = 3
 
 
 def cut_margin(length: int) -> int:
