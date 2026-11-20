@@ -97,3 +97,84 @@ The crash helper stops the program only at a call of an object the test hands in
 ## Conclusion on "an acknowledged request is never lost and never run twice"
 
 For the path tested, the guarantee held at all 43 kill points on PostgreSQL 16 and at the 39 points on the memory store. "Never lost" holds because the worker answers 2xx only after it has read the run row from the store: whenever a client saw 200 or 202, the row existed after the kill, and after restart and tick it was either the finished run or NEEDS_PERSON "interrupted". Note what that means in plain words: an acknowledged request that was cut off is handed to a person; it is NOT picked up again by the model. "Never run twice" holds because the row is the only memory: a retry that finds a row is answered from it and starts nothing, so the model was called at most once per key in every case (0 times when the kill came before the model call). A request that was killed before its row was written was never acknowledged, and the sender's retry ran it once. Two conditions carry the guarantee and are outside this matrix: the tick must run in the deployment (without it a cut-off run stays RECEIVED or WORKING and the retry keeps getting 202), and the sender must retry with the same key when it got no answer. The loop paths with tools, proposals and execution were not killed here, so for them the guarantee is shown only by the code reading, not by this evidence.
+
+## Part 2: paths with a tool call, a proposal and an approval
+
+Test file: `tests/triggers/test_t5_crash_matrix_paths.py`. Raw log of the last run: `handover/core-a/raw/D-crash-matrix-paths-pg16.log` (346 passed in 227.98 s, PostgreSQL 16 on port 55433; the run was made with `CRASH_MATRIX_OBSERVED=<file>` set so every case wrote down what it saw). Run: 07:01:49 UTC, 2026-11-20.
+
+### What failed, and what was not run (read this first)
+
+**Findings (an invariant broke): none.** At all 171 kill points on PostgreSQL 16 and all 171 on the memory store: at most one run row and at most one approval request for the key; the model was never called again after a kill when a row existed (it ran the whole path once when there was no row); the read tool was never called twice for the key; no action ran twice and none ran without an approval (0 actions on the two worker paths; at most 1, always with an "approve" decision, on the approval path); no row was left in RECEIVED, WORKING, PLAN_READY, EXECUTING or VERIFYING after the tick; the sender's retry before and after the tick got 200 or 202, never another 5xx.
+
+**Expectation corrections: none.** The tables were written from the code before the first run; a no-crash trace test (replay of each path with a recorder in every wrap point) matched them on its first run.
+
+**Failures of my own test code (before the final run):**
+- First full run: PostgreSQL cases passed, memory cases failed (the point never fired): the memory helper `_wsgi_post` of part 1 signs with part 1's secret and I had a different one. Fixed by importing that secret. The run was stopped by hand, so it has no result line.
+- In that first run one PostgreSQL case, `approve18-audit.write_outcome-4-before`, was marked FAILED; its failure text was lost because the run was stopped. Run alone it passed (1 try), and in the final full run it passed. **Cause not found; treat as an unexplained one-off, not as a finding.** Nothing else was seen to fail.
+
+**Things the matrix shows that a reader should know (not broken invariants):**
+1. **A run killed right after it went to WAITING_FOR_APPROVAL and before its approval request was saved** (4 points: `propose40`, `propose41`, `propose42-before`; row WAITING, no request) ends, after the tick, as NEEDS_PERSON "approval_missing". Nobody is told: no card was posted before the kill (0 cards), and the tick writes only an audit line. The sender's retry gets 200 NEEDS_PERSON. The waiting run is NOT still waiting in this case: it is parked with a person nobody told.
+2. **Duplicate approval card:** a kill after the channel send and before `sent_at` is stored (`propose43-chan.send-1-after`, `propose44-...-before`) leaves the request saved as "unsent"; the tick's `sweep` sends it again, so the approver gets two cards (2 cards in total). The code says this is known (requests.py ponytail note). A kill before the send (`propose42-after`, `propose43-before`) gets one card, sent by the tick.
+3. **A run that waits is kept:** with a saved request (`propose42-after` to `propose45`) the run is still WAITING_FOR_APPROVAL after the tick and the request is still pending (and `sent`). The tick did not turn it into "interrupted" and did not lose the request.
+4. **Approved, then killed before the side effect:** kill at or after the move to EXECUTING and before `exec.execute` (`approve08-after` to `approve10-before`, 4 points): the action never runs. The tick ends the run as NEEDS_PERSON "outcome_unknown" (the rule is the same as for an action that did run). The approval is used up and only an audit line says so. Kills before the move to EXECUTING (13 points): the tick's `reconcile` runs the approved plan once and the run ends SUCCEEDED, 1 action. Kill after the side effect (`approve10-after` to `approve13`, 5 points): 1 action, tick says "outcome_unknown", not run again. Kill while VERIFYING (7 points): "verify_interrupted". After the final write (3 points): SUCCEEDED stays.
+5. **The retry answer cannot tell a run in progress from a run that waits:** the worker answers 202 only for RECEIVED and WORKING. A run in PLAN_READY, EXECUTING or VERIFYING (and WAITING_FOR_APPROVAL) gets 200 with the state. A sender that treats 200 as "ended" is wrong for PLAN_READY, EXECUTING and VERIFYING. Seen at 11 PLAN_READY points, and at the EXECUTING and VERIFYING points of the approval path.
+
+**Not run, not checked:**
+- Request-thread points (`store.get_run` of the Runner, answer bytes on the socket) are not repeated: that code is the same on every path and is in part 1. The Runner's store is wrapped with the same CrashPoints object but no point is armed on it here.
+- Reads other than `get_kill_switch`, `spend_totals` and the loop's `get_run` (`get_plan`, `get_gate_decision`, `get_redaction_map`, `audit.events`, the proposal check's store reads) are not wrapped: they change nothing; a kill at one equals the kill at the next wrapped call. `:after` of a repeated pure read is left out (same moment as the next `:before`); the first read of each kind has both.
+- The approval path is NOT driven by a real approval receiver or a chat channel: the decision is recorded in the test with `Approvals.decide(record_only=True)` (what the receiver does), the card goes to the fake channel, and the kill is made in a tick child process, not in the worker. The action is a fake executor that counts calls; the verify check is a fake returning true. No real action contract was run through the HTTP executor. No rollback (verify failed) path was killed.
+- Not asserted: the audit events and their number. A kill between a state write and the audit write after it is not detectable from the tables.
+- A kill of two tick processes at once, a database that goes away, and a kill by signal 9 from outside were not run. The tick here runs the steps `sweep`, `reconcile` and `stuck` only, one hour after the kill (past the stuck floor of 420 s and before the 4 h approval step ends); the other steps were not run. Part 1 used a day.
+- The proposal is a `create_draft_record` action of the fixture config (a reversible http contract with a rollback, so the gate asks for approval), at level "suggest", with a replay record written for the test. The k5 action `rollout_undo` could not be used: it is a `none` contract, which can never be at "suggest" (deferred.py:88).
+
+### Path 1: a read-tool call, then "nothing to do" (read)
+
+Calls of one fresh request, in order (33): store.create_run; audit.write_outcome (received); loop.get_run; store.transition (WORKING); audit (state); get_kill_switch, spend_totals; put_redaction_map x2; get_kill_switch, spend_totals; touch; llm.chat 1 (a read-tool call); add_spend; add_cost; get_kill_switch, spend_totals; tool.invoke (read_logs); put_redaction_map x2; add_tool_call; audit (tool); get_kill_switch, spend_totals; touch; llm.chat 2 (nothing to do); add_spend; add_cost; loop.get_run; store.transition (NO_ACTION); audit (state); chan.post_card (abstain card); audit (card). 59 points per store (the `:after` of 7 repeated reads left out).
+
+| kill point | row after the kill | retry before the tick | state after the tick | retry after the tick | model calls | tool calls | actions executed | result | test id |
+|---|---|---|---|---|---|---|---|---|---|
+| read01 create_run:before | no row | 202 (new run, ends NO_ACTION) | NO_ACTION | 200 | 2 (whole path) | 1 | 0 | as expected | `read01-store.create_run-1-before` |
+| read01:after to read04 (RECEIVED) | RECEIVED | 202 | NEEDS_PERSON interrupted | 200 | 0 | 0 | 0 | as expected | `read01-...-after` to `read04-...` |
+| read04:after to read13:before (WORKING, before the model) | WORKING | 202 | NEEDS_PERSON interrupted | 200 | 0 | 0 | 0 | as expected | `read04-...` to `read13-llm.chat-1-before` |
+| read13:after to read18:before (model answered, tool not yet) | WORKING | 202 | NEEDS_PERSON interrupted | 200 | 1 | 0 | 0 | as expected | `read13-...-after` to `read18-tool.invoke-1-before` |
+| read18:after (tool ran) to read26:before (second model call not yet) | WORKING | 202 | NEEDS_PERSON interrupted | 200 | 1 | 1 | 0 | as expected | `read18-...-after` to `read26-llm.chat-2-before` |
+| read26:after to read30:before (second model call made) | WORKING | 202 | NEEDS_PERSON interrupted | 200 | 2 | 1 | 0 | as expected | `read26-...` to `read30-store.transition-2-before` |
+| read30:after to read32:before (NO_ACTION written, no card yet) | NO_ACTION | 200 | NO_ACTION | 200 | 2 | 1 | 0 | as expected; no abstain card is ever posted for this run (0 cards) | `read30-...-after` to `read32-chan.post_card-1-before` |
+| read32:after to read33 (card posted) | NO_ACTION | 200 | NO_ACTION | 200 | 2 | 1 | 0 | as expected (1 card) | `read32-...-after` to `read33-...` |
+
+A tool that already ran is not run again: the run is not resumed, it goes to a person. The client's first request got an answer before the kill at 56 PostgreSQL points (202) and none at 3 (no row).
+
+### Path 2: a proposal that ends waiting for approval (propose)
+
+Calls (45): the first 25 are those of path 1 up to the heartbeat of step 2; then llm.chat 2 (a proposal), add_spend, add_cost, put_redaction_map (proposal check), audit (cited evidence), store.save_plan, loop.get_run, store.transition (PLAN_READY), audit, get_kill_switch, spend_totals, audit.write_intent (gate decision), store.save_gate_decision, loop.get_run, store.transition (WAITING_FOR_APPROVAL), audit, store.save_approval_request, chan.send (the approval card), store.update_approval_request (sent_at), audit (request). 80 points per store.
+
+| kill point | row after the kill | retry before the tick | state after the tick | retry after the tick | model calls | tool calls | actions executed | cards | result | test id |
+|---|---|---|---|---|---|---|---|---|---|---|
+| propose01 create_run:before | no row | 202 (new run, ends WAITING) | WAITING_FOR_APPROVAL, request sent | 200 | 2 | 1 | 0 | 1 | as expected | `propose01-store.create_run-1-before` |
+| propose01:after to propose04 | RECEIVED | 202 | NEEDS_PERSON interrupted | 200 | 0 | 0 | 0 | 0 | as expected | `propose01-...-after` to `propose04-...` |
+| propose04 to propose33:before (WORKING, any step) | WORKING | 202 | NEEDS_PERSON interrupted | 200 | 0, 1 or 2 (as the table) | 0 or 1 | 0 | 0 | as expected (51 points) | `propose04-...` to `propose33-store.transition-2-before` |
+| propose33:after to propose40:before (plan saved, PLAN_READY) | PLAN_READY | 200 (not 202) | NEEDS_PERSON interrupted | 200 | 2 | 1 | 0 | 0 | as expected; see note 5 | `propose33-...-after` to `propose39-...` |
+| propose40 transition:after, propose41 audit, propose42:before (WAITING, no request) | WAITING_FOR_APPROVAL, no request | 200 | NEEDS_PERSON approval_missing | 200 | 2 | 1 | 0 | 0 (nobody told) | as expected; see note 1 | `propose40-...-after` to `propose42-store.save_approval_request-1-before` |
+| propose42:after, propose43 chan.send:before (request saved, card not sent) | WAITING, request unsent | 200 | WAITING (kept), request sent by the tick | 200 | 2 | 1 | 0 | 1 (the tick's) | as expected | `propose42-...-after`, `propose43-chan.send-1-before` |
+| propose43 chan.send:after, propose44:before (card sent, sent_at not stored) | WAITING, request unsent | 200 | WAITING (kept), request sent again | 200 | 2 | 1 | 0 | 2 (duplicate) | as expected; see note 2 | `propose43-chan.send-1-after`, `propose44-...-before` |
+| propose44:after to propose45 | WAITING, request sent | 200 | WAITING (kept) | 200 | 2 | 1 | 0 | 1 | as expected | `propose44-...-after` to `propose45-...` |
+
+### Path 3: an approved action through execute and verify (approve)
+
+Buildable from existing support (k5_support, the real `Approvals` class with the fake channel, the real tick). Setup in the test: a run that waits (path 2 without a crash), then the approval recorded. The kill is made inside the tick's `reconcile` step in a child process; then a worker is restarted, request again, real tick, request again. Calls (18): chan.update; loop.get_run (on_decided); loop.get_run (execute); get_kill_switch, spend_totals (recheck); audit.write_intent (execute); loop.get_run; store.transition (EXECUTING); audit; exec.execute; audit (result); loop.get_run; store.transition (VERIFYING); audit; exec.verify; loop.get_run; store.transition (SUCCEEDED); audit. 32 points per store.
+
+| kill point | row after the kill | retry before the tick | state after the tick | retry after the tick | model calls | tool calls | actions executed | result | test id |
+|---|---|---|---|---|---|---|---|---|---|
+| approve01 to approve08:before (13 points) | WAITING_FOR_APPROVAL, request approved | 200 WAITING | SUCCEEDED (the tick runs it) | 200 | 2 | 1 | 1 | as expected | `approve01-chan.update-1-before` to `approve08-store.transition-1-before` |
+| approve08:after to approve10:before (4 points) | EXECUTING | 200 EXECUTING | NEEDS_PERSON outcome_unknown | 200 | 2 | 1 | 0 | as expected; see note 4 | `approve08-...-after` to `approve10-exec.execute-1-before` |
+| approve10:after to approve13:before (5 points) | EXECUTING | 200 EXECUTING | NEEDS_PERSON outcome_unknown (not run again) | 200 | 2 | 1 | 1 | as expected | `approve10-...-after` to `approve13-...-before` |
+| approve13:after to approve17:before (7 points) | VERIFYING | 200 VERIFYING | NEEDS_PERSON verify_interrupted | 200 | 2 | 1 | 1 | as expected | `approve13-...-after` to `approve17-...-before` |
+| approve17:after, approve18 (3 points) | SUCCEEDED | 200 | SUCCEEDED | 200 | 2 | 1 | 1 | as expected | `approve17-...-after`, `approve18-...` |
+
+### Counts
+
+PostgreSQL 16, child process killed with `os._exit`: read 59, propose 80, approve 32 = 171 points. Memory store, mode "raise" (the thread or tick that reaches the point dies): the same 171. Plus 3 trace tests (one per path, no crash, the sequence of calls compared with the table) and 1 table test. 346 tests.
+
+### What could not be built, and why
+
+Nothing was left out for lack of support, but three limits stand: (1) the approval decision is recorded by the test, not by a receiver or a chat channel, because no live service may be used; (2) the executor is a counting fake, so the real HTTP executor, its idempotency check and rollback were not killed; (3) a retry that reaches the worker while a tick child is still running was not driven.
