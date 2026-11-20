@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:15:37Z
+UPDATED_UTC: 2026-11-20T08:18:37Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 10
-CAPACITY: load 6.8 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 10, heavy agents 0
+AGENTS_RUNNING: 8
+CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 8, heavy agents 0
 DISK: / 59G free, 15% used; git worktrees 12; 152M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:15:04+00:00
+PUSHED_UTC: 2026-11-20T08:18:29+00:00
 
-(13:45 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:48 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -86,7 +86,7 @@ PUSHED_UTC: 2026-11-20T08:15:04+00:00
 | (new) g7C | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-codebase-details): callers, tests, deadline clock | 07:50 | 08:05 | 100 | done | 2 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
 | (new) g4R | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: implementation readiness | 07:55 | 08:10 | 100 | done | 2 | 0 | reported: G4 v2 NOT READY, 2B/9M (G4-review-2.md) |
 | (new) g4C | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: codebase details | 07:55 | 08:10 | 100 | done | 2 | 0 | reported: G4 v2 NOT READY, 3B/8M (G4-review-2.md) |
-| (new) gfix4 | builder | claude-sonnet-5-5 | gate fix round 4 on review round 3 findings (model_gate.py, enforce functions, gate tests, ticket, request 3) | 07:52 | 08:40 | 1 | running | 4 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
+| (new) gfix4 | builder | claude-sonnet-5-5 | gate fix round 4 on review round 3 findings (model_gate.py, enforce functions, gate tests, ticket, request 3) | 07:52 | 08:40 | 100 | done | 4 | 0 | finished: cherry-picked as b83accc; builder batch 2583 passed 1 skipped 9 xfailed; 105 of 105 mutants good; escalations in E8 of the builder (redact.py scan not interruptible, core-b caps, call-id, empty map, k1b behavioural test) |
 | (new) secC | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: comprehension | 08:00 | 08:12 | 100 | done | 3 | 0 | reported: wording v3 NOT READY (SEC-wording-review-3.md) |
 | (new) secS | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: style | 08:00 | 08:12 | 100 | done | 3 | 0 | reported: wording v3 NOT READY (SEC-wording-review-3.md) |
 | (new) g7fix3 | builder | claude-sonnet-5-5 | G7 fix round 3 (real fixed point, rollback ghost, spelled loop, deadline, stale text, tests) | 07:55 | 08:45 | 100 | done | 3 | 0 | finished: G7 round 3 cherry-picked as da0f71f; builder batch non-perf 2321 passed 4 xfailed 0 failed, perf 10 passed; fixed point, cap 4 kept (max 3 seen), ghost rollback, linear spelled scan, deadline into settle; pushed wip/cloud-core-c/g7-r3 |
@@ -98,11 +98,11 @@ PUSHED_UTC: 2026-11-20T08:15:04+00:00
 | (new) secC4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: comprehension | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 9 Major (SEC-wording-review-4.md) |
 | (new) secS4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: style | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 12 Major, nits |
 | (new) sec5 | drafter | claude-opus-5-5 | wording v5 rewrite taking review round 4 (comprehension + style) | 08:12 | 08:40 | 1 | running | 5 | 0 | EGM draft step (opus drafter) |
-| (new) docfix | builder | claude-sonnet-5-5 | docstring and ticket corrections from the drift report (approvals/gate.py, G-text-deltas.md) | 08:14 | 08:30 | 1 | running | 1 | 0 | E8; redact.py docstrings wait for the G7 round 3 builder |
+| (new) docfix | builder | claude-sonnet-5-5 | docstring and ticket corrections from the drift report (approvals/gate.py, G-text-deltas.md) | 08:14 | 08:30 | 100 | done | 1 | 0 | finished: gate.py G5 docstring, G-text-deltas Amendment 2, F ticket correction; cherry-picked a4b2ce2; redact.py 18-21 and _OWN_OUTPUT comment still to fix (redact lane) |
 | (new) p1dR | reviewer | claude-sonnet-5-5 | EGM RESULT review of P1d-a round 2 (egm:egm-codebase-details): oracle independence, over-defang, fail-before | 08:14 | 08:28 | 100 | done | 2 | 0 | reported: 0 Blocker, 3 Major, 3 Nit (G2-result-review-2.md) |
-| (new) p1dfix3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix (oracle boundaries, four exclusions, linkifier dependency) | - | - | 0 | queued | 3 | 0 | waits for docfix (both touch approvals/gate.py) |
-| (new) g7D3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-design) | 08:17 | 08:30 | 2 | running | 3 | 0 | fresh reviewer after fixes |
+| (new) g7D3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-design) | 08:17 | 08:30 | 100 | done | 3 | 0 | reported: no leak; 0B 2M 2N (G7-result-review-3.md) |
 | (new) g7C3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-codebase-details) | 08:17 | 08:30 | 2 | running | 3 | 0 | fresh reviewer after fixes |
+| (new) p1dr3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix: oracle boundaries, four exclusions, linkifier dependency | 08:22 | 08:50 | 1 | running | 3 | 0 | from G2-result-review-2.md |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
