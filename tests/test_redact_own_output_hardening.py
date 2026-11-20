@@ -1,10 +1,10 @@
 """G7 fix round 1: the own-output rule (redact._mask) must not leave a secret in clear.
 
-The rule leaves alone a value made only of escaped look-alikes (`‹SECRET_1›`, as `runmap.escape_placeholders` writes
-them), genuine placeholders, and at most a cut-off placeholder opening at the end. It applies to the SECRET label
-only, accepts only a real label of this redactor (upper case, as the redactor issues them) and ASCII digits, and the
-whole value must match one anchored token shape: a secret wrapped in look-alike brackets, an unknown kind, a mixed
-form, or a non-ASCII digit is masked as before G7. Every value here is made up and built from parts.
+The rule leaves alone a value made only of escaped SECRET look-alikes (`‹SECRET_1›`, as `runmap.escape_placeholders`
+writes them) and genuine `<SECRET_n>` tokens, and at most a cut-off SECRET opening at the end (E9(2): SECRET tokens only;
+the older rule for a value of genuine placeholders of any kind is separate). It applies to the SECRET label only, accepts
+only ASCII digits, and the whole value must match one anchored token shape: a secret wrapped in look-alike brackets, a
+token of another kind (masked, and it makes one junk map entry), a mixed form, or a non-ASCII digit is masked as before G7. Every value here is made up and built from parts.
 """
 
 from __future__ import annotations
@@ -240,3 +240,23 @@ def test_e9_error_path_cut_off_opening_of_another_kind_makes_one_junk_entry():
     held = dict(rmap)
     assert tools.prepare_output(out, rmap, 4096) == out.replace("<SECRET_1>", f"{L}SECRET_1{G}")
     assert dict(rmap) == held
+
+
+def test_e9_a_junk_entry_in_the_run_map_keeps_later_genuine_placeholders_and_sweeps_a_stray_copy():
+    """Pins the effect of the accepted junk entry (`<SECRET_1>` = `<EMA`) on a LATER text of the same run (review round 2, N4).
+
+    A genuine `<EMAIL_1>` in a later text is not rewritten (a held-back edge value), a stray `<EMA` is swept into the entry's
+    placeholder, and `redact_text` and `enforce_map` agree; neither adds an entry.
+    """
+    message = "ab " * 49 + "password=a@b.co tail"
+    _reason, _out, rmap = _error_path(message)
+    assert dict(rmap) == {"<SECRET_1>": "<EMA"}
+    held = dict(rmap)
+    for later, expected in (
+        ("mail <EMAIL_1> here", "mail <EMAIL_1> here"),
+        ("x<EMA<IPV4_1>", "x<SECRET_1><IPV4_1>"),
+        ("plain <EMA end", "plain <SECRET_1> end"),
+    ):
+        assert runmap.redact_text(later, rmap) == expected
+        assert runmap.enforce_map(later, rmap) == expected
+        assert dict(rmap) == held

@@ -10,7 +10,8 @@ whose "value" was swept from every later text.
 The rule now (`redact._decide`; E9(2): SECRET tokens only, any other kind is masked): a value that is nothing but escaped look-alikes (`‹SECRET_n›`, exactly what
 `runmap.escape_placeholders` writes) and genuine placeholders, with nothing besides but spaces, `;` and `,`, is left
 alone, as a value of genuine placeholders alone already was. A value that holds a look-alike AND anything a secret
-can be made of is masked whole, as before. Nothing is added to a map for an escaped token, so it restores to nothing.
+can be made of is masked whole, as before. Nothing is added to a map for an escaped SECRET token, so it restores to
+nothing; an escaped token of another kind (`‹SECRET_1›<UUID_3>`, `‹EMAIL_1›`) is masked and makes one junk entry.
 
 Every value here is made up and built from parts.
 """

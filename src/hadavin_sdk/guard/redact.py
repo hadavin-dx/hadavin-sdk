@@ -880,7 +880,8 @@ _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # TRADE-OFF, accepted (core-c's default, option (a) of the E9 result review; the lead may order (b), an exemption on the tools
 # path only): the first pass writes the tokens of OTHER kinds after a key too (EMAIL, IPV4, APIKEY, JWT, URLCRED, HIGHENTROPY
 # and PHONE run before the SECRET key=value pattern, so `token=<JWT_1>`, `api_key=<APIKEY_1>`, `password=<EMAIL_1>`). After
-# `escape_placeholders` their escaped spelling is a SECRET value and is masked: ONE junk map entry per distinct escaped token
+# `escape_placeholders` their escaped spelling is a SECRET value and is masked (the same for a typed `password=‹JWT_1›`; a value of
+# GENUINE placeholders of any kind, `password=<EMAIL_1>`, is left as typed by the older rule in `_decide`, no entry): ONE junk map entry per distinct escaped token
 # (`<SECRET_n>` = `‹JWT_1›`), also for a cut-off opening of another kind (`password=<EMA`). That is accepted, to close the hole
 # where a real credential spelled like another kind's token stayed in clear. Tests: tests/test_redact_own_output*.py.
 # STATED LIMIT (fail open, by design): a SECRET value made ONLY of SECRET tokens, or of a cut-off start of one (`<S`, `<SE` ...

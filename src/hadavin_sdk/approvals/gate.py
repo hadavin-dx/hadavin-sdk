@@ -41,7 +41,8 @@ v0 (Phase 0 of the v2 re-architecture, 2026-09-27). Two of the planned rules:
   - a mention becomes `at-here` (`(at)here` after a removed link was a link).
 - **G5, leaks: NOT in this module.** WARDEN blocked a message that still held anything the redactor
   classed as secret. That check was not ported and nothing here runs a secret pattern. Text is masked
-  once, by `guard.runmap.redact_text`, before it reaches this module; nothing in this module re-checks
+  by `guard.runmap.redact_text` (`approvals/channel.clean` runs this module's cleaning inside that call, on the
+  text and on every decoded view, and masks again on its re-reads); nothing in this module re-checks
   it on the way out. (The model gate's `runmap.enforce_map` is a different thing: it replaces values the
   run's map already holds, runs no pattern, and so cannot see a new secret.) The original WARDEN
   paragraph said a message holding a secret was BLOCKED and a stub went out instead.
@@ -55,7 +56,7 @@ v0 (Phase 0 of the v2 re-architecture, 2026-09-27). Two of the planned rules:
 - **G4, commands** (`withhold_commands`, 2026-10-16). WARDEN prints no command for a person to run:
   its reports carry none, and a write command (aws, kubectl, helm, terraform, SQL, `rm -r`,
   `curl | sh`) in model-written prose is withheld where it stands, as the model's answer is read
-  (models.ModelProse, discuss.Answer). A change goes only through a catalogue plan and a signed
+  (`approvals/channel.clean`). A change goes only through a catalogue plan and a signed
   approval.
 
 In WARDEN every way out used this module (audit A-C-8) through `enforce`, `for_terminal` and
