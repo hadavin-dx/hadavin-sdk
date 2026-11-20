@@ -35,6 +35,8 @@ class Hand:
     more: tuple[tuple[str, str], ...] = ()  # further (old, new) edits of the same file
 
 
+# A9: with both membership tests off, migrate still refuses the member (it inherits the owner's rights, so the grant
+# map check names those instead): the killer pins the refusal's NAMING of the membership, hence "did not match".
 MEMBER_OWNER = """        if db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, owner)).fetchone()[0]:
             problems.append(f"{role}: is a member of {owner}, the owner of relations in {schema}")"""
 MEMBER_FUNC = """        elif db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, owner)).fetchone()[0]:
@@ -77,7 +79,7 @@ HAND = [
         f"{ROLES}::test_public_cannot_execute_the_outbox_functions", "can run hadavin_audit_outbox_done"),
     Hand("A9 the owner refusal skips a MEMBER of the owner role", MIG, MEMBER_OWNER,
         MEMBER_OWNER.replace("if db.execute(", "if False and db.execute("),
-        f"{ROLES}::test_migrate_refuses_a_checkpoint_login_that_is_a_member_of_the_owner_role", "DID NOT RAISE",
+        f"{ROLES}::test_migrate_refuses_a_checkpoint_login_that_is_a_member_of_the_owner_role", "Regex pattern did not match",
         more=(
             (MEMBER_FUNC, MEMBER_FUNC.replace("elif db.execute(", "elif False and db.execute(")),
         ),
