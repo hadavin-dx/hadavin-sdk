@@ -18,7 +18,7 @@ import re
 import threading
 from collections.abc import Callable, Collection
 from pathlib import Path
-from typing import Any, Final, Literal, cast
+from typing import Any, Final, Literal, Self, cast
 
 CRASH_EXIT_CODE: Final[int] = 137
 CRASH_MARKER: Final[str] = "simulate crash"
@@ -79,7 +79,7 @@ class CrashPoints:
         self._seen: dict[str, int] = {}
         self._fired: list[str] = []
 
-    def __enter__(self) -> CrashPoints:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
@@ -141,7 +141,7 @@ class CrashPoints:
 
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
         """A stand-in for `target` whose listed methods pass `<name>.<method>:before` and `:after`. Everything
-        else, results and exceptions included, is the target's. `AttributeError` if the target lacks a method."""
+        else, results and exceptions included, is the target's. `AttributeError` if the target lacks a method, `TypeError` if it is no method."""
         if not isinstance(name, str) or not _NAME.fullmatch(name):
             raise ValueError(f"bad name: {name!r}")
         if isinstance(methods, str):
@@ -151,7 +151,7 @@ class CrashPoints:
             if not isinstance(method, str) or not _NAME.fullmatch(method):
                 raise ValueError(f"bad method name: {method!r}")
             if not callable(getattr(target, method)):
-                raise AttributeError(f"{name}.{method} is not a method")
+                raise TypeError(f"{name}.{method} is not a method")
             calls[method] = self._edge(target, name, method)
         return cast(T, _Proxy(target, calls))
 

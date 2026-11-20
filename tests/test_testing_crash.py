@@ -138,6 +138,7 @@ def start_child(tmp_path: Path, source: str, flag: Path, *args: str, env: dict |
     return subprocess.run(  # noqa: S603 - this interpreter, a script written by this test, no shell
         [sys.executable, str(script), str(flag), *args],
         capture_output=True,
+        check=False,
         text=True,
         timeout=CHILD_TIMEOUT_S,
         env=env,
@@ -453,11 +454,13 @@ def test_h2_left_armed_is_an_error_and_is_disarmed(tmp_path, no_real_exit):
     assert thing.step() == 1 and cp.fired == ()
 
     flag = tmp_path / "flag"
-    with pytest.raises(RuntimeError, match="thing.step:after"):
-        with CrashPoints(mode="exit", flag_path=flag) as kill:
-            wrapped = kill.wrap(target, "thing", ["step"])
-            kill.arm("thing.step:after")
-            assert flag.exists()
+    with (
+        pytest.raises(RuntimeError, match="thing.step:after"),
+        CrashPoints(mode="exit", flag_path=flag) as kill,
+    ):
+        wrapped = kill.wrap(target, "thing", ["step"])
+        kill.arm("thing.step:after")
+        assert flag.exists()
     assert not flag.exists() and kill.armed() is None
     assert wrapped.step() == 2
 
@@ -513,12 +516,12 @@ def test_h3_bad_nth_is_refused_at_arm(nth):
 
 
 def test_h3_wrap_refuses_what_the_target_lacks_and_bad_names():
-    """H3: a method the target lacks is an AttributeError at wrap time; so is a plain attribute; bad names are
+    """H3: a method the target lacks is an AttributeError at wrap time; a plain attribute is a TypeError; bad names are
     ValueError; one string instead of a list is a TypeError."""
     cp, target = CrashPoints(), Thing()
     with pytest.raises(AttributeError):
         cp.wrap(target, "thing", ["step", "nope"])
-    with pytest.raises(AttributeError, match="not a method"):
+    with pytest.raises(TypeError, match="not a method"):
         cp.wrap(target, "thing", ["label"])
     for name in ("", "Thing", "a.b", "a:b", "a#b", "a\n", "t" * 300):
         with pytest.raises(ValueError, match="bad name"):
@@ -635,7 +638,7 @@ def test_h6_the_helper_file_keeps_its_own_rules():
     }
     assert "__import__" not in plain_calls
     shaped = re.compile(
-        r"https?://|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|dev|ai|cloud|internal|local)\b", re.I
+        r"https?://|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|dev|ai|cloud|internal|local)\b", re.IGNORECASE
     )
     texts = [n.value for n in nodes if isinstance(n, ast.Constant) and isinstance(n.value, str)]
     assert len(texts) > 10 and [t for t in texts if shaped.search(t)] == []
