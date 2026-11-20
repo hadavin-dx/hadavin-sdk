@@ -136,11 +136,11 @@
   {
    "item": "MUTANTS",
    "what": "tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants",
-   "state": "DONE on the code of 05:45Z; MUST be re-run on the final code",
-   "percent": 80,
-   "evidence file": "tests/endpoint_mutants.py (284 lines), raw/endpoint-mutants-run.log",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/endpoint_mutants.py, raw/endpoint-mutants-run-2.log",
    "tries": 1,
-   "reason": "17 of 17 good in 7 groups; 6 mutants have a weak expect text (bare asserts); one worker test is deselected in mutant runs because the runner uses --noconftest; dropping the NUL guard SURVIVES (the field patterns already refuse NUL), left out and said so in the script"
+   "reason": "re-run by me on the final endpoint.py and worker.py: 17 of 17 good; problems: []. Limits: 6 mutants are matched by a bare assert (weak expect text), one worker test is deselected in mutant runs, no mutant yet for the new server.py and for the new checks of ORDER 012 (secret count, whitespace, back-off, SIGTERM): those were killed by hand only (raw/E2-mutants.log, raw/D-endpoint-mutants.log)"
   },
   {
    "item": "E2-SOCKET",
@@ -514,11 +514,11 @@
   {
    "suite or file": "tests/endpoint_mutants.py (mutation runner, 17 mutants)",
    "branch and SHA": "working tree at 05:45Z",
-   "run number": "1 (plus 1 re-run by the same agent after worker edits)",
+   "run number": "3 (mine, final code)",
    "passed / failed / errors": "17 of 17 good; problems: []",
    "first failing line": "none",
-   "state": "done, re-run pending",
-   "reason": "worker.py and endpoint.py are still being changed for ORDER 012; a mutant whose old text no longer matches would show as a problem"
+   "state": "done",
+   "reason": "17 of 17 good on the final code; database tests are skipped inside mutant runs"
   },
   {
    "suite or file": "tests/triggers/test_endpoint.py (after lead review fixes)",
