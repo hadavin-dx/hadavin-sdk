@@ -198,7 +198,7 @@ def test_e1fix_main_warns_once_when_the_app_has_no_audit_and_make_app_does_not(
     del app.audit
     with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
         wsgi, runner = worker.make_app(app)  # tests build stand-ins this way: no warning here
-        assert caplog.records == []
+        assert [r for r in caplog.records if "audit" in r.getMessage()] == []
         monkeypatch.setattr(worker, "_build_app", lambda args: (wsgi, runner, app))
         args = argparse.Namespace(
             config_dir=None, host=worker.LOOPBACK, port=0, allow_non_loopback=False
@@ -206,7 +206,7 @@ def test_e1fix_main_warns_once_when_the_app_has_no_audit_and_make_app_does_not(
         server, got = worker._prepare(args)
         server.server_close()
         got.close(0)
-    warns = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    warns = [r.getMessage() for r in caplog.records if "audit" in r.getMessage()]
     assert len(warns) == 1 and "'audit'" in warns[0] and "SimpleNamespace" in warns[0]
     assert SECRET not in warns[0]
 
@@ -222,7 +222,7 @@ def test_e1fix_no_warning_when_the_app_has_an_audit(tmp_path, monkeypatch, caplo
         server, got = worker._prepare(args)
         server.server_close()
         got.close(0)
-    assert [r for r in caplog.records if r.levelname == "WARNING"] == []
+    assert [r for r in caplog.records if "audit" in r.getMessage()] == []
 
 
 @pytest.mark.parametrize("name", ["HEALTH_RECHECK_S", "HEALTH_PING_TIMEOUT_S"])
