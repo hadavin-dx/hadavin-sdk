@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:50:33Z
+UPDATED_UTC: 2026-11-20T16:52:41Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:12Z agents 2 (G9c builder, docs style reviewer round 5 = cap), load 1.3. DOCS5 MERGED (3 Blocker + 5 Major of round 4: no Kn outside SECURITY, no who-recorded refs, narrowed vendor note, one status per gap with K24a/K36a/K67a/K70a/K74a/K82a, numbers checked against code); doc tests 71 passed, 1 failed = lead-file vendor string. head 60f81a681. 1649Z agents 2 (G9c builder, DOCS5 builder: root docs r4 fixes), load 1.2. Docs split sent: handover/core-c/requests/to-core-a-docs-split-1649Z.md: core-c keeps SECURITY.md, CHANGELOG.md, README.md; core-a does not edit them (sends paragraphs instead). Not starting 4 parallel docs builders on the sa
+STATE: 17:17Z agents 2 (G9c, DOCS6 builders), load 1.0. Root docs style round 5 (cap): 0 Blocker, 5 Major recorded (tickets/DOCS-style-review-5.md). Q18 in QUESTIONS.md asks the owner: accept docs after DOCS6 or authorise more rounds. 17:12Z agents 2 (G9c builder, docs style reviewer round 5 = cap), load 1.3. DOCS5 MERGED (3 Blocker + 5 Major of round 4: no Kn outside SECURITY, no who-recorded refs, narrowed vendor note, one status per gap with K24a/K36a/K67a/K70a/K74a/K82a, numbers checked against code); doc tests 71 passed, 1 f
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 2
-CAPACITY: load 1.3 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
+CAPACITY: load 1.0 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 59; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:50:13+00:00
+PUSHED_UTC: 2026-11-20T16:52:38+00:00
 
-(22:20 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -48,7 +48,8 @@ PUSHED_UTC: 2026-11-20T16:50:13+00:00
 | docs4 | builder | claude-sonnet-5-5 | BUILDS DOCS4: style review round 3 fixes (8 Major); /tmp/core-c-docs4 | 16:47 | 17:15 | 1 | done | 1 | 0 | docs only |
 | docs-rev4 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 4 of root docs after DOCS4 | 17:00 | 17:12 | 1 | done | 1 | 0 | EGM style |
 | a6873a2f | builder | claude-sonnet-5-5 | BUILDS DOCS5: style review round 4 fixes (3 Blocker, 5 Major); /tmp/core-c-docs5 | 17:05 | 17:30 | 1 | done | 1 | 0 | docs only |
-| docs-rev5 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 5 (cap) of root docs after DOCS5 | 17:12 | 17:25 | 1 | running | 1 | 0 | EGM style |
+| docs-rev5 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 5 (cap) of root docs after DOCS5 | 17:12 | 17:25 | 1 | done | 1 | 0 | EGM style |
+| docs6 | builder | claude-sonnet-5-5 | BUILDS DOCS6: round 5 fixes (0 Blocker, 5 Major); /tmp/core-c-docs6 | 17:17 | 17:40 | 1 | running | 1 | 0 | docs only |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
