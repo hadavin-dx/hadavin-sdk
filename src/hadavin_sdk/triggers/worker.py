@@ -227,6 +227,7 @@ class Runner:
         self._closed = False
         self._ping_lock = threading.Lock()  # guards _ping
         self._ping: _Ping | None = None  # the one ping thread that may be pending
+        self._ping_error: BaseException | None = None  # why the last answered ping failed (for _recover)
 
     @property
     def ack_wait_s(self) -> float:
@@ -268,10 +269,18 @@ class Runner:
                     fresh  # assigned only after the thread runs: no wait on a dead ping
                 )
         if not ping.done.wait(HEALTH_PING_TIMEOUT_S):
+            self._ping_error = None  # no answer: a timeout is store-down, there is no cause
             self._count_store_failure()
             _LOG.debug("trigger health: store ping did not return in time")
             return False, self.store_failures
+        self._ping_error = None if ping.up else ping.cause
         return ping.up, self.store_failures
+
+    @property
+    def ping_error(self) -> BaseException | None:
+        """The error the last answered `/health` ping failed with (None when it was up or timed out). For
+        `_recover`, which tells a store that is down from one that refuses."""
+        return self._ping_error
 
     def _count_store_failure(self) -> None:
         with self._stats_lock:
@@ -399,7 +408,13 @@ class Runner:
             return
         if self._audit is None:
             return
-        event = _conflict_event(found, req)
+        try:
+            event = _conflict_event(found, req)
+        except Exception as exc:  # noqa: BLE001 - the flag was set above: reset it, the 409 stands
+            with self._stats_lock:
+                self._audit_pending = False
+            _LOG.warning("trigger conflict: audit event not built (%s)", type(exc).__name__)
+            return
         done = threading.Event()
 
         def write() -> None:
@@ -482,6 +497,7 @@ class _Ping:
     def __init__(self, store: Any, on_failure: Callable[[], None]) -> None:
         self.done = threading.Event()
         self.up = False
+        self.cause: BaseException | None = None  # the error of a failed ping, kept for the re-check
         self._store, self._on_failure = store, on_failure
         self.thread = threading.Thread(target=self._run, name="trigger-ping", daemon=True)
 
@@ -493,6 +509,7 @@ class _Ping:
                 pass
             self.up = True
         except Exception as exc:  # noqa: BLE001 - down in every case; the class name only
+            self.cause = exc.with_traceback(None)
             self._on_failure()
             _LOG.debug("trigger health: store ping failed (%s)", type(exc).__name__)
         finally:
@@ -899,6 +916,11 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
         raise
 
 
+def _is_store_down(exc: BaseException) -> bool:
+    """The store did not answer (retried forever by the re-check); anything else is a refusal or a bug."""
+    return isinstance(exc, StoreUnavailable) or is_connectivity_error(exc)
+
+
 def _recover(args: argparse.Namespace) -> tuple[Any, Runner]:
     """One try of a degraded worker to get the real app: build it and ping the store with `Runner.health`.
     Raises while the store is down (any error: the caller tries again later); on success (wsgi, runner)."""
@@ -907,6 +929,9 @@ def _recover(args: argparse.Namespace) -> tuple[Any, Runner]:
     try:
         up, _failures = runner.health()
         if not up:
+            cause = runner.ping_error
+            if cause is not None and not _is_store_down(cause):
+                raise cause  # the store answered with a refusal: _watch counts it as a non-store failure
             raise StoreUnavailable("store ping failed")
         _warn_no_audit(app)
         kept = True
@@ -966,7 +991,7 @@ class _Degraded:
                 with self._lock:
                     self.failures += 1
                 name = type(exc).__name__
-                if isinstance(exc, StoreUnavailable) or is_connectivity_error(exc):
+                if _is_store_down(exc):
                     other = 0  # the store is down: retried forever
                 else:
                     other += 1
