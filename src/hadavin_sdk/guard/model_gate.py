@@ -182,7 +182,9 @@ from hadavin_sdk.tools import END_MARKER, START_MARKER
 # THE ONE SETTLE RULE (ORDER 011; it replaces ORDER 006 item 8):
 #   (a) a reply came back with a usable cost            -> settle that cost;
 #   (b) the adapter MARKED the error as refused before any response (`refused_before_response`)
-#                                                       -> settle 0;
+#                                                       -> settle 0. The mark counts on a ProviderError and
+#                                                          on a ProviderExhausted (then it means EVERY attempt
+#                                                          the retry layer made was refused, nothing billed);
 #   (c) everything else (a timeout, used-up retries, a billed reply that failed to parse, any other
 #       exception, KeyboardInterrupt / SystemExit, an abandoned thread, a reply whose cost is missing,
 #       negative or not a number)                       -> NO settle: the worst case stays booked and the
@@ -306,12 +308,16 @@ AUDIT_CODES = (
 
 
 def refused_before_response(exc: BaseException) -> bool:
-    """Rule (b). True only for a ProviderError (not ProviderExhausted: its attempts may have been answered)
-    that the adapter marked with `refused_before_response = True`. llm/retry.py sets no such mark yet
-    (handover/core-c/requests/2-refused-before-response.md), so today this is False for every real error
-    and every failed call keeps its worst case booked."""
+    """Rule (b). True only for a ProviderError (a ProviderExhausted is one) that the adapter marked with the exact
+    value `refused_before_response = True`. On a ProviderExhausted the mark means EVERY attempt the retry layer
+    made was refused before any response, so nothing was billed (handover/core-c/requests/2-refused-before-response.md,
+    "Update 13:2xZ"). An unmarked ProviderExhausted stays under rule (c). The gate CANNOT verify the mark: the
+    adapter must set it on an exhausted error only when no attempt produced a response or may have been billed (a
+    timeout after the request was sent is NOT a refusal). A non-ProviderError with the mark, a truthy value that
+    is not True and a mark that raises on read are not honoured. llm/retry.py sets no mark yet, so today this is
+    False for every real error and every failed call keeps its worst case booked."""
     marked = getattr(exc, "refused_before_response", False) is True
-    return marked and isinstance(exc, ProviderError) and not isinstance(exc, ProviderExhausted)
+    return marked and isinstance(exc, ProviderError)
 
 
 def spend_reason(error: BaseException) -> str | None:
