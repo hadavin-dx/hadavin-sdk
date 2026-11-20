@@ -1,0 +1,125 @@
+===== memory
+zero below cap -> None
+zero at cap -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded day cap reached
+zero cap zero amt -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded day cap reached
+amount 1 -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('1E-13') -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('1E+9') -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('-0') -> None
+amount Decimal('0E+9') -> None
+amount Decimal('0E+10') -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('999999999.999999999999') -> None
+amount Decimal('1E+8') -> None
+totals amt -> (Decimal('1099999999.999999999999'), Decimal('1099999999.999999999999'))
+day_cap Decimal('NaN') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap Decimal('NaN') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap Decimal('-1') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap Decimal('-1') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap 3 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap 3 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap 3.0 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap 3.0 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap True -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap True -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap None -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap None -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap '3' -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap '3' -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap Decimal('Infinity') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap Decimal('Infinity') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap Decimal('1E+200000') -> None
+month_cap Decimal('1E+200000') -> None
+day_cap Decimal('1E-19') -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded day cap reached
+month_cap Decimal('1E-19') -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded month cap reached
+totals cap -> (Decimal('2E-12'), Decimal('2E-12'))
+settle no-run -> (SpendReservation(reservation_id='res-0380ee3a9ea94b3995032ef3a802c468', agent_id='g6', day=datetime.date(2026, 3, 10), run_id='run-nope', reserved_usd=Decimal('1'), settled_usd=Decimal('0.5'), status='settled', created_at=datetime.datetime(2026, 11, 20, 6, 18, 36, 770165, tzinfo=datetime.timezone.utc), closed_at=datetime.datetime(2026, 11, 20, 6, 18, 36, 770176, tzinfo=datetime.timezone.utc)), True)
+totals g6 -> (Decimal('0.5'), Decimal('0.5'))
+dup + over cap -> RAISED hadavin_sdk.store.protocol.StaleState spend reservation exists: res-65f247a1df144d16ac75a0de62ce18d7
+dup + bad amount -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+dup + bad cap -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+new + bad amount + bad cap msg -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+expire -1 -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire True -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire 1.0 -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire '0' -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire None -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire Decimal('0') -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire(0) immediately -> 9
+expire(1) -> 2
+purge future -> 12
+settle purged expired -> RAISED hadavin_sdk.store.protocol.NotFound 'res-aa9bb08dff45492aa8fa3e51b88f9f27'
+settle open survivor -> True
+totals c1 -> (Decimal('2.1'), Decimal('2.1'))
+purge naive datetime -> RAISED builtins.TypeError can't compare offset-naive and offset-aware datetimes
+settle bad types none -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+reserve id None -> RAISED pydantic_core._pydantic_core.ValidationError 1 validation error for SpendReservation
+reservation_id
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    
+reserve agent None -> RAISED pydantic_core._pydantic_core.ValidationError 1 validation error for SpendReservation
+agent_id
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For fu
+totals n -> (Decimal('1'), Decimal('1'))
+===== postgres
+zero below cap -> None
+zero at cap -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded day cap reached
+zero cap zero amt -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded day cap reached
+amount 1 -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('1E-13') -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('1E+9') -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('-0') -> None
+amount Decimal('0E+9') -> None
+amount Decimal('0E+10') -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+amount Decimal('999999999.999999999999') -> None
+amount Decimal('1E+8') -> None
+totals amt -> (Decimal('1099999999.999999999999'), Decimal('1099999999.999999999999'))
+day_cap Decimal('NaN') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap Decimal('NaN') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap Decimal('-1') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap Decimal('-1') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap 3 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap 3 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap 3.0 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap 3.0 -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap True -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap True -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap None -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap None -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap '3' -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap '3' -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap Decimal('Infinity') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+month_cap Decimal('Infinity') -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+day_cap Decimal('1E+200000') -> RAISED psycopg.errors.NumericValueOutOfRange value overflows numeric format
+CONTEXT:  unnamed portal parameter $4 = '...'
+month_cap Decimal('1E+200000') -> RAISED psycopg.errors.NumericValueOutOfRange value overflows numeric format
+CONTEXT:  unnamed portal parameter $4 = '...'
+day_cap Decimal('1E-19') -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded day cap reached
+month_cap Decimal('1E-19') -> RAISED hadavin_sdk.store.protocol.SpendCapExceeded month cap reached
+totals cap -> (Decimal('0'), Decimal('0'))
+settle no-run -> (SpendReservation(reservation_id='res-235b35a6c89e45d6a65ac98aa990e1bd', agent_id='g6', day=datetime.date(2026, 3, 10), run_id='run-nope', reserved_usd=Decimal('1'), settled_usd=Decimal('0.5'), status='settled', created_at=datetime.datetime(2026, 11, 20, 6, 18, 38, 256371, tzinfo=datetime.timezone.utc), closed_at=datetime.datetime(2026, 11, 20, 6, 18, 38, 258090, tzinfo=datetime.timezone.utc)), True)
+totals g6 -> (Decimal('0.5'), Decimal('0.5'))
+dup + over cap -> RAISED hadavin_sdk.store.protocol.StaleState spend reservation exists: res-2fb5612007de49f68abaa1e24401341b
+dup + bad amount -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+dup + bad cap -> RAISED builtins.ValueError spend cap must be a finite Decimal with 0 <= cap
+new + bad amount + bad cap msg -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+expire -1 -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire True -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire 1.0 -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire '0' -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire None -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire Decimal('0') -> RAISED builtins.ValueError older_than_s must be an int with 0 <= older_than_s
+expire(0) immediately -> 7
+expire(1) -> 2
+purge future -> 10
+settle purged expired -> RAISED hadavin_sdk.store.protocol.NotFound 'res-badcd377b56d41f097d063b952920e62'
+settle open survivor -> True
+totals c1 -> (Decimal('2.1'), Decimal('2.1'))
+purge naive datetime -> 1
+settle bad types none -> RAISED builtins.ValueError spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+reserve id None -> RAISED psycopg.errors.NotNullViolation null value in column "reservation_id" of relation "spend_reservations" violates not-null constraint
+DETAIL:  Failing row contains (null, n, 2026-03-10
+reserve agent None -> RAISED psycopg.errors.NotNullViolation null value in column "agent_id" of relation "spend_reservations" violates not-null constraint
+DETAIL:  Failing row contains (res-ca12808c1bf7438681948
+totals n -> (Decimal('0'), Decimal('0'))
+('read committed',)
