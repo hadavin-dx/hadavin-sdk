@@ -48,3 +48,8 @@
 - Not retried, not worked around (ORDER 003 item 4).
 - What I do instead: the fallback written in ORDER 003 item 1: a board at the end of every tool batch through handover/core-b/tools/board.sh. Effect: boards will be more than 1 minute apart whenever one tool batch (for example a long read or a reviewer round) runs longer than that, and no board is written while the session sits idle waiting for an agent.
 - Needed from the owner: allow the cron in this cloud session, or accept the fallback rhythm.
+
+## E7 (2026-11-20) integration tree Y after second merge (142d0bd, 6db83cd): 3 failures, none from core-b code
+1. test_model_gate::test_no_error_the_adapters_raise_today_carries_the_mark, and test_model_gate_install::...[usd_cap]: core-c must honour the mark on ProviderExhausted and add usd_cap to SPEND_REASONS (requests/to-core-c-1, 2).
+2. test_repo_rules::test_k5_no_transitive_import_of_actions_from_tools: chain tools -> guard -> guard.injection (function-local import of limits.SpendRefused, line 234) -> limits -> registry -> actions.contract. Fails on the Y tree before the merge too. guard/injection.py is core-c's; fix is to move SpendRefused to a module that does not import registry.
+Tests were not changed. Not pushed from the Y worktree yet.
