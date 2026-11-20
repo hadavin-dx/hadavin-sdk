@@ -14,6 +14,7 @@ import pytest
 from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.llm import common
 from hadavin_sdk.llm.common import NetworkLLM
 from hadavin_sdk.llm.fake import FakeLLM
 
@@ -111,6 +112,38 @@ def test_routes_swapped_after_build_are_refused_before_the_call(name):
     llm.routes = {"r": route(**{IN: Decimal(0)})}
     with pytest.raises(ConfigError, match=IN):
         llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
+
+
+class _Probe(NetworkLLM):
+    def _chat(self, route, system, turns, specs, forced, output_schema):
+        self.seen = route
+        return "reply"
+
+
+def _chat(llm, name="r"):
+    return llm.chat([{"role": "user", "content": "q"}], system="s", route=name)
+
+
+def test_the_route_checked_is_the_route_priced(monkeypatch):
+    good, other = route(), route(**{IN: Decimal(0)})
+    llm = _Probe({"r": good}, 3)
+    real = common.priced
+
+    def swap_after_check(routes):
+        out = real(routes)
+        llm.routes = {"r": other}  # a swap between the check and the use
+        return out
+
+    monkeypatch.setattr(common, "priced", swap_after_check)
+    assert _chat(llm) == "reply" and llm.seen is good
+
+
+def test_only_the_called_route_is_checked():
+    llm = _Probe({"ok": route(), "bad": route()}, 3)
+    llm.routes["bad"] = route(**{OUT: Decimal(-1)})
+    assert _chat(llm, "ok") == "reply"
+    with pytest.raises(ConfigError, match="bad"):
+        _chat(llm, "bad")
 
 
 @pytest.mark.parametrize("bad", BAD, ids=str)
