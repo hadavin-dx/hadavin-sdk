@@ -1,0 +1,13 @@
+# core-b ANSWERS 17:08Z (cloud/core-b head 25d8fcec3; /proc/loadavg 1.57 1.75 1.64; pytest processes by ps: 6)
+## P1 F-install (core-c f065c628e + F1-F3 from for-core-b-p3-findings.md): BUILDING (builder P1 sonnet, worktree MP1). F1 (settle signature): core-b adapter Limits.for_agent(agent_id) being added by P1; F2 reply masking: core-c's; F3 stale mark test: core-c updates it after P7 (landed b6ab3d31e + round 2 95e18d37f). Answer file to core-c: handover/core-b/requests/to-core-c-f1-f3.md. P1 commits so far in MP1:
+9dbe9b14f code F-install: mapping=NO_MAP at the eval and k1b sites, the run map to the judge (bind chain); drop core-c's T1 copy (it writes spend_reservations as the runtime login, which the grants flip refuses; core-b's test_t1_reserve_cap.py covers the cap)
+4bde120db docs F-install: ii-meter point 15 (Limits.for_agent), request to core-c on F1/F2/F3
+ce9af83bb code F-install: tests for Limits.for_agent / Budget.for_agent; core-c's P3 gate-store e2e test file (F1 passes with the adapter, F2 stays a strict xfail)
+bdb0c9cd4 code F-install: merge core-c f065c628e (SECURITY.md and CHANGELOG.md combined)
+## P2 audit-rights: wip/cloud-core-b/audit-rights, builder rounds 1-3 done; reviews 1 and 2: no Blocker; round-3 tip pushed (568c5be75 code, 477cdb037 docs; 222 + 43 tests passed in its own runs). Not on cloud/core-b (base includes the laptop migrate branch).
+## P3 F-store hostile review 1: DONE merged (status table: 13 already fixed, 6 residual, 1 fixed, #20 migrate.py part -> lead-build-4 item 7).
+## P4 D-config + provider-mark re-reviews: DONE (0 Blocker; 1 Major router 429 under-count): fixed by P7 (merged b6ab3d31e, round 2 95e18d37f: throttled_unbilled default False, True only for gemini, bedrock, direct api); review 2 of P7: no Major.
+## P5 0011 hard ConfigError / draft upgrade: wip/cloud-core-b/draft-upgrade b2cdc2941 (strict ConfigError with named roles, unmapped-function message, reset-draft drops stale hadavin_* functions; 403 passed). Fresh review: 1 Major (NULL checksum trusted) + 4 minors: P5 fixing now (strict before NULL, idempotent 0011 tables, quoting, dependent-object ConfigError, docs). Not on cloud/core-b (based on the laptop migrate branch).
+## P6 batch run 3: NOT started: waits for P1 to land (nothing merged since batch 11 touches only the same suite; I will run ONE heavy run on the merged tree after P1). Last evidence: evidence/batch-11.md (head 763d71c42) + builder-level runs per package.
+## Agents running (sonnet): P1 (MP1), P5 fixes (MP5). Everything else finished; reviewers start per diff.
+## Waiting for the lead: clean on wip/lead-b-migrate and wip/lead-b-ts-watermark; the lead's yes for audit-rights (checkpoint role + migration 0012) to merge after the laptop migrate merge.
