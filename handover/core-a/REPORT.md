@@ -1,3 +1,5 @@
+> **MODEL CHECK 13:46:55Z 2026-11-20 (get_session on session_014pRo39MRxnYCnugNxyoaw6, lead order 13:50):** configured_model = claude-fable-5-2 (the value stored when the session was created; it cannot be changed from inside the session); session_context.model = claude-sonnet-5-5; external_metadata.model = claude-sonnet-5-5; external_metadata.last_served_model = claude-sonnet-5-5; user_switched_model = claude-sonnet-5-5 (the owner's /model). So the model that SERVED the latest turn is sonnet, not fable. Session cost counter (cumulative since 04:09): 345.95 USD, which includes the early hours before the switch. Running agents (every Agent call sets model explicitly): wipci-fix2 sonnet, c-e14nits sonnet, c-e19 sonnet, grant-tests sonnet, max-running sonnet. No fable agent is running. Not provable from here: what the earlier (pre-switch) hours were billed as; ask the owner to check the usage page for the session id.
+
 # REPORT from core-a (newest on top, UTC and IST)
 
 ## UPDATE 11:31 UTC (head 98e0fd3a5): pg-kill defect closed; final independent batch BATCH10

@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:46:38Z
+UPDATED_UTC: 2026-11-20T13:46:55Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 5
-CAPACITY: load 0.88 of 4 cores (1-minute average), mem 1.4/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.84 of 4 cores (1-minute average), mem 1.9/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 18%; 628M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:46:28Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:46:43Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -115,17 +115,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 1355 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 1385 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 -m | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 1393 | /home/user/wt/c-e19/.venv/bin/python /home/user/wt/c-e19/.venv/bin/pyt | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 1494 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 1496 | /home/user/hadavin-sdk/.venv/bin/python -m pytest tests/test_ci_python | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27130s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 27130s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 27130s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 27130s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27130s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27130s ago | running | matched by name in ps |
+| 1355 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 30s ago | running | matched by name in ps |
+| 1385 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 -m | core-a session or its agent | 29s ago | running | matched by name in ps |
+| 1393 | /home/user/wt/c-e19/.venv/bin/python /home/user/wt/c-e19/.venv/bin/pyt | core-a session or its agent | 29s ago | running | matched by name in ps |
+| 1751 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 1771 | /home/user/hadavin-sdk/.venv/bin/python -m pytest tests/test_ci_python | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27148s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 27148s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 27148s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 27148s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27148s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27148s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -187,6 +187,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 13:46:55Z MODEL CHECK (get_session now): configured_model claude-fable-5-2 (creation-time value, I cannot change it); session_context.model claude-sonnet-5-5; external_metadata.model claude-sonnet-5-5; last_served_model claude-sonnet-5-5; user_switched_model claude-sonnet-5-5. NO FABLE SERVED on the latest turn; running agents all explicit sonnet: wipci-fix2, c-e14nits, c-e19, grant-tests, max-running. Cumulative cost counter 345.95 USD since 04:09 (includes the pre-switch hours). Full text at the top of REPORT.md.
 - 13:50 ORDER 13:46 taken: 5 agents (wipci-fix2, c-e14nits, c-e19, grant-tests, max-running); item 3 (stale contract tests) was already done earlier (maint-gate, 201 passed on core-c a60da3394); core-c item 4 (delete extract.py) left; written: tickets/G-cooperative-stop.md (ticket only), 3 rows in DECISIONS.md (Runtime.handle split deferred, no notify built, ticket only), and handover/core-a/requests/to-core-b.md with the FINDINGS-core-b-F-store.md path (my own file says F1 was FIXED at a later head: re-verify). Fresh review of each branch follows when each builder returns.
 - 13:44 wip/core-a-for-ci UPDATED and pushed: the agreement test now has a planted-mismatch test for every assertion (20 assertions, each red when deleted: shown in a scratch copy) and its parser sees env/UV_PYTHON, uv run/uvx --python, python-version-file, matrix include, container/service images, .python-version, composite actions and all workflow files; 212 passed with the two existing CI guards; review round 2 started (rev-wipci2).
 - 13:41 c-run-2 (perf) DONE at core-c 9072e701f (evidence/c-run-2.md, raw/c-run-2.log): 39 passed, 0 failed, 462 deselected, 209 s wall, load 0.60 start / 1.80 end / 1.95 max (quiet box). test_redact_fold_budget.py::test_hostile_1 PASSED but the whole test took 40.13 s (the top duration); core-c expected 'zwsp shape ~3 s' (a per-shape time I did not record: ask if you want it); T10 and T11 passed, both under 4.49 s (not in the top 15, exact figures unknown). Next slowest: test_k5_perf no_redaction_pattern_is_super_linear 28.8 s, settle_loop T4 13.6 s. All lead-build-3 runs 1-4 are now delivered (c-run-1..4).
