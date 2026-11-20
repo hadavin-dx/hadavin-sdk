@@ -53,12 +53,10 @@ MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # trie nodes of the first trie, past it every build is refused with `InputTooLarge("FinderMemoryTooMuch")` (about 360 MB and 2 s). The margin of one
 # `MAX_REDACT_CHARS` lets the call that crosses the run cap finish. No per-value cap: one value as long as the text (the `curl -u ` perf shape, 262,144) is honest and
 # memory depends on the total only. Honest maxima stay far under: property corpus 8,571, k5 full-size run 14,392, 2,000 HIGHENTROPY values 252,505.
-MAX_MAP_CHARS = (
-    2 * MAX_REDACT_CHARS
-)  # 524,288: characters of distinct originals one run's map may hold (config evidence.max_map_chars)
-MAX_FINDER_CHARS = (
-    MAX_MAP_CHARS + MAX_REDACT_CHARS
-)  # 786,432: trie nodes one finder build may hold; past it InputTooLarge("FinderMemoryTooMuch")
+# MAX_MAP_CHARS: 524,288 characters of distinct originals one run's map may hold (config evidence.max_map_chars).
+MAX_MAP_CHARS = 2 * MAX_REDACT_CHARS
+# MAX_FINDER_CHARS: 786,432 trie nodes one finder build may hold; past it InputTooLarge("FinderMemoryTooMuch").
+MAX_FINDER_CHARS = MAX_MAP_CHARS + MAX_REDACT_CHARS
 # A text over the redaction cap is cut at the cap, redacted, and this many characters of the result's end are dropped: a
 # secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB for RSA-2048, 3.2 KB for RSA-4096 and 6.4 KB for RSA-8192; 8,192 covers all three with slack), and it is the
 # part dropped, never shown.
