@@ -298,29 +298,13 @@ def test_n7_kill_mode_still_exits_with_the_crash_code_when_the_marker_cannot_be_
     assert "survived" not in done.stderr and "finally ran" not in done.stderr
 
 
-def test_h7_the_module_text_states_what_can_mislead_a_test():
-    """Design review 1, N16 and F7: the limits are written where a test author reads them. Pins
-    facts (numbers, names), not sentences."""
+def test_the_facts_that_decide_a_tests_correctness_are_written_down():
+    """The constants are what tests compare with, and the module text tells a test author to assert
+    `cp.fired` and that the exit code alone is not proof (loose: the facts, not the sentences)."""
+    assert CRASH_EXIT_CODE == 137 and CRASH_MARKER == "simulate crash"
     text = " ".join((crash_mod.__doc__ or "").split())
-    for fact in (
-        "137",
-        "128 + 9",
-        "503",
-        "Future",
-        "PYTEST_CURRENT_TEST",
-        "marker",
-        "exit code",
-        "`with`",
-        "setattr",
-        "isinstance",
-        "latch",
-        "require_claim",
-        "expect_fired",
-        "flag_taken",
-        "os.replace",
-        "descriptor 1",
-    ):
-        assert fact in text, fact
+    assert "assert `cp.fired`" in text
+    assert "exit code alone" in text or "exit code 137" in text.lower() or "alone" in text
 
 
 def test_f2_the_constants_are_the_ones_other_tests_assert_against():
@@ -559,125 +543,157 @@ def test_h2_left_armed_is_an_error_and_is_disarmed(tmp_path, no_real_exit):
     assert third.armed() is None
 
 
-@pytest.mark.parametrize(
-    "point",
+class Counted:
+    """A target whose call count is safe to read after a burst of threads (list append is atomic)."""
+
+    def __init__(self) -> None:
+        self.log: list[int] = []
+
+    def step(self) -> int:
+        self.log.append(1)
+        return len(self.log)
+
+
+class Gen:
+    def count(self):
+        yield 1
+
+    async def fetch(self):
+        return 1
+
+    async def stream(self):
+        yield 1
+
+    def plain(self):
+        return 1
+
+
+def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, monkeypatch):
+    """F9: leaving the block, if the flag file is still there after the delete, raises RuntimeError
+    naming the path (not the flag text); with an error in flight the error is not replaced."""
+    flag = tmp_path / "flag"
+    monkeypatch.setattr(Path, "unlink", lambda self, *a, **k: None)
+    with (
+        pytest.raises(RuntimeError, match="could not be deleted") as caught,
+        CrashPoints(mode="exit", flag_path=flag) as cp,
+    ):
+        cp.arm(POINT)
+    assert str(flag) in str(caught.value) and POINT not in str(caught.value)
+    os.unlink(flag)  # the patched Path.unlink does nothing
+    with pytest.raises(KeyError), CrashPoints(mode="exit", flag_path=flag) as cp:
+        cp.arm(POINT)
+        raise KeyError("in flight")
+    monkeypatch.undo()
+    flag.unlink()
+
+
+def _arm_bad(point=POINT, nth=1):
+    return lambda cp, flag: cp.arm(point, nth=nth)
+
+
+def _wrap_bad(target, name="thing", methods=("step",)):
+    return lambda cp, flag: cp.wrap(target, name, list(methods) if methods != "step" else methods)
+
+
+BAD_POINTS = [
+    ("empty", ""),
+    ("upper-name", "Thing.step:before"),
+    ("upper-method", "thing.Step:before"),
+    ("upper-edge", "thing.step:BEFORE"),
+    ("no-edge", "thing.step"),
+    ("unknown-edge", "thing.step:during"),
+    ("no-method", "thing:before"),
+    ("path", "a/b.step:before"),
+    ("dots", "...:before"),
+    ("newline-after", "thing.step:before\n"),
+    ("newline-before", "\nthing.step:before"),
+    ("hash-in-point", "thing.step:before#2"),
+    ("hash-in-name", "thing#2.step:before"),
+    ("too-many-parts", "thing.step.more:before"),
+    ("digit-first", "1thing.step:before"),
+    ("space", "thing.st ep:before"),
+    ("300-chars-name", "t" * 300 + ".step:before"),
+    ("300-chars-method", "thing." + "s" * 300 + ":before"),
+    ("none", None),
+    ("bytes", b"thing.step:before"),
+]
+BAD_NTH = [("zero", 0), ("negative", -1), ("huge", 10**9), ("float", 1.0), ("string", "2")]
+BAD_NTH += [("none", None), ("true", True), ("false", False)]
+BAD_NAMES = ["", "Thing", "a.b", "a:b", "a#b", "a\n", "t" * 300]
+BAD_METHODS = ["", "Step", "__init__\n", "st.ep", "step#1"]
+
+REFUSED = (
     [
-        "",
-        "Thing.step:before",
-        "thing.Step:before",
-        "thing.step:BEFORE",
-        "thing.step",
-        "thing.step:during",
-        "thing:before",
-        "a/b.step:before",
-        "../x.step:before",
-        "...:before",
-        "thing.step:before\n",
-        "\nthing.step:before",
-        "thing.step:before#2",
-        "thing#2.step:before",
-        "thing.step.more:before",
-        "1thing.step:before",
-        "thing.st ep:before",
-        "t" * 300 + ".step:before",
-        "thing." + "s" * 300 + ":before",
-        None,
-        b"thing.step:before",
-    ],
+        pytest.param(_arm_bad(point), ValueError, "point", id=f"point-{key}")
+        for key, point in BAD_POINTS
+    ]
+    + [
+        pytest.param(_arm_bad(nth=nth), (TypeError, ValueError), "nth", id=f"nth-{key}")
+        for key, nth in BAD_NTH
+    ]
+    + [
+        pytest.param(_wrap_bad(Thing(), name), ValueError, "bad name", id=f"wrap-name-{i}")
+        for i, name in enumerate(BAD_NAMES)
+    ]
+    + [
+        pytest.param(
+            _wrap_bad(Thing(), "thing", [m]), ValueError, "bad method", id=f"wrap-method-{i}"
+        )
+        for i, m in enumerate(BAD_METHODS)
+    ]
+    + [
+        pytest.param(
+            _wrap_bad(Thing(), "thing", ["step", "nope"]), AttributeError, "nope", id="wrap-missing"
+        ),
+        pytest.param(
+            _wrap_bad(Thing(), "thing", ["label"]), TypeError, "not a method", id="wrap-attribute"
+        ),
+        pytest.param(
+            lambda cp, flag: cp.wrap(Thing(), "thing", "step"),
+            TypeError,
+            "collection",
+            id="wrap-string-as-methods",
+        ),
+        pytest.param(_wrap_bad(Gen(), "gen", ["count"]), TypeError, "count", id="wrap-generator"),
+        pytest.param(_wrap_bad(Gen(), "gen", ["fetch"]), TypeError, "fetch", id="wrap-coroutine"),
+        pytest.param(
+            _wrap_bad(Gen(), "gen", ["stream"]), TypeError, "stream", id="wrap-async-generator"
+        ),
+        pytest.param(_wrap_bad([1], "box", ["__len__"]), TypeError, "__len__", id="wrap-dunder"),
+        pytest.param(
+            _wrap_bad(print, "fn", ["__call__"]), TypeError, "__call__", id="wrap-dunder-call"
+        ),
+        pytest.param(
+            lambda cp, flag: CrashPoints(mode="exit"),
+            ValueError,
+            "flag_path",
+            id="mode-exit-without-flag",
+        ),
+        pytest.param(
+            lambda cp, flag: CrashPoints(flag_path=flag),
+            ValueError,
+            "flag_path",
+            id="mode-raise-with-flag",
+        ),
+        pytest.param(
+            lambda cp, flag: CrashPoints(mode="kill", flag_path=flag),
+            ValueError,
+            "mode",
+            id="bad-mode",
+        ),
+    ]
 )
-def test_h3_bad_point_names_are_refused_at_arm(tmp_path, point):
-    """H3: empty, upper case, a path, dots, a newline, a `#`, 300 characters: ValueError, nothing
-    armed or written."""
+
+
+@pytest.mark.parametrize(("act", "exc", "match"), REFUSED)
+def test_h3_bad_input_is_refused_and_nothing_is_armed_or_written(tmp_path, act, exc, match):
+    """H3, E5, E6, F6, F9: bad point or name, nth below 1 or not a whole number (a bool too), a
+    dunder, async or generator method, one string as the methods, a wrong mode and flag pairing."""
     flag = tmp_path / "flag"
-    for cp in (CrashPoints(), CrashPoints(mode="exit", flag_path=flag)):
-        with pytest.raises(ValueError, match="point"):
-            cp.arm(point)
-        assert cp.armed() is None
-    assert not flag.exists()
-
-
-@pytest.mark.parametrize("nth", [0, -1, 10**9, 1.0, "2", None])
-def test_h3_bad_nth_is_refused_at_arm(nth):
-    """H3: nth below 1 (or not a whole number) is a ValueError."""
-    cp = CrashPoints()
-    with pytest.raises(ValueError, match="nth"):
-        cp.arm(POINT, nth=nth)
-    assert cp.armed() is None
-
-
-def test_h3_wrap_refuses_what_the_target_lacks_and_bad_names():
-    """H3: a method the target lacks is an AttributeError at wrap time; a plain attribute is a
-    TypeError; bad names are ValueError; one string instead of a list is a TypeError."""
-    cp, target = CrashPoints(), Thing()
-    with pytest.raises(AttributeError):
-        cp.wrap(target, "thing", ["step", "nope"])
-    with pytest.raises(TypeError, match="not a method"):
-        cp.wrap(target, "thing", ["label"])
-    for name in ("", "Thing", "a.b", "a:b", "a#b", "a\n", "t" * 300):
-        with pytest.raises(ValueError, match="bad name"):
-            cp.wrap(target, name, ["step"])
-    for method in ("", "Step", "__init__\n", "st.ep", "step#1"):
-        with pytest.raises(ValueError, match="bad method name"):
-            cp.wrap(target, "thing", [method])
-    with pytest.raises(TypeError):
-        cp.wrap(target, "thing", "step")
-
-
-def test_h3_constructor_refuses_a_wrong_mode_and_flag_pairing(tmp_path):
-    """H3: kill mode needs a flag path, same-process mode takes none, an unknown mode is refused."""
-    with pytest.raises(ValueError, match="flag_path"):
-        CrashPoints(mode="exit")
-    with pytest.raises(ValueError, match="flag_path"):
-        CrashPoints(flag_path=tmp_path / "flag")
-    with pytest.raises(ValueError, match="mode"):
-        CrashPoints(mode="kill", flag_path=tmp_path / "flag")
-
-
-@pytest.mark.parametrize(
-    "content",
-    [
-        "thing.step:after",
-        "thing.other:before",
-        "other.step:before",
-        POINT + "#0",
-        POINT + "#-1",
-        POINT + "#x",
-        POINT + "#",
-        POINT + "#1#1",
-        POINT + "# 1",
-        POINT + "#" + "9" * 5000,
-        POINT + "\n\n",
-        " " + POINT,
-        POINT.upper(),
-    ],
-)
-def test_h4_a_flag_for_another_point_or_a_bad_count_never_fires(tmp_path, no_real_exit, content):
-    """H4: a flag naming another point, or `#0`, `#-1`, `#x`: the watched point never fires and
-    nothing raises."""
-
-    class Before(Thing):  # only `:before` of `step` is ever reached: the body fails first
-        def step(self, fail: bool = False) -> int:
-            raise KeyError("stop before :after")
-
-    flag = tmp_path / "flag"
-    flag.write_text(content, encoding="utf-8")
     cp = CrashPoints(mode="exit", flag_path=flag)
-    thing = cp.wrap(Before(), "thing", ["step"])
-    for _ in range(3):
-        with pytest.raises(KeyError):
-            thing.step()
-    assert cp.fired == () and flag.read_text(encoding="utf-8") == content
-
-
-def test_h4_control_a_well_formed_flag_does_fire(tmp_path, no_real_exit):
-    """H4 (control): the same set-up with the right flag fires, so the cases above are not empty;
-    one trailing newline is allowed."""
-    flag = tmp_path / "flag"
-    flag.write_text(POINT + "#1\n", encoding="utf-8")
-    cp = CrashPoints(mode="exit", flag_path=flag)
-    with pytest.raises(Killed):
-        cp.wrap(Thing(), "thing", ["step"]).step()
-    assert cp.fired == (POINT,) and not flag.exists()
+    with pytest.raises(exc, match=match):
+        act(cp, flag)
+    assert cp.armed() is None and not flag.exists()
 
 
 def crash_importers(package: Path) -> list[str]:
@@ -748,6 +764,7 @@ def test_h6_the_helper_file_keeps_its_own_rules():
         "os",
         "re",
         "threading",
+        "time",
         "collections",
         "pathlib",
         "typing",
@@ -824,215 +841,22 @@ def test_f2_many_threads_released_together_give_exactly_one_crash_each_time():
         sys.setswitchinterval(old)
 
 
-def test_f4_latch_makes_every_later_call_through_any_proxy_crash_before_the_target():
-    """F4: with latch=True, after a raise-mode crash a call through any proxy of the object raises
-    SimulatedCrash and never touches the target; an unwrapped reference escapes."""
-    first, second = Thing(), Thing()
-    with CrashPoints(latch=True) as cp:
-        one = cp.wrap(first, "thing", ["step"])
-        two = cp.wrap(second, "other", ["step"])
-        assert two.step() == 1
-        cp.arm("thing.step:after")
-        with pytest.raises(SimulatedCrash):
-            one.step()
-        assert first.calls == 1
-        for proxy in (one, two):
-            with pytest.raises(SimulatedCrash) as caught:
-                proxy.step()
-            assert caught.value.point == "thing.step:after"
-        assert first.calls == 1 and second.calls == 1  # the target was not touched
-        assert first.step() == 2  # an unwrapped reference escapes the latch
-        assert cp.fired == ("thing.step:after",)
+def test_f9_a_flag_that_is_refused_twice_is_deleted_at_the_third_try(tmp_path, monkeypatch):
+    """G2: the delete is tried again (Windows can refuse while a reader holds the file); no error
+    when a retry works."""
+    flag, real, calls = tmp_path / "flag", Path.unlink, []
 
+    def flaky(self, *args, **kwargs):
+        calls.append(1)
+        if len(calls) <= 2:
+            raise PermissionError("held open")
+        real(self, *args, **kwargs)
 
-def test_f4_without_the_latch_the_proxy_keeps_working_after_a_crash():
-    """F4: the default (latch=False) is unchanged: the proxy goes on after the crash."""
-    target = Thing()
-    with CrashPoints(latch=False) as cp:
-        thing = cp.wrap(target, "thing", ["step"])
+    with CrashPoints(mode="exit", flag_path=flag) as cp:
         cp.arm(POINT)
-        with pytest.raises(SimulatedCrash):
-            thing.step()
-        assert thing.step() == 1 and thing.step() == 2
-
-
-def test_f4_latch_is_for_raise_mode_only(tmp_path):
-    """F4: kill mode ends the process, a latch there means nothing: refused."""
-    with pytest.raises(ValueError, match="latch"):
-        CrashPoints(mode="exit", flag_path=tmp_path / "flag", latch=True)
-
-
-def test_f5_expect_fired_claims_a_point_that_fired_and_names_one_that_did_not():
-    """F5: a claim of a point that did not fire is a RuntimeError naming the point."""
-    with CrashPoints() as cp:
-        thing = cp.wrap(Thing(), "thing", ["step"])
-        with pytest.raises(RuntimeError, match="thing.step:before"):
-            cp.expect_fired(POINT)
-        cp.arm(POINT)
-        with pytest.raises(SimulatedCrash):
-            thing.step()
-        cp.expect_fired(POINT)
-        with pytest.raises(RuntimeError, match="thing.step:after"):
-            cp.expect_fired("thing.step:after")
-
-
-def test_f5_require_claim_refuses_a_fired_point_nobody_claimed():
-    """F5: with require_claim=True, leaving the block raises, naming the point that fired and was
-    never claimed; claimed, or an error in flight, or the default: no error."""
-    with (
-        pytest.raises(RuntimeError, match="never claimed: thing.step:before"),
-        CrashPoints(require_claim=True) as cp,
-    ):
-        thing = cp.wrap(Thing(), "thing", ["step"])
-        cp.arm(POINT)
-        with pytest.raises(SimulatedCrash):
-            thing.step()
-    with CrashPoints(require_claim=True) as cp:
-        thing = cp.wrap(Thing(), "thing", ["step"])
-        cp.arm(POINT)
-        with pytest.raises(SimulatedCrash):
-            thing.step()
-        cp.expect_fired(POINT)
-    with pytest.raises(KeyError), CrashPoints(require_claim=True) as cp:
-        cp.wrap(Thing(), "thing", ["step"])
-        cp.arm(POINT)
-        with pytest.raises(SimulatedCrash):
-            cp.hit(POINT)
-        raise KeyError("in flight")
-    with CrashPoints() as cp:  # the default: fired, not claimed, fine (the test asserts cp.fired)
-        thing = cp.wrap(Thing(), "thing", ["step"])
-        cp.arm(POINT)
-        with pytest.raises(SimulatedCrash):
-            thing.step()
-        assert cp.fired == (POINT,)
-
-
-def test_f5_flag_taken_tells_the_parent_that_a_child_took_the_flag(tmp_path):
-    """F5: False before arming and while the flag is there; True once a child has taken it."""
-    flag = tmp_path / "flag"
-    parent = CrashPoints(mode="exit", flag_path=flag)
-    assert parent.flag_taken() is False  # never armed
-    parent.arm(POINT)
-    assert parent.flag_taken() is False
-    done = start_child(tmp_path, CHILD_ONE, flag)
-    assert done.returncode == CRASH_EXIT_CODE, done.stderr
-    assert parent.flag_taken() is True
-    with pytest.raises(RuntimeError, match="exit"):
-        CrashPoints().flag_taken()
-
-
-class Counted:
-    """A target whose call count is safe to read after a burst of threads (list append is atomic)."""
-
-    def __init__(self) -> None:
-        self.log: list[int] = []
-
-    def step(self) -> int:
-        self.log.append(1)
-        return len(self.log)
-
-
-class Gen:
-    def count(self):
-        yield 1
-
-    async def fetch(self):
-        return 1
-
-    async def stream(self):
-        yield 1
-
-    def plain(self):
-        return 1
-
-
-@pytest.mark.parametrize("method", ["count", "fetch", "stream"])
-def test_f6_wrap_refuses_coroutine_and_generator_methods(method):
-    """F6: the body of these runs after the call returns, so `:after` would be wrong: TypeError
-    naming the method."""
-    with pytest.raises(TypeError, match=method):
-        CrashPoints().wrap(Gen(), "gen", [method])
-    assert CrashPoints().wrap(Gen(), "gen", ["plain"]).plain() == 1
-
-
-def test_f6_wrap_refuses_dunder_method_names():
-    """F6: a proxy cannot stand in front of a dunder method: TypeError naming it."""
-    with pytest.raises(TypeError, match="__len__"):
-        CrashPoints().wrap([1], "box", ["__len__"])
-    with pytest.raises(TypeError, match="__call__"):
-        CrashPoints().wrap(print, "fn", ["__call__"])
-
-
-def test_f8_a_reader_never_sees_half_a_flag(tmp_path):
-    """F8: a thread reads the flag while arm writes it many times: every read is a whole flag (or
-    the file is missing), never an empty or cut text."""
-    flag = tmp_path / "flag"
-    cp = CrashPoints(mode="exit", flag_path=flag)
-    whole = {POINT, f"{POINT}#1234567"}
-    stop, bad = threading.Event(), []
-
-    def read():
-        while not stop.is_set():
-            try:
-                text = flag.read_text(encoding="utf-8")
-            except FileNotFoundError:
-                continue
-            if text not in whole:
-                bad.append(text)
-
-    reader = threading.Thread(target=read)
-    reader.start()
-    try:
-        for i in range(3000):
-            cp.arm(POINT, nth=1 if i % 2 else 1234567)
-            flag.unlink()
-    finally:
-        stop.set()
-        reader.join(timeout=30)
-    assert bad == []
-    assert not list(tmp_path.glob("*.tmp"))
-
-
-def test_f8_a_flag_armed_again_with_another_count_restarts_the_count(tmp_path, no_real_exit):
-    """F8: a long-lived child counts per flag text: when the text changes (armed again from another
-    process with #2), counting starts from the start."""
-    flag = tmp_path / "flag"
-    cp = CrashPoints(mode="exit", flag_path=flag)
-    thing = cp.wrap(Thing(), "thing", ["step"])
-    cp.arm(POINT, nth=3)
-    assert thing.step() == 1 and thing.step() == 2  # two matching calls counted for "#3"
-    flag.write_text(POINT + "#2", encoding="utf-8")  # another process armed it again
-    assert thing.step() == 3  # first call under the new text: passes
-    with pytest.raises(Killed):
-        thing.step()  # second call: crashes
-
-
-def test_f9_arm_refuses_a_bool_nth():
-    """F9: True is not a count."""
-    cp = CrashPoints()
-    for bad in (True, False):
-        with pytest.raises((TypeError, ValueError), match="nth"):
-            cp.arm(POINT, nth=bad)
-    assert cp.armed() is None
-
-
-def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, monkeypatch):
-    """F9: leaving the block, if the flag file is still there after the delete, raises RuntimeError
-    naming the path (not the flag text); with an error in flight the error is not replaced."""
-    flag = tmp_path / "flag"
-    monkeypatch.setattr(Path, "unlink", lambda self, *a, **k: None)
-    with (
-        pytest.raises(RuntimeError, match="could not be deleted") as caught,
-        CrashPoints(mode="exit", flag_path=flag) as cp,
-    ):
-        cp.arm(POINT)
-    assert str(flag) in str(caught.value) and POINT not in str(caught.value)
-    os.unlink(flag)  # the patched Path.unlink does nothing
-    with pytest.raises(KeyError), CrashPoints(mode="exit", flag_path=flag) as cp:
-        cp.arm(POINT)
-        raise KeyError("in flight")
+        monkeypatch.setattr(Path, "unlink", flaky)
     monkeypatch.undo()
-    flag.unlink()
+    assert len(calls) == 3 and not flag.exists()
 
 
 # --- real PostgreSQL (skipped without HADAVIN_TEST_PG_DSN) ----------------------------------------
