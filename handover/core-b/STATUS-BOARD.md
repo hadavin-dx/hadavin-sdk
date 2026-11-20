@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:42:17Z
+UPDATED_UTC: 2026-11-20T06:43:00Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 2
-CAPACITY: load 1.20 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 0 heavy 4
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 999M
+AGENTS_RUNNING: 5
+CAPACITY: load 0.74 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 1010M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:41:47Z (previous push; this board is pushed right after writing)
-IST: 12:12 IST
+PUSHED_UTC: 2026-11-20T06:42:18Z (previous push; this board is pushed right after writing)
+IST: 12:13 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -32,15 +32,16 @@ IST: 12:12 IST
 | 10 | hostile re-read of A, B, C code | DONE; B findings with the lead (ESCALATIONS E5), A findings in A's fix round 3 (queued behind the running A agent) | tickets/ABC-hostile-review-1.md |
 Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, contracts/test_store_spend.py, contracts/test_t1_reserve_cap.py, test_spend_reservations_pg.py incl. settle racing expire); F-2 and F-3 done (caps and sweep age validated); F-4, F-5, AB-5 done (docs); AB-4 running (ae79ea4d); AB-3 is the lead's.
 
-## AGENTS (RESTART on the normal models after the Fable limit, 06:45 UTC; model set explicitly on every call; none on fable)
+## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| aaf3d350 | builder | sonnet | F-store fix round 2: commit 8ca4d45 landed; reservation id validated in both stores (1 to 200 chars of A-Za-z0-9._:-); the 4 failing random-sequence cases pass; 714 passed on 8 files | 06:46 | done | 100 | done | none | 0 | finding from tests/contracts/test_store_spend_model.py |
-| ac5ecf28 | builder | sonnet | step A fix round 3 (last): commit a747ac5 landed; outage narrowed to connection-level errors; unwritable list retried once per reconcile | 06:46 | done | 100 | done | none | 3 of 3 | 298 passed on 7 audit files; I wrote 18 unit cases for the rule myself (no new agent): 183 passed |
-| a9cce047 | builder (tests) | sonnet | F-install tests: test_model_gate_install.py, contracts/test_meter.py, gate_install_mutants.py; worktree FI-tests on the wip branch | 06:46 | +40 min | 0 | starting | none | 0 | F-install built, no tests of its own |
-| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config (the Fable one was cut off by the limit, no report) | 06:46 | +15 min | 0 | starting | 1 of 1 | 1 | restart |
-| (restriction lifted) | | | egm plugin models reverted at 06:5x UTC on the owner's instruction in this session: 6 opus, 66 sonnet, 0 fable (REPORT.md); new agents allowed on sonnet and haiku only | | | | | | | |
-| a5f7551d, ae79ea4d, a439a627 | Fable agents | fable | cut off by the Fable limit at 06:44; their commits were recovered (A fix 2 and its tests, the random-sequence test); a439a627 produced no report | | | | KILLED (limit) | | | see RESUME-NOTE |
+| ae188231 | builder | sonnet | F-install Y2 and Y3: Reply.cost_usd None when unknown, retries never under-book; worktree Y on the F-install tree | 06:55 | +25 min | UNVERIFIED | running | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
+| a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: section Y1 to Y6, esp. the release command Y4 (money path) | 06:56 | +10 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
+| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config | 06:46 | +10 min | UNVERIFIED | running | 1 of 1 | 1 | restart after the limit |
+| earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
+| 3 Fable agents | | fable | died on the limit at 06:44; commits recovered | | | | KILLED (limit) | | | |
 | 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
 
 ## SHELLS AND PROCESSES
