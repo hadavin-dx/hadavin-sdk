@@ -1004,7 +1004,11 @@ def test_e9_a_stop_state_that_turns_unreadable_at_any_later_read_means_no_card_a
         run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
         assert len(reads) >= k, f"read {k} was never made"
         seen[k] = (run.state, run.reason_code)
-    assert seen == dict.fromkeys(range(2, total + 1), (RunState.NEEDS_PERSON, "limits_unavailable"))
+    # the read inside the spend reservation (B2) reports its refusal as limits.<reason>: still no card and no action
+    assert {k: v[0] for k, v in seen.items()} == dict.fromkeys(
+        range(2, total + 1), RunState.NEEDS_PERSON
+    )
+    assert {v[1] for v in seen.values()} <= {"limits_unavailable", "limits.limits_unavailable"}
     assert fake_system.creates == 0
 
 
