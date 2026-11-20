@@ -250,9 +250,9 @@ class QuietRequestHandler(WSGIRequestHandler):
             return
         if not parsed:  # it has answered through send_error, or the client sent nothing
             return
-        if not isinstance(
-            self.headers, Message
-        ):  # a request line with no version has no header block
+        if (
+            self.request_version == "HTTP/0.9" or not isinstance(self.headers, Message)
+        ):  # a request line with no version has no header block (3.12 reads one anyway: also closed here)
             _LOG.debug(
                 "trigger server: request line without an HTTP version, closed with no answer"
             )
