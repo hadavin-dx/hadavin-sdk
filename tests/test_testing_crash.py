@@ -741,7 +741,7 @@ def test_a_failed_read_does_not_advance_the_nth_count(tmp_path, no_real_exit, mo
 
     monkeypatch.setattr(Path, "read_text", flaky_read)
     assert thing.step() == 1  # the read fails: not counted
-    monkeypatch.undo()
+    monkeypatch.setattr(Path, "read_text", real_read)
     assert thing.step() == 2 and cp.fired == ()  # counted as the first
     with pytest.raises(Killed):  # the second counted call crashes
         thing.step()
