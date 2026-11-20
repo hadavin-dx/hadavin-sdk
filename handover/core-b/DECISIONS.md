@@ -39,3 +39,4 @@
 - 07:18Z: F-install fix round 2 (11760ae29, afdd6c84b) on wip/cloud-core-b/F-install-4: ends retried and idempotent, meter outage not a provider error, RunEndFailed has no chain. New reason code store_unavailable (builder's choice, lead may rename).
 - 07:44Z: step A: review 5 of fix round 5 is CLEAN (0 Blocker, 0 Major). Minors f-i recorded in A-audit-drain.md A8.
 - 08:01Z: evidence batch 4 on e125a7bc3 (step B round 1 + A round 4): 1302 passed serial and -n 3, 0 failed, 0 errors (evidence/batch-4.md). Newer head (A round 5, release command + fixes) needs batch 5.
+- 08:14Z: ORDER 021 M3: spend, spend_month, spend_reservations statements are schema-qualified (local/code-Q3, merged). audit_* statements are in audit/chain.py: own ticket row A9 (qualify audit_entries, audit_checkpoints, audit_outbox the same way, with a decoy-table test), to build after review 6 of chain.py ends. M1 runbook text done. (ORDERS.md is the lead's file: the builder's note moved here.)
