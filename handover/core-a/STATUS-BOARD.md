@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T14:07:07Z
+UPDATED_UTC: 2026-11-20T14:11:21Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.00 of 4 cores (1-minute average), mem 1.0/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 2
+CAPACITY: load 0.00 of 4 cores (1-minute average), mem 1.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 18%; 632M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T14:03:59Z (the push before this board)
+PUSHED_UTC: 2026-11-20T14:07:22Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| rev-c-G13 | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G13 gate net (bc6e2acd0 + mutants E19a-l) + check that my combining-marker xfails are really fixed | 14:10 | 15 min | 5 | running | 1 | 0 | lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land |
+| rev-c-E22G12b | fresh independent reviewer (codebase-details), read-only | sonnet | core-c E22 perf fix (skip second redact) safety + G12b placeholder/core edge rule | 14:10 | 15 min | 5 | running | 1 | 0 | lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 28368s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 28368s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 28368s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 28368s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 28368s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 28368s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 28621s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 28621s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 28621s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 28621s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 28621s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 28621s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +179,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 14:10 GO taken: (1) my 6 wip branches: all reviewed fresh already (c, ci x3 rounds, b, e14, grant); core-c has ALREADY merged my c/e14/e19 work into cloud/core-c (9170baa4f, 82fb4bdc7, 9cef3450e) so the e19 branch review is moot; (2) lead-build-3 runs 1-4 delivered (evidence/c-run-1..4.md); (3) core-c head now aeb9a205e: reviewers started on G13 (bc6e2acd0 + mutants) and E22 + G12b; (4) strict_switch: 22 passed (3.12, 3.13.12, 3.13.18) in my checkout, no failure. Board every 5 min.
 - 14:16 ALL FOUR core-b reviews DONE: reviews/rev-b-G.md, rev-b-H1.md, rev-b-H2.md, rev-b-F6I1.md; summary NEW FILE handover/core-b/requests/xr-from-core-a-reviews.md (copy into cloud/core-b). No Blocker; Majors: G writer check misses column grants/caps/limits/TRIGGER for unnamed roles; H1 earlier-0011-draft DBs silently keep the old functions + day window 3x cap; H2 _release_event unsanitised + all-429 mark not narrowed for routers; F6/I1 Limits.reserve never retries (M5 store-only); plus the nothing-calls-reserve finding. Docs SECURITY.md:23/README.md:41/DECISIONS.md:62 are stale (understate the code). No agents running.
 - 14:14 rev-b-G and rev-b-H1 DONE (reviews/rev-b-G.md, rev-b-H1.md): core-b G: NO Blocker, my M2/M4 CLOSED, 2 Majors on the M7 writer check (column-level grant to an unnamed role passes: `GRANT UPDATE (usd) ON spend TO stranger` then `UPDATE spend SET usd = usd + 1`; hadavin_caps/hadavin_limits/TRIGGER not covered for unnamed roles; it is migrate-time, not startup, and --no-roles skips it). core-b H1/B3: NO Blocker, my M1 CLOSED, 2 Majors: (1) a DB that applied an earlier 0011 draft keeps the OLD reserve/expire/release and no CHECKs while the limits rows look right: migrate only warns (every dev/evidence DB needs --reset-draft; no upgrade test); (2) the day window lets a compromised runtime use D-1, D and D+1 = up to 3 day caps in one UTC day and two month caps across a month end. Plus F6/I1: ONE Major (Limits.reserve never retries: M5 store-only). Waiting for rev-b-H2.
 - 14:08 rev-b-F6I1 DONE (reviews/rev-b-F6I1.md): core-b F6 caps + I1: NO Blocker, ONE Major: M5 is store-only: Limits.reserve (limits.py:186-196) creates a new reservation id on every call and never retries, so a lost reply still orphans the booking on the real path (needs a caller-supplied id/idempotency key, or say 'store-only' in the notes). Verified: caps from table (HD005), F2 closed, settle needs an agent everywhere, memory parity. Nits: 131073-digit cap passes memory not PG; retry across UTC midnight refused; 0011 is UNRELEASED so DBs with the earlier 0011 need reset_draft. Three reviewers still running: G, H1, H2.

@@ -746,7 +746,34 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [],
+ "agents": [
+  {
+   "id": "rev-c-G13",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c G13 gate net (bc6e2acd0 + mutants E19a-l) + check that my combining-marker xfails are really fixed",
+   "started UTC": "14:10",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land"
+  },
+  {
+   "id": "rev-c-E22G12b",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c E22 perf fix (skip second redact) safety + G12b placeholder/core edge rule",
+   "started UTC": "14:10",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land"
+  }
+ ],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1117,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:10 GO taken: (1) my 6 wip branches: all reviewed fresh already (c, ci x3 rounds, b, e14, grant); core-c has ALREADY merged my c/e14/e19 work into cloud/core-c (9170baa4f, 82fb4bdc7, 9cef3450e) so the e19 branch review is moot; (2) lead-build-3 runs 1-4 delivered (evidence/c-run-1..4.md); (3) core-c head now aeb9a205e: reviewers started on G13 (bc6e2acd0 + mutants) and E22 + G12b; (4) strict_switch: 22 passed (3.12, 3.13.12, 3.13.18) in my checkout, no failure. Board every 5 min.",
   "14:16 ALL FOUR core-b reviews DONE: reviews/rev-b-G.md, rev-b-H1.md, rev-b-H2.md, rev-b-F6I1.md; summary NEW FILE handover/core-b/requests/xr-from-core-a-reviews.md (copy into cloud/core-b). No Blocker; Majors: G writer check misses column grants/caps/limits/TRIGGER for unnamed roles; H1 earlier-0011-draft DBs silently keep the old functions + day window 3x cap; H2 _release_event unsanitised + all-429 mark not narrowed for routers; F6/I1 Limits.reserve never retries (M5 store-only); plus the nothing-calls-reserve finding. Docs SECURITY.md:23/README.md:41/DECISIONS.md:62 are stale (understate the code). No agents running.",
   "14:14 rev-b-G and rev-b-H1 DONE (reviews/rev-b-G.md, rev-b-H1.md): core-b G: NO Blocker, my M2/M4 CLOSED, 2 Majors on the M7 writer check (column-level grant to an unnamed role passes: `GRANT UPDATE (usd) ON spend TO stranger` then `UPDATE spend SET usd = usd + 1`; hadavin_caps/hadavin_limits/TRIGGER not covered for unnamed roles; it is migrate-time, not startup, and --no-roles skips it). core-b H1/B3: NO Blocker, my M1 CLOSED, 2 Majors: (1) a DB that applied an earlier 0011 draft keeps the OLD reserve/expire/release and no CHECKs while the limits rows look right: migrate only warns (every dev/evidence DB needs --reset-draft; no upgrade test); (2) the day window lets a compromised runtime use D-1, D and D+1 = up to 3 day caps in one UTC day and two month caps across a month end. Plus F6/I1: ONE Major (Limits.reserve never retries: M5 store-only). Waiting for rev-b-H2.",
   "14:08 rev-b-F6I1 DONE (reviews/rev-b-F6I1.md): core-b F6 caps + I1: NO Blocker, ONE Major: M5 is store-only: Limits.reserve (limits.py:186-196) creates a new reservation id on every call and never retries, so a lost reply still orphans the booking on the real path (needs a caller-supplied id/idempotency key, or say 'store-only' in the notes). Verified: caps from table (HD005), F2 closed, settle needs an agent everywhere, memory parity. Nits: 131073-digit cap passes memory not PG; retry across UTC midnight refused; 0011 is UNRELEASED so DBs with the earlier 0011 need reset_draft. Three reviewers still running: G, H1, H2.",
