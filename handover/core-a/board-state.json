@@ -1,0 +1,24 @@
+{
+ "order": "004 (002 and 003 standing)", "state": "WORKING", "boot_id_first": "3f12152f",
+ "next": "when T1 plan read-back lands: start ticket E and ticket D writers in parallel",
+ "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches",
+ "session_restarts": 0, "container_restarts": 0,
+ "items": [
+  {"item": "Q1", "what": "capability probe", "state": "DONE", "percent": 100, "evidence file": "CAPABILITY.md + raw/capability-raw*.txt", "tries": 1, "reason": "probe ran once; docker and PostgreSQL 14/17 not available, see file"},
+  {"item": "Q2", "what": "lane map", "state": "RUNNING", "percent": 20, "evidence file": "LANE-MAP.md (not yet)", "tries": 1, "reason": "lookup agent reading the package"},
+  {"item": "Q3-Q7", "what": "baselines of existing heads", "state": "SKIPPED by lead", "percent": 100, "evidence file": "lead puts results in inputs/", "tries": 0, "reason": "GO message 2026-11-20: lead runs them on the laptop"},
+  {"item": "T1", "what": "plan read-back", "state": "RUNNING", "percent": 20, "evidence file": "PLAN-READBACK.md (not yet)", "tries": 1, "reason": "lookup agent reading inputs/ plans and round-3 reviews"},
+  {"item": "T2-E", "what": "ticket step E test helpers", "state": "WAIT T1", "percent": 0, "evidence file": "", "tries": 0, "reason": "queue marks tickets WAIT T1"},
+  {"item": "T2-D", "what": "ticket step D signed endpoint + worker + n8n template", "state": "WAIT T1", "percent": 0, "evidence file": "", "tries": 0, "reason": "queue marks tickets WAIT T1"},
+  {"item": "T2-H", "what": "ticket step H logic, only if D proves a delta", "state": "WAIT T2-D", "percent": 0, "evidence file": "", "tries": 0, "reason": "ORDER 004 item 1"},
+  {"item": "T3", "what": "one EGM review round for ticket D (and H if written)", "state": "WAIT T2", "percent": 0, "evidence file": "", "tries": 0, "reason": "E needs no ticket review (ORDER 004 item 3)"},
+  {"item": "T4", "what": "store contract test files for core-b interface", "state": "WAIT interfaces", "percent": 0, "evidence file": "", "tries": 0, "reason": "READY only after interfaces are published"},
+  {"item": "BUILD-E", "what": "build step E on wip/cloud-core-a/E", "state": "WAIT T2-E", "percent": 0, "evidence file": "", "tries": 0, "reason": "allowed as soon as ticket E is written (ORDER 004 item 5)"}
+ ],
+ "agents": [
+  {"id": "a0f5c9e1", "role": "lookup", "model": "fable", "what exactly it is doing": "Q2: reads README, pyproject, conftest, src/hadavin_sdk and writes LANE-MAP.md", "started UTC": "05:22", "expected end": "05:32", "percent": 20, "state": "running", "review round n of cap": "n/a", "retries so far": 0, "reason": "queue item Q2 READY"},
+  {"id": "a86435a3", "role": "lookup", "model": "fable", "what exactly it is doing": "T1: reads plan-v2, v3, v4-final and round-3 reviews, writes PLAN-READBACK.md", "started UTC": "05:22", "expected end": "05:34", "percent": 20, "state": "running", "review round n of cap": "n/a", "retries so far": 0, "reason": "queue item T1 READY"}
+ ],
+ "tests": [], "restarts": [], "loops": [], "lost": [],
+ "lead_actions": ["none right now"]
+}

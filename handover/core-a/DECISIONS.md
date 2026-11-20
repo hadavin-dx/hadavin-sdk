@@ -1,4 +1,8 @@
 # DECISIONS of core-a (newest on top; the lead writes the verdict column)
 
 | time UTC / IST | question | options | CHOSEN and why | gives up | reversible | lead verdict |
+| 05:21 / 10:51 | How to make a board every minute without spending a model turn on writing it | (a) session cron wakes me and I write the board by hand each minute; (b) cron wakes me and one small script (tools/board.py) renders the board from board-state.json plus live machine facts and pushes; (c) a background shell loop | CHOSE (b): same content, about one short command per minute, numbers measured not typed; (c) is forbidden by preamble rule 19 (no unbounded loops) | the board is only as true as board-state.json, which I update by hand when an agent starts or ends | yes | |
+| 05:21 / 10:51 | Start tickets E and D now or after T1 | (a) now, each ticket agent reads the plans itself; (b) after T1 as QUEUE.md says (T2 WAIT T1) | CHOSE (b): tickets then share one read-back and one lane map and do not contradict each other; T1 is expected in about 10 minutes | about 10 minutes of ticket time | yes | |
+| 05:21 / 10:51 | Where temporary worktrees go | (a) /tmp as Q3 says; (b) the session scratch folder under /tmp/claude-0 | CHOSE (b): the session harness allows writes there without prompts; still under /tmp, never in the main checkout | nothing | yes | |
+| 05:21 / 10:51 | Commit trailer | (a) Claude Sonnet 5.5 line of preamble rule 9; (b) Claude Fable 5.2 line the session harness requires | CHOSE (b): Fable did the work and the harness rule is fixed for this session | commits differ from the preamble text | yes, by lead order | |
 |---|---|---|---|---|---|---|
