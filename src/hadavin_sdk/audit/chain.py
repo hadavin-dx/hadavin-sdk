@@ -28,6 +28,7 @@ import hashlib
 import inspect
 import json
 import logging
+import re
 import sqlite3
 import threading
 from collections.abc import Callable, Iterator
@@ -62,6 +63,7 @@ CREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);
     for t in ("audit_entries", "audit_checkpoints")
     for op in ("UPDATE", "DELETE")
 )
+_TABLE_NAME = re.compile(r"\b(audit_entries|audit_checkpoints|audit_outbox)\b")
 _ALL_ROWS = (
     "SELECT seq, at, run_id, kind, body, prev, hash, event_id FROM audit_entries ORDER BY seq"
 )
@@ -153,8 +155,11 @@ class _Db:
     One lock per connection: on postgres it is the store's own, so no store statement lands inside an audit
     transaction (WARDEN 2026-10-15: a read inside another thread's BEGIN ... COMMIT failed CI twice)."""
 
-    def __init__(self, conn: Any, lock: Any, pg: bool) -> None:
+    def __init__(self, conn: Any, lock: Any, pg: bool, schema: str | None = None) -> None:
         self.conn, self.lock, self.pg = conn, lock, pg
+        # Postgres only: every statement names this schema (an unqualified name is looked up in the session's
+        # temporary schema first, so a temporary table of that name would shadow the real one).
+        self.schema = schema
 
     @classmethod
     def memory(cls) -> _Db:
@@ -162,8 +167,21 @@ class _Db:
         conn.executescript(_SQLITE_SCHEMA)
         return cls(conn, threading.Lock(), pg=False)
 
+    def _t(self, sql: str) -> str:
+        """The statement with the three audit table names qualified by the schema (postgres kind only)."""
+        if not self.pg:
+            return sql
+        if (
+            not self.schema
+        ):  # a caller that gave none: resolved once (current_schema() never answers pg_temp)
+            self.schema = self.conn.execute("SELECT current_schema()").fetchone()[0]
+            if not self.schema:
+                raise ConfigError("audit chain: the search_path names no schema that exists")
+        quoted = '"' + self.schema.replace('"', '""') + '"'
+        return _TABLE_NAME.sub(lambda m: f"{quoted}.{m.group(1)}", sql.replace("?", "%s"))
+
     def _q(self, sql: str, params: tuple = ()) -> list[tuple]:
-        cur = self.conn.execute(sql.replace("?", "%s") if self.pg else sql, params)
+        cur = self.conn.execute(self._t(sql), params)
         return cur.fetchall() if cur.description else []
 
     def run(self, sql: str, params: tuple = ()) -> list[tuple]:
@@ -804,7 +822,7 @@ def build(settings, deps) -> ChainAudit:
         db = _Db.memory()
     elif hasattr(store, "_db") and hasattr(store, "_lock"):
         # The postgres store's connection and lock (one connection per process; schema from `migrate`).
-        db = _Db(store._db, store._lock, pg=True)
+        db = _Db(store._db, store._lock, pg=True, schema=getattr(store, "_schema", None))
         try:
             db.run("SELECT alg, key_label FROM audit_checkpoints LIMIT 1")
         except Exception as exc:  # noqa: BLE001 - any driver error here means "not migrated or unreachable"
