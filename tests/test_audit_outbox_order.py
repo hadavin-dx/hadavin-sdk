@@ -59,3 +59,28 @@ def test_postgres_outbox_is_read_by_instant_not_by_text():
         with psycopg.connect(dsn, autocommit=True) as conn:
             conn.execute("SET TIME ZONE 'UTC'")
             assert _order(audit._Db(conn, threading.Lock(), pg=True)) == [r[0] for r in ROWS]
+
+
+def test_postgres_a_wellformed_but_impossible_ts_sorts_last_and_never_fails_the_read():
+    """Review M-1: 2026-02-30, hour 25 and year 0000 match a shape check but the timestamptz cast raises."""
+    pytest.importorskip("psycopg")
+    import psycopg
+
+    from tests.contracts.kinds.store_postgres import pg_schema
+
+    bad = [
+        ("b1", '"2026-02-30T00:00:00Z"'),
+        ("b2", '"2026-01-01T25:00:00Z"'),
+        ("b3", '"0000-01-01T00:00:00Z"'),
+    ]
+    for dsn in pg_schema():
+        with psycopg.connect(dsn, autocommit=True) as conn:
+            conn.execute("SET TIME ZONE 'UTC'")
+            db = audit._Db(conn, threading.Lock(), pg=True)
+            for event_id, ts in bad + [("a1", '"2026-01-01T08:00:00Z"')]:
+                db.run(
+                    "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", (event_id, _body(ts))
+                )
+            log = audit.ChainAudit(db)
+            page = db.run(log._outbox_sql(), (defaults.AUDIT_QUARANTINE_PREFIX + "%", 100, 0))
+            assert [r[0] for r in page] == ["a1", "b1", "b2", "b3"]

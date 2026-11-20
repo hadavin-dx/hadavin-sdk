@@ -238,6 +238,20 @@ class Verification:
         return self.rows - self.signed_through
 
 
+# A ts is cast to timestamptz only when it is a real calendar value (a shape check alone lets 2026-02-30 through; no `?` here: the placeholder translation would rewrite it and
+# the cast then raises, which would block every batch read). Month-specific day ranges; 29 February is left out
+# (such a row sorts last, it is never an error). Hours 00-23, minutes and seconds 00-59, offset hours 00-15.
+_TS_SHAPE = (
+    "^(000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-("
+    "(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|"
+    "(0[469]|11)-(0[1-9]|[12][0-9]|30)|"
+    "02-(0[1-9]|1[0-9]|2[0-8]))"
+    "[T ]([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
+    "(\\.[0-9]{1,9}){0,1}"
+    "(Z|[+-](0[0-9]|1[0-5])(:{0,1}[0-5][0-9]){0,1}){0,1}$"
+)
+
+
 class ChainAudit:
     """The AuditSink Protocol over the chain, plus `checkpoint()` (inline every N rows, and from `tick`) and
     `verify()`. Keys returned by the writes are event ids."""
@@ -479,7 +493,7 @@ class ChainAudit:
         # time zone is pinned); SQLite uses julianday, which reads offsets and fractions and returns NULL otherwise.
         ts = (
             'CASE WHEN substring(body from \'"ts":"([^"]*)"\') ~ '
-            "'^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9}){0,1}(Z|[+-]\\d{2}(:{0,1}\\d{2}){0,1}){0,1}$' "
+            f"'{_TS_SHAPE}' "
             'THEN (substring(body from \'"ts":"([^"]*)"\'))::timestamptz END'
             if self._db.pg
             else "CASE WHEN json_valid(body) THEN julianday(json_extract(body, '$.ts')) END"

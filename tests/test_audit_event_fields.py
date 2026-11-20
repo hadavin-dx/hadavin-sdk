@@ -24,9 +24,7 @@ def test_a_value_over_the_limit_is_refused_at_construction(field):
 
 
 @pytest.mark.parametrize("field", TOKENS)
-@pytest.mark.parametrize(
-    "bad", ["two words", "line\nbreak", "tab\t", "semi;colon", "quote'", 'q"', "<x>"]
-)
+@pytest.mark.parametrize("bad", ["line\nbreak", "tab\t", "semi;colon", "quote'", 'q"', "<x>"])
 def test_prose_and_control_characters_are_refused(field, bad):
     with pytest.raises(ValidationError):
         _event(**{field: bad})
@@ -58,6 +56,17 @@ def test_audit_ref_keeps_a_fitting_value_and_hashes_the_rest():
     assert audit_ref(None) is None
     assert audit_ref("run-1:1,run-1:2") == "run-1:1,run-1:2"
     long = ",".join(f"run-{'0' * 32}:{i}" for i in range(6))
-    for text in (long, "has space", "x\ny"):
+    for text in (long, "x\ny"):
         ref = audit_ref(text)
         assert ref.startswith("sha256:") and _event(object_ref=ref)
+
+
+def test_a_result_with_spaces_is_accepted():
+    """Review B1: store and CLI build results such as 'released rows=2 requested_usd=3.00 applied_usd=3.00'."""
+    import re
+
+    from hadavin_sdk.models import AUDIT_FIELD_PATTERN
+
+    assert re.fullmatch(AUDIT_FIELD_PATTERN, "released rows=2 requested_usd=3.00 applied_usd=3.00")
+    assert re.fullmatch(AUDIT_FIELD_PATTERN, "intent day_cap=10.00 month_cap=100.00")
+    assert not re.fullmatch(AUDIT_FIELD_PATTERN, "line\nbreak")

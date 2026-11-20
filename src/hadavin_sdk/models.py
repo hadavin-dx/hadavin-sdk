@@ -218,7 +218,7 @@ class ApprovalDecision(Shape):
 # Audit rows carry identifiers and codes, never prose: a bounded length (a btree index row on `run_id` refuses
 # a long value with 54000 at write time, far too late) and a charset without whitespace or control characters.
 AUDIT_FIELD_MAX = 128
-AUDIT_FIELD_PATTERN = r"^[\w.:@/+=#~,-]*$"
+AUDIT_FIELD_PATTERN = r"^[\w.:@/+=#~, -]*$"
 _AUDIT_TOKEN = re.compile(AUDIT_FIELD_PATTERN)
 
 
