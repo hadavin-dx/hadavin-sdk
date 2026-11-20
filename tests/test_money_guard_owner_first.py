@@ -17,7 +17,9 @@ BODY = SQL[SQL.index("AS $fn$") :]
 
 def test_the_owner_check_comes_before_the_aggregate():
     owner = BODY.index("pg_get_userbyid")
-    check = BODY.index("IF release_owner IS NULL OR current_user::name IS DISTINCT FROM release_owner THEN")
+    check = BODY.index(
+        "IF release_owner IS NULL OR current_user::name IS DISTINCT FROM release_owner THEN"
+    )
     aggregate = BODY.index("FROM spend_reservations r")
     assert owner < check < aggregate  # the aggregates sit inside the non-owner branch
     assert BODY.rstrip().endswith("RETURN NEW;\nEND\n$fn$;".rstrip()) or "RETURN NEW;\nEND" in BODY
@@ -27,7 +29,9 @@ def test_the_refusal_is_inside_the_non_owner_branch():
     assert BODY.index("RAISE EXCEPTION") > BODY.index("FROM spend_reservations r")
 
 
-pg = pytest.mark.skipif(not os.environ.get("HADAVIN_TEST_PG_DSN"), reason="HADAVIN_TEST_PG_DSN not set")
+pg = pytest.mark.skipif(
+    not os.environ.get("HADAVIN_TEST_PG_DSN"), reason="HADAVIN_TEST_PG_DSN not set"
+)
 
 if os.environ.get("HADAVIN_TEST_PG_DSN"):
     pytest.importorskip("psycopg")

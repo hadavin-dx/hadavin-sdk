@@ -59,6 +59,20 @@ def _rows(store) -> dict[str, SpendReservation]:
     return {r["reservation_id"]: SpendReservation.model_validate(r) for r in found}
 
 
+def _owner_update(store, query, params):
+    """UPDATE as the table owner: the 0010 money guard refuses the runtime login (pattern of `_shift` in test_store_spend_model)."""
+    import os
+
+    from psycopg import connect
+    from psycopg.conninfo import conninfo_to_dict, make_conninfo
+
+    options = conninfo_to_dict(store._db.info.dsn).get("options")
+    owner = make_conninfo(os.environ["HADAVIN_TEST_PG_DSN"], options=options)
+    with store._lock, connect(owner, autocommit=False) as db:
+        db.execute("SET LOCAL session_replication_role = replica")
+        return db.execute(query, params).rowcount
+
+
 def _older(store, rid, seconds):
     """Move the row's created_at back, as if it had been reserved `seconds` earlier."""
     if _is_memory(store):
@@ -68,12 +82,11 @@ def _older(store, rid, seconds):
                 update={"created_at": row.created_at - timedelta(seconds=seconds)}
             )
         return
-    with store._lock:
-        done = store._exec(
-            "UPDATE spend_reservations SET created_at = created_at - make_interval(secs => %s) "
-            "WHERE reservation_id = %s",
-            (seconds, rid),
-        ).rowcount
+    done = _owner_update(
+        store,
+        "UPDATE spend_reservations SET created_at = created_at - make_interval(secs => %s) WHERE reservation_id = %s",
+        (seconds, rid),
+    )
     assert done == 1
 
 
@@ -85,12 +98,11 @@ def _closed_earlier(store, rid, days):
                 update={"closed_at": row.closed_at - timedelta(days=days)}
             )
         return
-    with store._lock:
-        done = store._exec(
-            "UPDATE spend_reservations SET closed_at = closed_at - make_interval(days => %s) "
-            "WHERE reservation_id = %s",
-            (days, rid),
-        ).rowcount
+    done = _owner_update(
+        store,
+        "UPDATE spend_reservations SET closed_at = closed_at - make_interval(days => %s) WHERE reservation_id = %s",
+        (days, rid),
+    )
     assert done == 1
 
 
@@ -521,7 +533,9 @@ def test_expired_then_settled_higher_raises_the_counters_to_the_actual(store):
 # --- purge ---------------------------------------------------------------------------------------------------------
 
 
-def test_purge_removes_closed_rows_only(store):
+def test_purge_removes_settled_rows_only_and_keeps_an_expired_unsettled_hold(store):
+    # E11 M3: purge deletes only SETTLED holds (released = settled at 0) past retention; a hold closed by expiry
+    # stays until it is settled.
     open_old, settled, expired = (_reserve(store, "1.00") for _ in range(3))
     recent, open_new = _reserve(store, "0.50"), _reserve(store, "0.25")
     store.settle_spend(settled, D("0.40"))
@@ -535,9 +549,10 @@ def test_purge_removes_closed_rows_only(store):
     totals = _totals(store)
     cutoff = now() - timedelta(days=400)
     assert store.purge_spend_reservations(now() - timedelta(days=600)) == 0
-    assert store.purge_spend_reservations(cutoff) == 2
+    assert store.purge_spend_reservations(cutoff) == 1  # only the settled one
     left = _rows(store)
-    assert set(left) == {open_old, recent, open_new}
+    assert set(left) == {open_old, recent, open_new, expired}
+    assert left[expired].status == "expired"
     assert (left[open_old].status, left[recent].status, left[open_new].status) == (
         "open",
         "settled",

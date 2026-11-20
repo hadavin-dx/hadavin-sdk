@@ -257,6 +257,15 @@ def test_a_golden_input_over_the_cap_is_a_config_error_naming_it(live_cfg_dir):
 # --- merge condition 4: a database that applied the old file name is refused, not silently migrated ---------------------------------------
 
 
+_RENAMED_TO_REAL = {
+    "0007_stop_state.sql": "0006_stop_state.sql",
+    "0008_spend_reservations.sql": "0007_spend_reservations.sql",
+    "0009_release_expired_spend.sql": "0008_release_expired_spend.sql",
+    "0010_stop_state_hardening.sql": "0009_stop_state_hardening.sql",
+    "0011_money_guard.sql": "0010_money_guard.sql",
+}
+
+
 def _folder(tmp_path, names):
     """The real migrations' SQL (so the grant map still matches the tables) under the renamed file names:
     0005_reservations stands in for #49's file (empty), 0006_evidence is today's 0005_evidence and 0007_stop_state
@@ -265,13 +274,7 @@ def _folder(tmp_path, names):
     folder.mkdir(parents=True)
     for n in names:
         real = mig.MIGRATIONS / (
-            n
-            if n[:4] <= "0004"
-            else "0006_stop_state.sql"
-            if n == "0007_stop_state.sql"
-            else "0007_spend_reservations.sql"
-            if n == "0008_spend_reservations.sql"
-            else "0005_evidence.sql"
+            n if n[:4] <= "0004" else _RENAMED_TO_REAL.get(n, "0005_evidence.sql")
         )
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
@@ -285,6 +288,9 @@ RENAMED = [
     "0006_evidence.sql",
     "0007_stop_state.sql",
     "0008_spend_reservations.sql",  # today's 0007_spend_reservations: the grant map names its table
+    "0009_release_expired_spend.sql",  # the later real files, shifted by one, so the grant map still finds what it names
+    "0010_stop_state_hardening.sql",
+    "0011_money_guard.sql",
 ]
 
 
