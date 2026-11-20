@@ -761,19 +761,6 @@
    "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
   },
   {
-   "id": "rev-wipci",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review of wip/core-a-for-ci tests/test_ci_python_matrix.py",
-   "started UTC": "13:34",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 13:34: reviewer on each branch"
-  },
-  {
    "id": "rev-wipb",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
@@ -785,6 +772,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "lead 13:34: reviewer on each branch"
+  },
+  {
+   "id": "wipci-fix",
+   "role": "builder in /home/user/wt/for-ci",
+   "model": "sonnet",
+   "what exactly it is doing": "CI agreement test: planted tests for every assertion, wider parser (env, uv --python, python-version-file, include, container, .python-version), float-3.10 trap, upper bound",
+   "started UTC": "13:36",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "rev-wipci findings"
   }
  ],
  "tests": [
@@ -3413,6 +3413,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "c-run-4 at g4-p4 e5d469a5f: 2 failed (test_no_reference_material Port.io; test_p1d_a_paths STOP guard 'SHOWN: db-7.corp.internal'), 15265 passed, 561 skipped, 15 xfailed, 391 s: matches expected; host mutants: no script found (globs *host*mut*, *g4*mut* empty); evidence/c-run-4.md"
+  },
+  {
+   "id": "rev-wipci",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of wip/core-a-for-ci tests/test_ci_python_matrix.py",
+   "started UTC": "13:34",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "review of wip/core-a-for-ci test: no Blocker; Major 1: the 'highest == check' assertion has no planted test; Major 2: parser misses env UV_PYTHON/uv run --python/python-version-file/matrix.include/container/.python-version (future drift); nits: 3.10 float, upper bound ignored; fixes -> wipci-fix"
   }
  ]
 }
