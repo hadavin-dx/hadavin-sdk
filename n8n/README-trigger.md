@@ -509,7 +509,7 @@ at. If the workflow took them as an end, the gap described above would stay open
 - Example, an agent with `max_steps` 12 on the defaults: 12 x 60 x 3 + 60 = 2220 seconds (37 minutes); with one
   tick gap, 2280 seconds (38 minutes).
 - The template's placeholders: a wait of 70 seconds ("Wait before next round"; above 65 seconds on purpose, see stated
-  limit 15) and 45 checks ("Checks left?"), 3150 seconds (about 52 to 53 minutes). That is longer than the 2280 seconds of the example.
+  limit 15) and 45 checks ("Checks left?"), 3150 seconds (52 minutes), about 52 to 53 in a real run with the time the other nodes take. That is longer than the 2280 seconds of the example.
 - The rule for each client: checks times wait must be LONGER than that client's stuck limit plus one tick gap.
   With the 70 second wait and the default model settings: `max_steps` 6 needs more than 17 checks, `max_steps` 12
   more than 32, `max_steps` 20 more than 53. When you change the number in "Checks left?", change the text of
