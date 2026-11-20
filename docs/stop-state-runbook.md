@@ -176,6 +176,16 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
 - `migrate` rewrites the rows of `hadavin_limits` on every run and takes back any hand grant on it or on a money
   function; only the owner reads or writes `hadavin_limits`.
 
+## Upgrading a database that ran a draft of 0010 or 0011
+
+`migrate` with roles named refuses a database whose 0010 or 0011 was applied from an older draft (recorded checksum
+differs from the file): the old function bodies would keep running, and a draft's 7-argument `hadavin_reserve_spend`
+lets the caller pick its caps. The error names the file. Fix: drop what the draft made and run
+`hadavin-sdk migrate ... --reset-draft 0011_money_definer` with all the roles (recipe and the
+`--accept-changed-draft` caveat: docs/migration-checksums.md). A leftover `hadavin_*` function outside the function
+maps also refuses migrate, listing each with its argument types and a `DROP FUNCTION` statement; `--reset-draft` drops
+those the migrating login owns. Afterwards run `limits sync-caps` (the cap table was recreated empty).
+
 ## Release expired spend holds
 
 After a provider outage: the live loop keeps the hold of a failed model call (ProviderError, ProviderExhausted, a crash) at the worst case, and the tick only MARKS it expired; the day and month counters do not move until the operator runs `release_expired_spend`. Enough failed runs make the agent hit `daily_budget` or `monthly_budget`: run the release below.

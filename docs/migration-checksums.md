@@ -26,6 +26,29 @@ operator acts. Two ways:
   version, and for any version in the shipped manifest even if `UNRELEASED_MIGRATIONS` still lists it. By hand: `DELETE FROM schema_migrations WHERE version >= '0011_money_definer';` after dropping the objects.
 - The database already matches the file: `--accept-changed-draft 0011_money_definer` records the file's checksum.
 
+**Roles named (the production path: any runtime, purge, release, reset or caps role is given) vs
+`--no-roles`.** With roles named, a changed 0010 or 0011 (the money wall) is a `ConfigError` naming the file and saying
+that the database holds an older draft of an unreleased migration, with both remedies above; nothing is applied and
+nothing is granted. The reason: a stale 0011 body keeps running (a draft's 7-argument `hadavin_reserve_spend` takes the
+caps from the caller, so the runtime could book past any cap). Without roles (`--no-roles`, a dev database) and for 0008
+and 0009 it stays a warning.
+
+**Functions left behind by a draft.** A draft database may hold a `hadavin_*` function whose signature is no longer in
+`MONEY_FUNCTIONS` or `AUDIT_FUNCTIONS` (for example the 7-argument `hadavin_reserve_spend`, still executable by the
+runtime). `migrate` refuses and rolls back, naming each such function with its argument types and the statement:
+`DROP FUNCTION <schema>.<name>(<types>)`, or run `migrate --reset-draft <version>`. `--reset-draft` itself drops the
+unmapped `hadavin_*` functions of the schema that the migrating login owns (never another owner's, never other names,
+never another schema) before it re-applies the files. It does not drop tables, constraints or triggers.
+
+**Recipe for `--reset-draft 0011_money_definer`** (drop what 0011 made, then reset): `DROP TABLE hadavin_caps,
+hadavin_limits; ALTER TABLE spend DROP CONSTRAINT spend_usd_range; ALTER TABLE spend_month DROP CONSTRAINT
+spend_month_usd_range;` (the caps are re-entered afterwards with `limits sync-caps`). The functions are replaced by the
+re-applied file. For 0010 reset also 0011 (later versions are reset with it). Test: `tests/test_migrations_draft_upgrade_pg.py`.
+
+**`--accept-changed-draft` is the operator's call.** It records the file's checksum and changes nothing else. On a
+database whose objects do NOT match the file, the old bodies keep running and migrate no longer warns; only the
+unmapped-function refusal above still stops an old overload. Use it only when you have compared the objects.
+
 A NULL checksum on an unreleased file is trusted once (warning) and recorded.
 
 ## What the lead does at the merge that releases 0008 to 0011
