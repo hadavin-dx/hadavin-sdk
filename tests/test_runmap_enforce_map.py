@@ -343,9 +343,9 @@ def test_m_new_1_a_map_of_many_short_values_builds_one_redactor_and_none_per_val
     built = []
     real = runmap._Redactor
 
-    def counting(known, cache=None):
+    def counting(known, cache=None, deadline=None):
         built.append((len(known), cache is not None))
-        return real(known, cache)
+        return real(known, cache, deadline)
 
     monkeypatch.setattr(runmap, "_Redactor", counting)
     monkeypatch.setattr(
@@ -358,14 +358,16 @@ def test_m_new_1_a_map_of_many_short_values_builds_one_redactor_and_none_per_val
     dict.__setitem__(mapping, "<SECRET_1>", "TENANT")
     built.clear()
     assert _enforce(f"TENANT host {IP}", mapping) == "<SECRET_1> host <IPV4_1>"
-    assert sorted(set(built)) == [(1, False), (2001, False)]
+    assert sorted(set(built)) == [(1, True), (2001, True)]
 
 
 def test_m_new_1_enforce_map_has_the_redactors_time_budget(monkeypatch):
     """m-new-1, ORDER 007 item 3: past `defaults.REDACT_BUDGET_S` the call fails closed (InputTooLarge)."""
     mapping = {"<IPV4_1>": IP}
     clock = iter([0.0, defaults.REDACT_BUDGET_S + 0.5])
-    monkeypatch.setattr(runmap, "time", SimpleNamespace(monotonic=lambda: next(clock)))
+    monkeypatch.setattr(
+        runmap, "time", SimpleNamespace(monotonic=lambda: next(clock), thread_time=lambda: 0.0)
+    )
     with pytest.raises(runmap.InputTooLarge) as caught:
         runmap.enforce_map(f"host {IP}", mapping)
     assert caught.value.args == ("InputTooLarge",), "the time budget was not checked"
@@ -634,3 +636,153 @@ def test_r2_m4_a_reader_between_the_cache_write_and_the_map_update_sees_a_whole_
     assert runmap.enforce_map(f"host {IP} token {TOKEN}", mapping) == (
         "host <IPV4_1> token <SECRET_1>"
     )
+
+
+# --- round 4 (design review round 3 M1, M2, M3; code review round 3 M2, N7) ----------------------------------------
+
+
+def test_r3_m2_the_calls_deadline_is_passed_into_every_sweep_of_the_redactor(monkeypatch):
+    """Design M2: `_Redactor.sweep(out, deadline)` takes a `time.thread_time()` value; `enforce_map` gives it the
+    budget's CPU deadline, for the main sweep and nothing else is unchecked."""
+    seen: list[object] = []
+    real = runmap._Redactor.sweep
+
+    def spy(self, out, deadline=None):
+        seen.append(deadline)
+        return real(self, out, deadline)
+
+    monkeypatch.setattr(runmap._Redactor, "sweep", spy)
+    mapping = _run_map()
+    snap = runmap.snapshot(mapping)
+    assert runmap.enforce_map(f"host {IP}", snap) == "host <IPV4_1>"
+    assert seen and all(isinstance(d, float) and d == snap.budget.cpu_deadline for d in seen[-1:])
+    assert snap.budget.cpu_deadline <= __import__("time").thread_time() + defaults.REDACT_BUDGET_S
+
+
+def test_r3_m2_a_deadline_already_past_stops_the_sweep_itself(monkeypatch):
+    monkeypatch.setattr(
+        runmap.EnforceBudget, "check", lambda self: None
+    )  # only the sweep can refuse
+    mapping = _run_map()
+    monkeypatch.setattr(runmap.defaults, "REDACT_BUDGET_S", -1.0)
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.enforce_map(f"host {IP} and more text", mapping)
+
+
+def test_r3_m2_the_map_is_capped_at_snapshot_with_a_code_not_a_hang(monkeypatch):
+    monkeypatch.setattr(runmap, "ENFORCE_MAX_ENTRIES", 5)
+    five = runmap.RunMap({f"<IPV4_{i}>": f"10.0.0.{i + 10}" for i in range(1, 6)})
+    assert runmap.snapshot(five)
+    five["<IPV4_6>"] = "10.0.0.99"
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.snapshot(five)
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.enforce_map("text", five)
+
+
+def test_r3_m2_late_is_the_old_definition_in_one_pass():
+    """`late` (held back): the sweep replaces it and it is a piece of a key or an edge value. The old test was
+    `original in "\\n".join(keys)` per value; the new one dismisses a value by its characters first and looks each
+    spelling up once. Same result on a mixed map, with a non-ASCII value whose FOLDED spelling is a piece of a key."""
+    mapping = {
+        "<SECRET_1>": "ECRET_1",  # piece of a key
+        "<SECRET_2>": TOKEN,  # not
+        "<SECRET_3>": ">abcdef",  # edge (head)
+        "<SECRET_4>": "xyz<",  # edge (tail)
+        "<TENANT_1>": "UUID_1",  # piece of a key
+        "<TENANT_2>": "abc123",
+        "<TENANT_3>": "\uff34\uff25\uff2e\uff21\uff2e\uff34",  # full-width TENANT: its fold is a piece
+        "<SECRET_5>": "ab",  # never swept (under 3)
+        "<UUID_1>": "ID_1>",  # edge and piece of a key
+    }
+    tokens = "\n".join(mapping)
+    from hadavin_sdk.guard.redact import _sweep
+
+    old = {
+        ph
+        for ph, original in mapping.items()
+        if (original in tokens or runmap._is_edge_value(original))
+        and _sweep(ph, original) is not None
+    }
+    new = set(runmap._late_values(mapping))
+    assert new == old | {"<TENANT_3>"}, "only the alias rule may add to the old definition"
+
+
+def test_r3_m1_one_step_per_text_and_per_value_that_occurs_not_per_held_value():
+    """Design M1: the steps of a call are one per text and one per held-back value that really occurs in a text."""
+    mapping = runmap.RunMap({f"<SECRET_{i}>": f"ECRET_{i}>x" for i in range(1, 301)})
+    mapping["<IPV4_1>"] = IP
+    snap = runmap.snapshot(mapping)
+    start = snap.budget.steps
+    for _ in range(50):
+        try:
+            out = runmap.enforce_map(f"host {IP}", snap)
+        except runmap.InputTooLarge:
+            raise AssertionError(
+                "a step was spent per held-back value: the budget ran out"
+            ) from None
+        assert out == "host <IPV4_1>"
+    assert start - snap.budget.steps <= 50 * 2, "a step was spent per held-back value"
+    before = snap.budget.steps
+    assert runmap.enforce_map("a ECRET_7>x b", snap) == "a <SECRET_7> b"
+    assert 1 <= before - snap.budget.steps <= 4
+
+
+def test_r3_m2_a_built_state_kept_in_the_callers_holder_is_reused_and_the_runs_cache_is_not_written(
+    monkeypatch,
+):
+    builds: list[int] = []
+    real = runmap._Redactor._build
+
+    def counting(self):
+        builds.append(len(self.mapping))
+        return real(self)
+
+    monkeypatch.setattr(runmap._Redactor, "_build", counting)
+    mapping = runmap.RunMap({"<IPV4_1>": IP, "<SECRET_1>": TOKEN, "<SECRET_2>": "ECRET_1>x"})
+    holder: dict = {}
+    runmap.snapshot(mapping, holder)
+    assert set(holder) == {"first", "check"} and mapping.redact_cache == {}
+    assert sorted(builds) == [
+        2,
+        2,
+    ]  # the main sweep (the held-back value left out), the net's finder (2 secrets)
+    builds.clear()
+    runmap.snapshot(mapping, holder)
+    assert builds == [], "the state was not reused: the redactors had to build"
+    mapping["<IPV4_2>"] = "10.0.0.6"
+    runmap.snapshot(mapping, holder)
+    assert builds == [3] and holder["first"][0] == {
+        "<IPV4_1>": IP,
+        "<SECRET_1>": TOKEN,
+        "<IPV4_2>": "10.0.0.6",
+    }
+    builds.clear()
+    runmap.snapshot(mapping)  # no holder: nothing is kept, so it builds again
+    assert builds, "a call with no holder reused something"
+
+
+def test_r3_c_m2_a_non_ascii_value_and_its_folded_spelling_do_not_cut_each_others_placeholder():
+    """Code review round 3, M2 (reproduced: `a <<TENANT_1>_1> b <TENANT_1> c`): the redactor sweeps the folded
+    spelling of a non-ASCII value in the same pass, and a spelling that is a piece of the value's own placeholder
+    cut it. Each spelling of a held-back value is its own item now, longest first."""
+    wide = "\uff34\uff25\uff2e\uff21\uff2e\uff34"  # full-width TENANT
+    mapping = runmap.RunMap({"<TENANT_1>": wide})
+    assert _enforce(f"a {wide} b TENANT c", mapping) == "a <TENANT_1> b <TENANT_1> c"
+    wide_word = "\uff33\uff25\uff23\uff32\uff25\uff34"  # full-width SECRET
+    mapping = runmap.RunMap({"<SECRET_1>": wide_word})
+    assert _enforce(f"a {wide_word} b SECRET c", mapping) == "a <SECRET_1> b <SECRET_1> c"
+
+
+def test_r3_n7_stated_limit_digits_of_any_script_count_as_digits_and_as_placeholder_digits():
+    """Code review round 3, N7: `str.isdigit()` and `\\d` take digits of every script. The limit text says 'all
+    digits': that means Arabic-Indic and full-width digits too. A value of such digits under 6 characters is never
+    swept as an identifier, and `<NAME_` followed by such a digit and `>` is placeholder-shaped (set aside)."""
+    arabic = "\u0661\u0662\u0663\u0664"  # four Arabic-Indic digits
+    mapping = runmap.RunMap({"<TENANT_1>": arabic, "<TENANT_2>": "1234"})
+    assert _enforce(f"id {arabic} and 1234", mapping) == f"id {arabic} and 1234"
+    shaped = "<XYZW_\u0663>"
+    mapping = runmap.RunMap({"<SECRET_1>": "XYZW_\u0663"})
+    assert (
+        _enforce(f"see {shaped}", mapping) == f"see {shaped}"
+    )  # the sweep sets it aside (the gate's net refuses)

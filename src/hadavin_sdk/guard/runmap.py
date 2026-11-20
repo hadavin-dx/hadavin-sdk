@@ -24,10 +24,14 @@ from urllib.parse import unquote
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.redact import (
     _EVERY_COPY,
+    _PLACEHOLDER,
     ARN_TAIL,
     PATTERNS,
     SECRET_KINDS,
+    _alias_keys,
+    _plain,
     _Redactor,
+    _replace_standalone,
     _sweep,
     kind_of,
     redact,
@@ -609,38 +613,47 @@ ENFORCE_MAX_SWEEPS = 4
 # made of short values is longer than the cap once masked and was refused on every call. The factor is safe because
 # one sweep cannot grow a text by more than `max placeholder length / 3` (a value under 3 characters is never
 # replaced); `test_e1_the_growth_factor_covers_the_longest_placeholder` derives that bound from the redactor's own
-# labels. WHAT IS BOUNDED (review round 2, dz2-M3): each input text stays under ENFORCE_MAX_CHARS and each sweep's
-# output under ENFORCE_MAX_OUT_CHARS (checked after the sweep that made it); one `EnforceBudget` (one per `snapshot`,
-# so one per chat call of the gate) bounds the characters of ALL texts of the call, the number of values processed one
-# at a time and the wall time (checked between values and after every sweep). NOT bounded: the time of ONE call of the
-# redactor's own `sweep` (guard/redact.py `_Redactor.sweep`, a per-value `str.replace` over a segment, has no
-# deadline of its own); it is checked as soon as it returns.
+# labels. WHAT IS BOUNDED (review rounds 2 and 3, dz2-M3, design M2): each input text stays under ENFORCE_MAX_CHARS and
+# each sweep's output under ENFORCE_MAX_OUT_CHARS (checked after the sweep that made it); one `EnforceBudget` (one per
+# `snapshot`, so one per chat call of the gate) bounds the characters of ALL texts of the call, the steps (one per text
+# and one per held-back value that really occurs in a text: NOT one per value per sweep, so a long honest history is
+# not refused for the size of the map) and the time. The time is a CPU deadline (`time.thread_time()`, the clock of
+# `redact.py`) that is passed INTO the redactor's `sweep` (checked before each segment and each value replaced) and
+# its build, and a wall-clock deadline checked between values: one `sweep` over a large text with many known values
+# stops at the deadline (InputTooLarge), it is no longer unbounded.
 ENFORCE_GROWTH_FACTOR = 8
 ENFORCE_MAX_CHARS = ENFORCE_GROWTH_FACTOR * defaults.MAX_REDACT_CHARS
 ENFORCE_MAX_OUT_CHARS = ENFORCE_GROWTH_FACTOR * ENFORCE_MAX_CHARS
 ENFORCE_MAX_TOTAL_CHARS = (
     4 * ENFORCE_MAX_CHARS
 )  # all texts of one chat call together (input; plus growth)
-ENFORCE_MAX_HELD = (
-    256  # held-back and edge values one snapshot accepts; more is refused (planted token pieces)
-)
-ENFORCE_MAX_STEPS = (
-    ENFORCE_MAX_HELD * ENFORCE_MAX_SWEEPS * 100
-)  # values processed one at a time: 100 texts, every round, every held value
+# Held-back values (a known value that is a piece of a placeholder or an edge value) one snapshot accepts. The
+# old cap of 256 refused EVERY later call of a run that a hostile document had planted 257 values in (the map only
+# grows). The work per held-back value is one substring test per text and round, and one sweep only where it occurs, so
+# the cap is set by memory and the deadline, not by one call's step count. Past it the call is refused with
+# `InputTooLarge` (gate code `mask_budget_exceeded`); the producer side should stop registering (core-b, request 3).
+ENFORCE_MAX_HELD = 4096
+# entries of the map one snapshot accepts (K): 20,480; past it, InputTooLarge
+ENFORCE_MAX_ENTRIES = 5 * ENFORCE_MAX_HELD
+# 32,768: one per text, one per held-back value that occurs in a text (per round)
+ENFORCE_MAX_STEPS = 8 * ENFORCE_MAX_HELD
 
 
 class EnforceBudget:
     """One deadline, one character budget and one step budget for every `enforce_map` call that shares a snapshot
-    (the gate takes one snapshot per chat call). Raises `InputTooLarge` when one runs out. Not shared between threads."""
+    (the gate takes one snapshot per chat call). Raises `InputTooLarge` when one runs out. Not shared between
+    threads. `cpu_deadline` is a `time.thread_time()` value (the redactor's clock): `enforce_map` passes it into
+    `_Redactor.sweep`."""
 
-    __slots__ = ("chars", "deadline", "steps")
+    __slots__ = ("chars", "cpu_deadline", "deadline", "steps")
 
     def __init__(self) -> None:
         self.deadline = time.monotonic() + defaults.REDACT_BUDGET_S
+        self.cpu_deadline = time.thread_time() + defaults.REDACT_BUDGET_S
         self.chars, self.steps = ENFORCE_MAX_TOTAL_CHARS, ENFORCE_MAX_STEPS
 
     def check(self) -> None:
-        if time.monotonic() > self.deadline:
+        if time.monotonic() > self.deadline or time.thread_time() > self.cpu_deadline:
             raise InputTooLarge("InputTooLarge")
 
     def spend_chars(self, n: int) -> None:
@@ -704,7 +717,8 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       more, a value that is all digits and under 6 characters or a common word (`redact._COMMON`).
     - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit touches it and
       keeps touching it after every other replacement.
-    - Only the spelling held in the map is replaced. A copy hidden by full-width letters, a zero-width
+    - Only the spelling held in the map is replaced (for a value that is not ASCII, also its folded NFKC spellings,
+      which the redactor sweeps with it: each is its own held-back item when it is a piece of a placeholder). A copy hidden by full-width letters, a zero-width
       space or an escape is NOT found here: finding those is the pattern redactor's work (`redact_text`),
       and returning a decoded view from here could turn a look-alike into a real placeholder. The text is
       not cleaned either: a copy split by NUL characters (a UTF-16 document read as UTF-8 has one after
@@ -726,8 +740,8 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     - A chain of glued identifiers that needs more than `ENFORCE_MAX_SWEEPS` sweeps is refused, not sent.
 
     Bounds: the input cap of `redact_text` and the time budget `defaults.REDACT_BUDGET_S`, but one budget for ALL
-    texts that share a snapshot (`EnforceBudget`: time, characters, values processed; see ENFORCE_MAX_CHARS for
-    what is and is not bounded). Past any of them, `InputTooLarge`. Any other failure (a map that is not text to
+    texts that share a snapshot (`EnforceBudget`: time, characters, steps; see ENFORCE_MAX_CHARS for what is and is
+    not bounded; one regex scan of one stretch of text inside the redactor cannot be interrupted). Past any of them, `InputTooLarge`. Any other failure (a map that is not text to
     text) is a RedactionError that names the error's type and never the text."""
     try:
         if len(text) > ENFORCE_MAX_CHARS:
@@ -735,15 +749,19 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
         snap = snapshot(mapping)
         budget = snap.budget
         budget.spend_chars(len(text))
+        budget.step()  # one step per text
         first, held_back = snap.sweeps
+        deadline = budget.cpu_deadline
         out = text
         for _ in range(ENFORCE_MAX_SWEEPS):
             before = out
-            out = first.sweep(out)
-            for original, alone in held_back:
-                budget.step()
-                if original in out:
-                    out = alone.sweep(out)
+            out = first.sweep(out, deadline)
+            for n, (spelling, placeholder, rule) in enumerate(held_back):
+                if not n % 64:
+                    budget.check()  # the substring tests below cost one pass over the text each
+                if spelling in out:
+                    budget.step()  # only a value that really occurs costs a step
+                    out = _sweep_held(out, spelling, placeholder, rule, deadline)
             if len(out) > ENFORCE_MAX_OUT_CHARS:
                 raise InputTooLarge("InputTooLarge")
             budget.check()  # a hostile text or map: fail closed
@@ -764,10 +782,10 @@ class MapSnapshot(dict):
     that call is enforced against the same entries. Private to its maker: not shared between threads, and
     not kept after the call (a value the run learns later is in the next snapshot)."""
 
-    sweeps: tuple[Any, list[tuple[str, Any]]]
+    sweeps: tuple[Any, list[tuple[str, str, Any]]]  # the main sweep, the held-back spellings
     budget: EnforceBudget
     secret_values: frozenset[str]  # originals swept in every copy (a secret kind of 4+ characters)
-    secret_held: list[str]  # of the held-back and edge values, the secret ones
+    checker: Any  # a redactor over exactly those secret values, for `held_value_left`
 
 
 def _rules_conflict(known: Mapping[str, str]) -> bool:
@@ -781,21 +799,108 @@ def _rules_conflict(known: Mapping[str, str]) -> bool:
     return any(len(found) > 1 for found in rules.values())
 
 
-def snapshot(mapping: Mapping[str, str]) -> MapSnapshot:
+def _late_values(known: Mapping[str, str]) -> dict[str, str]:
+    """The entries to hold back: the sweep can replace the value (or one of its ALIAS spellings: a non-ASCII value
+    is swept in its folded spellings too, `redact._alias_keys`) and it is a piece of one of the map's keys or an
+    edge value (`_is_edge_value`). A value is a piece of a key only if all its characters occur in the keys, so
+    most values are dismissed by one set test and only the rest are looked up in the joined keys; a value is
+    looked up once however many placeholders hold it (design M2: the old test was one pass over all keys per
+    value)."""
+    tokens = "\n".join(known)
+    alphabet = set(tokens)
+    seen: dict[str, bool] = {}
+
+    def held(spelling: str) -> bool:
+        found = seen.get(spelling)
+        if found is None:
+            found = _is_edge_value(spelling) or (
+                len(spelling) <= len(tokens)
+                and alphabet.issuperset(spelling)
+                and spelling in tokens
+            )
+            seen[spelling] = found
+        return found
+
+    late: dict[str, str] = {}
+    for ph, original in known.items():
+        if _sweep(ph, original) is None:
+            continue
+        spellings = (original,) if _plain(original) else (original, *_alias_keys(original))
+        if any(held(spelling) for spelling in spellings if spelling):
+            late[ph] = original
+    return late
+
+
+def _sweep_held(text: str, spelling: str, placeholder: str, rule: Any, deadline: float) -> str:
+    """The redactor's final sweep for ONE spelling of one held-back value: every placeholder-shaped token is set
+    aside, then the free stretches are replaced by the spelling's rule (`redact._sweep`). Not a `_Redactor`: a
+    redactor built for a non-ASCII value would sweep that value's folded spellings too, in the same pass, and cut
+    the placeholder it had just written (`<<TENANT_1>_1>`: code review round 3, M2). Each spelling is its own
+    held-back item, longest first."""
+    parts = _PLACEHOLDER.split(text)
+    for i in range(0, len(parts), 2):
+        if not i % 512 and time.thread_time() > deadline:
+            raise InputTooLarge("InputTooLarge")
+        segment = parts[i]
+        if spelling in segment:
+            if rule is _EVERY_COPY:
+                parts[i] = segment.replace(spelling, placeholder)
+            else:
+                parts[i] = _replace_standalone(segment, spelling, placeholder)
+    return "".join(parts)
+
+
+def _built(
+    entries: dict[str, str], holder: dict[str, Any] | None, slot: str, deadline: float
+) -> Any:
+    """A `_Redactor` over `entries`, its patterns BUILT now (inside the budget), reusing the state `holder[slot]`
+    holds when it was built for the same entries and storing the new state there as ONE assignment (a pair), so a
+    thread that shares the holder never reads half of an update. `holder` is the bound gate's own: the run's
+    `redact_cache` is never written."""
+    scratch: dict[str, Any] = {}
+    pair = holder.get(slot) if holder is not None else None
+    if pair is not None and pair[0] == entries:
+        scratch = {"map": pair[0], "state": pair[1]}
+    redactor = _Redactor(entries, scratch, deadline)
+    redactor.sweep("", deadline)  # builds the patterns now, under the deadline
+    if holder is not None and "map" in scratch and "state" in scratch:
+        holder[slot] = (scratch["map"], scratch["state"])
+    return redactor
+
+
+def _held_items(late: Mapping[str, str], stored: set[str]) -> list[tuple[str, str, Any]]:
+    """(spelling, placeholder, rule) for every spelling of every held-back value, longest first: the value itself and,
+    for a non-ASCII value, the folded spellings the redactor would sweep with it (`redact._alias_keys`; one that is
+    itself a stored value is that value's own item)."""
+    items: dict[str, tuple[str, str, Any]] = {}
+    for ph, original in late.items():
+        spellings = (original,) if _plain(original) else (original, *_alias_keys(original))
+        for spelling in spellings:
+            rule = _sweep(ph, spelling)
+            if spelling and rule is not None and (spelling == original or spelling not in stored):
+                items.setdefault(spelling, (spelling, ph, rule))
+    return sorted(items.values(), key=lambda item: -len(item[0]))
+
+
+def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) -> MapSnapshot:
     """A `MapSnapshot` of `mapping` (itself when it already is one). `dict(mapping)` on a RunMap or a plain
     dict is one atomic copy, so a writer in another thread is seen whole or not at all. Never writes
     `mapping` or its `redact_cache`. Any failure (a map that is not text to text, a cache attribute that
-    raises) is a RedactionError that names the error's type."""
+    raises) is a RedactionError that names the error's type. Bounded: more than `ENFORCE_MAX_ENTRIES` entries or
+    `ENFORCE_MAX_HELD` held-back values is `InputTooLarge`; the build runs under the budget's deadline.
+
+    `cache`: a dict the CALLER owns (the bound gate keeps one per run) in which the built patterns of the held-back
+    case are kept between calls. The run's own `redact_cache` cannot serve there: it is valid for the whole map, and
+    a map with one held-back value is swept in two parts."""
     if isinstance(mapping, MapSnapshot):
         return mapping
     try:
         known = MapSnapshot(mapping)
-        tokens = "\n".join(known)
-        late = {
-            ph: original
-            for ph, original in known.items()
-            if (original in tokens or _is_edge_value(original)) and _sweep(ph, original) is not None
-        }
+        if len(known) > ENFORCE_MAX_ENTRIES:
+            raise InputTooLarge("InputTooLarge")
+        known.budget = budget = EnforceBudget()
+        deadline = budget.cpu_deadline
+        late = _late_values(known)
         if len(late) > ENFORCE_MAX_HELD:
             raise InputTooLarge("InputTooLarge")
         if _rules_conflict(known):
@@ -803,34 +908,42 @@ def snapshot(mapping: Mapping[str, str]) -> MapSnapshot:
             # the stronger rule (every copy, a secret kind) goes first. Built fresh: the run's cache holds
             # the map's own order.
             ordered = dict(sorted(known.items(), key=lambda kv: _sweep(*kv) is not _EVERY_COPY))
-            first = _Redactor({ph: o for ph, o in ordered.items() if ph not in late}, None)
+            first = _built(
+                {ph: o for ph, o in ordered.items() if ph not in late}, cache, "first", deadline
+            )
         elif late:
-            first = _Redactor({ph: o for ph, o in known.items() if ph not in late}, None)
+            first = _built(
+                {ph: o for ph, o in known.items() if ph not in late}, cache, "first", deadline
+            )
         else:
             # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
-            first = _Redactor(known, dict(getattr(mapping, "redact_cache", None) or {}))
-        held_back = [
-            (original, _Redactor({ph: original}, None))
-            for ph, original in sorted(late.items(), key=lambda kv: -len(kv[1]))
-        ]
+            first = _Redactor(known, dict(getattr(mapping, "redact_cache", None) or {}), deadline)
+            first.sweep("", deadline)
+        held_back = _held_items(late, set(known.values()))
         known.sweeps = (first, held_back)
-        known.budget = EnforceBudget()
-        known.secret_values = frozenset(
-            o for ph, o in known.items() if _sweep(ph, o) is _EVERY_COPY
-        )
-        known.secret_held = [o for ph, o in late.items() if _sweep(ph, o) is _EVERY_COPY]
+        secrets = {ph: o for ph, o in known.items() if _sweep(ph, o) is _EVERY_COPY}
+        known.secret_values = frozenset(secrets.values())
+        known.checker = _built(secrets, cache, "check", deadline) if secrets else None
+    except RedactionError:
+        raise
     except Exception as exc:  # noqa: BLE001 - fail closed
         raise RedactionError(type(exc).__name__) from None
     return known
 
 
 def held_value_left(text: str, snap: MapSnapshot) -> bool:
-    """Safety net for the gate (dz2-M2): True when a held-back or edge value of a secret kind still occurs raw in
-    `text` outside every placeholder-shaped token. Never returns or logs the value."""
-    if not snap.secret_held:
+    """Safety net for the gate (dz2-M2, design M3): True when a value of a SECRET kind (4 or more characters: the
+    ones swept in every copy) still occurs raw in `text`. A placeholder-shaped token hides a value only if it is an
+    exact KEY of the map; any other `<NAME_1>` (a forged `<AKIAEXAMPLE123_1>`) is opened up first, because the
+    sweep itself sets every placeholder-shaped token aside. One pass of the same finder the sweep uses, under the
+    call's deadline. Never returns or logs the value. A value that spans two chunks the gate enforced one by one
+    (a fixed framing word between) is not seen here: a stated limit of the gate."""
+    if not snap.secret_values:
         return False
-    bare = _NOT_RAW.sub("\0", text)
-    return any(value in bare for value in snap.secret_held)
+    opened = _NOT_RAW.sub(
+        lambda m: m.group() if m.group() in snap else m.group().replace("<", "<\0"), text
+    )
+    return snap.checker.sweep(opened, snap.budget.cpu_deadline) != opened
 
 
 SAFE_HEAD_NOTE = "(details withheld)"

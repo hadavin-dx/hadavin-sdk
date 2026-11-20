@@ -13,8 +13,12 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   where no ASCII letter or digit touches it: `abc123` inside `xabc1234` stays.
   E::test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept
 - Only the spelling the map holds is replaced: a percent-, entity- or backslash-encoded copy, a full-width or
-  other look-alike spelling and a copy split by a zero-width character pass as written.
+  other look-alike spelling and a copy split by a zero-width character pass as written. EXCEPTION (code review round
+  3, M2): for a value that is not ASCII the redactor also sweeps its folded (NFKC) spellings, so a full-width
+  `TENANT` known as such is replaced, and so is the plain `TENANT`; each spelling is its own item and never cuts
+  the placeholder written for another.
   T::test_t7_stated_limit_a_hidden_spelling_of_a_known_value_is_not_replaced_by_the_gate
+  T::test_r3_c_m2_stated_rule_the_sweep_also_replaces_the_folded_spelling_of_a_non_ascii_value
 - The replace is case-sensitive: a known host or e-mail address written in another letter case passes.
   T::test_d7_stated_limit_another_letter_case_of_a_known_value_is_not_replaced
 - A copy split by NUL characters (a UTF-16 document: the gate reads documents as UTF-8) or by an ANSI colour
@@ -22,9 +26,13 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   T::test_d7_stated_limit_a_copy_split_by_nul_utf16_or_an_ansi_sequence_is_not_replaced
   E::test_stated_limit_a_copy_split_by_nul_characters_is_not_found
 - A known value that itself holds a placeholder-shaped token is never replaced, and a known value written inside
-  angle brackets so that it reads as a placeholder (`<ABC_1>`) is left.
+  angle brackets so that it reads as a placeholder (`<ABC_1>`) is left by the sweep. For a value of a SECRET kind
+  the gate's net then refuses the call (`held_value_left`, below); for an identifier kind the value passes as written.
+  Placeholder-shaped means ASCII capitals and digits and `_` followed by digits of ANY script (`\\d`), and
+  `isdigit()` counts digits of any script too: 'all digits' in these limits means that.
   E::test_stated_limit_a_value_holding_a_placeholder_shaped_token_is_never_replaced
   E::test_stated_limit_a_known_value_written_inside_angle_brackets_reads_as_a_placeholder
+  E::test_r3_n7_stated_limit_digits_of_any_script_count_as_digits_and_as_placeholder_digits
 - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in `abcdef`):
   one is replaced and the tail of the other stays (`<A_1>ef`); two identifiers there are both left. A value that
   is a piece of one of the map's placeholders loses to any other value, even a shorter one.
@@ -39,6 +47,26 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   kind, whatever the order). E::test_e5_one_original_under_two_placeholders_follows_the_stronger_rule
 - A text that is still changing after `runmap.ENFORCE_MAX_SWEEPS` sweeps (a chain of glued identifiers) is
   refused, not sent. E::test_mj2_a_chain_settles_within_the_cap_and_is_refused_past_it
+- The net (`runmap.held_value_left`, code `held_value_left`): after each enforced chunk, a value of a SECRET kind
+  (4 or more characters) that still stands raw refuses the call. Only an exact KEY of the map hides a value: a
+  forged `<AKIA...EXAMPLE_1>` does not. Each chunk is checked on its own, so a value that SPANS a chunk (a fixed
+  framing word between: `password="tool read_logs"`) is cut by it and passes as written; checking it would also
+  refuse every value that merely lies inside a fixed word (`ESULT`).
+  T::test_r3_m3_a_secret_hidden_in_a_placeholder_shaped_token_that_is_not_a_key_refuses_the_call
+  T::test_r3_m3_the_net_covers_every_secret_value_not_only_the_held_back_ones
+  T::test_r3_n2_stated_limit_a_value_spanning_a_fixed_framing_word_is_not_replaced
+- Budgets (design review round 3, M1 M2 N5): one budget per chat call (characters, steps, time). A step is one per
+  text and one per held-back value that occurs in it; the time is a CPU deadline given to the redactor's sweep. At most
+  `runmap.ENFORCE_MAX_ENTRIES` entries and `runmap.ENFORCE_MAX_HELD` held-back values; past a budget the call is
+  refused with its own code `mask_budget_exceeded` (a subclass of `UnmaskedInput`). NOT bounded: ONE regex scan of
+  ONE text stretch inside the redactor (a 256 KB text of `a` with 500 planted `aaa...` values takes about 7 s before
+  the deadline is read: slicing the scan is redact.py's job, see ESCALATIONS). The pattern state is kept in the bound
+  gate between calls. At most `MAX_FRAMING_TOKENS` framing tokens are read per message; what follows is plain text.
+  T::test_r3_m1b_planted_held_values_past_the_old_cap_of_256_do_not_brick_the_run
+  T::test_r3_m1_an_honest_long_history_with_a_big_held_set_is_not_refused
+  T::test_r3_n5_a_message_of_thousands_of_forged_tokens_costs_a_bounded_number_of_enforce_calls
+  T::test_r3_m2_a_deadline_inside_the_sweep_is_a_budget_refusal_with_its_own_code
+  T::test_r3_m2_the_patterns_are_built_once_per_map_change_even_with_a_held_back_value
 - The gate runs no pattern: a value that is in no map passes as written, also a clean key and a clean value that
   only match a pattern once composed (`"user_id": "abc123"`).
   T::test_stated_limit_a_clean_key_and_value_that_match_a_pattern_once_composed_are_not_touched
@@ -48,20 +76,30 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   tokens ARE enforced (review round 2, dz2-B1: a forged token `call_id=x_<secret>_y` is not a hiding place). A
   tool name is enforced the same way in the assistant line and in the token, so both read alike. A call is
   REFUSED, code `framing_refused`, only when a value of a SECRET kind (4 or more characters, swept in every copy)
-  EQUALS a tool name (the `tools` list, an assistant line, a token) or a call id: the `tools` list is forwarded
-  untouched and would show it. A host or tenant named `tool` or `search` does not stop a run. A document
-  is enforced whole: a framing token inside a document is data.
+  EQUALS a tool name (the `tools` list, an assistant line, a token) or a call id, or is a SUBSTRING of a name in the
+  `tools` list: the `tools` list is forwarded untouched and would show it. A tool name that is in the call's `tools`
+  stays EXACT in the assistant line and the token (an identifier inside it, tenant `billing` in `get_billing_info`,
+  is not rewritten); a name that is only in a message is enforced. A host or tenant named `tool` or `search`
+  does not stop a run. A document is enforced whole: a framing token inside a document is data. A planted value that
+  equals a tool name refuses every later call of the run (design review round 3, M1a): keeping such a value out of the
+  map is the producer side's job (core-b, request 3), the gate cannot tell it from a real secret.
   T::test_o17_6_reproduction_a_planted_value_that_equals_a_framing_word_rewrites_the_trusted_marker
   T::test_o17_6_a_value_that_only_lies_inside_a_framing_word_leaves_the_fixed_words_alone
   T::test_r2_b1_a_known_value_inside_a_token_slot_never_reaches_the_client
   T::test_o17_6_a_tool_name_from_the_tools_list_or_an_assistant_line_counts_too
   T::test_r2_m4_an_identifier_kind_value_equal_to_a_tool_name_does_not_stop_the_run
+  T::test_r3_c_m1_a_tool_name_in_the_tools_list_stays_exact_when_a_known_value_lies_inside_it
+  T::test_r3_c_m1_a_secret_that_is_part_of_a_listed_tool_name_refuses_the_call
+  T::test_r3_n1_a_framing_token_inside_the_name_of_an_assistant_line_is_not_copied_twice
 - With no map (`bind(..., mapping=NO_MAP)`: the eval and replay command lines only) there is no enforce step;
   every audit row of such a gate says so (`AuditEvent.decision` is `no_map`). `map_enforced` is written only when
   the enforce function is the module default (`runmap.enforce_map`) AND the call's map held an entry
   (`map_enforced_empty` otherwise); an injected `enforce=` is `enforce_custom`; a refusal of the enforce step is
   `map_failed`. The row says what was configured; it is not a proof that every value was replaced.
-  `mapping` is a required keyword; None is a TypeError.
+  `mapping` is a required keyword; it must be a `runmap.RunMap` or NO_MAP, anything else (None, a plain dict, a
+  `dict(run_map)` copy) is a TypeError. An EMPTY run map is accepted and marked `map_enforced_empty` (contested with
+  ORDER 020 m-2: the lead decides; pinned, not endorsed). `enforce=` is a test-only hook.
+  T::test_r3_m4_an_enforce_function_other_than_the_default_is_marked_and_documented_as_test_only
   T::test_r2_m5_the_audit_decision_says_what_was_really_enforced
   T::test_d1_every_audit_row_says_whether_the_map_was_enforced
   T::test_o17_1_bind_without_mapping_is_a_type_error_and_so_is_none_or_a_non_mapping
@@ -71,10 +109,12 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   operator text and are forwarded untouched, as are a message's `role` and its other keys.
   T::test_t20_system_and_tools_are_not_touched
   T::test_d7_role_extra_message_keys_and_output_schema_are_forwarded_untouched
-- A reply whose cost is absent or not a usable number (None, a float, NaN, negative) is returned and NOT settled
-  (`cost_unknown`; the worst case stays booked). `models.Reply.cost_usd` defaults to Decimal(0), so an adapter that
+- A reply whose cost is absent or not a usable number (None, a float, NaN, negative, `-0`, an absurd exponent, or a
+  `cost_usd` that raises on read) is returned and NOT settled (`cost_unknown`; the worst case stays booked). `models.Reply.cost_usd` defaults to Decimal(0), so an adapter that
   sets no cost looks like a free call: core-b must change that default.
   T::test_o17_2_a_reply_whose_cost_is_absent_or_not_a_usable_number_is_cost_unknown_and_not_settled
+  T::test_r3_n3_a_cost_or_worst_case_that_is_not_a_sane_amount_is_not_usable
+  T::test_r3_n3_a_cost_property_that_raises_after_the_paid_call_is_cost_unknown_and_the_reply_is_returned
 - One writer per run map (m-new-7): two threads that write ONE map at the same time through `redact_text` can
   give one placeholder number to two values. The gate only reads the map; one run has one writer today.
   Not pinned by a test (a race).
@@ -97,7 +137,8 @@ before the provider call that is an Exception and not a `SpendRefused` (the enfo
 amount, `reserve` failing with a KeyError or a store error, a bad reservation id, a framing conflict) is raised
 as `GateRefused` or a subclass: a fixed `code` and neither a cause nor a context (raised outside any `except`
 block), so for the caller `GateRefused` means 'no provider call was made'. A BaseException (KeyboardInterrupt) in
-`worst_case` or `reserve` writes a row (`call_interrupted`, `reserve_interrupted`) and passes on as it is: for
+the enforce step, `worst_case`, `reserve` or the instant after it writes a row (`call_interrupted`,
+`reserve_interrupted`) and passes on as it is: for
 `reserve` the meter may already have booked the amount (the sweep closes it). A `SpendRefused` (a meter error whose
 `.reason` is one of the six published reasons) and an error of the client pass as the same object with whatever
 chain it already had: the gate adds nothing to it and removes nothing. The caller's messages, dicts and
@@ -107,6 +148,7 @@ documents are never changed in place.
 from __future__ import annotations
 
 import contextlib
+import itertools
 import re
 from collections.abc import Callable, Mapping
 from decimal import Decimal
@@ -175,9 +217,10 @@ RESULT_REFUSED = "refused"
 RESULT_FAILED = "failed"
 CODE_GATE_REFUSED = "gate_refused"
 CODE_MASK_REFUSED = "mask_refused"
-CODE_WORST_CASE_FAILED = (
-    "worst_case_failed"  # `worst_case` raised: its error is re-raised, no reserve
+CODE_MASK_BUDGET = (
+    "mask_budget_exceeded"  # the enforce step ran out of its size, step or time budget: no call
 )
+CODE_WORST_CASE_FAILED = "worst_case_failed"  # `worst_case` raised: its error is NOT passed on (it may carry text), no reserve
 CODE_WORST_CASE_INVALID = "worst_case_invalid"  # it returned no finite Decimal >= 0: no reserve
 CODE_RESERVE_REFUSED = "reserve_refused"  # the meter's exception has no published `.reason`
 CODE_RESERVATION_INVALID = "reservation_invalid"  # reserve returned no usable id: no provider call
@@ -236,6 +279,7 @@ AUDIT_CODES = (
     | {
         CODE_GATE_REFUSED,  # what `_note` writes in place of a code that is not in this set (a bug guard)
         CODE_MASK_REFUSED,
+        CODE_MASK_BUDGET,
         CODE_WORST_CASE_FAILED,
         CODE_WORST_CASE_INVALID,
         CODE_RESERVE_REFUSED,
@@ -277,14 +321,31 @@ def spend_reason(error: BaseException) -> str | None:
     return reason if named and isinstance(reason, str) and reason in SPEND_REASONS else None
 
 
+# The largest decimal exponent (of the leading digit) and the smallest exponent an amount may have: a Decimal such as
+# `1E+999999` is finite and not negative, and no money amount (design review round 3, N3).
+MAX_AMOUNT_MAGNITUDE = 15  # `Decimal.adjusted()`: at most 10**16 USD
+MIN_AMOUNT_EXPONENT = -64
+
+
 def usable_amount(value: Any) -> bool:
-    """A finite Decimal that is not negative: the only amount the gate reserves or settles with."""
-    return isinstance(value, Decimal) and value.is_finite() and value >= 0
+    """A finite Decimal of 0 or more with a sane exponent: the only amount the gate reserves or settles with. A
+    negative zero (`Decimal("-0")`), NaN, an infinity and an absurd exponent are not usable."""
+    return (
+        isinstance(value, Decimal)
+        and value.is_finite()
+        and not value.is_signed()
+        and value.adjusted() <= MAX_AMOUNT_MAGNITUDE
+        and value.as_tuple().exponent >= MIN_AMOUNT_EXPONENT
+    )
 
 
 def usable_cost(reply: Any) -> Decimal | None:
-    """Rule (a): the reply's cost when it is a usable amount, else None."""
-    cost = getattr(reply, "cost_usd", None)
+    """Rule (a): the reply's cost when it is a usable amount, else None. A `cost_usd` that raises on read is no
+    cost (the call is paid: the row says `cost_unknown`, the reply is returned)."""
+    try:
+        cost = getattr(reply, "cost_usd", None)
+    except Exception:  # noqa: BLE001 - a hostile property: no usable cost
+        return None
     return cost if usable_amount(cost) else None
 
 
@@ -292,26 +353,54 @@ def usable_cost(reply: Any) -> Decimal | None:
 # ======================================================================================================
 
 
+MAX_FRAMING_TOKENS = (
+    64  # framing tokens read per message; the rest of the text is enforced as plain text
+)
+
+
+def framing_tokens(content: str) -> list[re.Match[str]]:
+    """The framing tokens of one message content, at most `MAX_FRAMING_TOKENS` (design review round 3, N5: one
+    message of ten thousand forged tokens costs a bounded amount). What follows the last token read is plain text."""
+    return list(itertools.islice(FRAMING.finditer(content), MAX_FRAMING_TOKENS))
+
+
 def framing_free(
     messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None, snap: runmap.MapSnapshot
 ) -> bool:
     """False when a value of a SECRET kind (swept in every copy: `snap.secret_values`) EQUALS a tool name (the
-    `tools` list, an assistant line `tool NAME {...}`, a framing token) or a call id. The `tools` list is
-    forwarded untouched, so such a name would show the secret. Values that the sweep never replaces, and values of
-    an identifier kind (a host or tenant named `search`), never refuse a call: the slots are enforced instead.
-    Returns a bool; the value is never returned or logged."""
+    `tools` list, an assistant line `tool NAME {...}`, a framing token) or a call id, or is a SUBSTRING of a name in
+    the `tools` list (that list is forwarded untouched, so the name would show the value; code review round 3, M1). A
+    piece of a call id, or of a name that is only in a message (not in `tools`), never refuses: that slot is enforced
+    and no raw copy of it is forwarded (review round 3 asked to refuse a piece of a call id too: NOT done, the forged
+    token `call_id=x_<secret>_y` of dz2-B1 is exactly such a case and is a hiding place no more, not a reason to stop). Values that the sweep never replaces, and values of an identifier kind (a host or tenant named `search`),
+    never refuse a call: the slots are enforced instead. Returns a bool; the value is never returned or logged."""
     names: set[str] = set()
     for message in messages:
         content = message["content"]
-        for token in FRAMING.finditer(content):
-            names.update(group for group in token.group("id", "name") if group)
+        for token in framing_tokens(content):
+            if token.group("id"):
+                names.add(token.group("id"))
+            if token.group("name"):
+                names.add(token.group("name"))
         call = _ASSISTANT_CALL.match(content) if message.get("role") == "assistant" else None
         if call:
             names.add(call.group(1))
-    for tool in tools or ():
-        if isinstance(tool, dict) and isinstance(tool.get("name"), str):
-            names.add(tool["name"])
-    return names.isdisjoint(snap.secret_values)
+    listed = tool_names(tools)
+    secrets = snap.secret_values
+    if not (names | listed).isdisjoint(secrets):
+        return False
+    # a piece of a listed name: one joined string, one substring test per secret value
+    shown = "\n".join(sorted(listed))
+    return not any(value in shown for value in secrets)
+
+
+def tool_names(tools: list[dict[str, Any]] | None) -> frozenset[str]:
+    """The names in the call's `tools` list (a dict with a str `name`): operator text, forwarded as it is."""
+    return frozenset(
+        tool["name"]
+        for tool in tools or ()
+        if isinstance(tool, dict) and isinstance(tool.get("name"), str)
+    )
 
 
 class GateRefused(RuntimeError):
@@ -337,8 +426,16 @@ class UnmaskedInput(GateRefused):
     code = CODE_MASK_REFUSED
 
 
+class MaskBudgetExceeded(UnmaskedInput):
+    """The enforce step ran out of its budget (a text or the map too large, too many steps, the time): this call
+    only is refused, with its own code, so an operator can tell a size problem from a bad input."""
+
+    code = CODE_MASK_BUDGET
+
+
 class HeldValueLeft(UnmaskedInput):
-    """Safety net: a held-back secret value still stood raw after the sweeps (it is a bug if this is ever raised)."""
+    """Safety net: a value of a secret kind still stood raw after the sweeps (a value that spans a framing
+    word, hides in a forged placeholder-shaped token, or a bug)."""
 
     code = CODE_HELD_LEFT
 
@@ -387,7 +484,12 @@ class ModelGate:
     """Holds the client, the meter, the audit sink, the worst-case function and the enforce step. It has NO
     `chat`: a caller must `bind` it to an agent and a run first, so an unbound gate cannot call a model.
     A client that is itself a gate is refused (TypeError), so the direct case of one call reserved twice
-    cannot be built; a gate hidden inside another wrapper is NOT detected."""
+    cannot be built; a gate hidden inside another wrapper is NOT detected.
+
+    `enforce=` is a test-only hook (design review round 3, M4): production code leaves it at the default
+    (`runmap.enforce_map`). Every audit row of a gate with another function says `enforce_custom`, and the install
+    test (tests/test_gate_install_callers.py) refuses an `enforce=` argument anywhere in src. The gate cannot tell a
+    production caller from a test, so it does not refuse the argument itself."""
 
     def __init__(
         self,
@@ -408,7 +510,7 @@ class ModelGate:
         agent_id: str,
         run_id: str,
         *,
-        mapping: Mapping[str, str] | _NoMap,
+        mapping: runmap.RunMap | _NoMap,
         principal: str | None = None,
         source: str = DEFAULT_SOURCE,
     ) -> BoundGate:
@@ -417,11 +519,13 @@ class ModelGate:
         masks later is replaced in earlier text on the next call. The map has ONE writer at a time (the run's own
         thread, through `redact_text`); the gate may read it from another thread. A site with no run map says so
         with `mapping=NO_MAP` (the eval and replay command lines only): no enforce step runs and every audit row
-        says `no_map` in its `decision` field. None, or anything that is not a Mapping, is a TypeError: a
-        forgotten map can no longer switch the guarantee off without a trace. `principal` defaults to the agent
+        says `no_map` in its `decision` field. None, or anything that is not a `runmap.RunMap` (a plain dict, a copy
+        made with `dict(run_map)` is a stale map that would still read `map_enforced`), is a TypeError: a forgotten
+        or wrong map can no longer switch the guarantee off without a trace. A RunMap that is not the run's own, or
+        a `RunMap(dict(run_map))` copy, cannot be told from the real one: the install tests (core-b) cover that. `principal` defaults to the agent
         id. The ids go into audit rows: one that is not a str is a TypeError here, not a row lost later."""
-        if not isinstance(mapping, Mapping | _NoMap):
-            raise TypeError("mapping must be a Mapping (the run's map) or NO_MAP")
+        if not isinstance(mapping, runmap.RunMap | _NoMap):
+            raise TypeError("mapping must be the run's RunMap or NO_MAP")
         if not all(isinstance(value, str) for value in (agent_id, run_id, source)):
             raise TypeError("agent_id, run_id and source must be str")
         if principal is not None and not isinstance(principal, str):
@@ -438,7 +542,7 @@ class BoundGate:
         gate: ModelGate,
         agent_id: str,
         run_id: str,
-        mapping: Mapping[str, str] | _NoMap,
+        mapping: runmap.RunMap | _NoMap,
         principal: str,
         source: str,
     ) -> None:
@@ -448,6 +552,9 @@ class BoundGate:
         self._principal, self._source = principal, source
         self._mode = MODE_NO_MAP if isinstance(mapping, _NoMap) else None
         self._custom = gate._enforce is not _DEFAULT_ENFORCE
+        self._built: dict[
+            str, Any
+        ] = {}  # built patterns kept between calls (`runmap.snapshot(cache=...)`)
 
     def chat(
         self,
@@ -459,13 +566,19 @@ class BoundGate:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
-        enforced = self._enforced(messages, documents, tools)
+        try:
+            enforced = self._enforced(messages, documents, tools)
+        except BaseException:  # KeyboardInterrupt in the enforce step: a row, then on as it is
+            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, decision=MODE_FAILED)
+            raise
         if isinstance(enforced, str):  # a failure code: nothing was sent, nothing is reserved
             self._note(RESULT_REFUSED, enforced, decision=MODE_FAILED)
             if enforced == CODE_FRAMING_REFUSED:
                 raise FramingRefused  # raised outside any `except`: no cause and no context to leak
             if enforced == CODE_HELD_LEFT:
                 raise HeldValueLeft
+            if enforced == CODE_MASK_BUDGET:
+                raise MaskBudgetExceeded
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
         messages, documents, mode = enforced  # from here on only the enforced copies are used
         failure: str | None = None
@@ -495,8 +608,12 @@ class BoundGate:
             ):  # the meter may have booked the amount already: the sweep closes it
                 self._note(RESULT_FAILED, CODE_RESERVE_INTERRUPTED, decision=mode)
                 raise
-        if failure is None and not (isinstance(reservation, str) and reservation):
-            failure = CODE_RESERVATION_INVALID
+        try:
+            if failure is None and not (isinstance(reservation, str) and reservation):
+                failure = CODE_RESERVATION_INVALID
+        except BaseException:  # between reserve and the call: the amount IS booked
+            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation, mode)
+            raise
         if failure is not None:  # no call; raised outside the handlers, so with no chain
             self._note(RESULT_REFUSED, failure, decision=mode)
             if failure == CODE_WORST_CASE_INVALID:
@@ -558,32 +675,32 @@ class BoundGate:
         tools: list[dict[str, Any]] | None,
     ) -> tuple[list[dict[str, Any]], list[bytes] | None, str | None] | str:
         """(new messages, new documents, the audit `decision`) or a failure code (`mask_refused`,
-        `framing_refused`, `held_value_left`) when the step failed (then nothing is sent). A message or document in
-        which nothing is replaced is passed on as the same object, so the bytes are the caller's; one with a replaced
-        value is a new dict or new bytes. A content that is not `str` is refused with or without a map. Documents
-        are read as the adapters read them (`llm/common.py` `turns`: UTF-8, bad bytes replaced, so a binary one is
-        decoded lossily). The live map is copied ONCE here (`runmap.snapshot`): every text of this call is enforced
-        against the same entries and shares one budget, and the patterns are built at most once per call. The
-        fixed words of a tool-result token are never replaced (`_enforce_text`)."""
+        `mask_budget_exceeded`, `framing_refused`, `held_value_left`) when the step failed (then nothing is sent). A
+        message or document in which nothing is replaced is passed on as the same object, so the bytes are the
+        caller's; one with a replaced value is a new dict or new bytes. A content that is not `str` is refused with
+        or without a map. Documents are read as the adapters read them (`llm/common.py` `turns`: UTF-8, bad bytes
+        replaced, so a binary one is decoded lossily). The live map is copied ONCE here (`runmap.snapshot`): every
+        text of this call is enforced against the same entries and shares one budget, and the patterns are built at
+        most once per map change (kept in this bound gate). The fixed words of a tool-result token are never
+        replaced (`_enforce_text`). Every enforced chunk is checked by the safety net (`runmap.held_value_left`)."""
         mapping = self._mapping
         try:
             if isinstance(mapping, _NoMap):
                 mapping = None
             else:
-                mapping = runmap.snapshot(mapping)
+                mapping = runmap.snapshot(mapping, self._built)
             if mapping is not None and not framing_free(messages, tools, mapping):
                 return CODE_FRAMING_REFUSED
+            listed = tool_names(tools)
             sent: list[dict[str, Any]] = []
             for message in messages:
                 content = message["content"] if isinstance(message, dict) else None
                 if not isinstance(content, str):
                     return CODE_MASK_REFUSED
                 if mapping is not None:
-                    fixed = self._enforce_text(content, mapping, message.get("role"))
-                    if not isinstance(fixed, str):
-                        return CODE_MASK_REFUSED
-                    if runmap.held_value_left(fixed, mapping):
-                        return CODE_HELD_LEFT
+                    fixed, code = self._enforce_text(content, mapping, message.get("role"), listed)
+                    if code is not None:
+                        return code
                     if fixed != content:
                         message = {**message, "content": fixed}
                 sent.append(message)
@@ -595,14 +712,14 @@ class BoundGate:
                         return CODE_MASK_REFUSED
                     if mapping is not None:
                         text = document.decode("utf-8", "replace")
-                        fixed = self._enforce(text, mapping)
-                        if not isinstance(fixed, str):
-                            return CODE_MASK_REFUSED
-                        if runmap.held_value_left(fixed, mapping):
-                            return CODE_HELD_LEFT
+                        fixed, code = self._chunk(text, mapping)
+                        if code is not None:
+                            return code
                         if fixed != text:
                             document = fixed.encode("utf-8")
                     docs.append(document)
+        except runmap.InputTooLarge:  # size, step or time budget: this call only
+            return CODE_MASK_BUDGET
         except Exception:  # noqa: BLE001 - fail closed: a step that cannot finish means no call
             return CODE_MASK_REFUSED
         if mapping is None:
@@ -613,41 +730,75 @@ class BoundGate:
             mode = MODE_ENFORCED if len(mapping) else MODE_EMPTY
         return sent, docs, mode
 
-    def _enforce_text(self, text: str, mapping: Mapping[str, str], role: Any = None) -> str:
-        """Enforce the map on one message content. The FIXED words of the agent loop's framing
-        (`<<TOOL RESULT call_id=`, ` tool=`, `>>`, `<<END TOOL RESULT>>`, and the `tool ` of an assistant line
-        `tool NAME {...}`) are kept exactly; the call id, the tool name (the same function, so the assistant
-        line and the token read alike) and every stretch between them are enforced. A text with no framing is
-        enforced whole."""
+    def _chunk(self, text: str, mapping: Mapping[str, str]) -> tuple[str, str | None]:
+        """(the enforced text, None) or ("", a failure code): one stretch enforced and then checked by the safety net
+        (a value of a secret kind still raw in it)."""
+        fixed = self._enforce(text, mapping)
+        if not isinstance(fixed, str):
+            return "", CODE_MASK_REFUSED
+        if runmap.held_value_left(fixed, mapping):
+            return "", CODE_HELD_LEFT
+        return fixed, None
+
+    def _enforce_text(
+        self,
+        text: str,
+        mapping: Mapping[str, str],
+        role: Any = None,
+        listed: frozenset[str] = frozenset(),
+    ) -> tuple[str, str | None]:
+        """Enforce the map on one message content: (the text, None) or ("", a failure code). The FIXED words of the
+        agent loop's framing (`<<TOOL RESULT call_id=`, ` tool=`, `>>`, `<<END TOOL RESULT>>`, and the `tool ` of an
+        assistant line `tool NAME {...}`) are kept exactly; the call id, the tool name and every stretch between
+        them are enforced. A tool name that is in the call's `tools` list stays EXACT (that list is forwarded
+        untouched and the model must see the same name in both places; a secret that equals or is part of such a name
+        has refused the call already, `framing_free`). The assistant line and the token read alike. A text with no
+        framing is enforced whole. At most `MAX_FRAMING_TOKENS` tokens are read; what follows is one plain stretch.
+        A token that starts inside the name of the assistant line is not read as one (it would be copied twice)."""
         call = _ASSISTANT_CALL.match(text) if role == "assistant" else None
-        tokens = list(FRAMING.finditer(text))
+        tokens = framing_tokens(text)
         if not tokens and call is None:
-            return self._enforce(text, mapping)
+            return self._chunk(text, mapping)
         parts: list[str] = []
+        failure: list[str] = []
         end = 0
 
-        def stretch(chunk: str) -> None:
-            if chunk:
-                parts.append(self._enforce(chunk, mapping))
+        def put(chunk: str, exact: bool = False) -> None:
+            if not chunk or failure:
+                return
+            if exact:
+                parts.append(chunk)
+                return
+            fixed, code = self._chunk(chunk, mapping)
+            if code is not None:
+                failure.append(code)
+            parts.append(fixed)
+
+        def slot(name: str) -> None:
+            put(name, exact=name in listed)
 
         if call is not None:
-            parts += ["tool ", self._enforce(call.group(1), mapping)]
+            put("tool ", exact=True)
+            slot(call.group(1))
             end = call.end(1)
         for token in tokens:
-            stretch(text[end : token.start()])
+            # a token that starts inside what is already written (the assistant line's own name) is not read again
+            if token.start() < end:
+                continue
+            put(text[end : token.start()])
             if token.group("end"):
-                parts.append(token.group("end"))
+                put(token.group("end"), exact=True)
             else:
-                parts += [
-                    token.group("head"),
-                    self._enforce(token.group("id"), mapping),
-                    token.group("mid"),
-                    self._enforce(token.group("name"), mapping),
-                    token.group("tail"),
-                ]
+                put(token.group("head"), exact=True)
+                put(token.group("id"))
+                put(token.group("mid"), exact=True)
+                slot(token.group("name"))
+                put(token.group("tail"), exact=True)
             end = token.end()
-        stretch(text[end:])
-        return "".join(parts)
+        put(text[end:])
+        if failure:
+            return "", failure[0]
+        return "".join(parts), None
 
     def _note(
         self,
