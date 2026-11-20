@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:19:31Z
+UPDATED_UTC: 2026-11-20T16:23:30Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:21Z agents 4 (G12d, G9c, G4d, DOCS2 builders), load 2.4. G13d MERGED onto cloud/core-c (every head hit charged 1+len//64 before the seen test; separator-only limit pinned test_g13d_1 + owner question ESCALATIONS E24; 8 new mutants, gate_mutants 146/147 only R8; gate/enforce_map tests 346 passed). 16:44Z agents 5 (G13d, G12d, G9c, G4d, DOCS2 builders), load 3.0, heavy runs <= 2 (builders serialize). Reviews recorded: G13c (0B/2M), G12c (0B/2M), G9b (0B/2M), G4c (0B/3M), root docs style (4B/7M) in handover/core-c/tickets; each has a fix builder. After the fixes merge: fresh result reviews of the G13d/G12d/G9c/G4d diffs, then the full idle suite again. 16:35Z agents 5 (G13d, G12d, G9c builders; G4c reviewer, docs style reviewer), load 2.1. Merged onto cloud/core-c: docs root pass (SECURITY/CHANGELOG/README, v8 drafts). G9b result review recorded (0B/2M, tickets/G9b-result-review-1-design.md) -> G9c builder. Vendor-brand test red only on the lead's handover/BRIEF-PREAMBLE.md now. 16:30Z 
+STATE: 16:25Z agents 3 (G12d, G9c, G4d builders), load 2.0. DOCS2 MERGED (root docs: breaking changes first, codes/brands removed, labels fixed; doc tests 71 passed, only the lead-file vendor test red). Fresh style review round 2 of the root docs next. 16:21Z agents 4 (G12d, G9c, G4d, DOCS2 builders), load 2.4. G13d MERGED onto cloud/core-c (every head hit charged 1+len//64 before the seen test; separator-only limit pinned test_g13d_1 + owner question ESCALATIONS E24; 8 new mutants, gate_mutants 146/147 only R8; gate/enforce_map tests 346 passed). 16:44Z agents 5 (G13d, G12d, G9c, G4d, DOCS2 builders), load 3.0, heavy runs <= 2 (builders serialize). Reviews recorded: G13c (0B/2M), G12c (0B/2M), G9b (0B/2M), G4c (0B/3M), root docs style (4B/7M) in handover/core-c/tickets; each has a fix builder. After the fixes merge: fresh result reviews of 
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 2.4 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+AGENTS_RUNNING: 3
+CAPACITY: load 2.0 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 3, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 56; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:18:56+00:00
+PUSHED_UTC: 2026-11-20T16:23:11+00:00
 
-(21:49 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:53 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -41,7 +41,7 @@ PUSHED_UTC: 2026-11-20T16:18:56+00:00
 | a7823001 | builder | claude-sonnet-5-5 | BUILDS G9c: G9b review fixes (charge accepted+rejected occurrences, per-edge/_expand calibration measured, kind rule at reverse[full], exact-work test); /tmp/core-c-g9c | 16:33 | 17:05 | 1 | running | 1 | 0 |  |
 | g4c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G4c (ab8ee0440) | 16:34 | 16:48 | 1 | done | 1 | 0 | EGM |
 | docs-rev | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review of root SECURITY/CHANGELOG/README (merged docs branch) | 16:34 | 16:48 | 1 | done | 1 | 0 | EGM style |
-| a56a54a7 | builder | claude-sonnet-5-5 | BUILDS DOCS2: fixes the root-docs style review (4 Blocker, 7 Major); /tmp/core-c-docs2 | 16:42 | 17:10 | 1 | running | 1 | 0 | docs only |
+| a56a54a7 | builder | claude-sonnet-5-5 | BUILDS DOCS2: fixes the root-docs style review (4 Blocker, 7 Major); /tmp/core-c-docs2 | 16:42 | 17:10 | 1 | done | 1 | 0 | docs only |
 | g4d | builder | claude-sonnet-5-5 | BUILDS G4d: G4c review fixes (trailing glue, HOSTKEY, label-internal non-ASCII limit, TB-4.13); /tmp/core-c-g4d | 16:43 | 17:10 | 1 | running | 1 | 0 |  |
 
 ## SHELLS AND PROCESSES
