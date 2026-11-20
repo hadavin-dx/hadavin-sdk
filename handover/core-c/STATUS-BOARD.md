@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:05:45Z
+UPDATED_UTC: 2026-11-20T07:05:58Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -14,7 +14,7 @@ CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:01:57+00:00
+PUSHED_UTC: 2026-11-20T07:05:45+00:00
 
 (12:35 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
