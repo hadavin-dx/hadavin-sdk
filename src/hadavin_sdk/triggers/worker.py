@@ -227,6 +227,7 @@ class Runner:
         self._closed = False
         self._ping_lock = threading.Lock()  # guards _ping
         self._ping: _Ping | None = None  # the one ping thread that may be pending
+        self.owned_app: Any = None  # set by `_recover`: the App whose connection a late close must also close
         self._ping_error: BaseException | None = None  # why the last answered ping failed (for _recover)
 
     @property
@@ -934,6 +935,7 @@ def _recover(args: argparse.Namespace) -> tuple[Any, Runner]:
                 raise cause  # the store answered with a refusal: _watch counts it as a non-store failure
             raise StoreUnavailable("store ping failed")
         _warn_no_audit(app)
+        runner.owned_app = app
         kept = True
         return wsgi, runner
     finally:
@@ -1018,6 +1020,7 @@ class _Degraded:
                     runner = None
             if runner is not None:  # stopped while building: nobody will serve with it
                 runner.close(0)
+                _close_app(runner.owned_app)  # and the connection `build` opened
                 return
             _LOG.info("trigger worker: store is back, serving triggers")
             return
