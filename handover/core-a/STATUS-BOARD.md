@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T17:24:25Z
+UPDATED_UTC: 2026-11-20T17:27:55Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 4
-CAPACITY: load 1.74 of 4 cores (1-minute average), mem 7.4/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 56G 21%; 675M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
+AGENTS_RUNNING: 3
+CAPACITY: load 1.08 of 4 cores (1-minute average), mem 1.2/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 56G 20%; 675M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: ['after mutant run 21: d-fix28 nit pass (symlink compare, BaseException in _watch, test_d_fix27 assertions) then round 5 fresh review; ledger NEEDS REVIEW queue (15 items) 2 at a time; N1 dry-run repeat when core-b/lead push']
-PUSHED_UTC: 2026-11-20T17:23:23Z (the push before this board)
+PUSHED_UTC: 2026-11-20T17:24:31Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -109,154 +109,22 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | A9-rev-c-G9c | builder/reviewer | sonnet | fresh review of core-c G9c and G12d follow-up diffs as they land -> xr-from-core-a-4.md | 17:08 | 30 min | 10 | waiting | - | 0 | no G9c commit on cloud/core-c yet (a4c99a006 has only a one-line G4d fix e82c42b63); findings 1-4 unaddressed; re-run on the next core-c push that touches redact.py |
 | A10-fuzz-pg | builder/reviewer | sonnet | hostile concurrency/crash fuzz of door against core-b real PG store (PG16) -> evidence/fuzz-pg-store.md | 17:08 | 30 min | 5 | running | - | 0 | lead 17:02 order A7-A10 |
 | d-fix25 | builder | sonnet | fix the 2 Majors + nits of rev-dfix22-24 in worker.py with tests first | 17:16 | 25 min | 5 | running | fix of round 1 | 0 | EGM |
-| grantfix4 | builder (tests) | sonnet | make the grant tests date/clock independent (round 5 Majors + MAINTAIN/COLUMNS nits) | 17:50 | 15 min | 5 | running | after cap | 0 | EGM cap |
 | mutant-run-21 | evidence runner | script | full endpoint_mutants.py on the d-fix27 tree (/tmp/mut-run21.log) | 17:52 | 35 min | 5 | running | - | 0 | worker.py changed |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 40198s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 40198s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 40198s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 40198s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 40198s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 40198s ago | running | matched by name in ps |
-| 15455 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 137s ago | running | matched by name in ps |
-| 15477 | /home/user/wt/integ3/.venv/bin/python -m pytest tests/test_grants_nega | core-a session or its agent | 137s ago | running | matched by name in ps |
-| 15918 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 124s ago | running | matched by name in ps |
-| 15919 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 123s ago | running | matched by name in ps |
-| 15920 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 122s ago | running | matched by name in ps |
-| 15925 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 121s ago | running | matched by name in ps |
-| 15931 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 120s ago | running | matched by name in ps |
-| 15932 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 119s ago | running | matched by name in ps |
-| 15952 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 118s ago | running | matched by name in ps |
-| 15960 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 117s ago | running | matched by name in ps |
-| 15965 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 116s ago | running | matched by name in ps |
-| 15970 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 116s ago | running | matched by name in ps |
-| 15978 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 115s ago | running | matched by name in ps |
-| 15991 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 114s ago | running | matched by name in ps |
-| 16049 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 112s ago | running | matched by name in ps |
-| 16304 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 111s ago | running | matched by name in ps |
-| 16362 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 110s ago | running | matched by name in ps |
-| 16372 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 109s ago | running | matched by name in ps |
-| 16387 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 108s ago | running | matched by name in ps |
-| 16426 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 107s ago | running | matched by name in ps |
-| 16480 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 106s ago | running | matched by name in ps |
-| 16532 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 105s ago | running | matched by name in ps |
-| 16586 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 104s ago | running | matched by name in ps |
-| 16637 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 103s ago | running | matched by name in ps |
-| 16688 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 102s ago | running | matched by name in ps |
-| 16738 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 102s ago | running | matched by name in ps |
-| 16790 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 101s ago | running | matched by name in ps |
-| 16841 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 100s ago | running | matched by name in ps |
-| 16894 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 99s ago | running | matched by name in ps |
-| 16946 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 98s ago | running | matched by name in ps |
-| 17001 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 97s ago | running | matched by name in ps |
-| 17055 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 96s ago | running | matched by name in ps |
-| 17108 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 95s ago | running | matched by name in ps |
-| 17161 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 94s ago | running | matched by name in ps |
-| 17214 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 93s ago | running | matched by name in ps |
-| 17264 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 92s ago | running | matched by name in ps |
-| 17328 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 91s ago | running | matched by name in ps |
-| 17427 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 90s ago | running | matched by name in ps |
-| 21159 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 89s ago | running | matched by name in ps |
-| 21314 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 88s ago | running | matched by name in ps |
-| 21527 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 87s ago | running | matched by name in ps |
-| 21678 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 86s ago | running | matched by name in ps |
-| 21852 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 85s ago | running | matched by name in ps |
-| 21992 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 84s ago | running | matched by name in ps |
-| 22114 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 83s ago | running | matched by name in ps |
-| 22302 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 82s ago | running | matched by name in ps |
-| 22466 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 81s ago | running | matched by name in ps |
-| 22591 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 80s ago | running | matched by name in ps |
-| 22791 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 79s ago | running | matched by name in ps |
-| 22983 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 78s ago | running | matched by name in ps |
-| 23123 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 77s ago | running | matched by name in ps |
-| 23283 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 76s ago | running | matched by name in ps |
-| 23408 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 75s ago | running | matched by name in ps |
-| 23608 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 74s ago | running | matched by name in ps |
-| 23684 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 73s ago | running | matched by name in ps |
-| 23695 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 72s ago | running | matched by name in ps |
-| 23703 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 71s ago | running | matched by name in ps |
-| 23704 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 70s ago | running | matched by name in ps |
-| 23711 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 69s ago | running | matched by name in ps |
-| 23712 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 68s ago | running | matched by name in ps |
-| 23717 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 67s ago | running | matched by name in ps |
-| 23743 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 67s ago | running | matched by name in ps |
-| 23802 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 66s ago | running | matched by name in ps |
-| 23807 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 65s ago | running | matched by name in ps |
-| 23839 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 64s ago | running | matched by name in ps |
-| 23856 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 63s ago | running | matched by name in ps |
-| 23910 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 62s ago | running | matched by name in ps |
-| 23936 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 61s ago | running | matched by name in ps |
-| 23945 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 60s ago | running | matched by name in ps |
-| 23946 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 59s ago | running | matched by name in ps |
-| 23950 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 58s ago | running | matched by name in ps |
-| 23967 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 57s ago | running | matched by name in ps |
-| 24051 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 56s ago | running | matched by name in ps |
-| 24092 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 55s ago | running | matched by name in ps |
-| 24093 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 55s ago | running | matched by name in ps |
-| 24105 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 54s ago | running | matched by name in ps |
-| 24203 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 53s ago | running | matched by name in ps |
-| 24438 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 52s ago | running | matched by name in ps |
-| 24489 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 51s ago | running | matched by name in ps |
-| 24503 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 50s ago | running | matched by name in ps |
-| 24545 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 49s ago | running | matched by name in ps |
-| 24602 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 48s ago | running | matched by name in ps |
-| 24657 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 47s ago | running | matched by name in ps |
-| 24712 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 46s ago | running | matched by name in ps |
-| 24769 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 45s ago | running | matched by name in ps |
-| 24822 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 44s ago | running | matched by name in ps |
-| 24875 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 43s ago | running | matched by name in ps |
-| 24929 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 42s ago | running | matched by name in ps |
-| 24977 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 41s ago | running | matched by name in ps |
-| 25028 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 40s ago | running | matched by name in ps |
-| 25081 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 39s ago | running | matched by name in ps |
-| 25129 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 38s ago | running | matched by name in ps |
-| 25185 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 37s ago | running | matched by name in ps |
-| 25242 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 36s ago | running | matched by name in ps |
-| 25297 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 35s ago | running | matched by name in ps |
-| 25352 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 34s ago | running | matched by name in ps |
-| 25405 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 33s ago | running | matched by name in ps |
-| 25458 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 32s ago | running | matched by name in ps |
-| 25500 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 32s ago | running | matched by name in ps |
-| 25551 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 31s ago | running | matched by name in ps |
-| 25604 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 30s ago | running | matched by name in ps |
-| 25765 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 29s ago | running | matched by name in ps |
-| 25894 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 28s ago | running | matched by name in ps |
-| 26032 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 27s ago | running | matched by name in ps |
-| 26156 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 26s ago | running | matched by name in ps |
-| 26333 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 25s ago | running | matched by name in ps |
-| 26446 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 24s ago | running | matched by name in ps |
-| 26598 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 23s ago | running | matched by name in ps |
-| 26736 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 26797 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 21s ago | running | matched by name in ps |
-| 26798 | timeout 250 .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_sto | core-a session or its agent | 21s ago | running | matched by name in ps |
-| 26800 | .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_store.py -k tes | core-a session or its agent | 21s ago | running | matched by name in ps |
-| 26806 | /home/user/wt/fuzz-b/.venv/bin/python -m tests.triggers.crash_launcher | core-a session or its agent | 20s ago | running | matched by name in ps |
-| 26807 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 20s ago | running | matched by name in ps |
-| 26809 | postgres: postgres postgres 127.0.0.1(35724) idle | core-a session or its agent | 20s ago | running | matched by name in ps |
-| 26894 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 27103 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 18s ago | running | matched by name in ps |
-| 27183 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 27187 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 16s ago | running | matched by name in ps |
-| 27248 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 27292 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 14s ago | running | matched by name in ps |
-| 27356 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 13s ago | running | matched by name in ps |
-| 27454 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 27506 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 11s ago | running | matched by name in ps |
-| 27554 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 10s ago | running | matched by name in ps |
-| 27611 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 27663 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 8s ago | running | matched by name in ps |
-| 27715 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 27767 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 27825 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 5s ago | running | matched by name in ps |
-| 27875 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 27929 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 3s ago | running | matched by name in ps |
-| 28000 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 28059 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 28110 | /home/user/wt/integ3/.venv/bin/python -m pytest /home/user/wt/grantfix | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 28152 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 40409s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 40409s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 40409s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 40409s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 40409s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 40409s ago | running | matched by name in ps |
+| 14839 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 14841 | timeout 250 .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_sto | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 14843 | .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_store.py -k tes | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 14848 | /home/user/wt/fuzz-b/.venv/bin/python -m tests.triggers.crash_launcher | core-a session or its agent | 18s ago | running | matched by name in ps |
+| 14849 | postgres: postgres postgres 127.0.0.1(47606) idle | core-a session or its agent | 18s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
