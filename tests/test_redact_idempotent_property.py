@@ -18,7 +18,7 @@ The corpora (nothing is dropped from any of them; `test_the_corpus_is_what_this_
   spellings      tests/test_k5_round8.py                          SPELLINGS (the layered spellings round 8 and 9 drive)
   round12-fuzz   tests/test_k5_round12_fuzz.py                    `_case`, its seed, its 1,200 cases
   round-trip     tests/redact_corpus_support.py                   `random_text`, its seed, 300 texts; LOOKALIKES
-  p1c            handover/core-c/evidence/p1c_probe.py            gap1_values (short and long), gap2_cases, gap3_cases
+  p1c            tests/p1c_builders.py                            gap1_values (short and long), gap2_cases, gap3_cases
   g7             tests/test_redact_context_after_sweep.py         SHAPES, MUST_KEEP, E5 (the shapes G7 was built on)
   constructed    this file                                        CONSTRUCTED: built to find what one extra pass misses
 Measured 2026-11-20 (fix round 3, settle as a real fixed point): 1,835 inputs, 0 refused (asserted), 0 fail. With settle
@@ -46,6 +46,7 @@ import sys
 import pytest
 
 from hadavin_sdk.guard import runmap
+from tests import p1c_builders as p1c
 from tests import redact_corpus_support as round_trip
 from tests import test_k5_round8 as round8
 from tests import test_k5_round12_fuzz as round12
@@ -60,15 +61,9 @@ importlib.import_module("hadavin_sdk.guard.redact")
 R = sys.modules["hadavin_sdk.guard.redact"]
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
-_P1C = _ROOT / "handover" / "core-c" / "evidence" / "p1c_probe.py"
-
-
-def _p1c_module():
-    spec = importlib.util.spec_from_file_location("g7_p1c_probe", _P1C)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # defines builders only; its `main()` runs under __main__
-    module.RNG.seed(20261120)  # the probe's own seed, so the built values are the same on every run
-    return module
+_P1C = (
+    _ROOT / "handover" / "core-c" / "evidence" / "p1c_probe.py"
+)  # the evidence file the builders came from: read by the parity test only
 
 
 # Built for this file while looking for what ONE extra pass cannot settle (the corpora above had no such input).
@@ -103,17 +98,11 @@ def _build() -> list[tuple[str, str]]:
     rng = random.Random(20261120)  # noqa: S311 - the seed the round-trip corpus was built with
     add("round-trip", [round_trip.random_text(rng) for _ in range(300)])
     add("lookalikes", round_trip.LOOKALIKES)
-    if not _P1C.exists():  # a deliberate failure at collection: a silently smaller corpus would make the property weaker
-        raise FileNotFoundError(
-            "tests/test_redact_idempotent_property.py needs the corpus builder "
-            "handover/core-c/evidence/p1c_probe.py (inputs p1c-gap1/2/3, 103 of 1,835) and it is not there "
-            f"({_P1C}): restore it, or change this file's corpus and EXPECTED_INPUTS on purpose"
-        )
-    probe = _p1c_module()
-    values = probe.gap1_values()
+    p1c.reseed()  # the probe's own seed, so the built values are the same on every run
+    values = p1c.gap1_values()
     add("p1c-gap1", [v[k] for v in values for k in ("short", "long")])
-    add("p1c-gap2", [text for _, _, text in probe.gap2_cases()])
-    add("p1c-gap3", [text for _, _, text in probe.gap3_cases()])
+    add("p1c-gap2", [text for _, _, text in p1c.gap2_cases()])
+    add("p1c-gap3", [text for _, _, text in p1c.gap3_cases()])
     add("g7-shapes", [g7.SHAPES[k] for k in sorted(g7.SHAPES)])
     add("g7-must-keep", g7.MUST_KEEP)
     add("g7-e5", [g7.E5[k][0] for k in sorted(g7.E5)])
@@ -279,6 +268,22 @@ def test_the_constructed_chain_is_one_call_and_check_reports_a_refusal_as_refuse
     assert g7.ACCOUNT not in out
     monkeypatch.setattr(R, "_SETTLE_ROUNDS", 1)
     assert check(CONSTRUCTED[0])[0] == "refused"  # never a silent leak
+
+
+@pytest.mark.skipif(not _P1C.exists(), reason="the evidence probe file is not in this checkout")
+def test_the_moved_builders_give_the_rows_of_the_evidence_probe():
+    """Codebase M4: the three builders live in tests/p1c_builders.py now. When the evidence probe is still there, both give the same rows
+    from the same seed, called in the order the corpus uses (this test, and only this one, loads the probe file: its builders only, its
+    `main()` runs under `__main__`; it never reads the probe's output). Skipped, and only this test, when the file is gone."""
+    spec = importlib.util.spec_from_file_location("g7_p1c_probe_parity", _P1C)
+    probe = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(probe)
+    probe.RNG.seed(p1c.SEED)
+    want = (probe.gap1_values(), probe.gap2_cases(), probe.gap3_cases())
+    p1c.reseed()
+    got = (p1c.gap1_values(), p1c.gap2_cases(), p1c.gap3_cases())
+    assert got == want
+    assert [len(x) for x in got] == [8, P1C_GAP2, P1C_GAP3]
 
 
 EXPECTED_INPUTS = 1835

@@ -32,14 +32,16 @@ MAX_DOCUMENT_BYTES = (
     262_144  # the largest incident document a run takes (redaction and grounding scan it)
 )
 # The most one redact_text call takes, counting the text and every view the second pass scans. Measured end to end
-# (redact_untrusted at the cap, Windows laptop, 2026-11-02): "curl -u " repeated 7.2 s, a zero-width-split
-# "password=" 4.0 s, full-width 3.7 s, IP addresses 2.6 s, "password=" 1.4 s, 14,563 U+FDFA (a 262,000-character
-# view) 3.0 s. Since G7 fix round 3 (Linux test machine, 2026-11-20, text with a planted chain of three rounds (a secret, a bank code
-# glued to it, an account after the code), a compound tail and a backslash so the views run): "password=" repeated 2.6 to 3.0 s and
-# "curl -u " repeated 4.8 s of thread CPU through redact_untrusted at the cap (round 2: 1.9 s and 4.0 s: the loop now ends on a round
-# that changes nothing, which is one more pass over the string the last round changed), one pass plus one sweep of that text 0.4 s and
-# 1.9 s. A text the budget cannot cover is REFUSED (InputTooLarge). The bound is the budget PLUS ONE UNINTERRUPTIBLE UNIT (see below),
-# not the budget; size a timeout around that, not around the 7 us per character a plain text costs.
+# (redact_untrusted at the cap, Windows laptop, 2026-11-02, BEFORE the deadline existed): "curl -u " repeated 7.2 s, a zero-width-split
+# "password=" 4.0 s, full-width 3.7 s, IP addresses 2.6 s, "password=" 1.4 s, 14,563 U+FDFA (a 262,000-character view) 3.0 s. THE 7.2 s OF THAT
+# LAPTOP IS OVER THE 6 s BUDGET BELOW: on that machine today the `curl -u ` text is REFUSED (InputTooLarge); nothing is shown. The figures
+# that count are the Linux test machine's (2026-11-20, G7 fix round 4; raw run in handover/core-c/evidence/G7-1.md), for a text of the keyword
+# repeated up to the cap with a planted chain of three rounds, a compound tail and a backslash so that the views run, through
+# redact_untrusted, in CPU seconds of the thread: "password=" 2.5 to 3.2 s, "curl -u " 4.5 to 5.3 s (budget 6.0 s). One pattern pass plus one
+# sweep of that text (the UNIT below): 0.35 to 0.63 s for "password=", 1.96 to 2.41 s for "curl -u ". So a machine about 25 percent slower
+# than the test machine (4.8 s x 1.25 = 6.0 s; at the slow end of the runs, 5.3 s, 14 percent is enough) REFUSES a `curl -u `-shaped 262 KB text with InputTooLarge: fail closed, and a legitimate
+# document of that shape is lost, never half masked. The test machine's margin is 1.1x to 1.3x on that text; a plain text costs about 7 us a
+# character and is nowhere near it. The bound of a call is stated below: size a timeout around that, not around the 7 us.
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 # A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
 MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
@@ -48,29 +50,45 @@ MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # part dropped, never shown.
 CUT_MARGIN = 8192
 # The most CPU seconds of the calling thread (`time.thread_time()`, not the wall clock) one `redact_text` call may spend
-# before it refuses (fail closed, `InputTooLarge`): a hostile text costs 1 to 5 s at the cap (measured on the test machine,
-# 2026-11-11: up to about 5 s for a text that needs all four spellings of every line) and every extra view repeats
+# before it refuses (fail closed, `InputTooLarge`): a hostile text costs 1 to 5 s at the cap (see above) and every extra view repeats
 # that. Checked between the stages, once per stored original in `_decoded_masks`, in the loop over the views, in the fold
 # scan (once per pattern, per suspect line, per round, per non-ASCII stored value of the alias build, and every 4,096
-# characters of the alignment) and, since G7 fix round 2, before EVERY round of `_Redactor.settle` (the pattern passes after the
-# first sweep: one round is a pass over the strings the previous round changed plus a sweep; the loop ends on a round that changes
-# no text, at most 4 rounds, then the call is refused as NotSettled), inside `_build` (every 512th stored value) and inside the sweeps
-# of those rounds (every 32nd free segment, every value replaced, every 256th placeholder token of the compound-form scan): a spent
-# budget raises InputTooLarge, a round is never skipped (that would fail open). The first sweep of a call and a direct `sweep()` call
-# with no deadline are not checked. NOT checked inside a direct pass of the pattern table, in `_views` (`neutralise`, `canonical`,
-# `composed`, `without_spacing_marks` and `undo` on the whole text), `_keep_earlier_masks`, the tail of `_folded_line` (the fold of
-# the body and the dry runs), `_withhold`, the `find` loop, one `str.replace` or finder pass over one segment and the per-line fold
-# loops. So ONE call can take the budget plus one uninterruptible unit: one pattern pass over the biggest string (0.4 s for
-# `password=` repeated, 1.6 s for `curl -u ` repeated, on the Linux test machine; the Windows laptop above took 7.2 s end to end for
-# `curl -u `, so its unit is larger) and `redact_untrusted` can start a call per view, each stopping at the same absolute deadline. The clock is
-# `time.thread_time()`: CPU time of the calling thread, not wall time (a thread that waits for the GIL or blocks does not advance
-# it), and a `_deadline` is valid only in the thread that created it (thread CPU clocks are per thread). A caller that needs a wall-clock
-# bound (a request timeout) must add its own guard; the gate converts its monotonic deadline to this clock itself. `clean()` makes one call for the text, one
+# characters of the alignment), before EVERY round of `_Redactor.settle` (the pattern passes after the first sweep: one round is a pass
+# over the strings the previous round changed plus a sweep; the loop ends on a round that changes no text, at most 4 rounds, then the
+# call is refused as NotSettled), inside `_build` (every 512th stored value) and inside EVERY sweep of a call, the FIRST included
+# (`redact` and `redact_many` pass the call's deadline since G7 fix round 4): every 32nd free segment (only when the map holds a value), every value replaced, and every 1,024th
+# unit of work of the compound-form scan (a placeholder token of the text, with or without a form, or one step of a trie walk). A spent
+# budget raises InputTooLarge, a round is never skipped (that would fail open). A direct `sweep()` call with no deadline is not checked, and
+# a `redact()` or `redact_many()` with no `_deadline` has no total bound at all (the fold scan restarts a fresh 6 s allowance on each `find`).
+# NOT checked: a direct pass of the pattern table (`find` over a string, and the loop over the strings of one round), `_views`
+# (`neutralise`, `canonical`, `composed`, `without_spacing_marks` and `undo` on the whole text), `_keep_earlier_masks`, the tail of
+# `_folded_line` (the fold of the body and the dry runs), `_withhold`, one `str.replace` or finder pass over one segment and the per-line fold
+# loops.
+# THE BOUND, one statement (the tests enforce it, tests/test_redact_settle_loop.py T4): a call can overrun the budget by the pass in
+# progress when it crosses the budget (pass 1 over every string, or the pass of one round) plus the one `str.replace` or finder pass of a
+# sweep that was running; the test asserts budget + twice the measured UNIT (one pattern pass and one sweep over the biggest text) + 0.5 s,
+# which is looser than that claim (pass 1 and sweep 1 are the two parts of it that the first check cannot reach). A text for which pass 1
+# alone costs more than the budget is refused at the first check after it. `redact_untrusted` can start a call per view, each stopping at
+# the same absolute deadline. The clock is `time.thread_time()`: CPU time of the calling thread, not wall time (a thread that waits for the
+# GIL or blocks does not advance it), and a `_deadline` is valid only in the thread that created it (thread CPU clocks are per thread). A
+# caller that needs a wall-clock bound (a request timeout) must add its own guard. The outbound gate (`runmap.EnforceBudget`) keeps TWO
+# clocks and does not convert one into the other: a `thread_time` deadline that it passes INTO `_Redactor.sweep` and the held-back sweeps
+# (checked inside them, as above), and a monotonic wall deadline that only its own `check()` reads (every 64th held-back value and after each
+# sweep, together with the CPU one). `clean()` makes one call for the text, one
 # more for its tag-stripped view only when tags were there, and a check read of its result (at most 3 calls, none when pass 1
 # changed nothing); the check reads share ONE budget (`channel.settled`, CPU seconds since `clean` began; a card over it, or a
 # read the redactor refuses, shows `SETTLE_NOTE`). Measured 2026-11-20 on the test machine: a 174-character card 1.3 ms ->
 # 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
 REDACT_BUDGET_S = 6.0
+# The scan of the written forms of compound secrets (`guard.redact._Redactor._spelled_sweep`; a secret found whole after its first copy
+# was cut, `<SECRET_1>xy`) walks, for each placeholder token of a text, every offset registered under that token, down a character trie.
+# The cost is tokens x offsets under the token x walk depth, so two caps bound the work per token: the most DISTINCT OFFSETS (where the first
+# placeholder token stands inside the written form) and the most FORMS registered under ONE first token. A registration past either is
+# refused with InputTooLarge (fail closed: the call shows nothing), before anything is stored. A real run sits far below both (an offset is the
+# length of text written in front of the placeholder inside one value, 0 to 2 in practice; a form is one compound value that starts with the
+# same known secret); a hostile text of many forms `password=a<SECRET_1>Z`, `password=aa<SECRET_1>Z`, ... reaches them and is refused.
+SPELLED_MAX_OFFSETS = 32
+SPELLED_MAX_FORMS = 256
 
 
 def cut_margin(length: int) -> int:
