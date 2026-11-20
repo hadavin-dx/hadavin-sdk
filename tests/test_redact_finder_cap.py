@@ -29,6 +29,12 @@ R = sys.modules["hadavin_sdk.guard.redact"]
 _ALPHA = string.ascii_letters + string.digits
 
 
+def _fail(msg):
+    raise AssertionError(
+        msg
+    ) from None  # an assertion, not pytest.Failed: the mutant runner judges the reason
+
+
 def v(c: str, n: int) -> str:
     rng = random.Random(f"{c}{n}")
     return c + "".join(rng.choices(_ALPHA, k=n - 1))
@@ -42,7 +48,7 @@ def test_t1_a_build_over_the_cap_is_refused(monkeypatch):
     except runmap.InputTooLarge as exc:
         assert "FinderMemoryTooMuch" in str(exc), f"E14-T1 wrong refusal: {exc!r}"
     else:
-        pytest.fail("E14-T1 the build over the cap was accepted")
+        _fail("E14-T1 the build over the cap was accepted")
 
 
 def test_t2_the_boundary_is_the_constant(monkeypatch):
@@ -52,7 +58,7 @@ def test_t2_the_boundary_is_the_constant(monkeypatch):
     try:
         out = R._Redactor(dict(rules)).sweep("q " + va + " q")
     except runmap.InputTooLarge:
-        pytest.fail("E14-T2 exactly 1,000 nodes at cap 1,000 was refused")
+        _fail("E14-T2 exactly 1,000 nodes at cap 1,000 was refused")
     assert out == "q <SECRET_1> q", f"E14-T2 the build at the cap did not mask: {out!r}"
     monkeypatch.setattr(defaults, "MAX_FINDER_CHARS", 999, raising=False)
     with pytest.raises(runmap.InputTooLarge, match="FinderMemoryTooMuch"):
@@ -69,7 +75,7 @@ def test_t3_nodes_not_characters(monkeypatch):
     try:
         R._Redactor(dict(rules)).sweep("x")
     except runmap.InputTooLarge:
-        pytest.fail(
+        _fail(
             "E14-T3 a build of 1,100 nodes at cap 1,100 was refused (characters counted, not nodes)"
         )
     monkeypatch.setattr(defaults, "MAX_FINDER_CHARS", 1099, raising=False)
@@ -162,7 +168,7 @@ def test_t8_config():
             EvidenceSettings(max_map_chars=bad)
         except ValidationError:
             continue
-        pytest.fail(f"E14-T8 max_map_chars={bad} was accepted")
+        _fail(f"E14-T8 max_map_chars={bad} was accepted")
 
 
 def test_t9_derivation_pin():
@@ -183,7 +189,7 @@ def test_t10_e14_shape_is_refused():
     except runmap.InputTooLarge as exc:
         assert "FinderMemoryTooMuch" in str(exc), f"E14-T10 wrong refusal {exc!r}"
     else:
-        pytest.fail("E14-T10 8 x 260,000 plain values were accepted")
+        _fail("E14-T10 8 x 260,000 plain values were accepted")
     assert time.thread_time() - t0 < 20, "E14-T10 the refusal took too long"
 
 
@@ -195,7 +201,7 @@ def test_t11_the_real_constant():
     try:
         red.sweep("x")
     except runmap.InputTooLarge:
-        pytest.fail("E14-T11 exactly 786,432 nodes was refused at the real constant")
+        _fail("E14-T11 exactly 786,432 nodes was refused at the real constant")
     red = R._Redactor(
         {f"<SECRET_{i}>": x for i, x in enumerate([vals[0] + "z", vals[1], vals[2]], 1)}
     )
