@@ -510,11 +510,27 @@ def test_an_outcome_that_cannot_be_appended_waits_in_the_outbox(key, monkeypatch
     assert log.write_outcome(first) is None
     assert log._db.run("SELECT event_id FROM audit_outbox") == [(first.event_id,)]
     monkeypatch.setattr(log, "_append", real)
+    assert log.reconcile() == 1  # the tick writes the parked outcome
     log.write_intent(later)
-    assert log.reconcile() == 1
-    assert [e.event_id for e in log.events()] == [later.event_id, first.event_id]
+    assert [e.event_id for e in log.events()] == [first.event_id, later.event_id]
     assert log._db.run("SELECT event_id FROM audit_outbox") == []
     assert log.reconcile() == 0
+
+
+def test_a_new_event_does_not_overtake_a_parked_outcome(key, monkeypatch):
+    """Step A (audit/chain.py `_drain_older_first`): the next append first drains the rows this process parked,
+    so the older outcome lands in the chain BEFORE the newer intent. The first version of this test expected the
+    reverse (the intent first, the outcome by the tick), which is the overtaking that was fixed on purpose."""
+    log = audit.ChainAudit(audit._Db.memory(), key)
+    first, later = _event(i=0), _event(i=1)
+    real = log._append
+    monkeypatch.setattr(log, "_append", lambda e: (_ for _ in ()).throw(OSError("down")))
+    assert log.write_outcome(first) is None
+    monkeypatch.setattr(log, "_append", real)
+    log.write_intent(later)
+    assert log._db.run("SELECT event_id FROM audit_outbox") == []
+    assert [e.event_id for e in log.events()] == [first.event_id, later.event_id]
+    assert log.reconcile() == 0  # nothing is left for the tick
 
 
 def test_an_unsigned_chain_still_verifies_its_links():
