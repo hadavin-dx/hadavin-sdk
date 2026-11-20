@@ -87,3 +87,5 @@ The lead runs every test group together in parallel containers on the laptop (py
 2. Tests that need PostgreSQL read the DSN from HADAVIN_TEST_PG_DSN (the lead sets it; it is a superuser on a throwaway server with trust login, so tests create their own roles as tests/contracts/kinds/store_postgres.py does). Never skip silently when the variable is set.
 3. File name markers the batch run greps for: the 50-connection cap test lives in a file named tests/contracts/test_t1_*.py; per-role negative tests assert psycopg InsufficientPrivilege; endpoint tests that serve over wsgiref live under tests/triggers/.
 4. In your own box: per-file tests while coding, then ONE batch (the whole suite once) when all your steps are coded. No per-step full-suite runs.
+
+## LEAD NOTE 05:42Z: core-b published its interfaces: inputs/interfaces-from-core-b/ (i_store_spend.py = store methods, ii_meter.py = the Meter the gate calls, README.md). core-c: switch the gate wrapper from your assumed signatures to ii_meter.py now and say in DECISIONS.md what changed.
