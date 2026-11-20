@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "rev-docs",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "CRASH-MATRIX.md and n8n README vs the code (overclaims)",
-   "started UTC": "12:59",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 13:0x order: PR package, doc review, drift, cross reviews"
-  },
-  {
    "id": "drift2",
    "role": "builder (egm-drift-report, report only)",
    "model": "sonnet",
@@ -785,6 +772,19 @@
    "review round n of cap": "1 (retry 1)",
    "retries so far": 1,
    "reason": "first attempt had no tree"
+  },
+  {
+   "id": "docfix20",
+   "role": "builder (docs + test pins)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix the 3 Major overclaims + nits in n8n README / CRASH-MATRIX / PR drafts",
+   "started UTC": "13:02",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "rev-docs findings"
   }
  ],
  "tests": [
@@ -1157,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:02 rev-docs DONE: no Blocker; 3 Majors = doc overclaims. ATTENTION: the wording you asked for ('queue mode required for no event loss') is UNPROVEN: queue mode was never run, and the evidence says default mode lost a 60 s wait but survived 70 s and 120 s waits. docfix20 rewrites it as 'queue mode recommended, NOT VERIFIED' with the evidence. Also fixed: 'never ends as a success' (false for WAITING_FOR_APPROVAL) and 'a person is told' (only once the error workflow is published and the placeholder replaced). Tell me if you want the stronger wording anyway (it would be an overclaim).",
   "13:05 xreview core-c E14 DONE (reviews/xreview-e14.md + NEW FILE handover/core-c/requests/xr-e14.md): no Blocker, no Major on E14 (fail closed, off-by-one right). STILL OPEN from my earlier review: tools.py:996 un-sanitised str(exc) crash (Major) and test_k5_producers.py:143 exemption (Major test). Please copy the request file into cloud/core-c.",
   "13:02 pr-pkg DONE: handover/core-a/pr/ (PR-DESCRIPTION.md, CHANGELOG-lines.md 8 lines, SECURITY-door-section.md, README-n8n-queue-mode.md). Honest gaps listed inside: NO complete mutant run exists on the final code (run 18 109/109 predates G33d/G34/G36; your run 6 is the first); line numbers cited not re-checked after d-fix19. rev-docs, drift2, xr-b2-retry, xr-c2-retry running.",
   "12:59 NOTE: first attempts of xr-b2 and xr-c2 produced NO verdict (reviewers have no shell; my fault, I had not unpacked the trees). Restarted with trees + diffs on disk. pr-pkg, rev-docs, drift2 running.",
@@ -3229,6 +3230,19 @@
    "review round n of cap": "1 (retry 1)",
    "retries so far": 1,
    "reason": "core-c E14: no Blocker/Major; off-by-one right, fail closed everywhere; earlier Majors (error_reason surrogate crash, test_k5_producers exemption) STILL NOT fixed; reviews/xreview-e14.md + handover/core-c/requests/xr-e14.md"
+  },
+  {
+   "id": "rev-docs",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "CRASH-MATRIX.md and n8n README vs the code (overclaims)",
+   "started UTC": "12:59",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "docs vs code: NO Blocker; 3 Majors (overclaims) + 6 nits: 'queue mode required for no event loss' unproven and contradicted by the 70/120 s evidence for default mode; 'never ends as success' false for WAITING_FOR_APPROVAL; 'a person is told' conditional on the published error workflow; fixes -> docfix20"
   }
  ]
 }
