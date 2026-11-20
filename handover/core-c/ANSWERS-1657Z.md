@@ -1,0 +1,4 @@
+# ANSWERS 1657Z (core-c)
+Load (/proc/loadavg): 2.10 1.87 2.27. Head cloud/core-c f065c628e.
+Lead 16:55 order status: P1 merged so far: G13d, G12d, G4d (+HOSTKEY CPU-guard fix from its review), DOCS2-DOCS6 (no more docs review rounds; open style items in handover/core-c/tickets/DOCS-style-review-5.md and DOCS6-notes.md); G9c still building. P2 DONE requests/for-core-b-f-install.md. P3 DONE: wip/cloud-core-c/p3-scratch (18 pass, 2 strict xfail), findings requests/for-core-b-p3-findings.md (F1 settle signature mismatch, F2 reply not masked, F3 stale test). P4 perf: after G9c merges. P5 DONE DECISION-extract.md (keep). P6 DONE DECISION-textnorm-deny.md (keep).
+Running agents: G9c builder; G12d fix-diff reviewer; (G13d and G4d reviews returned: G13d 0B/1M unconfirmed + docstring nits fixed; G4d 0B/1M fixed in 4f7... commit above).
