@@ -15,6 +15,7 @@ from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.models import RunState
 from hadavin_sdk.registry import load_registry
 from tests.conftest import qualify
+from tests.contracts.kinds.store_postgres import CHECKPOINT_DSN, PURGE_DSN
 from tests.test_k3_pilot import NONE_CONTRACT, PROPOSE, ScriptedLLM, reply
 
 S = RunState
@@ -56,6 +57,7 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
                 "kind": "postgres",
                 "dsn_secret_name": "pg-dsn",
                 "purge_dsn_secret_name": "pg-purge",
+                "checkpoint_dsn_secret_name": "pg-checkpoint",
             },
             "audit": {"kind": "chain"},
             "signer": {"kind": "ed25519_local", "private_key_path": "audit-key.pem"},
@@ -154,13 +156,16 @@ def test_k3_request_tracker_key_refused_in_pilot(tmp_path):
         load_config(cfg)
 
 
-def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
+def _spy(
+    dsn: str, resolved: list[str]
+) -> FakeSecretProvider:  # dsn: a runtime login of pg_schema(runtime=True)
     """A secret provider that records every name read."""
     values = {
         "slack-token": "t",
         "slack-sign": "s",
         "pg-dsn": dsn,
-        "pg-purge": dsn,
+        "pg-purge": PURGE_DSN[dsn],
+        "pg-checkpoint": CHECKPOINT_DSN[dsn],
         "restored-key": "r" * 16,
     }
 
@@ -176,7 +181,7 @@ def test_k3_pilot_app_has_no_executor(tmp_path):
     """A pilot App has no Executor and resolves no client-system secret; shadow and abstain cards are posted."""
     from tests.contracts.kinds.store_postgres import pg_schema
 
-    for dsn in pg_schema():
+    for dsn in pg_schema(runtime=True):
         cfg = pilot_cfg(tmp_path)
         qualify(load_registry(load_config(cfg)), "ito-agent")
         resolved: list[str] = []
@@ -194,6 +199,7 @@ def test_k3_pilot_app_has_no_executor(tmp_path):
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
         assert sorted(set(resolved)) == [
+            "pg-checkpoint",
             "pg-dsn",
             "pg-purge",
             "restored-key",

@@ -158,6 +158,15 @@ def build(
         # Only the purge role may DELETE evidence; without its DSN the purge fails every tick and the
         # redaction maps (plaintext originals) are kept for ever.
         raise ConfigError("backends.store.purge_dsn_secret_name is required in pilot and prod")
+    if sources and live:
+        # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
+        raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
+    if tools and live:
+        # Plain callables run with no egress allowlist, operation binding, deadline or schema: they are for replay
+        # and tests. A pilot or prod deployment declares its tools in tools/<agent>.yaml.
+        raise ConfigError(
+            "tools= (plain callables) is for replay and tests; use tools/<agent>.yaml in pilot and prod"
+        )
     ck_name = getattr(b.store, "checkpoint_dsn_secret_name", None)
     if (
         live
@@ -168,15 +177,6 @@ def build(
     ):
         # Without it the runtime login itself writes the signed checkpoints (INSERT on audit_checkpoints).
         raise ConfigError("backends.store.checkpoint_dsn_secret_name is required in pilot and prod")
-    if sources and live:
-        # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
-        raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
-    if tools and live:
-        # Plain callables run with no egress allowlist, operation binding, deadline or schema: they are for replay
-        # and tests. A pilot or prod deployment declares its tools in tools/<agent>.yaml.
-        raise ConfigError(
-            "tools= (plain callables) is for replay and tests; use tools/<agent>.yaml in pilot and prod"
-        )
     # Only http contracts hold a client-system secret; pilot and prod have none (http is refused there).
     executor_names = {
         c.executor.secret_name for c in reg.contracts.values() if c.executor.kind == "http"

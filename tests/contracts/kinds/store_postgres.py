@@ -13,6 +13,8 @@ from tests.contracts.kinds import kind
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
+# runtime DSN -> the DSN of the checkpoint role of the same schema (the only login that may INSERT a checkpoint)
+CHECKPOINT_DSN: dict[str, str] = {}
 
 
 def pg_schema(migrated=True, runtime=False):
@@ -34,22 +36,24 @@ def pg_schema(migrated=True, runtime=False):
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
         migrate(scoped, no_roles=True)
-    role = purge = None
+    role = purge = ckpt = None
     try:
         if runtime:
-            role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
+            sfx = uuid.uuid4().hex[:12]
+            role, purge, ckpt = "rt_" + sfx, "pu_" + sfx, "ck_" + sfx
             with psycopg.connect(dsn, autocommit=True) as db:
-                for r in (role, purge):
+                for r in (role, purge, ckpt):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
-            migrate(scoped, runtime_role=role, purge_role=purge)
+            migrate(scoped, runtime_role=role, purge_role=purge, checkpoint_role=ckpt)
             runtime_dsn = make_conninfo(scoped, user=role)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
+            CHECKPOINT_DSN[runtime_dsn] = make_conninfo(scoped, user=ckpt)
             yield runtime_dsn
         else:
             yield scoped
     finally:
         with psycopg.connect(dsn, autocommit=True) as db:
-            for r in (role, purge):
+            for r in (role, purge, ckpt):
                 if r:
                     db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
                     db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))

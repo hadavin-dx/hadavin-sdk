@@ -14,7 +14,7 @@ from hadavin_sdk.config import load_config
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
 from tests.conftest import qualify
-from tests.contracts.kinds.store_postgres import PURGE_DSN, pg_schema
+from tests.contracts.kinds.store_postgres import CHECKPOINT_DSN, PURGE_DSN, pg_schema
 from tests.test_k3_pilot_env import FakeChannel, ScriptedLLM, pilot_cfg
 
 
@@ -34,6 +34,7 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
                 "slack-sign": "s",
                 "pg-dsn": dsn,
                 "pg-purge": PURGE_DSN[dsn],
+                "pg-checkpoint": CHECKPOINT_DSN[dsn],
                 "restored-key": "r" * 16,
             }
         )
