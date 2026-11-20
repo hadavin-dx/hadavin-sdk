@@ -17,6 +17,7 @@ from hadavin_sdk.store.protocol import (
     Store,
     check_spend_amount,
     check_spend_cap,
+    clean_spend_amount,
 )
 
 _LOG = logging.getLogger("hadavin_sdk.limits")
@@ -75,6 +76,7 @@ class Budget:
         return self.spent >= self.limit
 
     def charge(self, usd: Decimal) -> None:
+        usd = clean_spend_amount(usd)  # a negative or NaN cost never lowers `spent`: ValueError
         with self._lock:
             self._rows[new_id("res")] = [usd, usd, "settled", Decimal(0), None, None]
 
@@ -138,6 +140,9 @@ class Limits:
         self.store, self.audit, self.registry = store, audit, registry
 
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:
+        check_spend_amount(
+            usd
+        )  # ValueError for a negative, NaN or infinite cost; the store checks it too
         return self.store.add_spend(agent_id, now().date(), usd)
 
     def blocked(self, agent_id: str) -> list[str]:

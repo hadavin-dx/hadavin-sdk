@@ -415,3 +415,22 @@ T1-T2-tests with edits:
 - A `local_dir` audit with a PostgreSQL store (unusual pairing): None means the event sits in its outbox and the tick writes it later, so exit 5 can precede a row that does arrive; the runbook now says to check the chain first.
 - A lost `release_failed` outcome row is only logged; the money tables are untouched in that case.
 - The m-2 behavioural test covers the restored-hash secret source only; the refs are not checked against the runtime's backend secret names.
+
+## agent_loop follow-up (from F-store round 6, M1; request note, runtime/agent_loop.py not edited here)
+
+`Limits.charge` and `store.add_cost` now raise ValueError for a negative, NaN, infinite, float or too-large amount
+(`check_spend_amount`). `llm/common.py reply()` and `llm/fake.py` now return only valid costs (rounded UP to 12 decimals)
+and raise `ProviderError("bad_usage: ...")` for a negative or non-integer token count, which the existing
+`except ProviderError` at agent_loop.py:~506 already turns into an abstain (`provider_error`). So the model-reply
+call site (:513) cannot reach the new ValueError today. The remaining unguarded pair is the paid screen at
+agent_loop.py:353 (`verdict.cost_usd` from a detector, not from `reply()` necessarily). Requested change, to be
+made by whoever owns agent_loop.py: wrap the two lines
+
+    self.limits.charge(run.agent_id, verdict.cost_usd)
+    self.store.add_cost(run.run_id, verdict.cost_usd)
+
+(and the same two lines after `self.llm.chat` at :513) in `try: ... except ValueError:` that notes
+`self._note(run, "llm", "charge", result="failed", error_code="bad_amount")` and ends the run safely
+(`return self._abstain(run, S.NEEDS_PERSON, "bad_amount", cited)` at :513; at :353 treat the screen as failed
+closed). k1b/loop.py:174 (`budget.charge(reply.cost_usd)`) has the same shape and is reached only with a cost
+from `reply()`/FakeLLM, which are now valid by construction.

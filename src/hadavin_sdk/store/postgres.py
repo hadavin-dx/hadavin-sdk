@@ -18,7 +18,7 @@ import threading
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from enum import Enum
 from typing import Any
 
@@ -61,6 +61,7 @@ from hadavin_sdk.store.protocol import (
     check_spend_cap,
     check_spend_day,
     check_store_id,
+    clean_spend_amount,
 )
 
 _LOG = logging.getLogger("hadavin_sdk.store")
@@ -401,6 +402,7 @@ class PostgresStore:
             raise NotFound(run_id)
 
     def add_cost(self, run_id: str, usd: Decimal) -> None:
+        usd = clean_spend_amount(usd)
         self._update_run("UPDATE runs SET cost_usd = cost_usd + %s WHERE run_id = %s", usd, run_id)
 
     def touch(self, run_id: str) -> None:
@@ -542,6 +544,7 @@ class PostgresStore:
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
         """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency."""
+        usd = clean_spend_amount(usd)  # a bad amount is a ValueError before any SQL; -0 becomes 0
         month = day.replace(day=1)
         with self._lock, self._db.transaction():
             d = self._exec(
@@ -826,7 +829,8 @@ class PostgresStore:
                 return SpendReservation.model_validate(row), False
             was = row.pop("was")
             # what the counters must move by: the booked amount changes from reserved to settled_usd
-            delta = row["settled_usd"] - row["reserved_usd"]
+            with localcontext(defaults.money_context()):  # not the caller's precision
+                delta = row["settled_usd"] - row["reserved_usd"]
             if (
                 was == "open" or delta
             ):  # a row that was expired and does not rise leaves the counters alone

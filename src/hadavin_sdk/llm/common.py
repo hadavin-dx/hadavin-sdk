@@ -21,6 +21,7 @@ from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.llm.protocol import ProviderError
 from hadavin_sdk.llm.retry import REFUSED_STATUSES, with_retry
 from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.store.protocol import MAX_SPEND_DECIMALS, clean_spend_amount
 
 # The forced tool an `output_schema` becomes: its input schema IS the schema, so the API enforces the shape.
 ANSWER_TOOL = "submit_answer"
@@ -250,6 +251,30 @@ def stop_reason(raw: str | None, calls: list[ToolCall]) -> str:
     return "tool_use" if calls else "end_turn"
 
 
+def _token_count(n: object) -> int:
+    """A provider's token count: None or 0 means "not reported" (the caller estimates); anything but an int
+    >= 0 is a ProviderError, never a negative cost. The call is then an unknown cost: its caller ends the run."""
+    if n is None:
+        return 0
+    if type(n) is not int or n < 0:
+        raise ProviderError(
+            "bad_usage: the provider reported a token count that is not an integer >= 0"
+        )
+    return n
+
+
+def round_up_cost(cost: Decimal) -> Decimal:
+    """A priced cost as a valid spend amount: finite, >= 0, < 10**9, at most 12 decimal places (rounded UP, a
+    cost is never rounded down). Anything else is a ProviderError("bad_amount"), so no bad cost is ever charged."""
+    try:
+        with localcontext(defaults.money_context()):
+            if cost.is_finite() and cost >= 0:
+                cost = cost.quantize(Decimal(1).scaleb(-MAX_SPEND_DECIMALS), rounding=ROUND_CEILING)
+        return clean_spend_amount(cost)
+    except (ArithmeticError, ValueError) as exc:
+        raise ProviderError("bad_amount: the reply cost is not a valid amount") from exc
+
+
 def reply(
     route: Any,
     *,
@@ -262,8 +287,10 @@ def reply(
 ) -> Reply:
     """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
-    tokens_in = tokens[0] or estimate_tokens(sent)
-    tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+    tokens_in = _token_count(tokens[0]) or estimate_tokens(sent)
+    tokens_out = _token_count(tokens[1]) or estimate_tokens(
+        text + json.dumps([c.input for c in calls])
+    )
     try:
         with localcontext(defaults.money_context()):
             cost = (
@@ -272,6 +299,7 @@ def reply(
             ) / Decimal(1_000_000)
     except ArithmeticError as exc:  # no price is ever guessed: the call is a refusal, its cost forfeits at the worst case
         raise ProviderError("bad_amount: the reply price overflowed") from exc
+    cost = round_up_cost(cost)
     stop = stop_reason(stop, calls)
     return Reply(
         text=text,
