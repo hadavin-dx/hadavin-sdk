@@ -228,7 +228,7 @@ def test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_
         ({"<SECRET_1>": "ab"}, "x ab y"),
         ({"<TENANT_1>": "ab"}, "x ab y"),
         ({"<SECRET_1>": "123"}, "x 123 y"),  # a 3-character secret follows the identifier rule
-        ({"<SECRET_1>": "dev"}, "x dev y"),
+        ({"<SECRET_1>": "web"}, "x web y"),
         ({"<TENANT_1>": "12345"}, "x 12345 y"),
         ({"<IPV4_1>": "8080"}, "port 8080 open"),
         ({"<TENANT_1>": "prod"}, "x prod y"),

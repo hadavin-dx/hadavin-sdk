@@ -330,12 +330,6 @@ def test_recorded_the_untrusted_hook_on_already_redacted_text_escapes_its_real_p
     assert again == "password=<SECRET_2> at \u2039IPV4_1\u203a"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="idempotence counter-example: `password=<SECRET_1>` (any key=placeholder) in redact_untrusted "
-    "output; the untrusted hook escapes the genuine placeholder and the escaped token is masked as a new "
-    "secret, so is_masked(redact_untrusted(t, m), m, neutralise_untrusted) is False for such texts",
-)
 def test_round_trip_of_redact_untrusted_with_the_same_hook_and_escaped_lookalikes():
     """The same loop with placeholder look-alikes in the text, checked with the hook the text was redacted
     with: `is_masked(redact_untrusted(t, m), m, neutralise_untrusted)` is True."""
