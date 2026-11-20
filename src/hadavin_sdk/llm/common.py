@@ -324,21 +324,26 @@ class Answer:
 
 
 def priced(routes: dict[str, Any]) -> dict[str, Any]:
-    """The routes, if every price is a finite Decimal above 0 and at most the ceiling. `Route.model_construct` and
-    a hand-built route skip the config check, and a zero price makes every reply cost 0 so no spend cap could fire:
-    a real (non-fake) client refuses them at build. Names route and field, never the price."""
+    """The routes, if every price is a plain Decimal that `config.Route` accepts (finite, not negative, at most the
+    ceiling, at most 6 decimals: that one rule is reused, not copied) and is above 0. `Route.model_construct` and a
+    hand-built route skip the config check, and a zero price makes every reply cost 0 so no spend cap could fire:
+    a real (non-fake) client refuses them at build and again before each call. Names route and field, never the
+    price."""
+    from hadavin_sdk.config import (
+        Route,
+    )  # here: config imports the backends, which import this package
+
     for name, route in routes.items():
         for field in ("input_usd_per_mtok", "output_usd_per_mtok"):
             v = getattr(route, field, None)
-            if not (
-                isinstance(v, Decimal)
-                and v.is_finite()
-                and 0 < v <= defaults.MAX_ROUTE_PRICE_USD_PER_MTOK
-            ):
-                raise ConfigError(
-                    f"route {name!r}: {field} must be a finite Decimal above 0 and at most "
-                    f"{defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}"
-                )
+            try:
+                if type(v) is not Decimal:  # no float, str, bool or Decimal subclass
+                    raise ValueError("a price must be a Decimal")
+                Route._price(v)
+                if v == 0:
+                    raise ValueError("a price must be above 0")
+            except (ValueError, ArithmeticError) as exc:
+                raise ConfigError(f"route {name!r}: {field}: {exc}") from None
     return routes
 
 
@@ -367,6 +372,7 @@ class NetworkLLM:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
+        priced(self.routes)  # `llm.routes = ...` after build must not skip the check
         r = self.routes[route]
         specs, forced = tools_for(tools, output_schema)
         return self._chat(r, system, turns(messages, documents), specs, forced, output_schema)
