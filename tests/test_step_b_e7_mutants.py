@@ -39,10 +39,7 @@ def no_seq_guard(t):
 
 
 def no_ts_check(t):
-    return _cut(t, "ALTER TABLE kill_switch_stops ADD CONSTRAINT", "NOT VALID;").replace(
-        "ALTER TABLE kill_switch_clears ADD CONSTRAINT kill_switch_clears_ts_range\n    CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID;",
-        "",
-    )
+    return _cut(t, "ALTER TABLE kill_switch_stops ADD CONSTRAINT", "$do$;")
 
 
 def no_index(t):
@@ -155,11 +152,36 @@ def test_a_validate_step_that_leaves_a_constraint_not_valid_is_killed(mw, monkey
     mw.migrate()
     monkeypatch.setattr(migrate_mod, "validate_constraints", mutant)
     with pytest.raises(AssertionError):
-        real.test_migrate_warns_while_a_constraint_is_not_valid_and_the_validate_step_clears_it(mw)
+        real.test_the_validate_step_validates_what_is_not_valid(mw)
 
 
 def test_a_migrate_that_never_warns_is_killed(mw, monkeypatch):
     mw.migrate()
-    monkeypatch.setattr(migrate_mod, "not_valid_constraints", lambda db: [])
+    monkeypatch.setattr(migrate_mod, "planted_ts_rows", lambda db: [])
     with pytest.raises(AssertionError):
-        real.test_migrate_warns_while_a_constraint_is_not_valid_and_the_validate_step_clears_it(mw)
+        real.test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_without_one(mw)
+
+
+def test_a_migrate_that_warns_on_every_not_valid_constraint_is_killed(mw, monkeypatch):
+    mw.migrate()
+    monkeypatch.setattr(migrate_mod, "planted_ts_rows", migrate_mod.not_valid_constraints)
+    with pytest.raises(AssertionError):
+        real.test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_without_one(mw)
+
+
+def test_an_unconditional_validate_inside_0009_is_killed():
+    always = SOURCE.replace(
+        "IF NOT EXISTS (SELECT 1 FROM kill_switch_stops WHERE",
+        "IF TRUE OR EXISTS (SELECT 1 FROM kill_switch_stops WHERE",
+    )
+    assert always != SOURCE
+    with pytest.raises(BaseException) as err:  # VALIDATE fails the upgrade on the planted row
+        real.check_real_0009_validates_clean_and_upgrades_planted(source=always)
+    assert not isinstance(err.value, KeyboardInterrupt)
+
+
+def test_a_0009_that_never_validates_is_killed():
+    never = _cut(SOURCE, "DO $do$", "$do$;")
+    assert never != SOURCE
+    with pytest.raises(AssertionError):
+        real.check_real_0009_validates_clean_and_upgrades_planted(source=never)

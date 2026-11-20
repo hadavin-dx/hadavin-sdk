@@ -627,11 +627,43 @@ def not_valid_constraints(db) -> list[tuple[str, str]]:
     return [pair for pair in NOT_VALID_BY_DESIGN if tuple(pair) in {tuple(r) for r in rows}]
 
 
+def planted_ts_rows(db) -> list[tuple[str, str]]:
+    """Of the constraints still NOT VALID, those whose table holds a row outside the year range (the same test as
+    the constraint). Only these need an operator: a NOT VALID constraint with no such row is harmless."""
+    return [
+        (table, name)
+        for table, name in not_valid_constraints(db)
+        if db.execute(
+            sql.SQL(
+                "SELECT EXISTS (SELECT 1 FROM {} WHERE NOT (ts BETWEEN '2000-01-01' AND '2100-01-01'))"
+            ).format(sql.Identifier(table))
+        ).fetchone()[0]
+    ]
+
+
+def earlier_0009_leftovers(db) -> list[str]:
+    """The watermark table and its guard function that an EARLIER, unreleased 0009 made (review N3 removed them)."""
+    found = []
+    if db.execute(
+        "SELECT pg_catalog.to_regclass(pg_catalog.format('%I.kill_switch_watermark', pg_catalog.current_schema()))"
+    ).fetchone()[0]:
+        found.append("kill_switch_watermark")
+    if db.execute(
+        "SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_proc WHERE proname = 'hadavin_watermark_guard' "
+        "AND pronamespace = pg_catalog.to_regnamespace(pg_catalog.current_schema()))"
+    ).fetchone()[0]:
+        found.append("hadavin_watermark_guard()")
+    return found
+
+
 def validate_constraints(db) -> list[str]:
     """VALIDATE every constraint `not_valid_constraints` lists; return their names. Run as the table owner, as a
     step of its own (`hadavin-sdk migrate --validate-constraints`), never inside a migration file: a planted row
     makes it fail, naming the constraint, and the operator must deal with that row first."""
     done = []
+    db.execute(
+        "SET LOCAL lock_timeout = '5s'"
+    )  # never queue behind a long writer and block the stop tables
     for table, name in not_valid_constraints(db):
         try:
             db.execute(
@@ -639,10 +671,16 @@ def validate_constraints(db) -> list[str]:
                     sql.Identifier(table), sql.Identifier(name)
                 )
             )
-        except (errors.CheckViolation, errors.InsufficientPrivilege) as exc:
+        except (
+            errors.CheckViolation,
+            errors.InsufficientPrivilege,
+            errors.LockNotAvailable,
+            errors.OperationalError,
+        ) as exc:
             raise ConfigError(
                 f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
-                "2100-01-01, or this login is not the table owner); deal with the row first"
+                "2100-01-01, this login is not the table owner, or the table is locked by a long "
+                "transaction); deal with that first and run it again"
             ) from None
         done.append(name)
     return done
@@ -1327,6 +1365,12 @@ def migrate(
                 "schema_migrations table to the new file name); if its content changed too, drop what it made and "
                 "run migrate again"
             )
+        if left_over := earlier_0009_leftovers(db):
+            raise ConfigError(
+                f"database ran an earlier unreleased 0009 ({', '.join(left_over)} still exist): drop and recreate it "
+                "(or run: DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard() CASCADE;) "
+                "and run migrate again; 0009 is unreleased, so there is no 0012 for this"
+            )
         texts = {
             p: _read_migration(p) for p in files
         }  # each file read ONCE: what is hashed is what runs
@@ -1375,10 +1419,10 @@ def migrate(
             if notes is not None:
                 notes.append(owner_note)
         _seed_limits(db)
-        if left := not_valid_constraints(db):
+        if left := planted_ts_rows(db):  # silent unless a row really is outside the range
             warn = (
-                f"constraints still NOT VALID: {', '.join(n for _, n in left)}; once no row is outside the "
-                "year range, run hadavin-sdk migrate --validate-constraints"
+                f"constraints NOT VALID because a row is outside the year range: {', '.join(n for _, n in left)}; "
+                "deal with that row, then run hadavin-sdk migrate --validate-constraints"
             )
             _LOG.warning("migrate: %s", warn)
             if notes is not None:

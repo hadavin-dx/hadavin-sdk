@@ -346,3 +346,24 @@ def test_cli_validate_constraints_runs_only_the_validate_step(cfg_dir, monkeypat
     )
     assert cli.main(["--config", str(cfg_dir), "migrate", "--validate-constraints"]) == 0
     assert seen == ["postgresql://unused"]
+
+
+@pytest.mark.parametrize(
+    "extra", [["--runtime-role", "rt"], ["--no-roles"], ["--accept-admin-role", "x"]]
+)
+def test_cli_validate_constraints_refuses_to_be_combined_with_role_flags(
+    cfg_dir, monkeypatch, extra
+):
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+
+    def boom(*a, **k):
+        raise AssertionError("ran")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", boom)
+    monkeypatch.setattr("hadavin_sdk.store.migrate.validate_stop_constraints", boom)
+    argv = ["--config", str(cfg_dir), "migrate", "--validate-constraints", *extra]
+    assert cli.main(argv) == 2

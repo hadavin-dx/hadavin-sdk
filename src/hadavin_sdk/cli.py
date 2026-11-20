@@ -519,7 +519,9 @@ def _migrate(
         print("refused: set HADAVIN_MIGRATE_DSN to the migration role's DSN", file=sys.stderr)
         return 2
     if validate_constraints and (
-        no_roles or accepted_admin_roles or any((runtime_role, portal_role, purge_role, reset_role, release_role))
+        no_roles
+        or accepted_admin_roles
+        or any((runtime_role, portal_role, purge_role, reset_role, release_role))
     ):
         print(
             "refused: --validate-constraints only validates; do not combine it with a role flag, --no-roles or --accept-admin-role",

@@ -20,16 +20,26 @@ CREATE INDEX kill_switch_stops_by_ts ON kill_switch_stops (ts);
 -- The constraints are NOT VALID: they are enforced for every NEW row, but the rows already there are not checked, so
 -- this migration cannot fail on a database that already holds a planted ts (the stop tables are append-only: such a row
 -- could not be removed below a superuser, and the upgrade would be stuck).
--- `ALTER TABLE ... VALIDATE CONSTRAINT` is a SEPARATE step, never part of this file (it would fail the upgrade on a planted row): every
--- `migrate` run lists a constraint that is still NOT VALID as a warning (`not_valid_constraints`), and the operator
--- runs `hadavin-sdk migrate --validate-constraints` once any such row has been dealt with (`validate_constraints`;
--- docs/stop-state-runbook.md, "After the upgrade"). VALIDATE fails, naming the constraint, while a bad row exists;
--- it takes a SHARE UPDATE EXCLUSIVE lock only.
+-- `ALTER TABLE ... VALIDATE CONSTRAINT` runs here ONLY when no row is outside the range (the DO block below), so a
+-- clean database ends validated and silent, and a database holding a planted row still upgrades. For that one, every
+-- `migrate` run warns while the row exists (`planted_ts_rows`), and the operator runs
+-- `hadavin-sdk migrate --validate-constraints` once the row has been dealt with (`validate_constraints`;
+-- docs/stop-state-runbook.md, "After the upgrade"). VALIDATE fails, naming the constraint, while a bad row exists.
 -- ADD CONSTRAINT takes a short ACCESS EXCLUSIVE lock on the (small) stop tables, and so does the index above.
 ALTER TABLE kill_switch_stops ADD CONSTRAINT kill_switch_stops_ts_range
     CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID;
 ALTER TABLE kill_switch_clears ADD CONSTRAINT kill_switch_clears_ts_range
     CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID;
+DO $do$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM kill_switch_stops WHERE NOT (ts BETWEEN '2000-01-01' AND '2100-01-01')) THEN
+        ALTER TABLE kill_switch_stops VALIDATE CONSTRAINT kill_switch_stops_ts_range;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM kill_switch_clears WHERE NOT (ts BETWEEN '2000-01-01' AND '2100-01-01')) THEN
+        ALTER TABLE kill_switch_clears VALIDATE CONSTRAINT kill_switch_clears_ts_range;
+    END IF;
+END
+$do$;
 
 CREATE OR REPLACE TRIGGER kill_switch_resets_append_only BEFORE UPDATE OR DELETE ON kill_switch_resets
     FOR EACH ROW EXECUTE FUNCTION hadavin_audit_append_only();
