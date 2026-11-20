@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:50:01Z
+UPDATED_UTC: 2026-11-20T08:50:15Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 2.2 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, light agents 4, heavy agents 0
-DISK: / 59G free, 16% used; git worktrees 15; 751M	/tmp/claude-0;255M	/root/.cache/uv;
+CAPACITY: load 2.2 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, light agents 4, heavy agents 0
+DISK: / 59G free, 16% used; git worktrees 15; 761M	/tmp/claude-0;255M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none in the two merged-tree batches (15 files). Not run: whole suite, Python 3.12, PostgreSQL 17, mutants. Known flaky under -n 4 load: tests/test_runmap_enforce_map.py::test_m_new_1_enforce_map_has_the_redactors_time_budget (CPU deadline, passes serially).
 NEXT: LIVE agents only (finished work is in REPORT.md). Commit plan by 09:05 UTC: merged-tree batch 3 after G7 round 5 lands; G8 v2 and G4 v4 plan review rounds; wording refresh and final review after G7 r5. Gate round 4 (b83accc) and G7 round 3 (da0f71f) are already pushed with merged-tree batches 2558 and 2601 passed; failing tests on the merged tree: none in the 15 files; test_k5_producers (model-registration) passes.
-PUSHED_UTC: 2026-11-20T08:45:24+00:00
+PUSHED_UTC: 2026-11-20T08:50:13+00:00
 
 (14:20 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
