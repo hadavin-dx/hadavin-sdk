@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:43:44Z
+UPDATED_UTC: 2026-11-20T10:44:26Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.72 of 4 cores, mem 2/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
-DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.3G
+CAPACITY: load 3.09 of 4 cores, mem 2/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
+DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.4G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T10:43:41Z (previous push; this board is pushed right after writing)
-IST: 16:13 IST
+PUSHED_UTC: 2026-11-20T10:44:23Z (previous push; this board is pushed right after writing)
+IST: 16:14 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -213,3 +213,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 10:37Z ON TRACK? E13 OPTION A (due 10:45Z): DONE and merged at 10:21Z (M10, b32f358fd) with its fixes since (release command exit 2 on a self-check ConfigError; test_u4 rows; contract model test follows the purge rule: agent fixing, 39 PG failures were test-side). B PLAN REVIEW ROUND 1 (due 10:40Z): DONE at 10:30Z: FIX FIRST (4 Majors, 0 Blocker): ROUND 2 = the ticket revision is RUNNING now (due 10:45Z), then a second fresh review by 10:55Z, then builders (honest: steps 2-3 today, 4-5 next session). who_else FINAL picked. Stop-state + CLI modules (14 files) RUNNING in the background (started 10:33Z, ~10 min on the shared server). LIVE AGENTS (sonnet): contract-model test fixer, F-money-definer ticket reviser.
 
 10:39Z STOP-STATE + CLI MODULES on the merged head (who_else FINAL cb88b8b41 + E5 + B6a + B6b + B7 + B8 + M10 + F7, 14 modules: stop_state_roles, stop_state_unit, cuj, e5 search_path/maintain/no_roles, e5c role_settings/units, e6 reset_compare/self_check/session_pins, e8 reset_record, e7 migration_0009, mutants_stop_state_e5): 366 passed, 9 skipped, 0 failed, 351 s on my PG 16.15 (skips: PG17-only MAINTAIN, PG15-only CREATEROLE listing, PG16 ADMIN). F-money-definer ticket REVISED (all 8 review points), plan review ROUND 2 running (due 10:55Z). Contract model test fixer still running.
+
+10:44Z OPTION B (F-money-definer): ticket REVISION 3 committed (plan review round 2 answered: expire bound dropped as a stated residual, core-a helpers named as lead question 8 / E14, table owners in the owner check, hadavin_limits mechanism chosen, tick-scheduler stop + smoke tick, builder file sets disjoint). STEPS 1-2 BUILDING NOW (both sonnet, started 10:47Z, due 11:30Z, no runtime behaviour change): builder A = migration 0011_money_definer.sql (hadavin_limits + reserve/settle/expire/purge definer functions, smoke-tested by hand against the Python store results) ; builder B = store/migrate.py (MONEY_FUNCTIONS re-pin, FUNCTION_GRANTS with the 'nobody else can execute' refusal, owner-consistency check, limits seeding, ledger/map checks, CHANGELOG + runbook). STEP 3 (store calls the functions) after step 2 is reviewed; STEPS 4-5 next session (lead's answers E14). LIVE AGENTS: A, B, evidence batch 9 (whole suite, since 10:41Z).
