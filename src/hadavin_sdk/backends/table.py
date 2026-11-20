@@ -122,6 +122,10 @@ class PostgresSettings(KindSettings):
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None
+    # A third DSN (the checkpoint role, `hadavin-sdk migrate --checkpoint-role`): the only login that may INSERT a signed
+    # audit checkpoint. The tick `checkpoint` step writes through it; the runtime login holds only SELECT on
+    # audit_checkpoints. None: the runtime's own DSN writes (memory store, dev, a deployment without the role).
+    checkpoint_dsn_secret_name: str | None = None
     # The secret that holds the reset role's DSN (`hadavin-sdk migrate --reset-role`), read only by
     # `hadavin-sdk limits reset`. Its name must not end in `_secret_name`: platform_secrets.py:19-20 resolves every
     # `*_secret_name` at runtime start, and the runtime process must never hold the login that can clear a stop.
@@ -597,7 +601,7 @@ ALLOWED: dict[str, frozenset[str]] = {
     "signer": frozenset(),
     "anchor": frozenset(),
     "store": frozenset(),
-    "audit": frozenset({"store", "signer", "anchor"}),
+    "audit": frozenset({"store", "signer", "anchor", "checkpoint_store"}),
     "llm": frozenset({"routes"}),
     "detector": frozenset({"llm"}),
     "channel": frozenset({"store"}),

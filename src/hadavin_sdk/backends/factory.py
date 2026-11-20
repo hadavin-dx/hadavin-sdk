@@ -24,6 +24,7 @@ class Deps:
     signer: Any = None
     anchor: Any = None
     llm: Any = None
+    checkpoint_store: Any = None
 
 
 def make(

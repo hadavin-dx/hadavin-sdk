@@ -44,6 +44,25 @@ from hadavin_sdk.store.protocol import missing_methods
 _LOG = logging.getLogger("hadavin_sdk.app")
 
 
+def _refuse_shared_login(store, purge_store, checkpoint_store) -> None:
+    """The checkpoint connection must be a different database login from the runtime's and the purge's (two secret
+    names can hold one DSN). Names only in the message; stores without a connection (memory) are not compared."""
+
+    def login(s) -> str | None:
+        conn = getattr(s, "_db", None)
+        try:
+            return conn.execute("SELECT current_user").fetchone()[0] if conn is not None else None
+        except Exception:  # noqa: BLE001 - an unreadable login is not "the same"
+            return None
+
+    mine = login(checkpoint_store)
+    if mine is not None and mine in {login(store), login(purge_store)} - {None}:
+        raise ConfigError(
+            "backends.store.checkpoint_dsn_secret_name holds the same database login as the runtime or purge "
+            "secret (two names, one DSN): the checkpoint role needs its own login"
+        )
+
+
 @dataclass
 class App:
     config: Config
@@ -139,6 +158,16 @@ def build(
         # Only the purge role may DELETE evidence; without its DSN the purge fails every tick and the
         # redaction maps (plaintext originals) are kept for ever.
         raise ConfigError("backends.store.purge_dsn_secret_name is required in pilot and prod")
+    ck_name = getattr(b.store, "checkpoint_dsn_secret_name", None)
+    if (
+        live
+        and getattr(b.store, "kind", "") == "postgres"
+        and getattr(b.audit, "kind", "") == "chain"
+        and getattr(b.signer, "kind", "none") != "none"
+        and not ck_name
+    ):
+        # Without it the runtime login itself writes the signed checkpoints (INSERT on audit_checkpoints).
+        raise ConfigError("backends.store.checkpoint_dsn_secret_name is required in pilot and prod")
     if sources and live:
         # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
         raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
@@ -203,6 +232,30 @@ def build(
         *(platform_secrets.secret_names(s) for _, s in b.entries()),
         *(set(names) for names in sender_names.values()),
     )
+    if ck_name:
+        file_backed_ck = file_backed
+        if path_form_problem(ck_name, file_backed_ck):
+            raise ConfigError(
+                "backends.store.checkpoint_dsn_secret_name is a path-shaped name (a '.' or '..' segment"
+                + (", or a leading or trailing '/'" if file_backed_ck else "")
+                + "), which cannot be compared with the other logins; write a plain secret name"
+            )
+        siblings = [
+            n
+            for n in (
+                getattr(b.store, "dsn_secret_name", None),
+                getattr(b.store, "purge_dsn_secret_name", None),
+                getattr(b.store, "release_credential_ref", None),
+                getattr(b.store, "reset_credential_ref", None),
+                getattr(b.store, "caps_credential_ref", None),
+            )
+            if n
+        ]
+        if collides(ck_name, siblings, file_backed=file_backed_ck):
+            raise ConfigError(
+                "backends.store.checkpoint_dsn_secret_name names the same secret as the runtime, purge, release, "
+                "reset or caps login: the checkpoint role needs its own login"
+            )
     for ref_field in ("release_credential_ref", "reset_credential_ref", "caps_credential_ref"):
         ref = getattr(b.store, ref_field, None)
         if ref and path_form_problem(ref, file_backed):
@@ -255,7 +308,31 @@ def build(
             ),
             secrets,
         )
-    audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+    checkpoint_store = None
+    if ck_name:
+        # Only the tick `checkpoint` step writes a checkpoint, on this connection (its own role: SELECT on the chain,
+        # INSERT on audit_checkpoints). The runtime login holds no INSERT there.
+        checkpoint_store = make(
+            "store",
+            b.store.model_copy(
+                update={
+                    "dsn_secret_name": ck_name,
+                    "purge_dsn_secret_name": None,
+                    "checkpoint_dsn_secret_name": None,
+                }
+            ),
+            secrets,
+        )
+        _refuse_shared_login(store, purge_store, checkpoint_store)
+    audit = make(
+        "audit",
+        b.audit,
+        secrets,
+        store=store,
+        signer=signer,
+        anchor=anchor,
+        checkpoint_store=checkpoint_store,
+    )
     llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
     summary_detector = detector
     if detector is None:

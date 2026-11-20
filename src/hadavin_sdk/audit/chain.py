@@ -64,7 +64,9 @@ CREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);
     for t in ("audit_entries", "audit_checkpoints")
     for op in ("UPDATE", "DELETE")
 )
-_TABLE_NAME = re.compile(r"\b(audit_entries|audit_checkpoints|audit_outbox)\b")
+_TABLE_NAME = re.compile(
+    r"\b(audit_entries|audit_checkpoints|audit_outbox|hadavin_audit_outbox_done|hadavin_audit_outbox_quarantine)\b"
+)
 _ALL_ROWS = (
     "SELECT seq, at, run_id, kind, body, prev, hash, event_id FROM audit_entries ORDER BY seq"
 )
@@ -267,8 +269,13 @@ class ChainAudit:
         drain_batch: int | None = None,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        checkpoint_db: _Db | None = None,
     ) -> None:
         self._db, self.signer, self.anchor = db, signer, anchor
+        # The checkpoint role's own connection (`backends.store.checkpoint_dsn_secret_name`): when set, ONLY the tick
+        # `checkpoint` step writes a checkpoint, through it, and the runtime login never attempts the INSERT (it holds
+        # none). None (memory store, dev, no checkpoint role): `db` writes, inline every `checkpoint_every` rows too.
+        self._checkpoint_db = checkpoint_db
         # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
         # objects just lack the two fields) and is logged once, instead of failing every put with a TypeError.
         self._anchor_takes_meta = not hasattr(anchor, "put") or _takes_meta(anchor.put)
@@ -320,7 +327,11 @@ class ChainAudit:
                     event.event_id,
                 ),
             )
-        if self.signer is not None and seq % self.checkpoint_every == 0:
+        if (
+            self.signer is not None
+            and self._checkpoint_db is None
+            and seq % self.checkpoint_every == 0
+        ):
             self.checkpoint()
         return event.event_id
 
@@ -558,7 +569,7 @@ class ChainAudit:
                 self._pending.remove(event)
             else:
                 try:
-                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
+                    self._outbox_done(row_id)
                 except Exception:  # noqa: BLE001 - in the chain; the next drain dedupes and deletes
                     r.not_deleted += 1
                     return False
@@ -588,6 +599,13 @@ class ChainAudit:
     def _quarantine(self, event: AuditEvent, row_id: str) -> int:
         """Mark a poison row: kept in the outbox under the quarantine prefix, skipped by every later read."""
         try:
+            if self._db.pg:
+                # Postgres: the runtime holds no DELETE on the outbox; the database function RENAMES the row (0012).
+                renamed = self._db.run(
+                    "SELECT hadavin_audit_outbox_quarantine(?, ?)",
+                    (row_id, defaults.AUDIT_QUARANTINE_PREFIX),
+                )
+                return 1 if renamed and renamed[0][0] else 0
             self._db.run(
                 "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) ON CONFLICT (event_id) DO NOTHING",
                 (defaults.AUDIT_QUARANTINE_PREFIX + row_id, event.model_dump_json()),
@@ -596,6 +614,14 @@ class ChainAudit:
         except Exception:  # noqa: BLE001
             return 0
         return 1
+
+    def _outbox_done(self, row_id: str) -> None:
+        """Remove a drained event from the outbox. Postgres: through the database function, which deletes only when
+        the event is in audit_entries (the runtime holds no DELETE); the memory store (SQLite) deletes directly."""
+        if self._db.pg:
+            self._db.run("SELECT hadavin_audit_outbox_done(?)", (row_id,))
+        else:
+            self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
 
     def _drain(self, event: AuditEvent) -> Exception | None:
         """Append one parked event. None when it is in the chain (now or already); else the exception, for the
@@ -652,16 +678,18 @@ class ChainAudit:
         call retries; the chain itself is untouched."""
         if self.signer is None:
             return None
+        cdb = self._checkpoint_db or self._db
         try:
             self._retry_anchors()
-            last = self._db.run("SELECT seq, hash FROM audit_entries ORDER BY seq DESC LIMIT 1")
+            last = cdb.run("SELECT seq, hash FROM audit_entries ORDER BY seq DESC LIMIT 1")
             if not last:
                 return None
             seq, head = last[0]
-            if self.signed_through() >= seq:
+            top = cdb.run("SELECT MAX(seq) FROM audit_checkpoints")
+            if top and top[0][0] is not None and int(top[0][0]) >= seq:
                 return seq
             signature = self.signer.sign(_signed_message(seq, head)).hex()
-            new = self._db.run(
+            new = cdb.run(
                 "INSERT INTO audit_checkpoints (seq, hash, signature, alg, key_label) "
                 "VALUES (?, ?, ?, ?, ?) ON CONFLICT (seq) DO NOTHING RETURNING seq",
                 (seq, head, signature, self.signer.alg, signer_label(self.signer)),
@@ -898,10 +926,16 @@ def build(settings, deps) -> ChainAudit:
     if deps.anchor is not None and deps.signer is None:
         raise ConfigError("audit chain: an anchor needs a signer (backends.signer)")
     # The anchor is its own capability (backends.anchor), built before the audit and handed in through Deps.
+    checkpoint_db = None
+    if (ck := getattr(deps, "checkpoint_store", None)) is not None:
+        if not (hasattr(ck, "_db") and hasattr(ck, "_lock")) or not db.pg:
+            raise ConfigError("audit chain: the checkpoint login needs the postgres store")
+        checkpoint_db = _Db(ck._db, ck._lock, pg=True, schema=getattr(ck, "_schema", None))
     return ChainAudit(
         db,
         deps.signer,
         deps.anchor,
         settings.checkpoint_every,
         getattr(settings, "drain_batch", None),
+        checkpoint_db=checkpoint_db,
     )

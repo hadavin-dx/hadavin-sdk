@@ -185,6 +185,10 @@ def _main(argv: list[str] | None = None) -> int:
         help="grant this database role the spend caps (set a cap, compare one, write the change to the audit) and nothing else; its own login, never the reset role's",
     )
     mig.add_argument(
+        "--checkpoint-role",
+        help="grant this database role the audit checkpoint write (INSERT on audit_checkpoints, SELECT on the chain) and nothing else; its own login (backends.store.checkpoint_dsn_secret_name), never the runtime's",
+    )
+    mig.add_argument(
         "--accept-admin-role",
         action="append",
         default=[],
@@ -247,6 +251,7 @@ def _main(argv: list[str] | None = None) -> int:
             args.caps_role,
             tuple(args.accept_changed_draft),
             args.reset_draft,
+            args.checkpoint_role,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -345,7 +350,11 @@ def _main(argv: list[str] | None = None) -> int:
             # The reset role's own login for the store and the audit row. It signs and anchors nothing (it may
             # not write a checkpoint); the tick does that under the runtime login.
             as_reset = b.store.model_copy(
-                update={"dsn_secret_name": reset_ref, "purge_dsn_secret_name": None}
+                update={
+                    "dsn_secret_name": reset_ref,
+                    "purge_dsn_secret_name": None,
+                    "checkpoint_dsn_secret_name": None,
+                }
             )
             platform_secrets.check(secrets, [as_reset, b.audit], set())
             as_reset._login_role = (
@@ -505,6 +514,7 @@ def _migrate(
     caps_role: str | None = None,
     accept_changed_draft: tuple[str, ...] = (),
     reset_draft: str | None = None,
+    checkpoint_role: str | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -518,7 +528,15 @@ def _migrate(
         print("refused: set HADAVIN_MIGRATE_DSN to the migration role's DSN", file=sys.stderr)
         return 2
     if not no_roles and not any(
-        (runtime_role, portal_role, purge_role, reset_role, release_role, caps_role)
+        (
+            runtime_role,
+            portal_role,
+            purge_role,
+            reset_role,
+            release_role,
+            caps_role,
+            checkpoint_role,
+        )
     ):
         print(
             "refused: no role is named, so the check of who could clear a stop would be skipped; name the "
@@ -540,6 +558,7 @@ def _migrate(
             reset_role=reset_role,
             release_role=release_role,
             caps_role=caps_role,
+            checkpoint_role=checkpoint_role,
             no_roles=no_roles,
             accepted_admin_roles=accepted_admin_roles,
             accept_changed_draft=accept_changed_draft,
@@ -570,6 +589,12 @@ def _migrate(
         print(
             "warning: no caps role was named, so nobody but the owner can set a spend cap; run again with "
             "--caps-role <role>",
+            file=sys.stderr,
+        )
+    if runtime_role and not checkpoint_role:
+        print(
+            "warning: no checkpoint role was named, so the runtime login still writes the audit checkpoints; run "
+            "again with --checkpoint-role <role> and set backends.store.checkpoint_dsn_secret_name",
             file=sys.stderr,
         )
     return 0
@@ -664,6 +689,7 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
             getattr(b.store, "dsn_secret_name", None),
             getattr(b.store, "reset_credential_ref", None),
             getattr(b.store, "purge_dsn_secret_name", None),
+            getattr(b.store, "checkpoint_dsn_secret_name", None),
         )
         if n
     ]
@@ -693,7 +719,11 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
             )
             return 2
         as_release = b.store.model_copy(
-            update={"dsn_secret_name": ref, "purge_dsn_secret_name": None}
+            update={
+                "dsn_secret_name": ref,
+                "purge_dsn_secret_name": None,
+                "checkpoint_dsn_secret_name": None,
+            }
         )
         platform_secrets.check(secrets, [as_release, b.audit], set())
         store = make("store", as_release, secrets)
@@ -809,6 +839,7 @@ def _caps_login(cfg, what: str):
             getattr(b.store, "purge_dsn_secret_name", None),
             getattr(b.store, "release_credential_ref", None),
             getattr(b.store, "reset_credential_ref", None),
+            getattr(b.store, "checkpoint_dsn_secret_name", None),
         )
         if n
     ]
@@ -822,7 +853,13 @@ def _caps_login(cfg, what: str):
                 file=sys.stderr,
             )
             return 2
-        as_caps = b.store.model_copy(update={"dsn_secret_name": ref, "purge_dsn_secret_name": None})
+        as_caps = b.store.model_copy(
+            update={
+                "dsn_secret_name": ref,
+                "purge_dsn_secret_name": None,
+                "checkpoint_dsn_secret_name": None,
+            }
+        )
         platform_secrets.check(secrets, [as_caps, b.audit], set())
         as_caps._login_role = "reset"  # the caps login, like the reset login, is not held to the runtime's rights at start
         store = make("store", as_caps, secrets)

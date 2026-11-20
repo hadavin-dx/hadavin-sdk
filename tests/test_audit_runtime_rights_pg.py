@@ -5,9 +5,8 @@ audit tables and (2) has no UPDATE, DELETE or TRUNCATE on audit_entries. Both th
 and a real attempt are checked, because the append-only triggers refuse the same statements to any role: a real
 attempt must fail with InsufficientPrivilege (SQLSTATE 42501, the grant), not with the trigger's text.
 
-Two more rights are broader than they need to be today (migrate.py GRANTS: DELETE on audit_outbox, INSERT on
-audit_checkpoints). Those are recorded as xfail, to pass once the migrate change of
-handover/core-b/tickets/A-audit-rights.md lands. Needs HADAVIN_TEST_PG_DSN; skipped without it."""
+Two more rights are closed by handover/core-b/tickets/A-audit-rights.md: no DELETE on audit_outbox (the runtime
+drains it through the 0012 functions) and no INSERT on audit_checkpoints (the checkpoint role writes them). Needs HADAVIN_TEST_PG_DSN; skipped without it."""
 
 from __future__ import annotations
 
@@ -28,7 +27,6 @@ pytestmark = pytest.mark.skipif(
     reason="HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)",
 )
 
-LATER = "finding 2: enforced in a later migrate change"
 HEAD_HASH = "h" * 64
 
 
@@ -120,14 +118,12 @@ def test_runtime_cannot_change_audit_entries(w, statement):
     assert w.run("SELECT COUNT(*) FROM audit_entries WHERE event_id = 'seed-e1'")[0][0] == 1
 
 
-@pytest.mark.xfail(reason=LATER, strict=False)
 def test_runtime_has_no_delete_on_audit_outbox(w):
     assert not _has(w, "audit_outbox", "DELETE")
     with pytest.raises(errors.InsufficientPrivilege):
         _attempt(w, "DELETE FROM audit_outbox WHERE event_id = 'seed-o1'")
 
 
-@pytest.mark.xfail(reason=LATER, strict=False)
 def test_runtime_has_no_insert_on_audit_checkpoints(w):
     assert not _has(w, "audit_checkpoints", "INSERT")
     with pytest.raises(errors.InsufficientPrivilege):
