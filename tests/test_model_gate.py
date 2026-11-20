@@ -774,6 +774,17 @@ def test_m4_only_the_published_reasons_become_an_audit_code():
             "a reason that is not published was copied"
         )
         assert client.sent == []
+    for reason in (
+        "timed_out",
+        "ok",
+        "",
+        "bad_reason",
+    ):  # a SpendRefused-shaped error with an unpublished reason
+        bound, client, _, sink = build(meter=Meter(reserve_raises=SpendRefused(reason)))
+        gate_refusal(bound)
+        assert sink.codes() == [("refused", "reserve_refused")], (
+            "a reason that is not published passed"
+        )
 
 
 PUBLISHED = (
@@ -1911,7 +1922,10 @@ def test_r2_m4_an_identifier_kind_value_equal_to_a_tool_name_does_not_stop_the_r
         {"role": "assistant", "content": f'tool {TOOL_NAME} {{"q": 1}}'},
         {"role": "user", "content": _framed("ok")},
     ]
-    bound.chat(messages, system="s", route="main", tools=[{"name": TOOL_NAME}])
+    try:
+        bound.chat(messages, system="s", route="main", tools=[{"name": TOOL_NAME}])
+    except model_gate.FramingRefused:
+        pytest.fail("an identifier kind value stopped the run")
     sent = client.sent[0]["messages"]
     assert sent[0]["content"] == 'tool <TENANT_1> {"q": 1}'
     assert sent[1]["content"].split("\n")[0] == f"<<TOOL RESULT call_id={CALL_ID} tool=<TENANT_1>>>"
@@ -1946,6 +1960,15 @@ def test_r2_m2_the_assistant_line_and_the_token_name_the_tool_alike_when_a_value
     sent = client.sent[0]["messages"]
     assert sent[0]["content"] == 'tool read_<SECRET_1> {"q": 1}'
     assert "tool=read_<SECRET_1>>>" in sent[1]["content"]
+
+
+def test_r2_m2_the_fixed_word_of_the_assistant_line_is_kept_exact():
+    """A planted value `tool` must not rewrite the `tool ` of the assistant line; the JSON after it is enforced."""
+    mapping = _learned("password=tool")
+    bound, client, _, _ = build(mapping=mapping)
+    line = f'tool {TOOL_NAME} {{"q": "tool"}}'
+    bound.chat([{"role": "assistant", "content": line}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == f'tool {TOOL_NAME} {{"q": "<SECRET_1>"}}'
 
 
 @pytest.mark.parametrize(
@@ -2279,7 +2302,8 @@ def test_r2_m7_a_keyboard_interrupt_in_worst_case_or_reserve_writes_a_row_and_pa
     bound, client, meter, sink = build(meter=Meter(reserve_raises=KeyboardInterrupt()))
     with pytest.raises(KeyboardInterrupt):
         bound.chat(CLEAN, system="s", route="main")
-    assert client.sent == [] and sink.codes() == [("failed", "reserve_interrupted")]
+    assert client.sent == []
+    assert sink.codes() == [("failed", "reserve_interrupted")]
 
 
 def test_r2_m7_a_raising_reason_property_or_a_look_alike_is_a_gate_refusal_not_a_leak():
@@ -2300,8 +2324,9 @@ def test_r2_m7_a_raising_reason_property_or_a_look_alike_is_a_gate_refusal_not_a
 
 
 def test_r2_m2_a_held_back_edge_value_does_not_leak_the_tail_of_a_secret():
-    """dz2-M2 (REPRODUCED on the pre-fix code by the mutant R4 in tests/gate_mutants.py): A = `S3cr3t`, B = `>abcdef`,
-    both secret kinds: `S3cr3t>abcdef` became `<SECRET_1>abcdef` (A's placeholder consumed B's leading `>`)."""
+    """dz2-M2: NOT REPRODUCED. A = `S3cr3t`, B = `>abcdef`, both secret kinds: the reviewer said `S3cr3t>abcdef`
+    becomes `<SECRET_1>abcdef`. With the real code it is `<SECRET_1><SECRET_2>` (the placeholder and the raw `>` that
+    follows it are separate characters). Pinned as it is; a swept-first order was tried and rejected."""
     value_a, value_b = "S3cr" + "3t", ">abc" + "def"
     mapping = runmap.RunMap({"<SECRET_1>": value_a, "<SECRET_2>": value_b})
     assert runmap.enforce_map(f"x {value_a}{value_b} y", mapping) == "x <SECRET_1><SECRET_2> y"

@@ -637,10 +637,11 @@ class EnforceBudget:
 _NOT_RAW = re.compile(r"<[A-Z][A-Z0-9]*_\d+>")
 # A known value that begins with the tail of a placeholder (`>abc`, `ECRET_1>abc`) or ends with the head of one
 # (`xyz<`, `xyz<SEC`) can be matched ACROSS the edge of a placeholder the same sweep has just written, and would
-# damage it (`<SECRET_1<SECRET_2>`). Such a value is held back (design review E2) and, since review round 2 (dz2-M2),
-# swept FIRST on the raw text of every round (`MapSnapshot.edge`), each sweep setting the placeholders aside: swept
-# after the others, a neighbour's placeholder had already consumed its leading `>` (`S3cr3t>abcdef` became
-# `<SECRET_1>abcdef`) and the tail of a secret stayed in clear.
+# damage it (`<SECRET_1<SECRET_2>`). Such a value is held back like a piece of a placeholder (design review E2).
+# Review round 2 (dz2-M2) claimed that `S3cr3t>abcdef` (two secret kinds `S3cr3t` and `>abcdef`) leaks the tail:
+# NOT REPRODUCED (the placeholder `<SECRET_1>` and the raw `>` that follows it are two characters; the held-back
+# sweep then finds `>abcdef`); a swept-first order was tried and rejected: it lets a shorter edge value cut a longer
+# secret (`pass>` and `>abc` in `pass>abc` left `pass` raw). `tests/test_model_gate.py::test_r2_m2_*` pin the case.
 _EDGE_HEAD = re.compile(r"[A-Z0-9_]*>")
 _EDGE_TAIL = re.compile(r"<[A-Z0-9_]*\Z")
 
@@ -716,13 +717,6 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
         out = text
         for _ in range(ENFORCE_MAX_SWEEPS):
             before = out
-            for (
-                original,
-                alone,
-            ) in snap.edge:  # raw text first: no neighbour's placeholder has eaten the edge yet
-                budget.step()
-                if original in out:
-                    out = alone.sweep(out)
             out = first.sweep(out)
             for original, alone in held_back:
                 budget.step()
@@ -749,7 +743,6 @@ class MapSnapshot(dict):
     not kept after the call (a value the run learns later is in the next snapshot)."""
 
     sweeps: tuple[Any, list[tuple[str, Any]]]
-    edge: list[tuple[str, Any]]  # edge values, longest first, swept before everything else
     budget: EnforceBudget
     secret_values: frozenset[str]  # originals swept in every copy (a secret kind of 4+ characters)
     secret_held: list[str]  # of the held-back and edge values, the secret ones
@@ -776,15 +769,10 @@ def snapshot(mapping: Mapping[str, str]) -> MapSnapshot:
     try:
         known = MapSnapshot(mapping)
         tokens = "\n".join(known)
-        edge_values = {
-            ph: original
-            for ph, original in known.items()
-            if _is_edge_value(original) and _sweep(ph, original) is not None
-        }
         late = {
             ph: original
             for ph, original in known.items()
-            if (original in tokens or ph in edge_values) and _sweep(ph, original) is not None
+            if (original in tokens or _is_edge_value(original)) and _sweep(ph, original) is not None
         }
         if len(late) > ENFORCE_MAX_HELD:
             raise InputTooLarge("InputTooLarge")
@@ -799,16 +787,9 @@ def snapshot(mapping: Mapping[str, str]) -> MapSnapshot:
         else:
             # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
             first = _Redactor(known, dict(getattr(mapping, "redact_cache", None) or {}))
-        by_length = sorted(late.items(), key=lambda kv: -len(kv[1]))
         held_back = [
             (original, _Redactor({ph: original}, None))
-            for ph, original in by_length
-            if ph not in edge_values
-        ]
-        known.edge = [
-            (original, _Redactor({ph: original}, None))
-            for ph, original in by_length
-            if ph in edge_values
+            for ph, original in sorted(late.items(), key=lambda kv: -len(kv[1]))
         ]
         known.sweeps = (first, held_back)
         known.budget = EnforceBudget()

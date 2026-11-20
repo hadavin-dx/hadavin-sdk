@@ -348,6 +348,9 @@ def test_m_new_1_a_map_of_many_short_values_builds_one_redactor_and_none_per_val
         return real(known, cache)
 
     monkeypatch.setattr(runmap, "_Redactor", counting)
+    monkeypatch.setattr(
+        runmap, "ENFORCE_MAX_HELD", 10**6
+    )  # the cap would hide what this test is about
     text = f"ID T EN 1 7 1999 host {IP} <TENANT_7>"
     assert _enforce(text, mapping) == "ID T EN 1 7 1999 host <IPV4_1> <TENANT_7>"
     assert set(built) == {(2001, True)}, "a redactor was built for a value the sweep never replaces"
