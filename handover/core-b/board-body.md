@@ -135,3 +135,5 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 - PLAN-READBACK.md section 4: four conflicts between the inputs; I follow the later file in each.
 
 AGENTS RUNNING (07:14Z, sonnet): drift report (docs vs code), hostile re-read of step A, hostile re-read of F-install fix, pg test isolation investigation, mutants for provider mark and expiry. Lanes are disjoint: no two on the same file.
+
+MODELS (07:21Z): every Agent call of core-b sets model sonnet or haiku explicitly (none fable, none inherited). Session model: set to claude-sonnet-5-5 by /model; one turn (the drift-report skill load) was labelled Fable 5.2 by the harness, later turns Sonnet 5.5. If it shows Fable again, only the owner can change it with /model. ORDER 020 is not in handover/core-b/ORDERS.md on cloud/core-b yet (latest order there is 018): lead, please push it; the release command waits for it.
