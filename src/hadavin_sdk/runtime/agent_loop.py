@@ -42,13 +42,15 @@ from hadavin_sdk.models import (
     RunState,
     ToolCall,
     ToolCallRecord,
+    audit_code,
+    audit_ref,
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.runtime.evidence import Validator, identifier_inputs, with_evidence
 from hadavin_sdk.runtime.plan import build_plan
 from hadavin_sdk.runtime.runs import advance
-from hadavin_sdk.store.protocol import NotFound, StaleState, Store
+from hadavin_sdk.store.protocol import NotFound, StaleState, Store, is_connectivity_error
 from hadavin_sdk.tools import (
     END_MARKER,
     ERROR_PREFIX,
@@ -187,6 +189,29 @@ def assert_qualified(registry: Registry, agent_id: str) -> None:
     raise Unqualified(agent_id)
 
 
+def qualified_agents(
+    registry: Registry, on_unqualified: Callable[[str], None] | None = None
+) -> list[str]:
+    """Every agent id (registry order) for which `assert_qualified` passes.
+
+    The lenient loop for callers that must keep going (the tick command, the trigger worker). Each other agent
+    is reported once, in order, to `on_unqualified(agent_id)`: only the id, never the reason. Only `Unqualified`
+    counts as "not qualified"; any other error from `assert_qualified` (a bad golden reference is a ConfigError)
+    propagates, as it did in the tick before this helper existed, so a broken config still stops the command with
+    its own exit code. `Runtime.__init__` does not use this: it must refuse start-up.
+    """
+    agents: list[str] = []
+    for agent_id in registry.agents:
+        try:
+            assert_qualified(registry, agent_id)
+        except Unqualified:
+            if on_unqualified is not None:
+                on_unqualified(agent_id)
+        else:
+            agents.append(agent_id)
+    return agents
+
+
 @dataclass
 class Hooks:
     """Injected by the app wiring so runtime never imports the executor or holds secrets."""
@@ -222,7 +247,9 @@ class Runtime:
         agents: list[str],
         hooks: Hooks | None = None,
     ) -> None:
-        for agent_id in agents:  # start-up refuses an unqualified agent
+        # Start-up refuses an unqualified agent: strict, it raises for the first one. `qualified_agents` is the
+        # lenient list (it skips), so this loop stays apart from it on purpose.
+        for agent_id in agents:
             assert_qualified(registry, agent_id)
         self.registry, self.store, self.audit = registry, store, audit
         self.llm, self.detector, self.limits = llm, detector, limits
@@ -247,17 +274,48 @@ class Runtime:
 
     # --- audit helpers ---------------------------------------------------------------------------
     def _event(self, run: Run, domain: str, operation: str, **kw: Any) -> AuditEvent:
+        # Provider, tool, user and executor text can reach these fields: sanitise them all here.
+        for key in ("object_ref", "rule_id", "result", "error_code"):
+            if isinstance(kw.get(key), str):
+                kw[key] = audit_code(kw[key])
         return AuditEvent(
-            run_id=run.run_id,
-            domain=domain,
-            operation=operation,
-            principal=run.principal_id,
+            run_id=audit_code(run.run_id),
+            domain=audit_code(domain),
+            operation=audit_code(operation),
+            principal=audit_code(run.principal_id),
             source="runtime",
             **kw,
         )
 
     def _note(self, run: Run, domain: str, operation: str, **kw: Any) -> None:
-        self.audit.write_outcome(self._event(run, domain, operation, **kw))
+        try:
+            event = self._event(run, domain, operation, **kw)
+        except Exception as exc:  # noqa: BLE001 - a refused event must never kill the run: audit a sanitised one
+            _LOG.warning(
+                "run %s: audit event refused error_kind=%s", run.run_id, type(exc).__name__
+            )
+            keep = {
+                k: audit_code(kw[k])
+                for k in (
+                    "object_ref",
+                    "result",
+                    "error_code",
+                    "inputs_hash",
+                    "output_hash",
+                    "decision",
+                )
+                if kw.get(k) is not None
+            }
+            event = AuditEvent(
+                run_id=audit_code(run.run_id),
+                domain=audit_code(domain),
+                operation=audit_code(operation),
+                principal=audit_code(run.principal_id),
+                source="runtime",
+                rule_id="audit_event_refused",
+                **keep,
+            )
+        self.audit.write_outcome(event)
 
     def _note_card(self, run: Run, operation: str, **kw: Any) -> None:
         """Audit a card post. The card is already out, so a failing audit write is logged and never raised."""
@@ -387,6 +445,38 @@ class Runtime:
         if isinstance(exc, UnmaskedInput):
             return self._redaction_failed(run, cited)
         return self._to(run, S.NEEDS_PERSON, exc.code)
+
+    def _settle_model_call(self, run: Run, rid: str, cost_usd: Any) -> Run | None:
+        """Replace the held worst case of one model call with its real cost; the store books the run cost with
+        the settle. Returns None when done, or the run ended in NEEDS_PERSON `limits.limits_unavailable`.
+        A failure keeps the hold at the worst case (an over-count, the safe direction; an operator releases it,
+        see the runbook). AMBIGUOUS failures are exactly the connectivity errors (`is_connectivity_error`:
+        StoreUnavailable, OSError and its subclasses, psycopg OperationalError and InterfaceError): the settle
+        may have committed and booked the run cost, so nothing more is booked and the run ends. EVERY other
+        failure rolled back: the run cost is booked directly (a bad amount cannot be booked: the run ends).
+        Never raises: if the run cannot be ended either, the failure is logged and the run is returned."""
+        try:
+            self.limits.settle_for(run.agent_id, rid, cost_usd)
+            return None
+        except Exception as exc:  # noqa: BLE001
+            ambiguous = is_connectivity_error(exc)
+            _LOG.warning(
+                "run %s: settle failed (%s, %s); the hold stays at the worst case",
+                run.run_id,
+                type(exc).__name__,
+                "unknown outcome: run cost left to the settle" if ambiguous else "rolled back",
+            )
+            if not ambiguous:
+                try:
+                    self.store.add_cost(run.run_id, cost_usd)
+                    return None
+                except Exception:  # noqa: BLE001 - a bad amount, or the store is down
+                    _LOG.warning("run %s: the run cost could not be booked", run.run_id)
+        try:
+            return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
+        except Exception:  # noqa: BLE001 - the store is down: nothing more can be written
+            _LOG.warning("run %s: could not end the run after a failed settle", run.run_id)
+            return run
 
     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
         cur = self.store.get_run(run.run_id)
@@ -777,7 +867,7 @@ class Runtime:
             call = checked.call
             if checked.cited:
                 cited = checked.cited  # the cards list the evidence the proposal rests on
-                self._note(run, "proposal", "cited", object_ref=",".join(cited))
+                self._note(run, "proposal", "cited", object_ref=audit_ref(",".join(cited)))
             if checked.reason is not None:
                 return self._abstain(run, S.NEEDS_PERSON, checked.reason, cited)
         try:  # model output: a float or a non-string id must not strand the run
@@ -969,7 +1059,7 @@ class Runtime:
             run,
             "action",
             "result",
-            object_ref=result.external_ref,
+            object_ref=audit_ref(result.external_ref),
             result=result.outcome,
             error_code=result.error_code,
         )

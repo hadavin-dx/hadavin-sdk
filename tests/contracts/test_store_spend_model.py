@@ -139,6 +139,12 @@ class Model:
         if not _is_amount(usd):
             return ("ValueError",)
         if rid in self.rows:
+            row = self.rows[rid]
+            if (row["agent"], row["day"], row["reserved"], row["run"]) == (agent, day, usd, run):
+                return (
+                    "ok",
+                    None,
+                )  # a retry of a committed reserve: the same row, nothing booked again
             return ("StaleState",)
         for which, booked, cap in (
             ("day", self.day[(agent, day)], day_cap),
@@ -159,11 +165,11 @@ class Model:
         }
         return ("ok", None)
 
-    def settle(self, rid, actual):
+    def settle(self, rid, actual, agent):
         if not _is_amount(actual):
             return ("ValueError",)
         row = self.rows.get(rid)
-        if row is None:
+        if row is None or row["agent"] != agent:  # another agent's id is the same NotFound
             return ("NotFound",)
         if row["status"] == "settled":
             return ("settled", False, self.view(rid))
@@ -193,7 +199,8 @@ class Model:
         gone = [
             rid
             for rid, row in self.rows.items()
-            if row["status"] != "open" and row["closed_days"] > days
+            if row["status"] == "settled"
+            and row["closed_days"] > days  # E11 M3: expired holds are KEPT
         ]
         for rid in gone:
             row = self.rows.pop(rid)
@@ -238,12 +245,26 @@ def _is_memory(store):
     return hasattr(store, "_reservations")
 
 
+def _owner_rows(store):
+    """Every row of spend_reservations, read as the table owner: since F-money-definer step 4 the runtime login (the
+    store's own connection) holds no right on the table."""
+    import os
+
+    from psycopg import connect
+    from psycopg.conninfo import conninfo_to_dict, make_conninfo
+    from psycopg.rows import dict_row
+
+    options = conninfo_to_dict(store._db.info.dsn).get("options")
+    owner = make_conninfo(os.environ["HADAVIN_TEST_PG_DSN"], options=options)
+    with store._lock, connect(owner, autocommit=True, row_factory=dict_row) as db:
+        return db.execute("SELECT * FROM spend_reservations").fetchall()
+
+
 def _rows(store) -> dict[str, SpendReservation]:
     if _is_memory(store):
         with store._lock:
             return dict(store._reservations)
-    with store._lock:
-        found = store._exec("SELECT * FROM spend_reservations").fetchall()
+    found = _owner_rows(store)
     return {r["reservation_id"]: SpendReservation.model_validate(r) for r in found}
 
 
@@ -258,8 +279,20 @@ def _shift(store, rid, column, by):
         "created_at": "UPDATE spend_reservations SET created_at = created_at - %s WHERE reservation_id = %s",
         "closed_at": "UPDATE spend_reservations SET closed_at = closed_at - %s WHERE reservation_id = %s",
     }[column]
-    with store._lock:
-        done = store._exec(query, (by, rid)).rowcount
+    # 0010 money guard (`spend_reservations_money_guard`) refuses a changed closed_at on a closed row for every login
+    # but the SECURITY DEFINER function owner, and the store's login is a non-owner (it cannot ALTER TABLE): this
+    # helper ages rows to exercise purge, so it goes through the owner DSN with triggers off (session_replication_role) for the UPDATE.
+    import os
+
+    from psycopg import connect
+    from psycopg.conninfo import conninfo_to_dict, make_conninfo
+
+    options = conninfo_to_dict(store._db.info.dsn).get("options")
+    owner = make_conninfo(os.environ["HADAVIN_TEST_PG_DSN"], options=options)
+    with store._lock, connect(owner, autocommit=False) as db:
+        # replica role skips the guard without ALTER TABLE's table lock (which would wait on the store's own session)
+        db.execute("SET LOCAL session_replication_role = replica")
+        done = db.execute(query, (by, rid)).rowcount
     assert done == 1, f"row {rid!r} is not in the table"
 
 
@@ -343,7 +376,10 @@ def _script(seed, n):
                         D("5.00"),
                     )
                 )
-            op = ("settle", rid, actual)
+            agent = model.rows[rid]["agent"] if rid in model.rows else rng.choice(AGENTS)
+            if rng.random() < 0.08:
+                agent = rng.choice(AGENTS)  # often another agent's id: NotFound, nothing changes
+            op = ("settle", rid, actual, agent)
         elif kind == "expire":
             open_ids = sorted(r for r, row in model.rows.items() if row["status"] == "open")
             picked = rng.sample(open_ids, min(len(open_ids), rng.randint(0, 3)))
@@ -390,7 +426,7 @@ def _apply(store, op):
                 ),
             )
         if kind == "settle":
-            row, applied = store.settle_spend(op[1], op[2])
+            row, applied = store.settle_spend(op[1], op[2], agent_id=op[3])
             return ("settled", applied, _view(row))
         if kind == "expire":
             for rid, secs in op[1]:
@@ -585,11 +621,13 @@ def test_300_reservations_settled_in_random_order_by_4_callers_end_at_the_model_
     _create_runs(store, runs)
     model = Model(runs[:2])
     amounts = {}
+    owner = {}
     for i in range(ROWS):
         rid = f"res-thr-{i}"
         op = (rid, rng.choice(AGENTS), rng.choice(DAYS), rng.choice(AMOUNTS[1:]), BIG, BIG)
         run = rng.choice((None, *runs))
         store.reserve_spend(*op[:4], day_cap=BIG, month_cap=BIG, run_id=run)
+        owner[rid] = op[1]
         assert model.reserve(*op, run) == ("ok", None)
         low, high = op[3] / 4, op[3] * 3 + MICRO
         amounts[rid] = rng.choice(((low, high), (high, low), (op[3], D(0)), (D(0), high)))
@@ -616,7 +654,7 @@ def test_300_reservations_settled_in_random_order_by_4_callers_end_at_the_model_
             start.wait(WAIT_S)
             for rid, amount in jobs[k::THREADS]:
                 try:
-                    row, applied = callers[k].settle_spend(rid, amount)
+                    row, applied = callers[k].settle_spend(rid, amount, agent_id=owner[rid])
                     results[k].append((rid, amount, applied, _view(row)))
                 except Exception as raised:  # noqa: BLE001 - asserted below, in the main thread
                     results[k].append((rid, amount, None, repr(raised)))
@@ -641,7 +679,7 @@ def test_300_reservations_settled_in_random_order_by_4_callers_end_at_the_model_
             winners[rid] = amount
     assert len(winners) == ROWS
     for rid, amount in winners.items():
-        assert model.settle(rid, amount)[1] is True
+        assert model.settle(rid, amount, owner[rid])[1] is True
     for rid, _, _, view in done:  # the winner and the loser both got the one stored row
         assert view == model.view(rid), f"{rid}: returned {view}, model {model.view(rid)}"
     got, want = _state(store, runs), model.snapshot()
@@ -679,11 +717,13 @@ def test_a_settle_amount_with_12_decimal_places_is_booked_and_returned_unrounded
     )
     if expire:
         assert store.expire_spend_reservations(0) == 1
-    row, applied = store.settle_spend("res-12", D(actual))
+    row, applied = store.settle_spend("res-12", D(actual), agent_id=AGENTS[0])
     assert applied is True
     assert row.settled_usd == D(stays) and row.reserved_usd == D(reserved)
     assert str(row.settled_usd.normalize()) == str(D(stays).normalize())
-    again, applied = store.settle_spend("res-12", D("0.5"))  # another amount: changes nothing
+    again, applied = store.settle_spend(
+        "res-12", D("0.5"), agent_id=AGENTS[0]
+    )  # another amount: changes nothing
     assert applied is False and again.settled_usd == D(stays)
     assert _rows(store)["res-12"].settled_usd == D(stays)
     want = D("0.111111111111") + D(stays)
@@ -710,7 +750,7 @@ def test_300_pico_dollar_settles_add_up_to_the_exact_sum_on_the_counters_and_the
             month_cap=BIG * BIG,
             run_id=runs[1],
         )
-        row, applied = store.settle_spend(f"res-p-{i}", actual)
+        row, applied = store.settle_spend(f"res-p-{i}", actual, agent_id=AGENTS[1])
         assert applied and row.settled_usd == actual, f"row {i}: {row.settled_usd} != {actual}"
         total += actual
     assert tuple(store.spend_totals(AGENTS[1], NEXT)) == (total, total)
@@ -746,15 +786,16 @@ def _id_outcome(store, rid):
         return f"reserve raised {type(raised).__module__}.{type(raised).__name__}"
     try:
         assert set(_rows(store)) == {rid}
+        store.reserve_spend(rid, AGENTS[2], DAY, amount, day_cap=BIG, month_cap=BIG)  # the retry
         with pytest.raises(StaleState):
-            store.reserve_spend(rid, AGENTS[2], DAY, amount, day_cap=BIG, month_cap=BIG)
+            store.reserve_spend(rid, AGENTS[2], DAY, amount + 1, day_cap=BIG, month_cap=BIG)
         with pytest.raises(NotFound):
             store.settle_spend(
-                rid[:-1] + ("0" if rid[-1] != "0" else "1"), actual
+                rid[:-1] + ("0" if rid[-1] != "0" else "1"), actual, agent_id=AGENTS[2]
             )  # same length, unknown
-        row, applied = store.settle_spend(rid, actual)
+        row, applied = store.settle_spend(rid, actual, agent_id=AGENTS[2])
         assert applied is True and row.reservation_id == rid and row.settled_usd == actual
-        row, applied = store.settle_spend(rid, amount)
+        row, applied = store.settle_spend(rid, amount, agent_id=AGENTS[2])
         assert applied is False and row.reservation_id == rid and row.settled_usd == actual
         assert tuple(store.spend_totals(AGENTS[2], DAY)) == (actual, actual)
         assert store.purge_spend_reservations(now() + timedelta(days=1)) == 1
@@ -772,7 +813,7 @@ def test_a_hostile_reservation_id_is_stored_and_found_again_or_refused_with_valu
     assert outcome in (STORED, REFUSED), f"{name}: {outcome}"
     # whatever happened, the store still works and nothing is left booked that the caller cannot settle
     store.reserve_spend("res-after", AGENTS[2], NEXT, D("1.00"), day_cap=BIG, month_cap=BIG)
-    assert store.settle_spend("res-after", D("0.50"))[1] is True
+    assert store.settle_spend("res-after", D("0.50"), agent_id=AGENTS[2])[1] is True
 
 
 @pytest.mark.parametrize("name", sorted(HOSTILE_IDS))

@@ -400,3 +400,311 @@ def test_bedrock_client_errors_through_the_retry(bedrock):
     error, calls = _converse(bedrock, after_a_5xx)
     assert type(error) is ProviderError and calls == 2
     assert error.refused_before_response is False
+
+
+# === Provider mark fix round 1 (ticket F-provider-mark RESOLUTION M1, M2, N3, N5, N7) ==============================
+# Added by a different agent than the builders. Existing tests above are unchanged.
+
+import itertools
+
+from hadavin_sdk.llm import retry as retry_mod
+from hadavin_sdk.llm.common import NetworkLLM
+from hadavin_sdk.llm.retry import REFUSED_STATUSES, never_sent
+
+ALL_REFUSED = (400, 401, 403, 404, 413, 422)
+ROUTER_REFUSED = (401, 403, 404)
+ROUTER_NOT_REFUSED = (400, 413, 422)
+
+
+class _Generic(NetworkLLM):
+    """The generic kind: no override of the status list. Its `_chat` raises the scripted errors in order."""
+
+    label = "generic"
+
+    def __init__(self, errors, max_attempts=ATTEMPTS):
+        super().__init__({}, max_attempts, sleep=lambda s: None)
+        self.left = list(errors)
+
+    def _chat(self, route, system, turns, specs, forced, output_schema):
+        def call():
+            raise self.left.pop(0)
+
+        return self._retry(call)
+
+
+def _generic_error(errors, max_attempts=ATTEMPTS):
+    llm = _Generic(errors, max_attempts)
+    llm.routes = {"r": ROUTE}
+    with pytest.raises(ProviderError) as caught:
+        llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
+    return caught.value
+
+
+@pytest.mark.parametrize("code", ALL_REFUSED + (429,))
+def test_generic_kind_keeps_the_full_status_list(code):
+    assert _Generic.refused_statuses == REFUSED_STATUSES == frozenset(ALL_REFUSED)
+    error = _generic_error([_Status(code)], max_attempts=1)
+    assert error.refused_before_response is True
+
+
+@pytest.mark.parametrize("code", ROUTER_REFUSED)
+def test_openai_compat_marks_401_403_404(monkeypatch, code):
+    assert openai_compat.OpenAICompatLLM.refused_statuses == frozenset(ROUTER_REFUSED)
+    llm, sent = _openai(monkeypatch, [_http(code)])
+    with pytest.raises(ProviderError) as caught:
+        _chat(llm)
+    assert type(caught.value) is ProviderError
+    assert caught.value.refused_before_response is True
+    assert len(sent) == 1
+
+
+@pytest.mark.parametrize("code", ROUTER_NOT_REFUSED)
+def test_openai_compat_does_not_mark_400_413_422(monkeypatch, code):
+    """A router behind base_url may answer these after the upstream model consumed tokens."""
+    llm, sent = _openai(monkeypatch, [_http(code)])
+    with pytest.raises(ProviderError) as caught:
+        _chat(llm)
+    assert type(caught.value) is ProviderError
+    assert caught.value.refused_before_response is False
+    assert len(sent) == 1
+
+
+@pytest.mark.parametrize("code", ROUTER_NOT_REFUSED)
+def test_openai_compat_refused_connection_then_router_status_is_unmarked(monkeypatch, code):
+    llm, _ = _openai(monkeypatch, [_refused(), _http(code)])
+    with pytest.raises(ProviderError) as caught:
+        _chat(llm)
+    assert caught.value.refused_before_response is False
+
+
+@pytest.mark.parametrize("code", ALL_REFUSED)
+def test_another_kind_still_marks_all_six_statuses(code):
+    error = _generic_error([_Status(code)], max_attempts=1)
+    assert error.refused_before_response is True
+
+
+def test_every_kind_but_openai_compat_keeps_the_default_list():
+    """The per-kind list is a class attribute: only the router-fronted kind narrows it."""
+    kinds = {"openai_compat": openai_compat.OpenAICompatLLM}
+    for name in ("anthropic", "gemini", "bedrock"):
+        try:
+            module = __import__(f"hadavin_sdk.llm.{name}", fromlist=["x"])
+        except ImportError:  # the extra is not installed
+            continue
+        kinds[name] = next(
+            v
+            for v in vars(module).values()
+            if isinstance(v, type) and issubclass(v, NetworkLLM) and v is not NetworkLLM
+        )
+    for name, kind in kinds.items():
+        narrow = name in (
+            "openai_compat",
+            "anthropic",
+        )  # anthropic: widened per instance for the direct API
+        expected = frozenset(ROUTER_REFUSED) if narrow else REFUSED_STATUSES
+        assert kind.refused_statuses == expected, name
+
+
+def test_a_429_then_a_400_stays_unmarked():
+    error, calls, _ = _run([_Status(429), _Status(400)])
+    assert type(error) is ProviderError and calls == 2
+    assert error.refused_before_response is False
+    error, _, _ = _run([_Status(429), _Status(429), _Status(400)])
+    assert error.refused_before_response is False
+
+
+def test_a_429_a_kind_chose_not_to_retry_stays_unmarked():
+    """No built kind declines to retry a 429 (anthropic, gemini, openai_compat use the generic rule; bedrock
+    retries it by status). The hook is exercised with a double."""
+    sleeps = []
+
+    def call():
+        raise _Status(429)
+
+    with pytest.raises(ProviderError) as caught:
+        with_retry(
+            call,
+            label="t",
+            max_attempts=ATTEMPTS,
+            sleep=sleeps.append,
+            retryable=lambda exc: False,
+        )
+    assert type(caught.value) is ProviderError
+    assert caught.value.refused_before_response is False
+    assert sleeps == []
+    # also after a refused connection
+    left = [_refused(), _Status(429)]
+
+    def call2():
+        raise left.pop(0)
+
+    with pytest.raises(ProviderError) as caught:
+        with_retry(
+            call2,
+            label="t",
+            max_attempts=ATTEMPTS,
+            sleep=sleeps.append,
+            retryable=lambda exc: status_of(exc) != 429,
+        )
+    assert caught.value.refused_before_response is False
+
+
+def status_of(exc):
+    return retry_mod.status(exc)
+
+
+def test_a_tls_error_stays_unmarked():
+    import ssl
+
+    for exc in (
+        ssl.SSLCertVerificationError("bad cert"),
+        urllib.error.URLError(ssl.SSLError("handshake")),
+    ):
+        error, calls, sleeps = _run([exc])
+        assert type(error) is ProviderError
+        assert error.refused_before_response is False
+        assert (calls, sleeps) == (1, [])
+    error, _, _ = _run([_refused(), ssl.SSLCertVerificationError("bad cert")])
+    assert error.refused_before_response is False
+
+
+def _linked(kinds):
+    """An error chain: kinds[0] is the outer error, each next one its `__cause__`."""
+    errors = [k if isinstance(k, BaseException) else k() for k in kinds]
+    for outer, inner in itertools.pairwise(errors):
+        outer.__cause__ = inner
+    return errors[0]
+
+
+def _plain():
+    return OSError("wrapper")
+
+
+def test_a_cause_chain_longer_than_the_walk_limit_is_not_never_sent():
+    # 10 errors: a refused connection at depth 3, a timeout at depth 9 (past the limit of 8)
+    kinds = [_plain] * 10
+    kinds[2], kinds[8] = ConnectionRefusedError, TimeoutError
+    assert never_sent(_linked(kinds)) is False
+    # a refused connection and nothing else, but the chain is cut: still not never-sent
+    kinds = [_plain] * 10
+    kinds[2] = ConnectionRefusedError
+    assert never_sent(_linked(kinds)) is False
+    # 9 errors is one past the limit
+    kinds = [_plain] * 9
+    kinds[2] = ConnectionRefusedError
+    assert never_sent(_linked(kinds)) is False
+
+
+def test_a_cause_chain_of_exactly_the_walk_limit_is_checked_whole():
+    kinds = [_plain] * 8
+    kinds[2] = ConnectionRefusedError
+    assert never_sent(_linked(kinds)) is True
+    kinds[7] = TimeoutError  # the last error of the chain is still seen
+    assert never_sent(_linked(kinds)) is False
+
+
+def test_a_truncated_chain_is_not_marked_through_with_retry():
+    kinds = [_plain] * 10
+    kinds[2], kinds[8] = ConnectionRefusedError, TimeoutError
+    error, _, _ = _run([_linked(kinds)], max_attempts=1)
+    assert error.refused_before_response is False
+    kinds = [_plain] * 8
+    kinds[2] = ConnectionRefusedError
+    error, _, _ = _run([_linked(kinds)], max_attempts=1)
+    assert (
+        type(error) is ProviderExhausted
+    )  # a bare chain ending in a refused connection is retried
+    assert error.refused_before_response is True
+
+
+@pytest.mark.parametrize("combo", list(itertools.product("RTSX", repeat=3)), ids="".join)
+def test_exhausted_is_marked_iff_every_attempt_was_never_sent_or_429(combo):
+    """R refused, T 429, S 500, X timeout. Rule (2) of the module docstring."""
+    make = {"R": _refused, "T": lambda: _Status(429), "S": lambda: _Status(500), "X": _timeout}
+    error, calls, _ = _run([make[c]() for c in combo])
+    assert type(error) is ProviderExhausted and calls == ATTEMPTS
+    assert error.refused_before_response is all(c in "RT" for c in combo)
+
+
+def test_a_provider_error_raised_by_the_adapters_own_call_passes_through_unmarked():
+    """N5 (corrected after the test writer's finding): `except ProviderError: raise` in with_retry is kept; a
+    ProviderError the adapter's own call raises passes through UNCHANGED and unmarked, whatever it carries
+    (the safe direction: the worst case stays booked). No built adapter raises one."""
+    raised = ProviderError("openai_compat: KeyError")
+    error, calls, _ = _run([raised])
+    assert error is raised
+    assert error.refused_before_response is False
+    assert calls == 1
+    # after a never-sent attempt: still the same object, still unmarked
+    raised = ProviderError("openai_compat: KeyError")
+    error, calls, _ = _run([_refused(), raised])
+    assert error is raised and calls == 2
+    assert error.refused_before_response is False
+    # even one that carries a refused status passes through unmarked (it is not with_retry's own error)
+    raised = ProviderError("x")
+    raised.status_code = 401
+    error, _, _ = _run([raised])
+    assert error is raised
+    assert error.refused_before_response is False
+
+
+class _AnthropicClient:
+    """Stands in for the SDK client: `messages.create` raises the scripted error."""
+
+    def __init__(self, code):
+        self.code = code
+        self.messages = self
+
+    def create(self, **_):
+        raise _Status(self.code)
+
+
+def _anthropic_error(code, **kw):
+    pytest.importorskip("anthropic")
+    from hadavin_sdk.llm.anthropic import AnthropicLLM
+
+    llm = AnthropicLLM(_AnthropicClient(code), {"r": ROUTE}, 1, sleep=lambda s: None, **kw)
+    with pytest.raises(ProviderError) as caught:
+        llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
+    return caught.value
+
+
+@pytest.mark.parametrize("code", ALL_REFUSED)
+def test_anthropic_direct_api_marks_all_six_statuses(code):
+    assert _anthropic_error(code, direct_api=True).refused_before_response is True
+
+
+@pytest.mark.parametrize("code", ROUTER_REFUSED)
+def test_anthropic_behind_a_gateway_marks_only_401_403_404(code):
+    assert _anthropic_error(code).refused_before_response is True
+
+
+@pytest.mark.parametrize("code", ROUTER_NOT_REFUSED)
+def test_anthropic_behind_a_gateway_does_not_mark_400_413_422(code):
+    """Vertex and Foundry (and an unknown platform) may answer these after the model started."""
+    assert _anthropic_error(code).refused_before_response is False
+
+
+@pytest.mark.parametrize(
+    ("platform", "direct"),
+    [
+        ("vertex", False),
+        ("foundry", False),
+        ("api", True),
+        ("bedrock", False),
+        ("API", False),
+        ("apii", False),
+        ("", False),
+        (None, False),
+    ],
+)
+def test_make_wide_list_only_for_the_exact_api_platform(monkeypatch, platform, direct):
+    pytest.importorskip("anthropic")
+    from types import SimpleNamespace
+
+    from hadavin_sdk.llm import anthropic as mod
+
+    monkeypatch.setattr(mod, "client", lambda settings, key: object())
+    settings = SimpleNamespace(platform=platform, api_key_secret_name="k", max_attempts=1)  # noqa: S106
+    llm = mod.make(settings, SimpleNamespace(routes={}, resolve=lambda n: "x"))
+    assert (llm.refused_statuses == REFUSED_STATUSES) is direct

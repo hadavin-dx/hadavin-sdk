@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
 
 import yaml
 from pydantic import (
+    AfterValidator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -36,6 +37,7 @@ from hadavin_sdk.backends.table import (
 )
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
+from hadavin_sdk.secret_name import canonical_secret_name
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 
 __all__ = [
@@ -61,6 +63,13 @@ def _money(v: object) -> object:
     if isinstance(v, float):
         # ValueError, not TypeError: pydantic turns only ValueError into a validation error.
         raise ValueError("money must be a decimal string, not a float")  # noqa: TRY004
+    if isinstance(v, str) and not (
+        v.isascii() and v.strip() == v and "_" not in v and v.isprintable()
+    ):
+        # pydantic reads "5_0" as 50, " 5 " as 5 and non-ASCII digits as digits: a typo or a hidden digit
+        raise ValueError(
+            "a price must be written with ASCII digits only (no spaces, underscores or other scripts)"
+        )
     return v
 
 
@@ -90,7 +99,12 @@ class Route(_Strict):
             raise ValueError("a price must not be negative")
         if v > defaults.MAX_ROUTE_PRICE_USD_PER_MTOK:
             raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")
-        if v != v.quantize(Decimal("1E-6")):
+        try:
+            with localcontext(defaults.money_context()):  # not the caller's precision
+                fine = v == v.quantize(Decimal("1E-6"))
+        except ArithmeticError as exc:
+            raise ValueError("a price could not be checked for decimal places") from exc
+        if not fine:
             raise ValueError("a price may have at most 6 decimal places")
         return v
 
@@ -346,9 +360,21 @@ TriggerId = Annotated[str, Field(pattern=_TRIGGER_ID)]
 # The NAME of a sender's secret, and the agent and principal ids a sender points to: no blank, no line break, no
 # control character. The repo had no shared rule for either, so these two are the trigger block's own. A value
 # that does not match is refused without being shown (`hide_input_in_errors`).
-_TRIGGER_NAME_RULE = r"^[A-Za-z0-9_.:/-]{1,128}$"
+_TRIGGER_NAME_RULE = r"^[A-Za-z0-9_.:-]{1,128}$"
 _TRIGGER_REF_ID = r"^[A-Za-z0-9_.:-]{1,128}$"
-_SecretName = Annotated[str, Field(pattern=_TRIGGER_NAME_RULE)]
+
+
+def _no_path_trick(name: str) -> str:
+    """No "." or ".." and no ".." inside a name (a file-backed provider would read a path), and a name that
+    canonicalises to nothing (only "." ":" "-" "_") is no name. The text never shows the value."""
+    if ".." in name or not canonical_secret_name(name):
+        raise ValueError(
+            "a secret name must not be '.', '..' or contain '..', and needs a letter or digit"
+        )
+    return name
+
+
+_SecretName = Annotated[str, Field(pattern=_TRIGGER_NAME_RULE), AfterValidator(_no_path_trick)]
 _RefId = Annotated[str, Field(pattern=_TRIGGER_REF_ID)]
 
 
@@ -370,7 +396,7 @@ class TriggerSettings(_Strict):
     # Strict: `true` is not 1 and "4" is not 4 (a whole number is still accepted for `ack_wait_s`).
     max_body_bytes: int = Field(
         default=defaults.TRIGGER_MAX_BODY_BYTES,
-        gt=0,
+        ge=defaults.TRIGGER_MAX_BODY_BYTES_FLOOR,
         le=defaults.TRIGGER_MAX_BODY_BYTES_CEILING,
         strict=True,
     )
@@ -382,8 +408,14 @@ class TriggerSettings(_Strict):
     )
     ack_wait_s: float = Field(
         default=defaults.TRIGGER_ACK_WAIT_S,
-        gt=0,
+        ge=defaults.TRIGGER_ACK_WAIT_S_FLOOR,
         le=defaults.TRIGGER_ACK_WAIT_S_CEILING,
+        strict=True,
+    )
+    conflict_events_per_minute: int = Field(
+        default=defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT,
+        ge=defaults.TRIGGER_CONFLICT_EVENTS_MIN,
+        le=defaults.TRIGGER_CONFLICT_EVENTS_MAX,
         strict=True,
     )
 
@@ -394,9 +426,10 @@ def _trigger_refusals(triggers: TriggerSettings | None) -> list[str]:
     out: list[str] = []
     owner: dict[str, str] = {}
     for sender_id, sender in sorted((triggers.senders if triggers else {}).items()):
-        if len(set(sender.secret_names)) != len(sender.secret_names):
+        canon = [canonical_secret_name(n) for n in sender.secret_names]
+        if len(set(canon)) != len(canon):
             out.append(f"triggers.senders.{sender_id}.secret_names: the same name twice")
-        for name in set(sender.secret_names):
+        for name in set(canon):
             if name in owner:
                 out.append(
                     f"triggers.senders.{sender_id}.secret_names: a name is also used by sender {owner[name]}"
@@ -545,6 +578,11 @@ def _sends_text_out(b: Backends) -> list[str]:
     return out
 
 
+def _plain(name: str) -> str:
+    """A route name for an error line: control characters escaped, so a name cannot forge a line."""
+    return repr(name)[1:-1]
+
+
 def _today() -> date:
     return datetime.now(UTC).date()  # a function, so a test can set the day
 
@@ -556,7 +594,7 @@ def _price_refusals(cfg: Config) -> list[str]:
     out = []
     if live or cfg.backends.llm.kind != "fake":
         out = [
-            f"routes.{name}.{field}: a zero price is allowed only for the fake llm kind in demo"
+            f"routes.{_plain(name)}.{field}: a zero price is allowed only for the fake llm kind in demo"
             for name, route in sorted(cfg.routes.items())
             for field in ("input_usd_per_mtok", "output_usd_per_mtok")
             if getattr(route, field) == 0
@@ -649,6 +687,7 @@ def _validation_text(exc: ValidationError) -> str:
 
 def load_config(config_dir: Path | None = None) -> Config:
     """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+    trigger_text = ""
     try:
         root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
         raw = _read_yaml(root / "config.yaml")
@@ -665,6 +704,19 @@ def load_config(config_dir: Path | None = None) -> Config:
     except ConfigError:
         raise
     except ValidationError as exc:
-        raise ConfigError(_validation_text(exc)) from exc
+        text = _validation_text(exc)
+        # A trigger section may hold a mistyped secret name: the cause's `.errors()` carries the typed value, so
+        # it is not chained (raised after the handler, so `__context__` does not keep it either). The location
+        # text can still show a bad KEY (a sender id or an extra key), never a value: accepted.
+        if not any(e["loc"][:1] == ("triggers",) for e in exc.errors()):
+            raise ConfigError(text) from exc
+        trigger_text = text
+    except (
+        ArithmeticError
+    ) as exc:  # a decimal error is not a ValueError: never let it out as a traceback
+        raise ConfigError(
+            f"routes: a price field could not be checked ({type(exc).__name__})"
+        ) from exc
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(str(exc)) from exc
+    raise ConfigError(trigger_text) from None

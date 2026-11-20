@@ -51,6 +51,12 @@ class StoreStub:
         if self.set_error is not None and not ks.on:
             raise self.set_error
 
+    def open_stops(self):  # E6: a reset reads the open stops first, then clears exactly those ids
+        return []
+
+    def clear_stops(self, by, stop_ids):
+        self.set_kill_switch(KillSwitch(on=False, by=by))
+
     def get_kill_switch(self):
         self.reads += 1
         if isinstance(self.read, BaseException):
@@ -116,6 +122,8 @@ RESET_ROWS = {
     "kill_switch_clears": "SELECT, INSERT",
     "audit_entries": "SELECT, INSERT",
     "audit_checkpoints": "SELECT",
+    "kill_switch_resets": "SELECT, INSERT",  # 0009: the reset's own append-only record
+    "kill_switch_watermark": "SELECT, INSERT, UPDATE",  # 0009: written by the reset only
 }
 
 
@@ -132,7 +140,7 @@ def test_u4_the_real_migrations_and_the_grant_map_agree():
     ]
 
 
-def test_u4_only_the_five_rows_of_the_ticket_give_the_reset_role_anything():
+def test_u4_only_the_seven_rows_of_the_ticket_give_the_reset_role_anything():
     held = {name: _privileges(g.reset) for name, g in GRANTS.items() if g.reset}
     assert held == {name: _privileges(text) for name, text in RESET_ROWS.items()}
     assert all(g.reset == "" for g in GRANTS.values() if g.kind == "sequence")
@@ -178,7 +186,10 @@ WARNING = "warning: no reset role was named, so nobody but the owner can reset t
         (["--runtime-role", "rt", "--purge-role", "pu", "--portal-role", "po"], True),
         (["--runtime-role", "rt", "--reset-role", "rs"], False),
         (["--reset-role", "rs"], False),
-        ([], False),
+        (
+            ["--no-roles"],
+            False,
+        ),  # a plain migrate with no role named is refused now (step B E5): see test_step_b_e5_no_roles
     ],
 )
 def test_migrate_warns_on_stderr_when_a_runtime_role_is_named_without_a_reset_role(
@@ -197,7 +208,7 @@ def test_migrate_warns_on_stderr_when_a_runtime_role_is_named_without_a_reset_ro
     assert (WARNING in err) is warned
     assert ("--reset-role <role>" in err) is warned
     assert "warning" not in out  # stderr only: stdout stays the list of applied migrations
-    named = dict(zip(flags[::2], flags[1::2], strict=True))
+    named = dict(zip(flags[::2], flags[1::2], strict=True)) if "--no-roles" not in flags else {}
     assert len(calls) == 1
     assert calls[0]["runtime_role"] == named.get("--runtime-role")
     assert calls[0]["reset_role"] == named.get("--reset-role")
@@ -223,7 +234,7 @@ def test_reset_exits_4_when_the_store_cannot_be_reached_at_the_clear(capsys, n):
     limits, audit = _limits(store)
     assert cli.kill_switch(limits, "reset", "user:op") == 4
     out, err = capsys.readouterr()
-    assert "kill switch NOT reset: the store is unreachable. Nothing was changed." in err
+    assert "kill switch NOT reset: the store is unreachable. The connection was lost" in err
     assert "kill switch OFF" not in out + err
     assert audit.kinds() == ["limits.reset", "limits.reset_failed"]
 
@@ -253,7 +264,8 @@ def test_reset_exits_2_and_says_still_on_when_the_read_back_is_on(capsys):
     limits, audit = _limits(store)
     assert cli.kill_switch(limits, "reset", "user:op") == 2
     out, err = capsys.readouterr()
-    assert "kill switch still ON (by 'ops:during')" in err and "Run limits reset again" in err
+    assert "kill switch still ON (set by 'ops:during' at " in err and "reset again" not in err
+    assert "Check the stop reason" in err
     assert "kill switch OFF" not in out + err
     assert audit.kinds() == ["limits.reset"] and store.reads == 1
 
@@ -263,7 +275,7 @@ def test_reset_exits_0_and_says_off_only_after_reading_off(capsys):
     limits, _ = _limits(store)
     assert cli.kill_switch(limits, "reset", "user:op") == 0
     out, err = capsys.readouterr()
-    assert out == "kill switch OFF (by user:op)\n" and err == ""
+    assert out == "kill switch OFF (by user:op; cleared 0 stop(s))\n" and err == ""
     assert store.reads == 1
 
 
@@ -282,14 +294,18 @@ def test_cli_limits_reset_exits_4_when_nothing_listens_at_the_store_address(
 
     def fake(capability, settings, *a, **k):
         if capability == "secrets":
-            return FakeSecretProvider({DSN_NAME: nowhere, RESET_REF: nowhere})
+            return FakeSecretProvider(
+                {DSN_NAME: nowhere, RESET_REF: nowhere + "&application_name=reset"}
+            )
         return real(capability, settings, *a, **k)
 
     monkeypatch.setattr(cli, "make", fake)
     argv = ["--config", str(_postgres(cfg_dir, ref)), "limits", "reset", "--by", "user:op"]
     assert cli.main(argv) == 4
     out, err = capsys.readouterr()
-    assert "kill switch NOT reset: the store is unreachable. Nothing was changed." in err
+    assert (
+        "kill switch NOT reset: the store is unreachable." in err and "Nothing was changed" in err
+    )
     assert "Traceback" not in err and "kill switch OFF" not in out + err
 
 

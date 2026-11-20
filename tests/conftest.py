@@ -106,3 +106,68 @@ def _pilot_builds_on_an_interpreter_with_other_unicode_data(request, monkeypatch
     ):
         monkeypatch.setattr(textnorm, "require_pinned_unidata", lambda *a, **k: None)
     yield
+@pytest.fixture(scope="session", autouse=True)
+def _migrate_takes_the_server_gate():
+    """Every `migrate` call of every test module holds the shared server gate (tests/pg_gate.py), whatever name the
+    module imported it under: the function is replaced in each module that holds it. Without a PostgreSQL DSN, or
+    without psycopg, nothing changes."""
+    if not os.environ.get("HADAVIN_TEST_PG_DSN"):
+        yield
+        return
+    try:
+        import sys
+
+        from hadavin_sdk.store import migrate as migrate_mod
+    except ImportError:
+        yield
+        return
+    from tests import pg_gate
+
+    original = migrate_mod.migrate
+    patched = pg_gate.gated(original)
+    mp = pytest.MonkeyPatch()
+    for mod in [m for m in list(sys.modules.values()) if m is not None]:
+        if getattr(mod, "__dict__", {}).get("migrate") is original:
+            mp.setattr(mod, "migrate", patched)
+    yield
+    mp.undo()
+
+
+@pytest.fixture(autouse=True)
+def _seed_caps_before_reserve(request):
+    """Step 6: the Postgres reserve function reads the caps from `hadavin_caps`, so a PG test that passes caps as
+    arguments needs them in the table. Test-only wrapper around `PostgresStore.reserve_spend` (never in src): it
+    writes the pair as the owner first (tests/money_caps_seed.py). `@pytest.mark.no_cap_seed` turns it off, for the
+    tests that prove the table wins or that a missing row refuses."""
+    if not os.environ.get("HADAVIN_TEST_PG_DSN") or request.node.get_closest_marker("no_cap_seed"):
+        yield
+        return
+    try:
+        from hadavin_sdk.store import postgres as postgres_mod
+    except ImportError:  # no psycopg: no Postgres test can run
+        yield
+        return
+    from tests.money_caps_seed import (
+        seeding_reserve,
+        widening_add_spend,
+        widening_expire,
+    )
+
+    mp = pytest.MonkeyPatch()
+    mp.setattr(
+        postgres_mod.PostgresStore,
+        "reserve_spend",
+        seeding_reserve(postgres_mod.PostgresStore.reserve_spend),
+    )
+    mp.setattr(
+        postgres_mod.PostgresStore,
+        "expire_spend_reservations",
+        widening_expire(postgres_mod.PostgresStore.expire_spend_reservations),
+    )
+    mp.setattr(
+        postgres_mod.PostgresStore,
+        "add_spend",
+        widening_add_spend(postgres_mod.PostgresStore.add_spend),
+    )
+    yield
+    mp.undo()

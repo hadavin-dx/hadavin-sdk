@@ -11,15 +11,17 @@ import time
 import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from decimal import ROUND_CEILING, Decimal
+from decimal import ROUND_CEILING, Decimal, localcontext
 from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
-from hadavin_sdk.llm.retry import with_retry
+from hadavin_sdk.llm.protocol import ProviderError
+from hadavin_sdk.llm.retry import REFUSED_STATUSES, with_retry
 from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.store.protocol import MAX_SPEND_DECIMALS, clean_spend_amount
 
 # The forced tool an `output_schema` becomes: its input schema IS the schema, so the API enforces the shape.
 ANSWER_TOOL = "submit_answer"
@@ -90,15 +92,16 @@ def worst_case_usd(
     size = len(system.encode("utf-8", "surrogatepass")) + _json_bytes(messages)
     if tools is not None:
         size += _json_bytes(tools)
-    size += sum(len(d) for d in documents or [])
+    size += sum(len(d.decode("utf-8", "replace").encode("utf-8")) for d in documents or [])
     if output_schema is not None:
         size += 2 * _json_bytes(output_schema)
     size += defaults.WORST_CASE_OVERHEAD_BYTES
-    one = (
-        Decimal(size) * route.input_usd_per_mtok
-        + Decimal(route.max_tokens) * route.output_usd_per_mtok
-    ) / Decimal(1_000_000)
-    return (one * requests).quantize(_WORST_PLACES, rounding=ROUND_CEILING)
+    with localcontext(defaults.money_context()):
+        one = (
+            Decimal(size) * route.input_usd_per_mtok
+            + Decimal(route.max_tokens) * route.output_usd_per_mtok
+        ) / Decimal(1_000_000)
+        return (one * requests).quantize(_WORST_PLACES, rounding=ROUND_CEILING)
 
 
 def worst_case_for(
@@ -248,6 +251,30 @@ def stop_reason(raw: str | None, calls: list[ToolCall]) -> str:
     return "tool_use" if calls else "end_turn"
 
 
+def _token_count(n: object) -> int:
+    """A provider's token count: None or 0 means "not reported" (the caller estimates); anything but an int
+    >= 0 is a ProviderError, never a negative cost. The call is then an unknown cost: its caller ends the run."""
+    if n is None:
+        return 0
+    if type(n) is not int or n < 0:
+        raise ProviderError(
+            "bad_usage: the provider reported a token count that is not an integer >= 0"
+        )
+    return n
+
+
+def round_up_cost(cost: Decimal) -> Decimal:
+    """A priced cost as a valid spend amount: finite, >= 0, < 10**9, at most 12 decimal places (rounded UP, a
+    cost is never rounded down). Anything else is a ProviderError("bad_amount"), so no bad cost is ever charged."""
+    try:
+        with localcontext(defaults.money_context()):
+            if cost.is_finite() and cost >= 0:
+                cost = cost.quantize(Decimal(1).scaleb(-MAX_SPEND_DECIMALS), rounding=ROUND_CEILING)
+        return clean_spend_amount(cost)
+    except (ArithmeticError, ValueError) as exc:
+        raise ProviderError("bad_amount: the reply cost is not a valid amount") from exc
+
+
 def reply(
     route: Any,
     *,
@@ -267,14 +294,21 @@ def reply(
     ``attempts`` is the number of requests the call took (audit). A cut-off answer keeps its cost but loses its
     tool calls: their input may be incomplete."""
     measured = tokens[0] is not None and tokens[1] is not None
-    tokens_in = tokens[0] or estimate_tokens(sent)
-    tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+    tokens_in = _token_count(tokens[0]) or estimate_tokens(sent)
+    tokens_out = _token_count(tokens[1]) or estimate_tokens(
+        text + json.dumps([c.input for c in calls])
+    )
     cost: Decimal | None = None
     if measured and prior_known:
-        cost = (
-            Decimal(tokens_in) * route.input_usd_per_mtok
-            + Decimal(tokens_out) * route.output_usd_per_mtok
-        ) / Decimal(1_000_000)
+        try:
+            with localcontext(defaults.money_context()):
+                cost = (
+                    Decimal(tokens_in) * route.input_usd_per_mtok
+                    + Decimal(tokens_out) * route.output_usd_per_mtok
+                ) / Decimal(1_000_000)
+        except ArithmeticError as exc:  # no price is ever guessed: the call is a refusal, its cost forfeits at the worst case
+            raise ProviderError("bad_amount: the reply price overflowed") from exc
+        cost = round_up_cost(cost)
     stop = stop_reason(stop, calls)
     return Reply(
         text=text,
@@ -302,6 +336,30 @@ class Answer:
     prior_known: bool = True
 
 
+def priced(routes: dict[str, Any]) -> dict[str, Any]:
+    """The routes, if every price is a plain Decimal that `config.Route` accepts (finite, not negative, at most the
+    ceiling, at most 6 decimals: that one rule is reused, not copied) and is above 0. `Route.model_construct` and a
+    hand-built route skip the config check, and a zero price makes every reply cost 0 so no spend cap could fire:
+    a real (non-fake) client refuses them at build and again before each call. Names route and field, never the
+    price."""
+    from hadavin_sdk.config import (
+        Route,
+    )  # here: config imports the backends, which import this package
+
+    for name, route in routes.items():
+        for field in ("input_usd_per_mtok", "output_usd_per_mtok"):
+            v = getattr(route, field, None)
+            try:
+                if type(v) is not Decimal:  # no float, str, bool or Decimal subclass
+                    raise ValueError("a price must be a Decimal")
+                Route._price(v)
+                if v == 0:
+                    raise ValueError("a price must be above 0")
+            except (ValueError, ArithmeticError, AttributeError) as exc:
+                raise ConfigError(f"route {name!r}: {field}: {exc}") from None
+    return routes
+
+
 class NetworkLLM:
     """The ``chat`` every network kind shares: the route, the tool list and bounded retries around one request
     and the parse of its answer, so a malformed answer is a ``ProviderError``, never a stray KeyError that
@@ -315,7 +373,7 @@ class NetworkLLM:
         max_attempts: int,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
-        self.routes, self.max_attempts, self._sleep = routes, max_attempts, sleep
+        self.routes, self.max_attempts, self._sleep = priced(routes), max_attempts, sleep
 
     def chat(
         self,
@@ -327,7 +385,8 @@ class NetworkLLM:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
-        r = self.routes[route]
+        r = self.routes[route]  # read once: the object checked is the object priced
+        priced({route: r})  # `llm.routes = ...` after build must not skip the check
         specs, forced = tools_for(tools, output_schema)
         return self._chat(r, system, turns(messages, documents), specs, forced, output_schema)
 
@@ -353,6 +412,7 @@ class NetworkLLM:
             retryable=self.retryable,
             detail=self.detail,
             http_status=self.http_status,
+            refused_statuses=self.refused_statuses,
         )
         got.attempts, got.prior_known = len(record) + 1, all(record)
         return got
@@ -363,6 +423,8 @@ class NetworkLLM:
     # Where the kind's SDK keeps the HTTP status when it is not `status_code` / `code` (feeds only the mark
     # `refused_before_response`, llm/retry.py).
     http_status: Callable[[BaseException], int | None] | None = None
+    # The statuses this kind counts as refused before any response (a kind behind routers or proxies narrows it).
+    refused_statuses: frozenset[int] = REFUSED_STATUSES
 
 
 # No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly

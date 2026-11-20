@@ -24,6 +24,10 @@ from hadavin_sdk.errors import ConfigError
 
 
 class MountedFileProvider(CachedSecrets):
+    file_backed = (
+        True  # a name is a path: dot segments and a leading or trailing "/" reach other files
+    )
+
     def __init__(
         self, root: Path, ttl_s: float = 300, clock: Callable[[], float] = time.monotonic
     ) -> None:

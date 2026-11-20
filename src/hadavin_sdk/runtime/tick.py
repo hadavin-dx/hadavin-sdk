@@ -2,7 +2,7 @@
 
 Contract (design v5 kernel, section 4):
 * ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily),
-  reprobe_sources, audit_drain, expire_reservations. Later PRs only **append** a ``TickStep``.
+  reprobe_sources, audit_drain, expire_reservations, check_caps, check_expired_holds. Later PRs only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -29,9 +29,9 @@ from typing import TYPE_CHECKING, Any
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.runmap import safe_head
-from hadavin_sdk.models import AuditEvent, RunState, TickState
+from hadavin_sdk.models import AuditEvent, RunState, TickState, audit_code
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
-from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
+from hadavin_sdk.store.protocol import MAX_EXPIRY_AGE_S, StaleState, is_connectivity_error
 
 if TYPE_CHECKING:
     from hadavin_sdk.app import App
@@ -140,7 +140,7 @@ def stuck(ctx: TickContext) -> None:
                     principal="system:tick",
                     source="tick",
                     result=S.NEEDS_PERSON.value,
-                    error_code=reason,
+                    error_code=audit_code(reason),
                 )
             )
 
@@ -263,8 +263,15 @@ def audit_drain(ctx: TickContext) -> None:
 def reservation_expire_s(app: App) -> int:
     """The age at which an open spend reservation expires: `defaults.RESERVATION_EXPIRE_S`, or the longest
     stuck-run age of any agent when that is larger, so no reservation expires while its run could still work."""
-    longest = max((stuck_after_s(app, a) for a in app.registry.agents), default=0)
-    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))
+    ages = [stuck_after_s(app, a) for a in app.registry.agents]
+    if any(math.isnan(a) for a in ages):  # max() would skip a NaN depending on its position
+        return MAX_EXPIRY_AGE_S
+    longest = max(ages, default=0)
+    if (
+        not longest < MAX_EXPIRY_AGE_S
+    ):  # infinite or too large: clamp, or the store refuses it every tick
+        return MAX_EXPIRY_AGE_S
+    return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))
 
 
 def expire_reservations(ctx: TickContext) -> None:
@@ -274,6 +281,71 @@ def expire_reservations(ctx: TickContext) -> None:
     expired = ctx.app.store.expire_spend_reservations(age)
     if expired:
         _LOG.warning("expire_reservations expired=%d older_than_s=%d", expired, age)
+
+
+class CapsDrift(RuntimeError):
+    """The caps of the registry and the caps table differ for at least one agent. The message names agent ids and
+    states ('differs' or 'missing') and never a cap value."""
+
+
+def check_caps(ctx: TickContext) -> None:
+    """Compare the registry caps of every live and draft agent with the caps table (`cap_matches`, read-only,
+    the runtime login). `Limits` shows the registry cap but the database enforces the table, so a cap lowered in
+    the registry and not synced would stay high in the table: that is made loud here (the step fails, the tick
+    exits 1) for any difference and any missing row. DIRECTION: `cap_matches` answers only same/differs/missing and
+    the runtime has no table right, so a RAISED registry cap (the safe direction) is reported like a lowered one;
+    this is a decided divergence from ticket T13 (sync after every registry edit). A database error for one agent
+    is reported as `agent:error` and the other agents are still checked. Retired agents are not checked. A store without a cap table
+    (memory) has nothing to check. The fix is `hadavin-sdk limits sync-caps` under the reset login."""
+    matches = getattr(ctx.app.store, "cap_matches", None)
+    if matches is None:
+        return
+    bad: list[str] = []
+    for agent in sorted(ctx.app.registry.agents.values(), key=lambda a: a.id):
+        if agent.status == "retired":
+            continue
+        try:
+            state = matches(agent.id, agent.budget_usd.daily, agent.budget_usd.monthly)
+        except Exception as exc:  # noqa: BLE001 - name the agent and go on: one bad id must not hide the others
+            _LOG.error("check_caps agent=%.64s error_kind=%s", agent.id, type(exc).__name__)
+            bad.append(f"{agent.id[:64]}:error")
+            continue
+        if state != "same":
+            bad.append(f"{agent.id[:64]}:{state}")
+    if bad:
+        raise CapsDrift(
+            "the caps table differs from the registry for "
+            + ", ".join(bad)
+            + ": run hadavin-sdk limits sync-caps under the reset login (until then the table caps apply)"
+        )
+
+
+class ExpiredHoldsStale(RuntimeError):
+    """Expired spend holds nobody released are still booked past the alert age. The message names agent, day, number
+    of holds and the booked amount (money, not a secret), never a hold or run id."""
+
+
+def check_expired_holds(ctx: TickContext) -> None:
+    """After a provider outage or a revoked key every failed call leaves its worst-case hold booked (the safe
+    direction) until an operator runs `release-expired`; the agents then hit their daily budget with no
+    error anywhere. This step makes it loud: it reads the expired, unreleased holds closed more than
+    `defaults.EXPIRED_HOLD_ALERT_AFTER_S` ago (`expired_holds`, read-only, through a definer function: the runtime
+    login has no right on the table) and fails (the tick exits 1) naming agent, day, count and amount. Quiet when
+    there are none; a store without the method has nothing to check."""
+    reader = getattr(ctx.app.store, "expired_holds", None)
+    if reader is None:
+        return
+    groups = reader(defaults.EXPIRED_HOLD_ALERT_AFTER_S)
+    if not groups:
+        return
+    parts = [f"{g.agent_id[:64]} {g.day.isoformat()}: {g.holds} holds, {g.usd} USD" for g in groups]
+    for part in parts:
+        _LOG.error("check_expired_holds %s", part)
+    raise ExpiredHoldsStale(
+        f"expired spend holds are still booked after {defaults.EXPIRED_HOLD_ALERT_AFTER_S} s ("
+        + "; ".join(parts)
+        + "): run hadavin-sdk release-expired (until then the agents' daily budget stays reduced)"
+    )
 
 
 def heartbeat(ctx: TickContext) -> None:
@@ -301,6 +373,8 @@ STEPS: list[TickStep] = [
     ),
     TickStep("audit_drain", 0, audit_drain),
     TickStep("expire_reservations", 0, expire_reservations),
+    TickStep("check_caps", 0, check_caps),
+    TickStep("check_expired_holds", 0, check_expired_holds),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

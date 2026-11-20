@@ -9,6 +9,8 @@ keeps host names, account ids, ARNs and key-shaped strings out of `src/`.
 
 from __future__ import annotations
 
+import decimal
+
 # --- tools (manifest and Config.evidence) ---------------------------------------------------------------------------
 MAX_TOOL_ERRORS = 3  # tool errors in one run before it ends NEEDS_PERSON tool_error
 MAX_OUTPUT_BYTES = (
@@ -140,15 +142,37 @@ TRIGGER_MAX_BODY_BYTES_CEILING = 2 * MAX_DOCUMENT_BYTES
 # The largest request body the endpoint reads when the config names none: the ceiling (524288). The document cap
 # itself would be too small, because the JSON around a full-size document adds bytes.
 TRIGGER_MAX_BODY_BYTES = TRIGGER_MAX_BODY_BYTES_CEILING
+# Floors: a typo (`max_body_bytes: 1`, `ack_wait_s: 0.0005`) must not load and then refuse or 503 every request.
+TRIGGER_MAX_BODY_BYTES_FLOOR = 1024
+TRIGGER_ACK_WAIT_S_FLOOR = 0.1
 TRIGGER_MAX_RUNNING = 4  # runs the worker's pool handles at once
 TRIGGER_MAX_RUNNING_CEILING = 64
 TRIGGER_ACK_WAIT_S = 5.0  # how long a request waits for its run row before it answers 503
 TRIGGER_ACK_WAIT_S_CEILING = 30.0
+# `trigger.conflict` audit events one sender may write per minute (the rest are counted, logged once).
+TRIGGER_CONFLICT_EVENTS_DEFAULT = 10
+TRIGGER_CONFLICT_EVENTS_MIN = 1
+TRIGGER_CONFLICT_EVENTS_MAX = 1000
 
 # --- spend reservations (limits.py, the `expire_reservations` tick step) -------------------------------------------------
 # Seconds after which an open spend reservation is marked expired (its worst case stays booked). The tick step uses
 # the larger of this and the stuck-run age, so a reservation never expires while its run could still be working.
 RESERVATION_EXPIRE_S = 3600
+# The youngest an open hold may be for `hadavin_expire_spend_reservations` to expire it (row `min_expiry_age` of
+# `hadavin_limits`). It equals the floor the only legitimate caller (the tick step) already uses, so nothing that works
+# today changes; a runtime login that calls the function directly can no longer expire a live hold at age 0 (an expired
+# hold can be released by the operator and the real cost of a late settle would be lost, review M1).
+MIN_EXPIRY_AGE_S = RESERVATION_EXPIRE_S
+# How long an expired hold may stay booked before the tick step `check_expired_holds` fails loudly (a hold that nobody
+# released keeps its worst case in the day counter, so after a provider outage or a revoked key the agents run into
+# their daily budget without any error). Six hours: past the one hour in which a late settle can still book the real
+# cost (MIN_EXPIRY_AGE_S, after which `release-expired` is allowed at all) with room for a normal operator
+# response, short enough that the same day's budget is still worth saving. Not a hard limit: only the alert uses it.
+EXPIRED_HOLD_ALERT_AFTER_S = 3600 * 6
+# How many days the booking day of `hadavin_reserve_spend` may differ from the database's UTC date (row
+# `max_day_skew` of `hadavin_limits`). One day covers a clock a few hours off and a call made across midnight; a
+# larger window would let a runtime login start a fresh day counter and month counter by naming a far day (review B3).
+MAX_RESERVE_DAY_SKEW_DAYS = 1
 # Bytes added to the input of every worst-case price of a model call (llm/common.py worst_case_usd): room for what
 # an adapter adds around the prompt (JSON framing, role names, the forced-tool wrapper). Not measured against a
 # provider (UNVERIFIED); a lead may raise it.
@@ -231,3 +255,53 @@ TEXTNORM_INJECTION_OVERLAP_CHARS = 1_024
 TEXTNORM_INJECTION_OVERLAP_MAX_CHARS = 8_192
 TEXTNORM_INJECTION_PHRASE_CHARS = 120
 TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS
+
+# Milliseconds a store call may wait for a row lock (store/postgres.py `build`, the runtime connection only; the migrate
+# connection sets none). A call that waits longer fails loudly instead of holding the process-wide store lock for ever;
+# the runtime maps it to limits_unavailable. It does not limit how long a statement itself runs.
+STORE_LOCK_TIMEOUT_MS = 10000
+
+# --- audit outbox drain (audit/chain.py reconcile) ----------------------------------------------------------------------
+# Rows of audit_outbox read and drained per reconcile (one tick): a big backlog is drained over several ticks, so a
+# tick stays short and holds a bounded number of bodies in memory.
+AUDIT_DRAIN_BATCH = 500
+# Inline flush of events parked in memory: a transient failure is retried up to this many times in one flush, with
+# a sleep of BACKOFF_S doubling each time and never above BACKOFF_MAX_S; then the event stays parked (never dropped).
+AUDIT_FLUSH_ATTEMPTS = 3
+AUDIT_FLUSH_BACKOFF_S = 0.05
+AUDIT_FLUSH_BACKOFF_MAX_S = 0.5
+# An outbox row refused for a PERMANENT reason (not 42501) on a reconcile pass is renamed to the quarantine prefix
+# when its own event.ts is at least this many seconds old (about 3 tick periods; `hadavin-sdk tick` runs ONE pass per
+# process, so the age is read from the row, not counted in memory): still readable, never deleted, skipped by reads.
+AUDIT_QUARANTINE_AFTER_S = 300
+# Upper bound of `backends.audit.drain_batch` (a 1 MB body x 5000 rows would be GBs in one page list).
+# backends/table.py imports nothing of ours and keeps this value as a literal; a test pins them equal.
+AUDIT_DRAIN_BATCH_MAX = 2000
+# SQLSTATE prefixes the audit chain counts as a PERMANENT refusal (waiting never helps): class 22 data, class 23
+# integrity, 42501 missing grant, 54000 limit exceeded. Every other database error is transient and is retried.
+AUDIT_PERMANENT_SQLSTATES = ("22", "23", "42501", "54000")
+# Prefix of the event_id an outbox row gets when the chain refuses it for ever (a poison row): the runtime role may
+# INSERT and DELETE but not UPDATE, so "marking" is insert-under-the-new-id then delete-the-old.
+AUDIT_QUARANTINE_PREFIX = "poison:"
+
+# Decimal digits used for money sums and price checks, set locally so a host's own Decimal context cannot round money.
+MONEY_DECIMAL_PRECISION = 60
+# Exponent range of the money context (the traps and rounding are pinned in `money_context`, too).
+MONEY_DECIMAL_EXPONENT_LIMIT = 999_999
+
+
+def money_context() -> decimal.Context:
+    """The ONE Decimal context every money sum, product and price check runs in (`with
+    decimal.localcontext(defaults.money_context())`). Built from nothing, not from `decimal.DefaultContext`: a host's
+    precision, rounding mode, traps or exponent range cannot change a cost. Exact up to
+    `MONEY_DECIMAL_PRECISION` digits; an overflow of that raises (InvalidOperation) and the caller fails closed."""
+    return decimal.Context(
+        prec=MONEY_DECIMAL_PRECISION,
+        rounding=decimal.ROUND_HALF_EVEN,
+        Emin=-MONEY_DECIMAL_EXPONENT_LIMIT,
+        Emax=MONEY_DECIMAL_EXPONENT_LIMIT,
+        capitals=1,
+        clamp=0,
+        flags=[],
+        traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow],
+    )

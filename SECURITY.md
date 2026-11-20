@@ -17,6 +17,18 @@ an outage are kept in memory, counted in a warning, and lost when the process ex
 refuses for such a reason is kept and fails the `audit_drain` step with a count. The eval and replay commands do not
 write to the chain.
 
+Tamper evidence of past rows is conditional. It holds only when the runtime login (1) does not own the audit tables
+and (2) has no UPDATE, DELETE or TRUNCATE on `audit_entries`. `migrate --runtime-role` enforces (2): it grants the
+runtime login SELECT and INSERT on `audit_entries` and `audit_checkpoints`, and the append-only triggers also refuse
+UPDATE, DELETE and TRUNCATE (a test proves the real attempts fail). It does not enforce (1): it does not refuse a
+runtime role that owns the audit tables (an owner can disable the triggers), so the operator must not make the runtime
+login the owner. Two runtime rights are wider than they need to be today: DELETE on `audit_outbox` (events parked
+there and not yet written can vanish; they are not yet in the chain, so nothing in the chain shows it) and INSERT on
+`audit_checkpoints` (a planted row at the head's seq makes verification raise a false alarm). Both are tracked in
+handover/core-b/tickets/A-audit-rights.md. Even then this is tamper evidence of past rows, not authenticity: a
+runtime process that is itself taken over can append new rows with valid hashes, and the chain cannot tell those from
+true ones. A signer and an anchor (checkpoints held outside the database) narrow this; they do not remove it.
+
 **Stop.** A stop takes effect at the next gate check; a call already in flight is not interrupted; the command-line
 eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
 runtime's database login can add a stop and cannot clear one; only the reset login can, and its reset is written to
@@ -28,9 +40,21 @@ cannot hide a stop; a runtime process that is itself taken over can ignore any s
 reset login can clear a stop by hand with no audit row. (3) The reset login cannot add a stop row, but it can set the
 old flag ON, which is also a stop (the safe direction). (4) A reset clears the stops visible to its clear statement:
 a stop committed after that statement began stays ON, and one committed between the audit row and that statement is
-cleared; the command reads the state back and exits 2 while it is still ON. (5) `migrate` refuses, when it applies
-grants, any other role that could clear a stop; a plain `migrate` that names no role applies and checks no grants and
-leaves old ones in place, so name all roles in ONE command.
+cleared; the command reads the state back and exits 2 while it is still ON. (5) As of the last `migrate` that named all roles (the check runs only then: a role or grant added later is not seen
+until the next run), `migrate` refuses, when it applies grants, any other role that could clear a stop through a grant on this schema's stop tables or through membership
+in a role that holds one (or in the reset role), through UPDATE, DELETE or TRUNCATE on `kill_switch`, INSERT on
+`kill_switch_clears` or TRIGGER on any of the three; below PostgreSQL 16 also every non-superuser role with CREATEROLE
+(an operator who vouches for such a role can name it with `--accept-admin-role`; the names are printed and logged, the
+CI log of that run is the record of who vouched, and a grant on the stop tables still lists the role and its members are
+still listed, as is a vouched role that is a member of a listed role; vouching for the schema owner role seeds nothing), from 16 every holder of the ADMIN option on such a role or on the reset
+role (so the login that created the reset role is listed until it revokes that option). It refuses when it cannot find the three stop tables in the schema the store
+uses. A `migrate` that names no role is refused (exit 2) unless `--no-roles` is given, which applies the schema and checks
+and grants nothing (first install only), so name all roles in ONE command. Outside the guarantee and not checked: the schema owner (it can DROP and recreate the stop tables: the
+runtime login must not own the schema), superusers and managed-database admin roles that are not superusers
+(`rds_superuser`, `azure_pg_admin`, `cloudsqlsuperuser`), SECURITY DEFINER functions or views of a privileged role
+(review them), and a role whose only path is membership in the owner role, in a superuser or in a PostgreSQL predefined
+role such as `pg_write_all_data`, and a role that may set `session_replication_role` (the append-only triggers do
+not fire under `replica`) and holds DELETE or TRUNCATE on a stop table.
 
 **Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
 (for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT
@@ -54,3 +78,11 @@ Redaction is pattern based and treats the end of a value the way the redactor's 
 - A form-encoded `;` or `&` inside a value is ambiguous: `password%3Dab%3Bzq9` can be one secret or a key and a value followed by more text. The redactor decodes it, masks what its value pattern reaches, and keeps what pass one masked whole when the decoded view would mask less; it cannot know which reading the sender meant.
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege).
+
+## Spend limits (stated limits)
+
+Exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
+
+In force on PostgreSQL after migration 0011: money is exact decimal, and the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). The caps live in the table `hadavin_caps`, written only under the reset login. The reserve and settle functions exist and are tested.
+
+The live loop's main model call reserves the worst case before the call and settles after: the reservation bounds the booked worst case per call; a reply costing more than the worst case is booked in full (an overshoot, audited); the kill switch is read before the reserve, not atomic with it. NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired. No text of this package may claim a hard spend cap beyond the main call of the live loop.

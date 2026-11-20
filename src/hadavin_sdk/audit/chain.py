@@ -28,19 +28,22 @@ import hashlib
 import inspect
 import json
 import logging
+import re
 import sqlite3
 import threading
+import time
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.audit import anchors
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import AuditEvent
-from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
+from hadavin_sdk.store.protocol import StoreUnavailable
 
 GENESIS = "0" * 64
 _LOG = logging.getLogger("hadavin_sdk.audit.chain")
@@ -61,6 +64,7 @@ CREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);
     for t in ("audit_entries", "audit_checkpoints")
     for op in ("UPDATE", "DELETE")
 )
+_TABLE_NAME = re.compile(r"\b(audit_entries|audit_checkpoints|audit_outbox)\b")
 _ALL_ROWS = (
     "SELECT seq, at, run_id, kind, body, prev, hash, event_id FROM audit_entries ORDER BY seq"
 )
@@ -73,21 +77,60 @@ def _hash(prev: str, seq: int, at: str, run_id: str, kind: str, body: str) -> st
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
 
+def _driver_names(exc: BaseException) -> set[str]:
+    return {c.__name__ for c in type(exc).__mro__ if c.__module__.startswith("psycopg")}
+
+
 def _is_outage(exc: BaseException) -> bool:
     """True only for "the database cannot be reached right now": OSError, StoreUnavailable, a psycopg
     InterfaceError, or a psycopg OperationalError with no SQLSTATE or one of class 08 (connection) or 57P
-    (operator shutdown). Any other error (a row too large for an index 54000, a statement timeout 57014, a full
-    disk 53100, a missing grant) can never succeed by waiting and is "not writable". A sqlite3 error is not an
-    outage. No driver import: psycopg errors are recognised by class name along the MRO."""
+    (operator shutdown). Used where an outage stays quiet (reading the outbox). No driver import: psycopg errors
+    are recognised by class name along the MRO."""
     if isinstance(exc, StoreUnavailable | OSError):
         return True
-    names = {c.__name__ for c in type(exc).__mro__ if c.__module__.startswith("psycopg")}
+    names = _driver_names(exc)
     if "InterfaceError" in names:
         return True
     if "OperationalError" in names:
         state = getattr(exc, "sqlstate", None)
         return state is None or state.startswith(("08", "57P"))
     return False
+
+
+def _is_permanent(exc: BaseException) -> bool:
+    """True only for the KNOWN permanent refusals: SQLSTATE class 22 (data) or 23 (integrity), 42501 (missing
+    grant), 54000 (limit exceeded), a psycopg DataError or IntegrityError without a SQLSTATE, and local data
+    errors (ValueError, TypeError, sqlite3 data, integrity and programming errors). EVERY other psycopg or OS
+    error is transient (timeouts 57014 and 55P03, 40001, 40P01, 53300, 25006, class 08, 57P): the event stays in
+    the retry set. An error of NO known kind (not a database, OS or local data error) is NOT permanent: it is
+    treated as transient and reported by name (`_is_unclassified`), so a bug in a wrapped connection never
+    quarantines a row that could be written."""
+    if isinstance(exc, StoreUnavailable | OSError):
+        return False
+    names = _driver_names(exc)
+    if names:
+        state = getattr(exc, "sqlstate", None)
+        if isinstance(state, str):
+            return state.startswith(defaults.AUDIT_PERMANENT_SQLSTATES)
+        return bool(names & {"DataError", "IntegrityError"})
+    return isinstance(exc, ValueError | TypeError | sqlite3.Error) and not isinstance(
+        exc, sqlite3.OperationalError
+    )
+
+
+def _is_unclassified(exc: BaseException) -> bool:
+    """True for an exception that is neither a known permanent refusal nor a known transient database or OS error
+    (an AttributeError or RuntimeError from a wrapped connection, say). It is retried like a transient error and
+    fails the reconcile step with its own text."""
+    if _is_permanent(exc) or _is_outage(exc) or _driver_names(exc):
+        return False
+    return not isinstance(exc, sqlite3.OperationalError)
+
+
+def _sort_ts(event: AuditEvent) -> datetime:
+    """The ordering instant of an event: a naive `ts` is read as UTC (it would otherwise raise in the comparison
+    with an aware one); only the order uses this, the event keeps its own `ts`."""
+    return event.ts if event.ts.tzinfo is not None else event.ts.replace(tzinfo=UTC)
 
 
 def _takes_meta(put: Callable) -> bool:
@@ -113,8 +156,11 @@ class _Db:
     One lock per connection: on postgres it is the store's own, so no store statement lands inside an audit
     transaction (WARDEN 2026-10-15: a read inside another thread's BEGIN ... COMMIT failed CI twice)."""
 
-    def __init__(self, conn: Any, lock: Any, pg: bool) -> None:
+    def __init__(self, conn: Any, lock: Any, pg: bool, schema: str | None = None) -> None:
         self.conn, self.lock, self.pg = conn, lock, pg
+        # Postgres only: every statement names this schema (an unqualified name is looked up in the session's
+        # temporary schema first, so a temporary table of that name would shadow the real one).
+        self.schema = schema
 
     @classmethod
     def memory(cls) -> _Db:
@@ -122,8 +168,21 @@ class _Db:
         conn.executescript(_SQLITE_SCHEMA)
         return cls(conn, threading.Lock(), pg=False)
 
+    def _t(self, sql: str) -> str:
+        """The statement with the three audit table names qualified by the schema (postgres kind only)."""
+        if not self.pg:
+            return sql
+        if (
+            not self.schema
+        ):  # a caller that gave none: resolved once (current_schema() never answers pg_temp)
+            self.schema = self.conn.execute("SELECT current_schema()").fetchone()[0]
+            if not self.schema:
+                raise ConfigError("audit chain: the search_path names no schema that exists")
+        quoted = '"' + self.schema.replace('"', '""') + '"'
+        return _TABLE_NAME.sub(lambda m: f"{quoted}.{m.group(1)}", sql.replace("?", "%s"))
+
     def _q(self, sql: str, params: tuple = ()) -> list[tuple]:
-        cur = self.conn.execute(sql.replace("?", "%s") if self.pg else sql, params)
+        cur = self.conn.execute(self._t(sql), params)
         return cur.fetchall() if cur.description else []
 
     def run(self, sql: str, params: tuple = ()) -> list[tuple]:
@@ -150,6 +209,18 @@ class _Db:
 
 
 @dataclass
+class _Pass:
+    done: int = 0
+    unreadable: int = 0
+    not_writable: int = 0
+    deferred: int = 0
+    unclassified: int = 0
+    not_deleted: int = 0
+    marked: int = 0
+    select_error: Exception | None = None
+
+
+@dataclass
 class Verification:
     rows: int = 0
     signed_through: int = 0
@@ -167,6 +238,22 @@ class Verification:
         return self.rows - self.signed_through
 
 
+# A ts is cast to timestamptz only when it is a real calendar value (a shape check alone lets 2026-02-30 through; no `?` here: the placeholder translation would rewrite it and
+# the cast then raises, which would block every batch read). Month-specific day ranges; 29 February only in a
+# leap year (divisible by 4, a century only when divisible by 400; any other such row sorts last, never an error). Hours 00-23, minutes and seconds 00-59, offset hours 00-15.
+_LEAP2 = "(0[48]|[2468][048]|[13579][26])"
+_TS_SHAPE = (
+    "^((000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-("
+    "(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|"
+    "(0[469]|11)-(0[1-9]|[12][0-9]|30)|"
+    "02-(0[1-9]|1[0-9]|2[0-8]))|"
+    f"([0-9]{{2}}{_LEAP2}|{_LEAP2}00)-02-29)"
+    "[T ]([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
+    "(\\.[0-9]{1,9}){0,1}"
+    "(Z|[+-](0[0-9]|1[0-5])(:{0,1}[0-5][0-9]){0,1}){0,1}$"
+)
+
+
 class ChainAudit:
     """The AuditSink Protocol over the chain, plus `checkpoint()` (inline every N rows, and from `tick`) and
     `verify()`. Keys returned by the writes are event ids."""
@@ -177,6 +264,9 @@ class ChainAudit:
         signer: Signer | None = None,
         anchor: Any = None,
         checkpoint_every: int = 100,
+        drain_batch: int | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self._db, self.signer, self.anchor = db, signer, anchor
         # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
@@ -187,6 +277,9 @@ class ChainAudit:
                 "audit anchor put() takes no alg/key_label: its objects will not verify offline"
             )
         self.checkpoint_every = checkpoint_every
+        self.drain_batch = drain_batch if drain_batch is not None else defaults.AUDIT_DRAIN_BATCH
+        self._sleep = sleep
+        self._clock = clock
         # Last resort when even the outbox table cannot be written (the database is down): drained by the next
         # successful write of this process and by reconcile. In-process only: lost if the process exits first.
         self._pending: list[AuditEvent] = []
@@ -194,6 +287,10 @@ class ChainAudit:
         # Parked events the database refused for a reason other than an outage: moved here by the flush so
         # they do not block the ones after them. In-process only, retried once per reconcile: lost when the process exits.
         self._unwritable: list[AuditEvent] = []
+        # True after this process wrote an outbox row: the next write drains the outbox first (ordering).
+        self._outbox_dirty = False
+        # The last flush stopped at a transient error that is not an outage (timeout, lock wait): reconcile says so.
+        self._transient_stuck = False
         # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
         # restart drops the list and `verify` then reports "never anchored", which is the truth).
         self._unanchored: dict[int, tuple[str, str]] = {}
@@ -228,6 +325,7 @@ class ChainAudit:
         return event.event_id
 
     def write_intent(self, event: AuditEvent) -> str:
+        self._drain_older_first()
         try:
             key = self._append(event)
         except DuplicateEvent:
@@ -240,6 +338,7 @@ class ChainAudit:
 
     def write_outcome(self, event: AuditEvent) -> str | None:
         """Never raises: the chain, then the outbox table, then memory (all drained by reconcile)."""
+        self._drain_older_first()
         try:
             key = self._append(event)
         except DuplicateEvent:
@@ -251,6 +350,7 @@ class ChainAudit:
                     "ON CONFLICT (event_id) DO NOTHING",
                     (event.event_id, event.model_dump_json()),
                 )
+                self._outbox_dirty = True
             except Exception:  # noqa: BLE001
                 self._pending.append(event)
             return None
@@ -258,17 +358,39 @@ class ChainAudit:
             self._flush_pending()
         return key
 
+    def _drain_older_first(self) -> None:
+        """A newer event must not overtake an older one this process parked in the outbox table: before the append,
+        one bounded drain pass puts the parked rows in the chain first. Best effort, never raises: if the older
+        rows are still refused for a transient reason the new event is written anyway (an intent must not wait on a
+        sick outbox); their own `ts` still shows the order, and the next tick reconciles by ts."""
+        if not self._outbox_dirty:
+            return
+        try:
+            self._drain_pass(retry_refused=False)
+        except Exception as exc:  # noqa: BLE001
+            _LOG.warning(
+                "audit outbox pre-drain failed (%s); retried next time", type(exc).__name__
+            )
+
     def _flush_pending(self) -> int:
-        """Write the events parked in memory, oldest first. An outage stops the flush at that event (it and the
-        ones after it stay, in order). An event the database refuses for another reason is moved to
-        `_unwritable` (kept in memory, counted in one warning) so it cannot block the events after it.
-        Returns how many were written. Never raises."""
+        """Write the events parked in memory, oldest first. A TRANSIENT failure (an outage, a timeout, a lock wait,
+        a deadlock: anything not known to be permanent) stops the flush at that event: it and the ones after it
+        stay in `_pending`, in order, and the next append or reconcile retries them. An event the database
+        refuses for a PERMANENT reason (`_is_permanent`) is moved to `_unwritable` (kept in memory, counted in one
+        warning) so it cannot block the events after it. Returns how many were written. Never raises."""
         done = aside = 0
         try:
             with self._flush_lock:
                 while self._pending:
-                    failed = self._drain(self._pending[0])
-                    if failed is not None and _is_outage(failed):
+                    failed = self._drain_with_backoff(self._pending[0])
+                    if failed is not None and not _is_permanent(failed):
+                        _LOG.warning(
+                            "audit pending flush: event stays parked after %d attempts (%s), total=%d",
+                            defaults.AUDIT_FLUSH_ATTEMPTS,
+                            type(failed).__name__,
+                            len(self._pending),
+                        )
+                        self._transient_stuck = not _is_outage(failed)
                         break
                     event = self._pending.pop(
                         0
@@ -278,6 +400,8 @@ class ChainAudit:
                     else:
                         self._unwritable.append(event)
                         aside += 1
+                else:
+                    self._transient_stuck = False
         except Exception as exc:  # noqa: BLE001 - a flush failure is never the caller's error
             _LOG.warning("audit pending flush stopped (%s); retried next time", type(exc).__name__)
         if aside:
@@ -289,65 +413,189 @@ class ChainAudit:
             )
         return done
 
-    def reconcile(self) -> int:
-        """Write every parked event (memory, then the outbox table) to the chain; returns how many. An outbox
-        row is deleted only after its event is in the chain. A row that is unreadable, that the database refuses
-        for a reason other than an outage, or whose delete failed is kept and skipped, and the call then raises
-        with the counts only. An outage (reading the outbox or appending a row) is quiet: retried next time. Any
-        other error reading the outbox (a missing grant or table) is raised."""
-        # One retry per run: events refused earlier go back in front of the queue.
-        with self._flush_lock:
-            self._pending[:0], self._unwritable = self._unwritable, []
-        done = self._flush_pending()
-        try:
-            queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
-        except Exception as exc:
-            if not is_connectivity_error(exc):
-                raise
-            return done  # the database is still down: retried next time
-        unreadable = not_writable = not_deleted = 0
-        # Events still refused after this run's retry: counted in the error.
-        in_memory = len(self._unwritable)
-        for event_id, body in queued:
-            try:
-                event = AuditEvent.model_validate_json(body)
-            except ValueError:
-                unreadable += 1
-                continue
-            if event.event_id != event_id:
-                unreadable += 1
-                continue
+    def _drain_with_backoff(self, event: AuditEvent) -> Exception | None:
+        """`_drain` with up to AUDIT_FLUSH_ATTEMPTS tries on a TRANSIENT failure, sleeping AUDIT_FLUSH_BACKOFF_S
+        doubling, capped at AUDIT_FLUSH_BACKOFF_MAX_S. A permanent failure is returned at once. Returns the last
+        failure; the caller keeps the event parked."""
+        delay = defaults.AUDIT_FLUSH_BACKOFF_S
+        failed = None
+        for attempt in range(defaults.AUDIT_FLUSH_ATTEMPTS):
             failed = self._drain(event)
-            if failed is not None:
-                # An outage: stays queued quietly. Anything else (a missing grant, a rejected row) is counted.
-                not_writable += not _is_outage(failed)
-                continue
-            try:
-                self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
-            except Exception:  # noqa: BLE001 - the event is in the chain; the next drain dedupes and deletes
-                not_deleted += 1
-                continue
-            done += 1
+            if failed is None or _is_permanent(failed):
+                return failed
+            if attempt + 1 < defaults.AUDIT_FLUSH_ATTEMPTS:
+                self._sleep(min(delay, defaults.AUDIT_FLUSH_BACKOFF_MAX_S))
+                delay *= 2
+        return failed
+
+    def reconcile(self) -> int:
+        """Write parked events to the chain; returns how many. Memory events and the outbox rows of this tick
+        (at most `defaults.AUDIT_DRAIN_BATCH`, oldest first) are merged into ONE order: `event.ts`, then
+        `event_id`. An outbox row is deleted only after its event is in the chain. The call raises with counts only
+        when something needs the operator: an unreadable row; a poison row (a PERMANENT refusal, see
+        `_is_permanent`), which is moved to the quarantine id prefix and counted every tick until an operator
+        removes it (handover tickets/A-audit-drain.md); a row or memory event still refused for a transient
+        reason that is not an outage (timeout, lock wait); a failed delete. A plain outage (database unreachable)
+        is quiet: retried next time. Reading the outbox fails the step for every error except an outage."""
+        r = self._drain_pass(tick=True)
+        if r.select_error is not None:
+            if _is_outage(r.select_error):
+                return r.done  # the database is still down: retried next time
+            raise RuntimeError(f"audit outbox: read failed ({type(r.select_error).__name__})")
+        earlier = 0
+        with contextlib.suppress(Exception):  # the count is a report, not a gate
+            total = self._db.run(
+                "SELECT COUNT(*) FROM audit_outbox WHERE event_id LIKE ?",
+                (defaults.AUDIT_QUARANTINE_PREFIX + "%",),
+            )
+            earlier = max(0, int(total[0][0]) - r.marked)
+        in_memory = len(self._unwritable) + (len(self._pending) if self._transient_stuck else 0)
+        quarantine_text = (
+            f"{earlier} poison rows quarantined earlier (event_id prefix "
+            f"{defaults.AUDIT_QUARANTINE_PREFIX!r}; operator removal: tickets/A-audit-drain.md)"
+        )
+        deferred_text = f"{r.deferred} rows refused for a transient error, retried next tick"
         problems = [
             text
             for count, text in (
-                (unreadable, f"{unreadable} unreadable rows kept"),
-                (not_writable, f"{not_writable} rows not writable"),
-                (not_deleted, f"{not_deleted} rows not deleted"),
+                (r.unreadable, f"{r.unreadable} unreadable rows kept"),
+                (r.not_writable, f"{r.not_writable} rows not writable"),
+                (earlier, quarantine_text),
+                (r.deferred, deferred_text),
+                (
+                    r.unclassified,
+                    f"{r.unclassified} items refused for an unclassified error (retried, not quarantined)",
+                ),
+                (r.not_deleted, f"{r.not_deleted} rows not deleted"),
                 (in_memory, f"{in_memory} events not writable in memory"),
             )
             if count
         ]
         if problems:
             _LOG.warning(
-                "audit outbox: drained=%d unreadable=%d not_writable=%d not_deleted=%d (kept)",
-                done,
-                unreadable,
-                not_writable,
-                not_deleted,
+                "audit outbox: drained=%d unreadable=%d not_writable=%d not_deleted=%d (kept) "
+                "quarantined_now=%d quarantined_earlier=%d deferred=%d",
+                r.done,
+                r.unreadable,
+                r.not_writable,
+                r.not_deleted,
+                r.marked,
+                earlier,
+                r.deferred,
             )
             raise RuntimeError("audit outbox: " + ", ".join(problems))
-        return done
+        return r.done
+
+    def _outbox_sql(self) -> str:
+        """The read of one batch, oldest `ts` first (the body is text and `ts` is its ISO timestamp: a row whose body
+        is not JSON has no `ts` and sorts last, it is never a reason for the read to fail)."""
+        # The text ts is normalised before it sorts: a fraction-less ts sorts after a fractional one as text, and
+        # an offset other than Z sorts by its wall clock. PostgreSQL casts to timestamptz (only a well-formed ISO
+        # value is cast: a malformed one is NULL, never an error; a ts without an offset is read as UTC, the session
+        # time zone is pinned); SQLite uses julianday, which reads offsets and fractions and returns NULL otherwise.
+        ts = (
+            'CASE WHEN substring(body from \'"ts":"([^"]*)"\') ~ '
+            f"'{_TS_SHAPE}' "
+            'THEN (substring(body from \'"ts":"([^"]*)"\'))::timestamptz END'
+            if self._db.pg
+            else "CASE WHEN json_valid(body) THEN julianday(json_extract(body, '$.ts')) END"
+        )
+        return (
+            "SELECT event_id, body FROM audit_outbox WHERE event_id NOT LIKE ? "  # noqa: S608 - ts is a constant
+            f"ORDER BY ({ts} IS NULL), {ts}, event_id LIMIT ? OFFSET ?"
+        )
+
+    def _drain_pass(self, retry_refused: bool = True, tick: bool = False) -> _Pass:
+        """One bounded drain pass: parked memory events and one batch of outbox rows, merged and sorted by
+        (ts, event_id). Holds the flush lock. Never raises: a failed read is returned in `select_error`."""
+        r = _Pass()
+        with self._flush_lock:
+            # Events refused earlier go back in front of the queue: one retry per pass.
+            if retry_refused:
+                self._pending[:0], self._unwritable = self._unwritable, []
+            items: list[tuple[AuditEvent, str | None]] = [(e, None) for e in self._pending]
+            # Rows that are not readable never use a slot of the batch: the read pages on until it holds
+            # `AUDIT_DRAIN_BATCH` readable rows or the table is exhausted.
+            seen = good = 0
+            while good < self.drain_batch:
+                want = self.drain_batch - good
+                try:
+                    page = self._db.run(
+                        self._outbox_sql(), (defaults.AUDIT_QUARANTINE_PREFIX + "%", want, seen)
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    r.select_error = exc
+                    break
+                seen += len(page)
+                for event_id, body in page:
+                    try:
+                        event = AuditEvent.model_validate_json(body)
+                    except ValueError:
+                        r.unreadable += 1
+                        continue
+                    if event.event_id != event_id:
+                        r.unreadable += 1
+                        continue
+                    items.append((event, event_id))
+                    good += 1
+                if len(page) < want:
+                    break
+            items.sort(key=lambda it: (_sort_ts(it[0]), it[0].event_id))
+            for event, row_id in items:
+                if self._drain_item(event, row_id, r, tick):
+                    break  # a transient refusal stops the pass: nothing newer is written past it
+            if r.select_error is None and not seen:
+                self._outbox_dirty = False
+        return r
+
+    def _drain_item(
+        self, event: AuditEvent, row_id: str | None, r: _Pass, tick: bool = False
+    ) -> bool:
+        """Drain one item. True when the pass must stop here (a transient refusal)."""
+        failed = self._drain(event)
+        if failed is None:
+            if row_id is None:
+                self._pending.remove(event)
+            else:
+                try:
+                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
+                except Exception:  # noqa: BLE001 - in the chain; the next drain dedupes and deletes
+                    r.not_deleted += 1
+                    return False
+            r.done += 1
+            return False
+        if _is_permanent(failed):
+            if row_id is None:
+                self._pending.remove(event)
+                self._unwritable.append(event)
+            else:
+                r.not_writable += 1
+                # A missing grant (42501) is mended by the operator and then every row drains: no quarantine.
+                if getattr(failed, "sqlstate", None) != "42501" and tick:
+                    # Age from the row's own ts (stable across processes: a tick is one process); naive = UTC.
+                    age = (self._clock() - _sort_ts(event)).total_seconds()
+                    if age >= defaults.AUDIT_QUARANTINE_AFTER_S:
+                        r.marked += self._quarantine(event, row_id)
+            return False
+        if row_id is None:
+            self._transient_stuck = not _is_outage(failed)
+        elif not _is_outage(failed):
+            r.deferred += 1
+        if _is_unclassified(failed):
+            r.unclassified += 1
+        return True
+
+    def _quarantine(self, event: AuditEvent, row_id: str) -> int:
+        """Mark a poison row: kept in the outbox under the quarantine prefix, skipped by every later read."""
+        try:
+            self._db.run(
+                "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) ON CONFLICT (event_id) DO NOTHING",
+                (defaults.AUDIT_QUARANTINE_PREFIX + row_id, event.model_dump_json()),
+            )
+            self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
+        except Exception:  # noqa: BLE001
+            return 0
+        return 1
 
     def _drain(self, event: AuditEvent) -> Exception | None:
         """Append one parked event. None when it is in the chain (now or already); else the exception, for the
@@ -630,7 +878,7 @@ def build(settings, deps) -> ChainAudit:
         db = _Db.memory()
     elif hasattr(store, "_db") and hasattr(store, "_lock"):
         # The postgres store's connection and lock (one connection per process; schema from `migrate`).
-        db = _Db(store._db, store._lock, pg=True)
+        db = _Db(store._db, store._lock, pg=True, schema=getattr(store, "_schema", None))
         try:
             db.run("SELECT alg, key_label FROM audit_checkpoints LIMIT 1")
         except Exception as exc:  # noqa: BLE001 - any driver error here means "not migrated or unreachable"
@@ -650,4 +898,10 @@ def build(settings, deps) -> ChainAudit:
     if deps.anchor is not None and deps.signer is None:
         raise ConfigError("audit chain: an anchor needs a signer (backends.signer)")
     # The anchor is its own capability (backends.anchor), built before the audit and handed in through Deps.
-    return ChainAudit(db, deps.signer, deps.anchor, settings.checkpoint_every)
+    return ChainAudit(
+        db,
+        deps.signer,
+        deps.anchor,
+        settings.checkpoint_every,
+        getattr(settings, "drain_batch", None),
+    )

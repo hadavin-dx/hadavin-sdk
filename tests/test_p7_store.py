@@ -152,8 +152,15 @@ def test_append_only_tables_get_no_update(fresh_dsn):
             for table in ("approval_decisions", "dead_letters", "gate_decisions"):
                 assert can(table, "INSERT") and can(table, "SELECT")
                 assert not can(table, "UPDATE") and not can(table, "DELETE"), table
-            for table in ("runs", "approval_requests", "spend_month", "tick_state"):
+            for table in ("runs", "approval_requests", "tick_state"):
                 assert can(table, "UPDATE") and not can(table, "DELETE"), table
+            # Money (F-money-definer step 4): the counters are written by definer functions only.
+            for table in ("spend", "spend_month"):
+                assert can(table, "SELECT"), table
+                assert not any(can(table, p) for p in ("INSERT", "UPDATE", "DELETE")), table
+            assert not any(
+                can("spend_reservations", p) for p in ("SELECT", "INSERT", "UPDATE", "DELETE")
+            )
             # Stop state (0006): the runtime may add a stop and read; nothing it holds turns the switch off.
             assert can("kill_switch_stops", "INSERT") and can("kill_switch_stops", "SELECT")
             for table, privs in (
@@ -237,7 +244,7 @@ def test_the_stop_tables_are_append_only_for_the_owner_too(store):
 
 
 def test_month_spend_is_exact_under_concurrent_writers(fresh_dsn):
-    migrate(fresh_dsn)
+    migrate(fresh_dsn, no_roles=True)
     settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
     stores = [make("store", settings, FakeSecretProvider({"pg-dsn": fresh_dsn})) for _ in range(4)]
     days = [date(2026, 3, d) for d in (1, 2, 3, 4)]

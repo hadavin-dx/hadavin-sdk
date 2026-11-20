@@ -46,12 +46,17 @@ SELF = "tests/reserve_mutants.py"
 CONTRACT = "tests/contracts/test_store_spend.py"
 T1 = "tests/contracts/test_t1_reserve_cap.py"
 PGT = "tests/test_spend_reservations_pg.py"
+SCHEMAQ = "tests/test_store_schema_qualified_pg.py"
 MEM = "src/hadavin_sdk/store/memory.py"
 PG = "src/hadavin_sdk/store/postgres.py"
 PROTO = "src/hadavin_sdk/store/protocol.py"
 LIM = "src/hadavin_sdk/limits.py"
 TICK = "src/hadavin_sdk/runtime/tick.py"
+MODELS = "src/hadavin_sdk/models.py"
 MIG = "src/hadavin_sdk/store/migrate.py"
+SQL11 = (
+    "src/hadavin_sdk/store/migrations/0011_money_definer.sql"  # the SQL of the bookings (step 3)
+)
 
 if (
     __name__ != "__main__"
@@ -87,6 +92,10 @@ MONTH = "test_the_month_cap_binds_when_it_is_the_lower_one"
 ZERO_BUDGET = "test_a_budget_of_zero_refuses_even_an_amount_of_zero"
 REFUSED = "test_a_refused_reserve_leaves_the_totals_and_the_rows_unchanged"
 SETTLE = "test_settle_lower_equal_and_higher_books_the_actual_amount"
+DUP_ID = "test_a_duplicate_id_is_stale_state_and_is_booked_once"
+SCHEMAQ_TEST = (
+    "test_the_money_function_calls_name_their_schema_so_a_temporary_function_never_answers"
+)
 TWICE = "test_settle_twice_the_first_wins_and_the_second_changes_nothing"
 NEXT_DAY = "test_a_settle_on_the_next_day_moves_only_the_day_and_month_of_the_reserve"
 CLOCK = "test_a_settle_when_the_clock_says_the_next_day_moves_only_the_reserved_day"
@@ -133,8 +142,8 @@ def mutant(name, file, old, new, killer, expect, crash=""):
 
 
 # --- M: run by the mutation runner, no database ----------------------------------------------------------------------
-M_DAY = "            if not (booked < day_cap and booked + usd <= day_cap):"
-M_MONTH = "            if not (month < month_cap and month + usd <= month_cap):"
+M_DAY = "            if not day_ok:"
+M_MONTH = "            if not month_ok:"
 M_BOOK = "            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd"
 M_BOOKED = '            booked = max(actual_usd, row.reserved_usd) if row.status == "expired" else actual_usd'
 M_EXPIRE_LOOP = (
@@ -180,19 +189,19 @@ M = [
         M_BOOKED.replace("else actual_usd", "else min(actual_usd, row.reserved_usd)"),
         SETTLE + "[1.75]", "assert ('settled', D"),
     mutant("M19 memory: purge deletes open rows", MEM,
-        'if r.status != "open" and r.closed_at is not None and r.closed_at < before',
-        'if r.status == "open" or (r.closed_at is not None and r.closed_at < before)',
+        'if r.status == "settled" and r.closed_at is not None and r.closed_at < before',
+        'if r.status == "open" or (r.status == "settled" and r.closed_at is not None and r.closed_at < before)',
         PURGE_OPEN, "assert 2 == 1"),
     mutant("M20 memory: the run cost update is removed", MEM,
-        "            if run is not None:  # a missing run row moves only the counters", "            if False:",
+        "                    if run is not None\n                    else None", "                    if False\n                    else None",
         RUN_COST, "Decimal('0.40')"),
     mutant("M21 memory: the booked amount ignores the prior status", MEM, M_BOOKED,
         "            booked = actual_usd",
         LATE_LOW + "[0.40]", "assert ('settled', D"),
-    mutant("M9b amount helper: the exponent bounds are removed", PROTO,
+    mutant("M9b amount helper: the exponent bounds are removed", MODELS,
         "        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT\n", "",
         HELPER + "[huge_exponent_zero]", NOT_RAISED),
-    mutant("M9c amount helper: a Decimal subclass is accepted", PROTO,
+    mutant("M9c amount helper: a Decimal subclass is accepted", MODELS,
         "type(usd) is not Decimal", "not isinstance(usd, Decimal)",
         HELPER_TYPE, NOT_RAISED),
     mutant("M15 Limits.reserve returns an id after a store error", LIM,
@@ -205,8 +214,11 @@ M = [
         '            raise SpendRefused("bad_amount") from None', "            pass",
         BAD_AMOUNT + "[bool]", "limits_unavailable"),
     mutant("M16c Limits.reserve looks the agent up after the stop state", LIM,
-        "        budget = self.registry.agents[agent_id].budget_usd\n        try:\n",
-        "        try:\n            budget = self.registry.agents[agent_id].budget_usd\n",
+        "        try:\n            budget = self.registry.agents[agent_id].budget_usd\n"
+        "        except TypeError:  # an unhashable agent id\n            raise KeyError(agent_id) from None\n"
+        "        try:\n            if self.store.get_kill_switch().on:\n                raise SpendRefused(\"kill_switch\")\n",
+        "        try:\n            if self.store.get_kill_switch().on:\n                raise SpendRefused(\"kill_switch\")\n"
+        "            budget = self.registry.agents[agent_id].budget_usd\n",
         UNKNOWN, "limits_unavailable", crash="SpendRefused"),
     mutant("M16d Limits.settle audits a replay again", LIM,
         "        if applied and over > 0:", "        if over > 0:",
@@ -222,16 +234,16 @@ M = [
         '    TickStep("expire_reservations", 0, expire_reservations),\n', "",
         LAST_STEP, "['sweep', 'reconcile'"),
     mutant("M18b the expiry age takes the smallest stuck-run age", TICK,
-        "longest = max((stuck_after_s(app, a) for a in app.registry.agents), default=0)",
-        "longest = min((stuck_after_s(app, a) for a in app.registry.agents), default=0)",
+        "longest = max(ages, default=0)",
+        "longest = min(ages, default=0)",
         TWO_AGENTS, "assert 3600 == 24060"),
     mutant("M18c the expiry age is the bare default", TICK,
-        "    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))",
+        "    return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))",
         "    return defaults.RESERVATION_EXPIRE_S",
         TWO_AGENTS, "assert 3600 == 24060"),
     mutant("M18d the expiry age may fall below the default", TICK,
-        "    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))",
-        "    return math.ceil(longest) or defaults.RESERVATION_EXPIRE_S",
+        "    return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))",
+        "    return min(MAX_EXPIRY_AGE_S, math.ceil(longest) or defaults.RESERVATION_EXPIRE_S)",
         FLOOR, "== 3600"),
     mutant("M18e the purge line is removed from the evidence purge", TICK,
         "    reservations = store.purge_spend_reservations(\n"
@@ -250,109 +262,104 @@ class Hand:
     new: str
     node: str  # the pytest node id of the killer
     expect: str  # must be in the killer's output
+    more: tuple[
+        tuple[str, str], ...
+    ] = ()  # further (old, new) edits of the same file, for a guard that is held twice
 
 
-S_DAY = (
-    'AND day = %(day)s "\n'
-    '                    "AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd"'
-)
-S_MONTH = '"AND month = %(month)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd"'
+S_DAY = "WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < v_day_cap AND s.usd + p_usd <= v_day_cap;"
+S_MONTH = "WHERE m.agent_id = p_agent AND m.month = v_month AND m.usd < v_month_cap AND m.usd + p_usd <= v_month_cap;"
 S_DAY_BLOCK = (
-    "                booked = self._exec(\n"
-    '                    "UPDATE spend SET usd = usd + %(amt)s WHERE agent_id = %(agent)s AND day = %(day)s "\n'
-    '                    "AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd",\n'
-    '                    {"amt": usd, "agent": agent_id, "day": day, "cap": day_cap},\n'
-    "                ).fetchone()\n"
+    f"    UPDATE spend s SET usd = s.usd + p_usd\n     {S_DAY}\n"  # noqa: S608
+    "    IF NOT FOUND THEN\n        RAISE EXCEPTION 'day' USING ERRCODE = 'HD001';\n    END IF;\n"
 )
 S_CHECK_THEN_BOOK = (
-    "                booked = self._exec(\n"
-    '                    "SELECT usd FROM spend WHERE agent_id = %(agent)s AND day = %(day)s "\n'
-    '                    "AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s",\n'
-    '                    {"amt": usd, "agent": agent_id, "day": day, "cap": day_cap},\n'
-    "                ).fetchone()\n"
-    "                self._exec(\n"
-    '                    "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",\n'
-    "                    (usd, agent_id, day),\n"
-    "                )\n"
+    f"    PERFORM 1 FROM spend s {S_DAY}\n"  # noqa: S608
+    "    IF NOT FOUND THEN\n        RAISE EXCEPTION 'day' USING ERRCODE = 'HD001';\n    END IF;\n"
+    "    UPDATE spend s SET usd = s.usd + p_usd WHERE s.agent_id = p_agent AND s.day = p_day;\n"
 )
-S_OPEN_TX = (
-    "        try:\n            with self._lock, self._db.transaction():\n                self._exec(\n"
-    '                    "INSERT INTO spend_reservations'
-)
-S_DELTA = '            delta = row["settled_usd"] - row["reserved_usd"]'
-S_AGE = '"AND created_at <= clock_timestamp() - make_interval(secs => %s::double precision)"'
+S_DELTA = "    v_delta := rec.settled_usd - rec.reserved_usd;"
+S_AGE = "AND r.created_at <= pg_catalog.clock_timestamp() - pg_catalog.make_interval(secs => p_age_s::double precision);"
+S_CLAIM_STATUS = " AND r.status IN ('open', 'expired')\n       FOR UPDATE;"
+S_DAYROW = "WHERE s.agent_id = rec.agent_id AND s.day = rec.day AND s.usd + v_delta >= 0;"
+S_MONTHROW = "m.month = pg_catalog.date_trunc('month', rec.day)::date"
+S_PIN = '    ("default_transaction_isolation", "\'read committed\'"),\n'
 S_ISOLATION = '    conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")\n'
 TOTALS = "assert _totals(store) == (D(actual), D(actual))"
 PGP = "[postgres]"
 
 HAND = [
-    Hand("H1 the day cap clause is removed", PG, S_DAY, 'AND day = %(day)s "\n                    "RETURNING usd"',
+    Hand("H1 the day cap clause is removed", SQL11, S_DAY, "WHERE s.agent_id = p_agent AND s.day = p_day;",
         f"{T1}::{T1_CAP3}", "{'granted': 50}"),
-    Hand("H2 the month cap clause is removed", PG, S_MONTH, '"AND month = %(month)s RETURNING usd"',
+    Hand("H2 the month cap clause is removed", SQL11, S_MONTH, "WHERE m.agent_id = p_agent AND m.month = v_month;",
         f"{T1}::{T1_MONTH}", "{'granted': 50}"),
-    Hand("H3 <= becomes < on the day cap", PG, S_DAY, S_DAY.replace("<= %(cap)s", "< %(cap)s"),
+    Hand("H3 <= becomes < on the day cap", SQL11, S_DAY, S_DAY.replace("<= v_day_cap", "< v_day_cap"),
         f"{CONTRACT}::{EXACT}{PGP}", "SpendCapExceeded: day cap reached"),
-    Hand("H3 <= becomes < on the month cap", PG, S_MONTH, S_MONTH.replace("<= %(cap)s", "< %(cap)s"),
+    Hand("H3 <= becomes < on the month cap", SQL11, S_MONTH, S_MONTH.replace("<= v_month_cap", "< v_month_cap"),
         f"{CONTRACT}::{MONTH}{PGP}", "SpendCapExceeded: month cap reached"),
-    Hand("H4 usd < cap is removed on the day", PG, S_DAY, S_DAY.replace("AND usd < %(cap)s ", ""),
+    Hand("H4 usd < cap is removed on the day", SQL11, S_DAY, S_DAY.replace("AND s.usd < v_day_cap ", ""),
         f"{CONTRACT}::{ZERO_BUDGET}{PGP}", NOT_RAISED),
-    Hand("H4 usd < cap is removed on the month", PG, S_MONTH, S_MONTH.replace("AND usd < %(cap)s ", ""),
+    Hand("H4 usd < cap is removed on the month", SQL11, S_MONTH, S_MONTH.replace("AND m.usd < v_month_cap ", ""),
         f"{CONTRACT}::{ZERO_BUDGET}{PGP}", NOT_RAISED),
-    Hand("H5 the cap is checked by a SELECT, then an unconditional UPDATE books", PG, S_DAY_BLOCK, S_CHECK_THEN_BOOK,
+    Hand("H5 the cap is checked by a SELECT, then an unconditional UPDATE books", SQL11, S_DAY_BLOCK, S_CHECK_THEN_BOOK,
         f"{T1}::{T1_CAP3}", "'granted': "),
-    Hand("H6 the reservation insert is outside the transaction", PG, S_OPEN_TX,
-        S_OPEN_TX.replace("with self._lock, self._db.transaction():", "with self._lock:"),
-        f"{CONTRACT}::{REFUSED}{PGP}", "assert _rows(store) == rows"),
-    Hand("H6 (crash form) a fault at the month UPDATE leaves the row and the day booking", PG, S_OPEN_TX,
-        S_OPEN_TX.replace("with self._lock, self._db.transaction():", "with self._lock:"),
-        f"{PGT}::{C3}[raised]", "assert _table(w) == {kept"),
-    Hand("H7 the settle claim has no status test", PG, "\"AND status IN ('open', 'expired') FOR UPDATE) \"",
-        '"FOR UPDATE) "',
-        f"{CONTRACT}::{TWICE}[postgres-0.40]", "assert applied_again is False"),
-    Hand("H8 the delta sign is flipped", PG, S_DELTA, '            delta = row["reserved_usd"] - row["settled_usd"]',
+    Hand("H7 the settle claim has no status test", SQL11, S_CLAIM_STATUS, "\n       FOR UPDATE;",
+        f"{CONTRACT}::{TWICE}[postgres-0.40]", "spend counter row missing"),
+    Hand("H8 the delta sign is flipped", SQL11, S_DELTA, "    v_delta := rec.reserved_usd - rec.settled_usd;",
         f"{CONTRACT}::{SETTLE}[postgres-0]", TOTALS),
-    Hand("H9 settle books on today's day", PG, '                        row["day"],\n',
-        "                        now().date(),\n",
-        f"{CONTRACT}::{CLOCK}[postgres-0.40]", TOTALS),
-    Hand("H9 (no row for today) settle books on today's day", PG, '                        row["day"],\n',
-        "                        now().date(),\n",
+    Hand("H9 settle books on today's day", SQL11, S_DAYROW, "WHERE s.agent_id = rec.agent_id AND s.day = current_date AND s.usd + v_delta >= 0;",
+        f"{CONTRACT}::{CLOCK}[postgres-0.40]", "spend counter row missing"),
+    Hand("H9 (no row for today) settle books on today's day", SQL11, S_DAYROW,
+        "WHERE s.agent_id = rec.agent_id AND s.day = current_date AND s.usd + v_delta >= 0;",
         f"{CONTRACT}::{NEXT_DAY}[postgres-0.40]", "spend counter row missing"),
-    Hand("H10 the month key is taken from today", PG, '                        row["day"].replace(day=1),\n',
-        "                        now().date().replace(day=1),\n",
-        f"{CONTRACT}::{CLOCK}[postgres-0.40]", TOTALS),
-    Hand("H11 expire sets settled_usd to 0", PG, "status = 'expired', settled_usd = reserved_usd, ",
-        "status = 'expired', settled_usd = 0, ",
+    Hand("H10 the month key is taken from today", SQL11, S_MONTHROW,
+        "m.month = pg_catalog.date_trunc('month', current_date)::date",
+        f"{CONTRACT}::{CLOCK}[postgres-0.40]", "spend counter row missing"),
+    Hand("H11 expire sets settled_usd to 0", SQL11, "SET status = 'expired', settled_usd = r.reserved_usd,",
+        "SET status = 'expired', settled_usd = 0,",
         f"{CONTRACT}::{EXPIRE_ZERO}{PGP}", "CheckViolation"),
-    Hand("H12 expire ignores the age", PG, S_AGE, S_AGE.replace('"AND created_at', '"AND (TRUE OR created_at')[:-1] + ')"',
+    Hand("H12 expire ignores the age", SQL11, S_AGE, "AND TRUE;",
         f"{CONTRACT}::{YOUNG}{PGP}", "assert 1 == 0"),
-    Hand("H13 the counters go down after expiry", PG, S_DELTA, '            delta = actual_usd - row["reserved_usd"]',
+    Hand("H13 the counters go down after expiry", SQL11, S_DELTA, "    v_delta := p_actual - rec.reserved_usd;",
         f"{CONTRACT}::{LATE_LOW}[postgres-0.40]", 'assert _totals(store) == (D("1.00"), D("1.00"))'),
-    Hand("H14 the actual amount is clamped to the reserved one", PG, "ELSE %(a)s::numeric END",
-        "ELSE LEAST(%(a)s::numeric, r.reserved_usd) END",
+    Hand("H14 the actual amount is clamped to the reserved one", SQL11, "ELSE p_actual END",
+        "ELSE LEAST(p_actual, r.reserved_usd) END",
         f"{CONTRACT}::{SETTLE}[postgres-1.75]", "Decimal('1.75')"),
-    Hand("H17 the runtime grant gains DELETE", MIG, '"spend_reservations": Grant("table", _RW, purge="DELETE"',
-        '"spend_reservations": Grant("table", _RW + ", DELETE", purge="DELETE"',
-        f"{PGT}::{NO_DELETE}", NOT_RAISED),
-    Hand("H19 purge deletes open rows", PG, "WHERE status <> 'open' AND closed_at < %s",
-        "WHERE status = 'open' OR closed_at < %s",
+    Hand("H17 the runtime grant gains DELETE", MIG, '"spend_reservations": Grant("table", ""),',
+        '"spend_reservations": Grant("table", "DELETE"),',
+        f"{PGT}::{NO_DELETE}", "can DELETE spend_reservations"),
+    Hand("H19 purge deletes open rows", SQL11, "WHERE r.status = 'settled' AND r.closed_at < p_before;",
+        "WHERE r.status = 'open' OR r.closed_at < p_before;",
         f"{CONTRACT}::{PURGE_OPEN}{PGP}", "assert 2 == 1"),
-    Hand("H20 the runs update is removed", PG, '            if row["run_id"] is not None:  # the real',
-        "            if False:  # the real",
+    Hand("H20 the runs update is removed", SQL11, "    IF rec.run_id IS NOT NULL THEN  -- the real",
+        "    IF FALSE THEN  -- the real",
         f"{CONTRACT}::{RUN_COST}{PGP}", 'assert _cost(store, run_id) == D("0.40")'),
-    Hand("H21 the booked amount ignores the prior status", PG, "CASE WHEN old.status = 'expired' \"",
-        'CASE WHEN FALSE "',
+    Hand("H21 the booked amount ignores the prior status", SQL11, "CASE WHEN v_was = 'expired' THEN",
+        "CASE WHEN FALSE THEN",
         f"{PGT}::{WAITED}[0.25-1.00]", "Decimal('0.25')"),
-    Hand("H21 (contract form) the booked amount ignores the prior status", PG, "CASE WHEN old.status = 'expired' \"",
-        'CASE WHEN FALSE "',
+    Hand("H21 (contract form) the booked amount ignores the prior status", SQL11, "CASE WHEN v_was = 'expired' THEN",
+        "CASE WHEN FALSE THEN",
         f"{CONTRACT}::{LATE_LOW}[postgres-0.40]", "Decimal('0.40')"),
-    Hand("H21 (race form) the booked amount ignores the prior status", PG, "CASE WHEN old.status = 'expired' \"",
-        'CASE WHEN FALSE "',
+    Hand("H21 (race form) the booked amount ignores the prior status", SQL11, "CASE WHEN v_was = 'expired' THEN",
+        "CASE WHEN FALSE THEN",
         f"{PGT}::{RACE}[0.25]", "expired=1"),
-    Hand("H21b the claim reads the status without the row lock", PG,
-        "\"AND status IN ('open', 'expired') FOR UPDATE) \"", "\"AND status IN ('open', 'expired')) \"",
+    Hand("H21b the claim reads the status without the row lock", SQL11, S_CLAIM_STATUS,
+        " AND r.status IN ('open', 'expired');",
         f"{PGT}::{WAITED}[0.25-1.00]", "Decimal('0.25')"),
+    # connect() holds the isolation twice (SET SESSION CHARACTERISTICS, and the pin `default_transaction_isolation`
+    # read back by SHOW): either alone is redundant, so the mutant removes both
     Hand("H22 the session isolation SET is removed", PG, S_ISOLATION, "",
-        f"{T1}::{T1_RR}", "SerializationFailure"),
+        f"{T1}::{T1_RR}", "SerializationFailure", more=((S_PIN, ""),)),
+    Hand("H23 the money call is not schema-qualified", PG,
+        "sql.Identifier(self._schema), sql.Identifier(function), sql.SQL(placeholders)",
+        "sql.Identifier(function), sql.Identifier(function), sql.SQL(placeholders)",
+        f"{SCHEMAQ}::{SCHEMAQ_TEST}", "decoy was called"),
+    Hand("H24 a duplicate reservation id is not mapped to StaleState", PG, 'if code == "23505":',
+        'if code == "00000":',
+        f"{CONTRACT}::{DUP_ID}{PGP}", "UniqueViolation"),
+    Hand("H25 a cap refusal is not mapped to SpendCapExceeded", PG, 'if code == "HD001":',
+        'if code == "00000":',
+        f"{CONTRACT}::{REFUSED}{PGP}", "unexpected money function error (HD001)"),
 ]  # fmt: skip
 
 # Forms of a ticket mutant that change nothing in the built code: (name, why).
@@ -366,6 +373,10 @@ EQUIVALENT = [
     ("5 (memory form) check by SELECT, then an unconditional UPDATE",
         "one process, one lock around the check and the booking: the two steps cannot interleave"),
     ("22 (memory form) the session isolation SET removed", "the memory store has no session"),
+    ("6 (PostgreSQL form, H6) the reservation insert outside the store's transaction",
+        "since step 3 the insert, both bookings and the cap checks are ONE function call, atomic in the database "
+        "even without the store's `transaction()`: a fault inside the function is the constraint form of "
+        + C3 + "[constraint] (the owner's CHECK), which changes nothing in the tables"),
     ("17 (runner form) the runtime grant gains DELETE", "a grant is only real in a database: see H17"),
 ]  # fmt: skip
 
@@ -396,11 +407,14 @@ def run_by_hand(only: list[str]) -> list[tuple[str, str]]:
             clean[m.node] = _killer(m.node)[0] == 0
         if not clean[m.node]:
             verdict = "BASELINE FAILS (the killer fails on the clean tree)"
-        elif text.count(m.old) != 1:
-            verdict = f"NOT APPLIED (the old text is in the file {text.count(m.old)} times)"
+        elif miss := [o for o, _ in ((m.old, m.new), *m.more) if text.count(o) != 1]:
+            verdict = f"NOT APPLIED (the old text is in the file {text.count(miss[0])} times)"
         else:
             try:
-                path.write_bytes(text.replace(m.old, m.new).encode("utf-8"))
+                mutated = text
+                for old, new in ((m.old, m.new), *m.more):
+                    mutated = mutated.replace(old, new)
+                path.write_bytes(mutated.encode("utf-8"))
                 code, out = _killer(m.node)
             finally:
                 path.write_bytes(before)

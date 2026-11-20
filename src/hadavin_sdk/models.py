@@ -12,7 +12,7 @@ import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, ClassVar, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -50,6 +50,31 @@ def canonical_json(obj: Any) -> str:
 
 def sha256_hex(obj: Any) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
+
+
+MAX_SPEND_USD = (
+    10**9
+)  # exclusive upper bound of one amount; the same bound as the table CHECK of 0007
+MAX_SPEND_DECIMALS = 12  # decimal places one amount may carry
+MAX_SPEND_EXPONENT = (
+    9  # a larger exponent can only be a zero such as 0E+999999, which the database refuses
+)
+
+
+def check_spend_amount(usd: object) -> Decimal:
+    """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+    bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+    ValueError and nothing is booked."""
+    if (
+        type(usd) is not Decimal
+        or not usd.is_finite()
+        or not 0 <= usd < MAX_SPEND_USD
+        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+    ):
+        raise ValueError(
+            "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+        )
+    return usd
 
 
 class Shape(BaseModel):
@@ -190,27 +215,63 @@ class ApprovalDecision(Shape):
     decided_at: datetime = Field(default_factory=now)
 
 
+# Audit rows carry identifiers and codes, never prose: a bounded length (a btree index row on `run_id` refuses
+# a long value with 54000 at write time, far too late) and a charset without whitespace or control characters.
+AUDIT_FIELD_MAX = 128
+AUDIT_FIELD_PATTERN = r"^[A-Za-z0-9_.:@/+=#~, -]*$"
+_AUDIT_TOKEN = re.compile(AUDIT_FIELD_PATTERN)
+
+
+def audit_ref(text: str | None) -> str | None:
+    """A free-form reference (a list of cited calls, an executor's external id) as an audit `object_ref`: the text
+    itself when it fits the field, else `sha256:<hex prefix>` of it (the row never carries prose)."""
+    if text is None or (len(text) <= AUDIT_FIELD_MAX and _AUDIT_TOKEN.fullmatch(text)):
+        return text
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
+
+
+_AUDIT_BAD = re.compile(r"[^A-Za-z0-9_.:@/+=#~, -]", re.ASCII)
+
+
+def audit_code(text: object) -> str:
+    """Outside text (a provider stop reason, a tool error, a user or executor string) as an audit identifier field:
+    every disallowed character becomes `_`, cut to AUDIT_FIELD_MAX; empty becomes `unknown`. Never raises."""
+    try:
+        out = "" if text is None else _AUDIT_BAD.sub("_", str(text))[:AUDIT_FIELD_MAX]
+    except Exception:  # noqa: BLE001 - a text whose str() fails still gets a row
+        out = ""
+    return out or "unknown"
+
+
+AuditToken = Annotated[str, Field(max_length=AUDIT_FIELD_MAX, pattern=AUDIT_FIELD_PATTERN)]
+
+
 class AuditEvent(Shape):
-    """Hashes and codes only: never payload text."""
+    """Hashes and codes only: never payload text. Identifier fields (`principal`, `object_ref`, `result`,
+    `rule_id`, `error_code`) are at most 128 characters of word characters and `.:@/+=#~,-`; `run_id`, `domain`,
+    `operation` and `source` are length-bounded."""
 
     event_id: str = Field(default_factory=lambda: new_id("evt"))
     ts: datetime = Field(default_factory=now)
-    run_id: str
-    domain: str
-    operation: str
-    principal: str
-    source: str
-    object_ref: str | None = None
+    run_id: str = Field(max_length=AUDIT_FIELD_MAX)
+    domain: str = Field(max_length=AUDIT_FIELD_MAX)
+    operation: str = Field(max_length=AUDIT_FIELD_MAX)
+    principal: AuditToken
+    source: str = Field(max_length=AUDIT_FIELD_MAX)
+    object_ref: AuditToken | None = None
+    # The payload hash of the call or request: a tool call's inputs; for `trigger.conflict`, the NEW request's
+    # payload hash (never the payload).
     inputs_hash: str | None = None
     decision: str | None = None
-    rule_id: str | None = None
-    result: str | None = None
-    error_code: str | None = None
+    rule_id: AuditToken | None = None
+    result: AuditToken | None = None
+    error_code: AuditToken | None = None
     # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None
     # A tool call's audit event carries the SHA-256 of the output text as STORED (redacted, truncated), so a
-    # later edit of the `tool_calls` row is detectable against the chain. None for every other event.
+    # later edit of the `tool_calls` row is detectable against the chain. For `trigger.conflict` it is the hash of
+    # the STORED request the new one conflicted with. None for every other event.
     output_hash: str | None = None
     # The gate's decide event carries the hash of the plan's inputs with their placeholders restored, so an
     # approval is bound to the real values and execution refuses a map that changed since (R6, before K8).
@@ -259,6 +320,14 @@ class KillSwitch(Shape):
     ts: datetime = Field(default_factory=now)
 
 
+class OpenStop(Shape):
+    """One stop that no reset has cleared: what `limits reset` shows the operator and then clears by id."""
+
+    id: str
+    by: str | None = None
+    ts: datetime
+
+
 class GateRun(Shape):
     agent_id: str
     model_id: str
@@ -297,12 +366,18 @@ class Reply(Shape):
     input_tokens: int = 0
     output_tokens: int = 0
     # None: the true cost of the call is not known (no usage reported, or an earlier attempt may have been billed).
-    # The model gate then returns the reply and does not settle: the worst case stays booked.
+    # The model gate then returns the reply and does not settle: the worst case stays booked. Anything else must
+    # pass `check_spend_amount`: an invalid cost cannot be built.
     cost_usd: Decimal | None = None
     attempts: int = 1  # requests the call took (audit only)
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0
+
+    @field_validator("cost_usd", mode="before")
+    @classmethod
+    def _cost_is_valid(cls, v: object) -> object:
+        return None if v is None else check_spend_amount(v)
 
 
 class Verdict(Shape):
@@ -313,6 +388,11 @@ class Verdict(Shape):
     # What a model-backed detector's call (llm_judge) cost. Information only: the model gate client the detector
     # is bound to has already booked it, and nobody charges this field.
     cost_usd: Decimal = Decimal(0)
+
+    @field_validator("cost_usd", mode="before")
+    @classmethod
+    def _cost_is_valid(cls, v: object) -> object:
+        return check_spend_amount(v)
 
 
 class RunResult(Shape):

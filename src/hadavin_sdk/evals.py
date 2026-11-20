@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import os
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config import ConfigError, confined
@@ -34,6 +34,11 @@ def matches(got: dict, expected: dict) -> bool:
         return False
     want = expected.get("inputs") or {}
     return all(k in got["inputs"] and got["inputs"][k] == v for k, v in want.items())
+
+
+def _per_task(cost: Decimal, pairs: int) -> Decimal:
+    with localcontext(defaults.money_context()):
+        return cost / pairs
 
 
 def gate(
@@ -111,7 +116,8 @@ def gate(
                     "the cost of the call is unknown and the eval cannot account for its spend; use a "
                     "provider that reports usage"
                 )
-            cost += reply.cost_usd
+            with localcontext(defaults.money_context()):
+                cost += reply.cost_usd
             abstains += not reply.tool_calls
             # `evidence` (K5) is a citation the runtime strips before the plan exists: never graded.
             got = (
@@ -161,7 +167,7 @@ def gate(
         k=k,
         pass_k=pass_k,
         abstain_rate=abstains / pairs if n else None,
-        cost_per_task_usd=cost / pairs if n else None,
+        cost_per_task_usd=_per_task(cost, pairs) if n else None,
         upper_error_bound=upper_error_bound(n - passed, n),
     )
     if run.green:  # append-only log: one green run per line

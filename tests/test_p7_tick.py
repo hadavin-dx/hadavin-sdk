@@ -88,6 +88,8 @@ def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
         "reprobe_sources",
         "audit_drain",
         "expire_reservations",
+        "check_caps",
+        "check_expired_holds",
     ]
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0
@@ -507,7 +509,7 @@ def test_cli_migrate_warns_when_new_tables_get_no_grants(cfg_dir, monkeypatch, c
     monkeypatch.setattr(
         "hadavin_sdk.store.migrate.migrate", lambda dsn, **kw: ["0003_approvals_tick"]
     )
-    assert cli.main(["--config", str(cfg_dir), "migrate"]) == 0
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--no-roles"]) == 0
     assert "--runtime-role" in capsys.readouterr().err
 
 

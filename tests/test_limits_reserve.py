@@ -17,7 +17,12 @@ from hadavin_sdk import limits as limits_mod
 from hadavin_sdk.limits import Limits, Meter, SpendRefused
 from hadavin_sdk.models import KillSwitch, Run, new_id, now
 from hadavin_sdk.store.memory import MemoryStore
-from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StoreUnavailable
+from hadavin_sdk.store.protocol import (
+    BookingDayRefused,
+    NotFound,
+    SpendCapExceeded,
+    StoreUnavailable,
+)
 
 try:
     from psycopg import OperationalError
@@ -218,6 +223,31 @@ def test_the_refusal_log_line_names_the_error_class_and_not_its_message(caplog):
     assert "RuntimeError" in caplog.text and "host=db" not in caplog.text
 
 
+def test_a_refused_booking_day_logs_the_clock_hint_and_never_the_message(caplog):
+    err = BookingDayRefused("spend argument refused by the database (p_day) host=db user=u")
+    limits = _limits(Spy(MemoryStore(), fail={"reserve_spend": err}))
+    with caplog.at_level("WARNING", logger="hadavin_sdk.limits"):
+        _refused(limits, "limits_unavailable")
+    assert "hint=check the app clock against the database clock" in caplog.text
+    assert "host=db" not in caplog.text and "p_day" not in caplog.text
+
+
+def test_a_caller_chosen_id_with_p_day_cannot_forge_the_clock_hint(caplog):
+    # the text alone (a plain ValueError, a message that echoes an id) never earns the hint
+    err = ValueError("bad id p_day")
+    limits = _limits(Spy(MemoryStore(), fail={"reserve_spend": err}))
+    with caplog.at_level("WARNING", logger="hadavin_sdk.limits"):
+        _refused(limits, "limits_unavailable")
+    assert "clock" not in caplog.text
+
+
+def test_another_value_error_gets_no_clock_hint(caplog):
+    limits = _limits(Spy(MemoryStore(), fail={"reserve_spend": ValueError("bad p_usd")}))
+    with caplog.at_level("WARNING", logger="hadavin_sdk.limits"):
+        _refused(limits, "limits_unavailable")
+    assert "clock" not in caplog.text
+
+
 HOSTILE = {
     "nan": D("NaN"),
     "signalling_nan": D("sNaN"),
@@ -301,6 +331,7 @@ def test_limits_has_the_two_methods_of_the_meter_with_the_agreed_signatures():
             "self",
             "reservation_id",
             "actual_usd",
+            "agent_id",  # keyword-only and required: no agent-less settle
         ]
 
 
@@ -311,7 +342,7 @@ def test_limits_has_the_two_methods_of_the_meter_with_the_agreed_signatures():
 def test_settle_at_or_below_the_reserved_amount_returns_zero_and_writes_no_audit_row(actual):
     limits = _limits()
     rid = limits.reserve(AGENT, D("0.60"))
-    over = limits.settle(rid, D(actual))
+    over = limits.settle(rid, D(actual), agent_id=AGENT)
     assert over == 0 and type(over) is Decimal
     assert _today_totals(limits) == (D(actual), D(actual))
     assert limits.audit.outcomes == [] and limits.audit.intents == []
@@ -321,7 +352,7 @@ def test_an_overshoot_is_booked_in_full_returned_and_audited_once():
     """Cap 1.00, month cap 100.00, reserve 0.60, settle 1.50."""
     limits = _limits(daily="1.00", monthly="100.00")
     rid = limits.reserve(AGENT, D("0.60"), run_id="run-x")
-    over = limits.settle(rid, D("1.50"))
+    over = limits.settle(rid, D("1.50"), agent_id=AGENT)
     assert over == D("0.90") and type(over) is Decimal
     assert _today_totals(limits) == (D("1.50"), D("1.50"))
     row = limits.store._reservations[rid]
@@ -332,7 +363,7 @@ def test_an_overshoot_is_booked_in_full_returned_and_audited_once():
     assert (event.principal, event.result, event.run_id) == (AGENT, "booked", "run-x")
     # a replay, also with another amount, returns the first result and writes NO second audit row
     for amount in ("1.50", "0.10", "9.00"):
-        assert limits.settle(rid, D(amount)) == D("0.90")
+        assert limits.settle(rid, D(amount), agent_id=AGENT) == D("0.90")
     assert len(limits.audit.outcomes) == 1
     assert _today_totals(limits) == (D("1.50"), D("1.50"))
     # every later reserve of that day is refused, also a free one
@@ -342,7 +373,7 @@ def test_an_overshoot_is_booked_in_full_returned_and_audited_once():
 
 def test_the_day_after_an_overshoot_is_free_again(monkeypatch):
     limits = _limits(daily="1.00", monthly="100.00")
-    limits.settle(limits.reserve(AGENT, D("0.60")), D("1.50"))
+    limits.settle(limits.reserve(AGENT, D("0.60")), D("1.50"), agent_id=AGENT)
     _refused(limits, "daily_budget", worst="0")
     start = now()
     monkeypatch.setattr(limits_mod, "now", lambda: start + timedelta(days=1))
@@ -353,7 +384,7 @@ def test_the_day_after_an_overshoot_is_free_again(monkeypatch):
 
 def test_the_overshoot_event_of_a_reservation_without_a_run_names_no_run():
     limits = _limits()
-    assert limits.settle(limits.reserve(AGENT, D("0.10")), D("0.35")) == D("0.25")
+    assert limits.settle(limits.reserve(AGENT, D("0.10")), D("0.35"), agent_id=AGENT) == D("0.25")
     assert [e.run_id for e in limits.audit.outcomes] == ["-"]
 
 
@@ -361,20 +392,23 @@ def test_a_raising_audit_sink_does_not_make_settle_raise(caplog):
     limits = _limits(sink=BrokenSink())
     rid = limits.reserve(AGENT, D("0.60"))
     with caplog.at_level("WARNING", logger="hadavin_sdk.limits"):
-        assert limits.settle(rid, D("1.50")) == D("0.90")
+        assert limits.settle(rid, D("1.50"), agent_id=AGENT) == D("0.90")
     assert len(limits.audit.outcomes) == 1  # it was tried once
     assert "RuntimeError" in caplog.text and "audit down" not in caplog.text
     assert _today_totals(limits) == (D("1.50"), D("1.50"))  # the booking stands
-    assert limits.settle(rid, D("1.50")) == D("0.90") and len(limits.audit.outcomes) == 1
+    assert (
+        limits.settle(rid, D("1.50"), agent_id=AGENT) == D("0.90")
+        and len(limits.audit.outcomes) == 1
+    )
 
 
 def test_settle_with_an_unknown_id_is_not_found():
     limits = _limits()
     limits.reserve(AGENT, D("0.60"))
     with pytest.raises(NotFound):
-        limits.settle(new_id("res"), D("0.10"))
+        limits.settle(new_id("res"), D("0.10"), agent_id=AGENT)
     with pytest.raises(KeyError):
-        limits.settle("res-unknown", D("5.00"))
+        limits.settle("res-unknown", D("5.00"), agent_id=AGENT)
     assert _today_totals(limits) == (D("0.60"), D("0.60")) and limits.audit.outcomes == []
 
 
@@ -383,7 +417,7 @@ def test_settle_with_a_bad_amount_is_a_value_error_and_the_worst_case_stays(name
     limits = _limits()
     rid = limits.reserve(AGENT, D("0.60"))
     with pytest.raises(ValueError):
-        limits.settle(rid, HOSTILE[name])
+        limits.settle(rid, HOSTILE[name], agent_id=AGENT)
     assert limits.store._reservations[rid].status == "open"
     assert _today_totals(limits) == (D("0.60"), D("0.60")) and limits.audit.outcomes == []
 
@@ -393,7 +427,7 @@ def test_a_store_that_raises_in_settle_reaches_the_caller_and_writes_no_audit_ro
     limits = _limits(Spy(MemoryStore(), fail={"settle_spend": OperationalError("gone")}))
     rid = limits.reserve(AGENT, D("0.60"))
     with pytest.raises(OperationalError):
-        limits.settle(rid, D("1.50"))
+        limits.settle(rid, D("1.50"), agent_id=AGENT)
     assert limits.audit.outcomes == []
     assert limits.store._real._reservations[rid].status == "open"
 
@@ -402,8 +436,8 @@ def test_settle_adds_the_real_cost_to_the_run():
     limits = _limits(daily="10")
     run = Run(agent_id=AGENT, principal_id="p", trigger_kind="event", trigger_ref="t")
     limits.store.create_run(run)
-    limits.settle(limits.reserve(AGENT, D("0.60"), run_id=run.run_id), D("0.25"))
-    limits.settle(limits.reserve(AGENT, D("0.60"), run_id=run.run_id), D("0.75"))
+    limits.settle(limits.reserve(AGENT, D("0.60"), run_id=run.run_id), D("0.25"), agent_id=AGENT)
+    limits.settle(limits.reserve(AGENT, D("0.60"), run_id=run.run_id), D("0.75"), agent_id=AGENT)
     assert limits.store.get_run(run.run_id).cost_usd == D("1.00")
 
 
@@ -411,7 +445,7 @@ def test_expired_then_settled_lower_is_no_overshoot_and_no_audit_row():
     limits = _limits()
     rid = limits.reserve(AGENT, D("0.60"))
     assert limits.store.expire_spend_reservations(0) == 1
-    assert limits.settle(rid, D("0.10")) == 0
+    assert limits.settle(rid, D("0.10"), agent_id=AGENT) == 0
     assert limits.audit.outcomes == []
     assert _today_totals(limits) == (
         D("0.60"),
@@ -423,8 +457,8 @@ def test_expired_then_settled_higher_is_an_overshoot_audited_once():
     limits = _limits()
     rid = limits.reserve(AGENT, D("0.60"))
     assert limits.store.expire_spend_reservations(0) == 1
-    assert limits.settle(rid, D("0.85")) == D("0.25")
-    assert limits.settle(rid, D("0.10")) == D("0.25")
+    assert limits.settle(rid, D("0.85"), agent_id=AGENT) == D("0.25")
+    assert limits.settle(rid, D("0.10"), agent_id=AGENT) == D("0.25")
     assert len(limits.audit.outcomes) == 1
     assert _today_totals(limits) == (D("0.85"), D("0.85"))
 
@@ -446,6 +480,8 @@ def test_a_reserve_in_the_last_microsecond_books_that_day_and_a_late_settle_move
     assert limits.store.spend_totals(AGENT, following) == ZERO
     other = limits.reserve(AGENT, D("1.00"))  # a new day and a new month: the full cap is free
     assert limits.store._reservations[other].day == following
-    assert limits.settle(rid, D("0.85")) == D("0.25")  # settled "tomorrow": January 31 moves
+    assert limits.settle(rid, D("0.85"), agent_id=AGENT) == D(
+        "0.25"
+    )  # settled "tomorrow": January 31 moves
     assert limits.store.spend_totals(AGENT, day) == (D("0.85"), D("0.85"))
     assert limits.store.spend_totals(AGENT, following) == (D("1.00"), D("1.00"))

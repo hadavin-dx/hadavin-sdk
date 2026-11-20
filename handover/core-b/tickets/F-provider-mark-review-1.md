@@ -1,0 +1,13 @@
+# EGM RESULT review of the provider mark (egm:egm-codebase-details, model sonnet, fresh reviewer, one round; 2026-11-20 06:49 to 06:58 UTC)
+Nothing run by the reviewer. Result: 0 Blockers, 2 Majors, 5 Nits. The mark logic in with_retry matches the ticket's rules (1) and (2); every adapter goes through NetworkLLM._retry; no path re-raises a new ProviderError after the mark is set; the mark is never copied between exception objects; per-call state is two local variables (thread-safe); no adapter streams.
+| # | sev | finding | answer |
+|---|---|---|---|
+| 1 | Major | rule (2) (mark on ProviderExhausted) has no effect because the gate returns False for any ProviderExhausted by type; the ticket's purpose is not met for exhausted retries; the gate docstring is stale | stated in the ticket: rule (2) is INERT until core-c changes the gate (requests/to-core-c-1 and to-core-c-2); retry.py docstring to say the same (fix round 1, queued) |
+| 2 | Major | a router or proxy behind openai_compat (OpenRouter, LiteLLM, Groq ...) can answer 400, 413 or 422 AFTER the upstream consumed tokens: marked refused, settled at 0, real spend unbooked | decision: for the openai_compat kind only 401, 403 and 404 count as refused-before-response (the hook gives each kind its own status list); stated limit for the rest (fix round 1, queued) |
+| 3 | Nit | the cause-chain walk stops after 8 exceptions: a never-sent error inside the first 8 can hide a timeout beyond them | treat a truncated chain as NOT never_sent (fix round 1) |
+| 4 | Nit | status() accepts any int .code as an HTTP status | noted (shared with the retry decision); no change |
+| 5 | Nit | the "ProviderError raised inside the call passes through unmarked" path is dead code for all built adapters; the ticket and docstring describe the wrong mechanism (parse failures are wrapped by with_retry and get the rule) | ticket and docstring corrected (fix round 1) |
+| 6 | Nit | protocol.py docstring overclaims ("nothing was billed") | reworded to "no response seen and no work known" (fix round 1) |
+| 7 | Nit | no test for "429 then 400", a kind that declines to retry a 429, TLS error, or a gate-level integration test | added to the test list of fix round 1 |
+Checked safe by the reviewer: streamed partial answer (none stream); earlier timeout, reset, 5xx, 408 or 429 keeps a later 4xx unmarked; openai_compat second request clears the mark for both error classes; a proxy CONNECT refusal is retried and unmarked; a TLS error stays unmarked; bedrock ServiceQuotaExceeded blocks the mark (conservative).
+Not checked: real SDK exception chains (UNVERIFIED: anthropic/httpx, botocore/urllib3, google-auth), whether any provider or router bills a 4xx or a 429, git history, the gate source itself.

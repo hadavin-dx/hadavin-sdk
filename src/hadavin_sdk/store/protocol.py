@@ -3,24 +3,30 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Protocol
+from typing import Any, Protocol
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
+    MAX_SPEND_DECIMALS,
+    MAX_SPEND_EXPONENT,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
     DeadLetter,
     GateDecision,
     KillSwitch,
+    OpenStop,
     Plan,
     Run,
     RunState,
     SpendReservation,
     TickState,
     ToolCallRecord,
+    check_spend_amount,
 )
 
 
@@ -56,13 +62,9 @@ class SpendCapExceeded(RuntimeError):
         self.which = which
 
 
-MAX_SPEND_USD = (
-    10**9
-)  # exclusive upper bound of one amount; the same bound as the table CHECK of 0007
-MAX_SPEND_DECIMALS = 12  # decimal places one amount may carry
-MAX_SPEND_EXPONENT = (
-    9  # a larger exponent can only be a zero such as 0E+999999, which the database refuses
-)
+class BookingDayRefused(ValueError):
+    """The database refused the booking day (outside its UTC date +/- the window): a clock off by days. A dedicated
+    class, so a hint never depends on the text of a message a caller could shape."""
 
 
 MAX_RESERVATION_ID_CHARS = 200
@@ -84,38 +86,135 @@ def check_reservation_id(reservation_id: object) -> str:
     return reservation_id
 
 
-def check_spend_amount(usd: object) -> Decimal:
-    """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
-    bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
-    ValueError and nothing is booked."""
+def check_store_id(value: object, what: str) -> str:
+    """The id rule of `agent_id` and `run_id` in the spend methods, used by both stores before any lock or SQL:
+    exactly a str of 1 to 200 characters, no NUL or other control character, encodable as UTF-8 (a lone surrogate
+    is not). A ValueError names `what`, never the value."""
     if (
-        type(usd) is not Decimal
-        or not usd.is_finite()
-        or not 0 <= usd < MAX_SPEND_USD
-        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+        type(value) is not str
+        or not 1 <= len(value) <= MAX_RESERVATION_ID_CHARS
+        or any(ord(c) < 32 or 127 <= ord(c) < 160 for c in value)
     ):
-        raise ValueError(
-            "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
-        )
-    return usd
+        raise ValueError(f"{what} must be a str of 1 to 200 characters with no control characters")
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError(f"{what} must be encodable as UTF-8") from None
+    return value
+
+
+def check_spend_day(day: object) -> date:
+    """A booking day is a plain date: a datetime or a string would be kept under another key than the row. A day
+    before 1970-01-01 is refused as the database does (0011); 9999-12-31 is the last date there is."""
+    if type(day) is not date:
+        raise ValueError("a spend day must be a date")
+    if day < date(1970, 1, 1):
+        raise ValueError("a spend day must not be before 1970-01-01")
+    return day
+
+
+def clean_spend_amount(usd: object) -> Decimal:
+    """`check_spend_amount`, then `-0` becomes `0` (no arithmetic: the caller's Decimal context never touches
+    the amount). What a store writes into a counter or a reservation row."""
+    usd = check_spend_amount(usd)
+    return usd.copy_abs() if usd.is_zero() else usd
 
 
 def check_spend_cap(cap: object) -> Decimal:
     """The cap rule of `reserve_spend`, used by both stores before any lock or SQL: a Decimal (not a float, an
-    int, a bool, a str or None), finite, 0 <= cap; no upper bound. Anything else is a ValueError and nothing is
-    booked. A NaN cap must never reach the comparison: PostgreSQL sorts NaN above every number, so it would be
-    no cap at all."""
-    if type(cap) is not Decimal or not cap.is_finite() or cap < 0:
-        raise ValueError("spend cap must be a finite Decimal with 0 <= cap")
+    int, a bool, a str or None), finite, 0 <= cap, with the exponent window of an amount (-12 to 9); no other
+    upper bound. Anything else is a ValueError and nothing is booked. A NaN cap must never reach the comparison:
+    PostgreSQL sorts NaN above every number, so it would be no cap at all."""
+    if (
+        type(cap) is not Decimal
+        or not cap.is_finite()
+        or cap < 0
+        or not -MAX_SPEND_DECIMALS <= cap.as_tuple().exponent <= MAX_SPEND_EXPONENT
+    ):
+        raise ValueError(
+            "spend cap must be a finite Decimal with 0 <= cap, at most 12 decimal places and an exponent of at most 9"
+        )
     return cap
+
+
+MAX_EXPIRY_AGE_S = 10**7  # a larger age overflows a timestamp (memory) or a PostgreSQL interval
+
+
+def check_purge_bound(before: object) -> datetime:
+    """The bound of `purge_spend_reservations`, used by both stores: a timezone-aware datetime. Anything else
+    (a naive datetime, a date, a str) is a ValueError and nothing is deleted."""
+    if not isinstance(before, datetime) or before.tzinfo is None or before.utcoffset() is None:
+        raise ValueError("purge bound must be a timezone-aware datetime")
+    return before
 
 
 def check_expiry_age(older_than_s: object) -> int:
     """The age rule of `expire_spend_reservations`, used by both stores: an int (not a bool) that is not
     negative. Anything else is a ValueError and nothing expires."""
-    if type(older_than_s) is not int or older_than_s < 0:
-        raise ValueError("older_than_s must be an int with 0 <= older_than_s")
+    if type(older_than_s) is not int or not 0 <= older_than_s <= MAX_EXPIRY_AGE_S:
+        raise ValueError("older_than_s must be an int with 0 <= older_than_s <= 10**7")
     return older_than_s
+
+
+@dataclass(frozen=True)
+class SpendRelease:
+    """What `release_expired_spend` changed: the expired holds it lowered to 0, their summed reserved amount, and
+    the day and month counter after the release (None when the agent has no counter row for that day)."""
+
+    agent_id: str
+    day: date
+    reservations: int
+    released_usd: Decimal
+    day_usd: Decimal | None
+    month_usd: Decimal | None
+    applied_usd: Decimal = Decimal(
+        0
+    )  # what the day counter really fell by; below released_usd means drift
+    intent_id: str = ""  # the audit intent row written before the release
+    outcome_audited: bool = True  # False: committed, but the outcome row could not be written
+
+
+class SpendReleaser(Protocol):
+    """Optional, separate from `Store` so a custom store without it still starts. Only the Postgres store has it,
+    and only the release login may run it (migration 0008)."""
+
+    def release_expired_spend(
+        self, agent_id: str, day: date, actor: str, audit: Any
+    ) -> SpendRelease: ...
+
+
+EXPIRED_HOLDS_MAX_ROWS = 1000  # groups (agent, day) one `expired_holds` call returns; the SQL function has the same bound
+
+
+@dataclass(frozen=True)
+class ExpiredHolds:
+    """The expired holds of one agent and one day that nobody has released or settled (`expired_holds`): how many
+    and their summed reserved amount, which is still booked. No hold id, no run id."""
+
+    agent_id: str
+    day: date
+    holds: int
+    usd: Decimal
+
+
+class ExpiredHoldsReader(Protocol):
+    """Optional, like `CapAdmin`: a read-only view of the expired holds still booked, for the tick alert
+    (`check_expired_holds`). The runtime login has no right on the table, so Postgres answers through the definer
+    function `hadavin_expired_holds` (migration 0011). Holds closed no longer than `older_than_s` seconds ago are
+    left out; at most `EXPIRED_HOLDS_MAX_ROWS` groups, ordered by agent and day. ValueError for a bad age."""
+
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]: ...
+
+
+class CapAdmin(Protocol):
+    """Optional, like `SpendReleaser`: the per-agent spend caps live in a table the runtime login cannot write
+    (migration 0011). Only the Postgres store has it. `set_cap` runs under the reset login only; `cap_matches`
+    (read-only, answers 'same', 'differs' or 'missing') under the runtime login (the tick step) or the reset login
+    (`limits check-caps`). The memory store has no cap table: it compares the caps a caller passes."""
+
+    def set_cap(self, agent_id: str, day_cap: Decimal, month_cap: Decimal, by: str) -> None: ...
+
+    def cap_matches(self, agent_id: str, day_cap: Decimal, month_cap: Decimal) -> str: ...
 
 
 class Store(Protocol):
@@ -187,10 +286,21 @@ class Store(Protocol):
         ...
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
-        """`on=True` adds a stop. `on=False` clears the stops visible to its clear statement; on Postgres only the
-        reset role may (the runtime role is refused by the database). A stop committed after that statement began
-        stays ON; one committed between the audit intent and that statement is cleared. A reset that finds no
-        switch row raises (the state stays ON)."""
+        """`on=True` adds a stop. `on=False` clears every stop visible to its clear statement (kept for callers that
+        mean "clear all"; `limits reset` uses `clear_stops`); on Postgres only the reset role may (the runtime role
+        is refused by the database). A reset that finds no switch row raises (the state stays ON)."""
+        ...
+
+    def open_stops(self) -> list[OpenStop]:
+        """The stops no reset has cleared, oldest first (what `limits reset` shows before it clears)."""
+        ...
+
+    def clear_stops(self, by: str, stop_ids: Sequence[str], audit_seq: int | None = None) -> None:
+        """Compare-and-clear: turn the old flag off and clear exactly the stops named by `stop_ids` (an id that is
+        not a stop, or is already cleared, is ignored). Any other stop, one set after `open_stops` was read, stays
+        open and the switch reads ON. On Postgres only the reset role may (the runtime role is refused), and the same
+        transaction records the reset (`kill_switch_resets`: the ids really cleared, `audit_seq` when known, else
+        NULL) and moves the watermark. The memory store keeps no such record."""
         ...
 
     def get_tick_state(self, step: str) -> TickState | None: ...
@@ -246,9 +356,9 @@ class Store(Protocol):
         ...
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
-        """The stored row and `applied` (true only for the call that changed it). The first call closes an open
+        """`agent_id` is required (there is no agent-less settle): a reservation of another agent is NotFound (the same as an unknown id); a missing or empty agent is a ValueError (TypeError when omitted). The stored row and `applied` (true only for the call that changed it). The first call closes an open
         or an expired row: the counters of the row's own day and month move by actual minus reserved (after
         expiry only upward), `settled_usd` becomes what stays booked (the actual amount; for a row that was
         expired the larger of actual and reserved) and the real actual amount is added to the run's cost when

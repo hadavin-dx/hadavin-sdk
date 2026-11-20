@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
 
 
 class KindSettings(BaseModel):
@@ -115,6 +115,10 @@ SslMode = Literal["disable", "allow", "prefer", "require", "verify-ca", "verify-
 
 class PostgresSettings(KindSettings):
     dsn_secret_name: str
+    # The schema the store lives in. At start-up the store refuses to run unless the effective search_path of its
+    # connection is exactly this schema, so a role-level `ALTER ROLE ... SET search_path` cannot send it to a decoy.
+    # None: the schema the DSN pins with `options=-c search_path=...`, else `public`.
+    db_schema: str | None = None
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None
@@ -122,6 +126,10 @@ class PostgresSettings(KindSettings):
     # `hadavin-sdk limits reset`. Its name must not end in `_secret_name`: platform_secrets.py:19-20 resolves every
     # `*_secret_name` at runtime start, and the runtime process must never hold the login that can clear a stop.
     reset_credential_ref: str | None = None
+    # The secret that holds the release role's DSN (`hadavin-sdk migrate --release-role`), read only by
+    # `hadavin-sdk release-expired`. Same rule as the reset reference: its name must not end in `_secret_name`, and
+    # it is never the runtime's or the reset login's secret.
+    release_credential_ref: str | None = None
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )
@@ -132,6 +140,10 @@ class PostgresSettings(KindSettings):
     # The server's CA bundle, cloud-neutral: a file path, or a PEM held in any secrets kind.
     sslrootcert: str | None = None
     sslrootcert_secret_name: str | None = None
+    # Which login this store is built for: "runtime" (the default; held to the runtime's rights on the stop tables at
+    # start) or "reset" (set by `limits reset` after it swaps in the reset DSN). A private attribute: no config file
+    # can set it, so a runtime config cannot opt out of the check.
+    _login_role: Literal["runtime", "reset"] = PrivateAttr(default="runtime")
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:
@@ -195,6 +207,11 @@ class GcsRetentionLockSettings(_AnchorSettings):
 
 class ChainSettings(KindSettings):
     checkpoint_every: int = Field(default=100, ge=1)
+    # Outbox rows drained per tick; absent = defaults.AUDIT_DRAIN_BATCH (this module imports nothing of ours, so the
+    # default is applied by audit/chain.py `build`). Bounds: 1 to 2000.
+    drain_batch: int | None = Field(
+        default=None, ge=1, le=2000
+    )  # = defaults.AUDIT_DRAIN_BATCH_MAX (a test pins it)
 
 
 class _SignerSettings(KindSettings):

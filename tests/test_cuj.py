@@ -292,7 +292,9 @@ def test_kill_switch_with_the_store_down_exits_4_and_says_it_was_not_changed(act
 
     assert cli.kill_switch(Down(), action, "user:a") == 4
     err = capsys.readouterr().err
-    assert "NOT" in err and "unreachable" in err and "Nothing was changed" in err
+    assert "NOT" in err and "unreachable" in err
+    # a stop that could not connect changed nothing; a reset that lost the connection may have landed (E5b nit 11)
+    assert ("Nothing was changed" in err) is (action == "stop")
 
 
 def test_kill_switch_with_a_store_that_answers_with_an_error_exits_2_and_says_not_set(capsys):

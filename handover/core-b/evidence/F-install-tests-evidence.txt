@@ -1,0 +1,99 @@
+== pytest ==
+........................................................................ [ 12%]
+.....................F..........................................s.s..... [ 24%]
+........................................................................ [ 36%]
+.........................................s.s.s.s.s..ss.s................ [ 48%]
+........................................................................ [ 60%]
+....F................................................................... [ 73%]
+........................................................................ [ 85%]
+........................................................................ [ 97%]
+...............                                                          [100%]
+=================================== FAILURES ===================================
+_ test_the_gate_audits_each_of_the_six_published_reasons_as_the_error_code[usd_cap] _
+
+reason = 'usd_cap'
+
+    @pytest.mark.parametrize(
+        "reason",
+        [
+            "kill_switch",
+            "daily_budget",
+            "monthly_budget",
+            "limits_unavailable",
+            "bad_amount",
+            "usd_cap",
+        ],
+    )
+    def test_the_gate_audits_each_of_the_six_published_reasons_as_the_error_code(reason):
+        """ii-meter point 1: SpendRefused.reason is the audit error code; the allowlist holds all six reasons."""
+        sink, client = Sink(), Client()
+        meter = Refuser(Budget(Decimal(1)), lambda: SpendRefused(reason))
+        bound, _ = bound_gate(client, budget=meter, sink=sink)
+        with pytest.raises(SpendRefused):
+            bound.chat(MSG, system="s", route="default")
+>       assert [(r.result, r.error_code) for r in sink.rows] == [("refused", reason)]
+E       AssertionError: assert [('refused', ...rve_refused')] == [('refused', 'usd_cap')]
+E         
+E         At index 0 diff: ('refused', 'reserve_refused') != ('refused', 'usd_cap')
+E         Use -v to get more diff
+
+tests/test_model_gate_install.py:842: AssertionError
+___________ test_no_error_the_adapters_raise_today_carries_the_mark ____________
+
+    def test_no_error_the_adapters_raise_today_carries_the_mark():
+        """Until core-b adds it, rule (b) never fires: every error `with_retry` can raise is unmarked."""
+        from hadavin_sdk.llm import retry
+    
+        def boom(exc):
+            def call():
+                raise exc
+    
+            return call
+    
+        raised = []
+        for inner in (ValueError("did not parse"), OSError("reset"), ProviderError("inner")):
+            with pytest.raises(ProviderError) as caught:
+                retry.with_retry(boom(inner), label="x", max_attempts=1, sleep=lambda s: None)
+            raised.append(caught.value)
+        assert [model_gate.refused_before_response(e) for e in raised] == [False, False, False]
+>       assert not hasattr(ProviderError("x"), "refused_before_response")
+E       AssertionError: assert not True
+E        +  where True = hasattr(ProviderError('x'), 'refused_before_response')
+E        +    where ProviderError('x') = ProviderError('x')
+
+tests/test_model_gate.py:817: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_model_gate_install.py::test_the_gate_audits_each_of_the_six_published_reasons_as_the_error_code[usd_cap]
+FAILED tests/test_model_gate.py::test_no_error_the_adapters_raise_today_carries_the_mark
+2 failed, 579 passed, 10 skipped in 15.88s
+
+== mutants (run with the one known failing case temporarily xfailed, restored before commit) ==
+ok  KILLED       M1 the bind line removed in handle (the chat goes to the raw client)  [test_n1_one_run_books_spend_run_cost_and_one_audit_row]
+ok  KILLED       M2 _screen uses the raw detector  [test_n2_a_judge_in_the_run_settles_twice_into_the_run_cost]
+ok  KILLED       M3 _shadow passes self.detector  [test_n3_the_shadow_card_judge_is_charged_to_the_runs_agent]
+ok  KILLED       M4a the old run-cost line is restored (run cost counted twice)  [test_n1_one_run_books_spend_run_cost_and_one_audit_row]
+ok  KILLED       M4b the old day-spend line is restored (spend counted twice)  [test_n1_one_run_books_spend_run_cost_and_one_audit_row]
+ok  KILLED       M6a forfeit does not turn an open hold into spend  [test_e6_a_late_settle_after_forfeit_raises_the_booked_amount]
+ok  KILLED       M6b forfeit does not close the run id  [test_e6_forfeit_closes_its_run_id_and_no_other]
+ok  KILLED       M7 spent ignores holds  [test_e8_holds_count_toward_the_limit]
+ok  KILLED       M8 the Budget lock is removed  [test_e8_twenty_threads_on_one_budget_never_pass_the_limit]
+ok  KILLED       M9 the evals.gate wrap is removed (the raw client is called)  [test_n4_evals_with_max_usd_stops_at_the_cap]
+ok  KILLED       M10 the replay detector is not bound  [test_n5_a_judge_call_in_replay_is_booked_on_the_same_budget]
+ok  KILLED       M11a the refusal except is removed at the chat call (run stranded)  [test_h6_reserve_raising_store_unavailable_ends_needs_person_]
+ok  KILLED       M11b the refusal except is removed at the document screen  [test_a_meter_refusal_ends_the_run_by_the_mapping_at_every_si]
+ok  KILLED       M11c the refusal except is removed at the tool-result screen  [test_a_meter_refusal_ends_the_run_by_the_mapping_at_every_si]
+ok  KILLED       M11d a refusal in the shadow judge ends as an undelivered card, not by the mapping  [test_a_meter_refusal_ends_the_run_by_the_mapping_at_every_si]
+ok  KILLED       M12a Budget.settle is not idempotent  [test_p3_settle_twice_the_first_wins_and_the_repeat_returns_t]
+ok  KILLED       M12b the memory store settle is not idempotent (Limits)  [test_p3_settle_twice_the_first_wins_and_the_repeat_returns_t]
+ok  KILLED       M13 the unknown-route fallback is removed  [test_an_unknown_route_name_is_priced_at_the_largest_worst_ca]
+ok  KILLED       M14 the re-raise in injection_check is removed (a refusal becomes a flag)  [test_injection_check_raises_a_refusal_and_flags_any_other_er]
+ok  KILLED       M15a _refused maps daily_budget to the monthly code  [test_a_meter_refusal_ends_the_run_by_the_mapping_at_every_si]
+ok  KILLED       M15b _refused maps kill_switch to NEEDS_PERSON  [test_a_meter_refusal_ends_the_run_by_the_mapping_at_every_si]
+ok  KILLED       M15c _refused maps an unknown reason to gate_error  [test_a_meter_refusal_ends_the_run_by_the_mapping_at_every_si]
+ok  KILLED       M16 the run's live map is not handed to the gate  [test_e3_a_model_gate_in_rt_llm_is_used_as_it_is]
+ok  KILLED       M17 evals in pilot and prod no longer needs a cap  [test_e7_evals_in_pilot_without_max_usd_is_a_config_error]
+ok  KILLED       M18 the requests multiplier is dropped from the worst case  [test_worst_case_for_multiplies_by_the_requests[3-None-3]]
+ok  KILLED       M19 the output schema is counted once, not twice  [test_worst_case_counts_system_messages_tools_documents_and_s]
+ok  KILLED       M20 replay does not forfeit the case at its end  [test_replay_the_budget_is_forfeited_per_case_whatever_the_en]
+ok  KILLED       M21 a replay cap hit is an abort, not a capped case  [test_replay_a_refused_chat_ends_the_case_without_raising[<la]
+28 of 28 good; problems: []

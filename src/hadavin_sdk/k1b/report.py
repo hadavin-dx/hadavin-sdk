@@ -6,8 +6,10 @@ scientific notation. The first paragraph of every report is the disclaimer.
 
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from typing import TYPE_CHECKING, Any
+
+from hadavin_sdk import defaults
 
 if TYPE_CHECKING:
     from hadavin_sdk.k1b.score import RunScore, ScoreResult
@@ -105,11 +107,13 @@ def render_replay_report(runs: list[dict[str, Any]], result: str) -> str:
         )
     lines += _issue_lines((r["run_index"], r.get("issue_cases") or {}) for r in runs)
     first = runs[0]
+    with localcontext(defaults.money_context()):
+        total = sum((Decimal(r["usd"]) for r in runs), Decimal(0))
     lines += ["", *redaction_lines(first)]
     lines += [
         "",
         (
-            f"Model: {first['model_id']}. Cost: USD {usd(sum(Decimal(r['usd']) for r in runs))}. "
+            f"Model: {first['model_id']}. Cost: USD {usd(total)}. "
             f"SDK: {sdk_label(first['sdk_version'])}. Config hash: {first['config_hash']}. "
             f"Bundle set: {first['bundle_set_sha256']}."
         ),

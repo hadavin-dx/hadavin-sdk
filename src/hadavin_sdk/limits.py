@@ -2,15 +2,25 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import threading
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from typing import Protocol
 
+from hadavin_sdk import defaults
 from hadavin_sdk.audit.protocol import AuditSink
-from hadavin_sdk.models import AuditEvent, KillSwitch, new_id, now
+from hadavin_sdk.models import AuditEvent, KillSwitch, OpenStop, audit_code, new_id, now
 from hadavin_sdk.registry import Registry
-from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, Store, check_spend_amount
+from hadavin_sdk.store.protocol import (
+    BookingDayRefused,
+    NotFound,
+    SpendCapExceeded,
+    Store,
+    check_spend_amount,
+    check_spend_cap,
+    check_store_id,
+)
 
 _LOG = logging.getLogger("hadavin_sdk.limits")
 
@@ -33,8 +43,9 @@ class Meter(Protocol):
         """Book the worst case, then return the reservation id. Any exception: no model call."""
         ...
 
-    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
-        """Replace the worst case with the real cost; returns the overshoot (0 when none). First call wins."""
+    def settle(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str) -> Decimal:
+        """Replace the worst case with the real cost; returns the overshoot (0 when none). First call wins. The agent
+        is required: a reservation of another agent is NotFound."""
         ...
 
 
@@ -46,7 +57,9 @@ class Budget:
     every call that is open or was abandoned. Not the registry's `Budget` (an agent's budget numbers)."""
 
     def __init__(self, limit: Decimal) -> None:
-        self.limit = limit
+        self.limit = check_spend_cap(
+            limit
+        )  # a NaN, a float or a negative cap is a ValueError here, not later
         self._lock = threading.Lock()
         # reservation id -> [reserved, booked now, state, overshoot, run_id]; state: open | forfeited | settled
         self._rows: dict[str, list] = {}
@@ -58,7 +71,8 @@ class Budget:
             return self._spent()
 
     def _spent(self) -> Decimal:
-        return sum((row[1] for row in self._rows.values()), Decimal(0))
+        with localcontext(defaults.money_context()):
+            return sum((row[1] for row in self._rows.values()), Decimal(0))
 
     @property
     def exhausted(self) -> bool:
@@ -74,25 +88,36 @@ class Budget:
         except ValueError:
             raise SpendRefused("bad_amount") from None
         with self._lock:
-            if run_id in self._closed or self._spent() + worst_usd > self.limit:
+            # the same rule as the store: a counter AT the cap refuses even a zero amount (usd < cap)
+            spent = self._spent()
+            with localcontext(defaults.money_context()):
+                over_cap = not (spent < self.limit and spent + worst_usd <= self.limit)
+            if run_id in self._closed or over_cap:
                 raise SpendRefused("usd_cap")
             rid = new_id("res")
-            self._rows[rid] = [worst_usd, worst_usd, "open", Decimal(0), run_id]
+            self._rows[rid] = [worst_usd, worst_usd, "open", Decimal(0), run_id, agent_id]
             return rid
 
-    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+    def settle(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str) -> Decimal:
         """Replace the worst case with the real cost (it may be above it; settle never refuses) and return the
-        overshoot. NotFound for an unknown id, ValueError for a bad amount. A repeat returns the first result
-        and changes nothing. After `forfeit` the late settle of that call can only RAISE what is booked."""
+        overshoot. NotFound for an unknown id or another agent's id, ValueError for a bad amount or agent. A repeat
+        returns the first result and changes nothing. After `forfeit` the late settle of that call can only RAISE
+        what is booked."""
+        return self.settle_for(agent_id, reservation_id, actual_usd)
+
+    def settle_for(self, agent_id: str, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        """`settle` with the agent first: a reservation of ANOTHER agent is NotFound (ORDER 020 m2)."""
         check_spend_amount(actual_usd)
+        check_store_id(agent_id, "agent_id")
         with self._lock:
             row = self._rows.get(reservation_id)
-            if row is None:
+            if row is None or row[5] != agent_id:
                 raise NotFound(reservation_id)
             reserved, booked, state = row[0], row[1], row[2]
             if state != "settled":
                 row[1] = actual_usd if state == "open" else max(booked, actual_usd)
-                row[2], row[3] = "settled", max(Decimal(0), actual_usd - reserved)
+                with localcontext(defaults.money_context()):
+                    row[2], row[3] = "settled", max(Decimal(0), actual_usd - reserved)
             return row[3]
 
     def forfeit(self, run_id: str) -> None:
@@ -108,6 +133,11 @@ class Budget:
 
 
 _CAP_REASON = {"day": "daily_budget", "month": "monthly_budget"}
+
+
+_AUDITED_IDS = (
+    50  # stop ids written into one reset intent; more are covered by the hash and the clear rows
+)
 
 
 class Limits:
@@ -135,7 +165,10 @@ class Limits:
             check_spend_amount(worst_usd)
         except ValueError:
             raise SpendRefused("bad_amount") from None
-        budget = self.registry.agents[agent_id].budget_usd
+        try:
+            budget = self.registry.agents[agent_id].budget_usd
+        except TypeError:  # an unhashable agent id
+            raise KeyError(agent_id) from None
         try:
             if self.store.get_kill_switch().on:
                 raise SpendRefused("kill_switch")
@@ -155,15 +188,36 @@ class Limits:
         except SpendCapExceeded as exc:
             raise SpendRefused(_CAP_REASON.get(exc.which, "limits_unavailable")) from None
         except Exception as exc:  # noqa: BLE001 - fail closed: whatever the store raised, no model call
-            _LOG.warning("reserve refused: limits_unavailable error_kind=%s", type(exc).__name__)
+            # The log names the error class, never the message (a store message can carry host, user, SQL text);
+            # the one fixed hint is for a missing cap row, which an operator fixes with sync-caps.
+            hint = ""
+            if "no cap for this agent" in str(exc):
+                hint = " hint=no cap row: run limits sync-caps"
+            elif isinstance(
+                exc, BookingDayRefused
+            ):  # the day is outside the database window: a clock off by days
+                hint = " hint=check the app clock against the database clock"
+            _LOG.warning(
+                "reserve refused: limits_unavailable error_kind=%s%s", type(exc).__name__, hint
+            )
             raise SpendRefused("limits_unavailable") from None
 
-    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+    def settle(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str) -> Decimal:
         """Replace the worst case with the real cost and return the overshoot (0 when none), always from the
-        stored row: a repeated call returns the first result. NotFound for an unknown id, ValueError for a bad
-        amount. An overshoot is booked in full and audited once; the audit never makes this raise."""
-        row, applied = self.store.settle_spend(reservation_id, actual_usd)
-        over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
+        stored row: a repeated call returns the first result. NotFound for an unknown id or another agent's id,
+        ValueError for a bad amount or agent. An overshoot is booked in full and audited once; the audit never
+        makes this raise."""
+        return self._settle(reservation_id, actual_usd, agent_id)
+
+    def settle_for(self, agent_id: str, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        """`settle` with the agent first: a reservation of ANOTHER agent is NotFound and nothing changes
+        (ORDER 020 m2). The gate should call this one."""
+        return self._settle(reservation_id, actual_usd, agent_id)
+
+    def _settle(self, reservation_id: str, actual_usd: Decimal, agent_id: str) -> Decimal:
+        row, applied = self.store.settle_spend(reservation_id, actual_usd, agent_id=agent_id)
+        with localcontext(defaults.money_context()):
+            over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
         if applied and over > 0:
             try:
                 self.audit.write_outcome(
@@ -171,7 +225,7 @@ class Limits:
                         run_id=row.run_id or "-",
                         domain="limits",
                         operation="overshoot",
-                        principal=row.agent_id,
+                        principal=audit_code(row.agent_id),
                         source="meter",
                         result="booked",
                     )
@@ -186,7 +240,7 @@ class Limits:
             run_id="-",
             domain="limits",
             operation=operation,
-            principal=by,
+            principal=audit_code(by),
             source="cli",
             result="on" if on else "off",
         )
@@ -196,12 +250,26 @@ class Limits:
         self.store.set_kill_switch(KillSwitch(on=True, by=by))
         self.audit.write_outcome(self._event(True, by, "stop"))
 
-    def reset(self, by: str) -> None:
-        """Removing a safety control is audited first; if that fails, the switch stays on. A clear the store
-        refuses (the runtime role may not reset) leaves a `reset_failed` outcome, and the error is raised again."""
-        self.audit.write_intent(self._event(False, by, "reset"))
+    def reset(self, by: str) -> list[OpenStop]:
+        """Compare-and-clear. Reads the open stops first, writes the audit intent WITH their ids (and their count and
+        a hash of the ids), then clears exactly those ids. Removing a safety control is audited first; if that
+        fails, the switch stays on. A stop set after the read (also one set while the intent is written) is not in
+        the list, so it stays open and the caller's read-back says ON. A clear the store refuses (the runtime role
+        may not reset) leaves a `reset_failed` outcome, and the error is raised again. Returns the stops it cleared."""
+        stops = self.store.open_stops()
+        ids = [s.id for s in stops]
+        event = self._event(False, by, "reset").model_copy(
+            update={
+                # The ids are listed up to a bound (a flood of stops would make a huge row); the hash covers all.
+                "object_ref": f"stops:{len(ids)}"
+                + (":" + ",".join(ids) if 0 < len(ids) <= _AUDITED_IDS else ""),
+                "inputs_hash": hashlib.sha256("\n".join(sorted(ids)).encode()).hexdigest(),
+            }
+        )
+        self.audit.write_intent(event)
         try:
-            self.store.set_kill_switch(KillSwitch(on=False, by=by))
+            self.store.clear_stops(by, ids)
         except Exception:
             self.audit.write_outcome(self._event(True, by, "reset_failed"))
             raise
+        return stops

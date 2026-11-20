@@ -74,6 +74,8 @@ def _call(tool_call: dict[str, Any]) -> ToolCall | None:
 
 class OpenAICompatLLM(NetworkLLM):
     label = "openai_compat"
+    # A router or proxy behind base_url can answer 400, 413 or 422 after the upstream consumed tokens.
+    refused_statuses = frozenset({401, 403, 404})
 
     def __init__(
         self,

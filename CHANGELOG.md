@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Money status (read this first)
+Exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install). The live loop's main model call reserves the worst case before the call and settles after: the reservation bounds the booked worst case per call; a reply costing more than the worst case is booked in full (an overshoot, audited); the kill switch is read before the reserve, not atomic with it.
+- In force: exact decimal money; on PostgreSQL the runtime login cannot lower a booked amount or change a cap (grants flip in `migrate`, migrations 0010 and 0011); caps live in `hadavin_caps`; `Limits.reserve` and `Limits.settle` exist and are tested.
+- NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. The core-c model gate will move the reserve/settle pair. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired. A store failure at reserve ends the run in NEEDS_PERSON `limits.limits_unavailable` with no retry.
+- Migrations in this release: 0006 `stop_state`, 0007 `spend_reservations`, 0008 `release_expired_spend`, 0009 `stop_state_hardening`, 0010 `money_guard`, 0011 `money_definer` (0007 to 0011 are unreleased and may still change; see `handover/core-b/MIGRATIONS.md`).
+- Operator sequence: stop the tick scheduler and every runtime-side process; `hadavin-sdk migrate` naming ALL roles (including `--reset-role`); `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke `tick`. Every run is refused (`limits_unavailable`) until `sync-caps` has completed. There is no rolling upgrade.
+
+### Added
+- New tick step `check_expired_holds` (runtime login, read-only): fails the tick (exit 1, an ERROR line naming agent, day, number of holds and USD) while expired spend holds that nobody released have been closed for more than `defaults.EXPIRED_HOLD_ALERT_AFTER_S` (6 hours), and says to run `hadavin-sdk release-expired`. Backed by one read-only SECURITY DEFINER function `hadavin_expired_holds(integer)` in 0011 (EXECUTE for the runtime role only) and the store method `expired_holds(older_than_s)` on both stores.
+- `limits set-cap AGENT --day --month --by`, `limits sync-caps --by` and `limits check-caps` (F-money-definer step 6): the spend caps live in the table `hadavin_caps`, written only under the reset login (intent audited first, one intent and one outcome per agent, stop at the first failure, idempotent re-run). `check-caps` exits 1 on any difference or missing row. New tick step `check_caps` (runtime login, read-only) fails the tick while a live or draft agent's registry caps differ from the table. `limits stop` and `limits reset` are unchanged.
+- `triggers.conflict_events_per_minute` (strict whole number, 1 to 1000, default 10): the cap on `trigger.conflict` audit events per sender per minute. Optional, outside `config_hash`.
+
 ### Upgrade steps
 - **Changed behaviour: every model call is booked before it is made (the model gate is installed; step F-install).**
   - **What changed.** The run loop, the `llm_judge` detector inside a run, the judge's screen of a shadow card
@@ -42,6 +54,35 @@
   - **Removed: `hadavin_sdk.extract`** (no caller), with its tests and fixtures. `k1b.loop.run_case` takes the
     unbound gate and no `route_prices`; `k1b.loop.worst_case_usd` moved to `llm.common.worst_case_usd`; `Budget`
     moved to `hadavin_sdk.limits` (`k1b.loop.Budget` still resolves).
+- **Breaking: the runtime login loses INSERT and UPDATE on the money tables (F-money-definer step 4, `migrate`).**
+  - **What changed.** After `migrate` the runtime login holds only SELECT on `spend` and `spend_month` (`spend_totals`
+    reads them) and no right at all on `spend_reservations`; the purge login holds no right on it either (the purge is
+    the function `hadavin_purge_spend_reservations`, EXECUTE only). Reserve, settle, expire and add-spend run as
+    SECURITY DEFINER functions (0011) the runtime may EXECUTE. A hand GRANT of any write right on these tables is
+    repaired by the next `migrate`, and a role that inherits one is refused.
+  - **Upgrade: stop, migrate, start.** Stop the tick scheduler and every runtime process first (old code writes
+    these tables directly and would be refused); run `migrate` naming ALL roles; start; run one smoke `tick`. Anything
+    of yours that read `spend_reservations` or wrote a money table as the runtime login must use the store methods or
+    an admin login.
+- **Every Postgres deployment now needs a reset login, and every run is refused until the caps are synced (F-money-definer step 6, migration 0011).**
+  - Deploy order: stop the tick and every runtime-side process; `migrate` naming ALL roles including `--reset-role`;
+    set `backends.store.reset_credential_ref`; `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke tick.
+    Migrate creates the caps table empty and never seeds it, so until `sync-caps` completes every agent is refused
+    (`limits_unavailable`). There is no rolling upgrade. See "Caps live in a table the runtime cannot write" in
+    `docs/stop-state-runbook.md`.
+  - The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
+- **`migrate` now refuses a database whose `hadavin_*` functions or money tables have more than one owner (F-money-definer, migration 0011).**
+  - **What changed.** Every `hadavin_*` function must have the same owner, that owner must not be a named role (or
+    a role a named role is a member of), and `spend`, `spend_month`, `spend_reservations`, `runs` and the new
+    `hadavin_limits` must be owned by it (a superuser owner is the one exception and prints a note). The refusal
+    names the functions, tables and owners, never a value. Fix: run `ALTER FUNCTION ... OWNER TO <owner>` (or
+    `ALTER TABLE ...`) as that owner or a superuser, then run migrate again. A database whose migrations were run by
+    one login is not affected; one where 0008 and 0011 ran under different logins is.
+  - **Also new.** `migrate` writes the five limits the money functions read into `hadavin_limits` from the Python
+    constants on every run, pins their search path, gives EXECUTE per function to the runtime role (reserve, settle,
+    expire, add) and the purge role (purge), and refuses when any other named role or PUBLIC can still run one.
+  - **Upgrade order.** Stop the tick scheduler and every runtime process before migrating 0011; after migrate run
+    one smoke `tick`.
 - **Breaking: the stop switch can no longer be cleared by the runtime's database login (migration `0006_stop_state.sql`).**
   - **What changed.** A stop is now a row added to the new table `kill_switch_stops`; a reset adds a row to
     `kill_switch_clears`. Both tables are append-only for everyone. The runtime login may add a stop and read the state;
@@ -61,17 +102,43 @@
     state back and reports the real state: it exits 2 and says "still ON" when a stop is still open, and a reset
     that finds no `kill_switch` row fails (exit 2, `limits.reset_failed`).
   - **`migrate` with any role named** refuses when another role (not a superuser, the owner or the named reset role)
-    could clear a stop; a plain `migrate` with no role leaves old grants in place.
+    could clear a stop. A plain `migrate` that names no role is now refused (exit 2) unless `--no-roles` is given (see
+    the next entry).
   - **New behaviour in a run.** When the stop state or the budgets cannot be read, the run ends with a person
     (`NEEDS_PERSON`, reason `limits_unavailable`, or `recheck.limits_unavailable` just before an approved action); no
     model call is made.
   - **New audit operation** `limits.reset_failed` (result `on`): a reset the database refused.
   - **Stated limits** are in `SECURITY.md` (Stop). Steps: `docs/stop-state-runbook.md`.
+- **Breaking: search_path, role names and `--no-roles` (E5; hostile reviews 1 to 6).** Upgrade steps, in this order:
+  (0) stop every runtime process. (1) For EVERY login (runtime, portal, purge, reset, release) check `SHOW search_path;`
+  as that login. A process now **refuses to start** when the effective `search_path` of its login is not exactly the
+  configured schema, and for the runtime, purge, reset and release logins alike. The stock unpinned login on
+  `"$user", public` with the tables in `public` starts unchanged. A login that has a schema of its own name, a database
+  or role default other than `public` (for example `ALTER DATABASE x SET search_path = app`, which the old runbook told
+  you to set), or a default such as `app, public` is refused at start. (2) Pin the schema in the DSN of each login,
+  `options=-c search_path=<schema>` (a value with a space needs the libpq escape `app,\ public`), or make the role
+  default equal to the schema. (3) Set the new setting `backends.store.db_schema` to the same schema. It is the
+  EXPECTED schema (the check); it does not choose the schema of the login, and a login that is not pinned still
+  refuses. (4) Run `hadavin-sdk migrate` naming ALL roles in ONE command. (5) Deploy.
+  - **`migrate` and role defaults.** For a named role whose default `search_path` is not the migrated schema, migrate no
+    longer erases it (a role default reaches every database of the server). A default set for this database only is
+    reset. A role-wide default is kept and `ALTER ROLE r IN DATABASE <this database> SET search_path = <schema>` is
+    written, so only this database is pinned. Every change is printed on stderr (`changed: role, database, old value,
+    new value`) and logged by `hadavin_sdk.migrate`. Roles that are not named are never touched. A database-wide or
+    server-wide default is refused. `ALTER ROLE` needs a migrate login with CREATEROLE and the ADMIN OPTION on the role
+    (PostgreSQL 16 and later), otherwise migrate refuses (exit 2) and names the role.
+  - **`migrate` with no role named exits 2** unless `--no-roles`. Every script that ran a plain `migrate` after an
+    upgrade now fails until it names the roles. `--no-roles` is for the first install (before the roles exist): it grants
+    and checks nothing, so do not use it on an existing deployment, where old grants stay in place.
+  - **PostgreSQL 17 `MAINTAIN`.** From 17 migrate revokes MAINTAIN (it allows `LOCK TABLE`) on `kill_switch`,
+    `kill_switch_stops` and `kill_switch_clears` from PUBLIC and every role but the owner, and refuses a named role that
+    still holds it through `pg_maintain`. The store connection sets `lock_timeout`.
 - **Breaking: the worst-case cost of a model call can be booked before the call (migration `0007_spend_reservations.sql`).**
   - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
     case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction
-    and refuses at the cap (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
-    `limits_unavailable`, `bad_amount`). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
+    and refuses at the cap (the function does this; the live loop's main model call calls it since B2; the ungated sites do not, see the money block) (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
+    `limits_unavailable`, `bad_amount`; a sixth, `usd_cap`, comes with the in-memory meter of the eval and replay
+    commands). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
     real cost, adds the real cost to the run's cost (`runs.cost_usd`) and returns the amount above the reserved one. A
     reservation nobody settled (a crash, a timeout) is marked expired by the new tick step `expire_reservations` after
     3600 seconds (`defaults.RESERVATION_EXPIRE_S`), or after the stuck-run age when that is longer; it stays booked at
@@ -85,17 +152,39 @@
     the model calls use `reserve` every call is refused as `limits_unavailable`. (3) A custom store must add four
     methods (`reserve_spend`, `settle_spend`, `expire_spend_reservations`, `purge_spend_reservations`); without them
     the app refuses to start and names them (`ConfigError`).
+  - **Stated limits (found by a hostile re-read).** (a) The day is chosen from the clock before the booking; a reserve
+    that waits on a row lock across 00:00 UTC books and checks the previous day. (b) If the database commits a
+    reservation and the connection drops before the caller sees it, the call is refused (`limits_unavailable`) but the
+    booking exists with no id returned; it is closed only by the expiry step and the counters never go down, so the
+    worst case of a call that never started stays counted for the rest of the day and month; a flapping network can use
+    up a tight daily cap this way. (c) A model adapter must not stream: a stream needs its own rule for the
+    "refused before any response" mark. (d) A sender of the signed trigger endpoint whose agent is retired after the
+    app started keeps being served until the next restart, and the next start then refuses (remove or repoint the
+    sender first, then retire the agent). (e) The store connection sets a lock timeout of
+    `defaults.STORE_LOCK_TIMEOUT_MS` (10 seconds): a store call that waits longer for a row lock fails with
+    `limits_unavailable`; a statement's own run time is not limited.
   - **Rollback.** Revert only the Python code. Keep the file `0007_spend_reservations.sql`, its grant row and its
     manifest entry: `migrate` refuses a database whose ledger names a migration that has no file. The table is then
     unused.
-  - **Behaviour changes.** (a) A call whose worst case does not fit under the day or month cap is refused even when
-    some budget is left (before, one call could pass the cap). (b) The day and month totals now include the amounts
+  - **Behaviour changes.** (a) Once the model call sites use `reserve` (not yet: see "Money status"), a call whose worst case does not fit under the day or month cap is refused even when
+    some budget is left (before, one call could pass the cap). (b) The day and month totals (as `Limits.blocked` reads them) now include the amounts
     held for calls that are still running and for expired reservations, so a run can end with `daily_budget` or
     `monthly_budget` while another call's hold is open. (c) The same totals feed the two other readers of
     `Limits.blocked`: the action authorizer (it denies with `limits.*`) and the check just before an approved action
     runs can now refuse because another call's hold is open or expired. (d) A real cost above the reserved amount is
     booked in full with no cap check, and one audit outcome is written (domain `limits`, operation `overshoot`,
     result `booked`); every later reserve on that day or month is refused until the counter is below the cap.
+  - **Fix round 3.** `agent_id` and `run_id` of `reserve_spend` are validated in both stores (exactly a str of 1 to 200
+    characters, no control character, UTF-8 encodable; `ValueError` names the field, never the value). Caps follow the
+    amount rule's exponent window (finite, >= 0, exponent -12 to 9; no other upper bound). `expire_spend_reservations`
+    refuses an age above 10**7 and `purge_spend_reservations` a naive datetime (`ValueError`). The memory store builds the
+    reservation row before it moves a counter, and a settle whose counter row is missing raises `RuntimeError` as
+    PostgreSQL does. `Limits.reserve` raises `KeyError` for an unhashable agent id. The trigger sender secret reader
+    raises `RuntimeError("sender secret unavailable")` and never the provider's own error. The runtime PostgreSQL
+    connection sets `lock_timeout` to 10000 ms (`defaults.STORE_LOCK_TIMEOUT_MS`): a store call that waits longer for a
+    row lock fails (the runtime reports `limits_unavailable`) instead of holding the process-wide store lock for ever.
+    Stated limit: it bounds lock waits only, not a statement's own run time, and the migrate connection sets none.
+    The worst-case price of a document counts the bytes sent (an invalid byte becomes U+FFFD, 3 bytes).
   - **Stated limits.** A call that takes longer than the expiry age is charged its worst case or more (after expiry
     a settle can raise the booked amount, never lower it). A reservation that is never settled is in the day and
     month totals but not in the run's cost. The overshoot audit row is written after the settle commits: a crash in
@@ -334,7 +423,7 @@
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
 ### Added (audit drain)
-- **Parked audit events are now written.** A new tick step `audit_drain` (the last step) writes the events that wait in
+- **Parked audit events are now written.** A new tick step `audit_drain` (before `expire_reservations`) writes the events that wait in
   the `audit_outbox` table into the audit chain; before, nothing in the package did this. A running process also
   writes its own memory-parked events at its next successful audit write. An outbox row that cannot be read is kept,
   the rows after it are still written, and the step fails with a count (no row text). A missing grant or table on the
@@ -347,20 +436,31 @@
   - **Keys.** `tenant` (required) and `senders` (at least one), each id 1 to 40 characters of `a-z`, `0-9` and `-`.
     A sender has `secret_names` (one or two NAMES of secrets in the configured secrets kind, never a value; two
     names let a secret be changed with no downtime), `agent_id` and `principal_id`. A secret name is 1 to 128
-    characters of letters, digits and `_ . : / -`; the two ids the same without `/`.
-  - **Limits.** `max_body_bytes` (default 524288, above 0, at most 524288: twice the document cap, so a full-size
+    characters of letters, digits and `_ . : -` (no `/`, no `..`, at least one letter or digit); the two ids the same.
+    Names are compared in one canonical form (every run of characters outside `A-Za-z0-9` becomes `_` first, then
+    lower case), so `db-pass`, `DB_PASS`, `db.pass` and a Unicode look-alike such as a dotted capital I name one
+    secret. When senders exist, a name elsewhere in the config with a `.` or `..` segment (split on `/` and on `\`)
+    is refused at start, not folded; with the `mounted_file` kind a leading or trailing `/` is refused too (a
+    mounted file resolves `a/../x` to `x`). Other kinds keep names such as `/hadavin/prod/dsn`. With
+    `mounted_file`, names are also compared after NFKC and case folding (macOS and Windows file systems; not run
+    here). A reset or release ref with a path form gets its own message.
+  - **Limits.** `max_body_bytes` (default 524288, at least 1024, at most 524288: twice the document cap, so a full-size
     document still fits once it is wrapped in JSON), `max_running` (default 4, 1 to 64), `ack_wait_s` (default 5.0,
-    above 0, at most 30). The three are strict: `true` or a quoted number is refused.
+    at least 0.1, at most 30). The three are strict: `true` or a quoted number is refused.
   - **No agent has to be re-gated.** The block is not part of `config_hash`, so adding or changing it changes no
     agent's qualification hash.
   - **Refused at start, naming the sender and the field and never the value:** a secret name twice in one sender or
     in two senders; a secret name that a backend, an action executor, a read tool, a source or
     `evidence.restored_hash_key_secret_name` also uses; a named secret that cannot be read; an `agent_id` that is
     not in `agents.yaml` or whose agent is not `live`; a `principal_id` that is not in `principals.yaml` or is not
-    of kind `service`.
+    of kind `service`. The sender secrets are checked in their own start step, before the main secret check; a
+    config error in the `triggers:` block is raised without the validation error chained (its text can still show
+    a bad sender id or extra key, never a value).
   - **For code that builds on `App`.** New required field `App.trigger_secret(name)`, placed right after `runtime`:
     it reads one sender secret by name and raises `PermissionError`, without asking the secrets provider, for any
-    name that is not under `triggers.senders`. The secrets provider itself is not on the `App`.
+    name that is not a real `str` under `triggers.senders`; a provider failure is `RuntimeError("sender secret
+    unavailable")` with no name in it. The secrets provider is not an attribute of the `App`, but the reader is a
+    closure: code running in the same process can still reach it, so this limits the worker's API, not Python code.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

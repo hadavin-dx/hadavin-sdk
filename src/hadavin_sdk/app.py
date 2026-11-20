@@ -35,6 +35,7 @@ from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
+from hadavin_sdk.secret_name import collides, path_form_problem
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
 from hadavin_sdk.stages import is_live
@@ -181,6 +182,9 @@ def build(
         sender_id: sender.secret_names
         for sender_id, sender in (cfg.triggers.senders if cfg.triggers else {}).items()
     }
+    file_backed = getattr(b.secrets, "kind", None) == "mounted_file" or bool(
+        getattr(secrets, "file_backed", False)
+    )
     platform_secrets.check_senders(
         secrets,
         sender_names,
@@ -190,8 +194,31 @@ def build(
             *(platform_secrets.secret_names(s) for _, s in b.entries()),
             # The reset login is never read by this process; a sender must not carry its name all the same.
             {getattr(b.store, "reset_credential_ref", None)} - {None},
+            {getattr(b.store, "release_credential_ref", None)} - {None},
         ),
+        file_backed=file_backed,
     )
+    # The reset and release logins are read only by their own commands, never by this process: NO secret name the
+    # runtime reads (tool, source, executor, restored-hash key, any backend, sender) may be, or fold to, either.
+    runtime_names = set().union(
+        extra_secret_names,
+        executor_names,
+        *(platform_secrets.secret_names(s) for _, s in b.entries()),
+        *(set(names) for names in sender_names.values()),
+    )
+    for ref_field in ("release_credential_ref", "reset_credential_ref"):
+        ref = getattr(b.store, ref_field, None)
+        if ref and path_form_problem(ref, file_backed):
+            raise ConfigError(
+                f"backends.store.{ref_field} is a path-shaped name (a '.' or '..' segment"
+                + (", or a leading or trailing '/'" if file_backed else "")
+                + "), which cannot be compared with the secrets the runtime reads; write a plain secret name"
+            )
+        if ref and collides(ref, runtime_names, file_backed=file_backed):
+            raise ConfigError(
+                f"backends.store.{ref_field} names a secret that the runtime also reads (a backend, tool, source, "
+                "executor, sender or the restored-hash key): the runtime must never hold that login"
+            )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
     # configured sources (Config.sources) are probed here, so a deployed cluster is never read unprobed.
@@ -342,13 +369,27 @@ def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[
 
 def _sender_secrets(secrets: SecretProvider, names: set[str]) -> Callable[[str], str]:
     """A secret reader limited to the trigger senders' `secret_names` (the same shape as `_own_secrets`): the
-    trigger worker is never handed the global provider. The refusal does not show the name that was asked for."""
+    trigger worker is never handed the global provider. The refusal does not show the name that was asked for.
+    Only a real `str` is served: a subclass with its own `__eq__`/`__hash__` could pass `in`, and an unhashable
+    argument is a PermissionError, not a TypeError. Stated limit: the reader is a closure, so Python code that
+    holds the App can reach the provider through `read.__closure__`; the guarantee is the worker's API, not
+    isolation from in-process code (the same as `_own_secrets`)."""
     allowed = frozenset(names)
 
     def read(name: str) -> str:
-        if name not in allowed:
+        if type(name) is not str or name not in allowed:
             raise PermissionError("not one of the secret names under triggers.senders")
-        return secrets.get(name)
+        failed = False
+        value = ""
+        try:
+            value = secrets.get(name)
+        except Exception:  # noqa: BLE001 - a provider's own error may carry the name
+            failed = True
+        # raised AFTER the handler has ended: inside it, `from None` would hide the provider's error from a
+        # traceback but leave it in `__context__`, where its text (and the name) stays reachable
+        if failed:
+            raise RuntimeError("sender secret unavailable") from None
+        return value
 
     return read
 

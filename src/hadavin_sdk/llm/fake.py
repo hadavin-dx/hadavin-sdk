@@ -6,11 +6,14 @@ import hashlib
 import json
 import threading
 from collections import Counter
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
+from hadavin_sdk.llm.common import round_up_cost
+from hadavin_sdk.llm.protocol import ProviderError
 from hadavin_sdk.models import Reply
 
 
@@ -48,8 +51,16 @@ class FakeLLM:
         data = json.loads(path.read_text(encoding="utf-8"))
         r = self.routes[route]
         # A recording is a measured usage (its token counts, 0 when absent), so its cost is always known.
-        cost = (
-            Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
-            + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
-        ) / Decimal(1_000_000)
+        tokens = (data.get("input_tokens", 0), data.get("output_tokens", 0))
+        if any(type(n) is not int or n < 0 for n in tokens):  # same rule as llm/common.py reply()
+            raise ProviderError("bad_usage: the recorded token count is not an integer >= 0")
+        try:
+            with localcontext(defaults.money_context()):  # not the caller's precision
+                cost = (
+                    Decimal(tokens[0]) * r.input_usd_per_mtok
+                    + Decimal(tokens[1]) * r.output_usd_per_mtok
+                ) / Decimal(1_000_000)
+            cost = round_up_cost(cost)
+        except ArithmeticError as exc:  # same mapping as llm/common.py reply()
+            raise ProviderError("bad_amount: the reply price overflowed") from exc
         return Reply(**data, cost_usd=cost, model_id=r.model_id)

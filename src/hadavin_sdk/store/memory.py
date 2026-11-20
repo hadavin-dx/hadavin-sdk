@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import threading
+import uuid
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
+from hadavin_sdk import defaults
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -15,6 +18,7 @@ from hadavin_sdk.models import (
     DeadLetter,
     GateDecision,
     KillSwitch,
+    OpenStop,
     Plan,
     Run,
     RunState,
@@ -24,13 +28,18 @@ from hadavin_sdk.models import (
     now,
 )
 from hadavin_sdk.store.protocol import (
+    EXPIRED_HOLDS_MAX_ROWS,
+    ExpiredHolds,
     NotFound,
     SpendCapExceeded,
     StaleState,
     check_expiry_age,
+    check_purge_bound,
     check_reservation_id,
-    check_spend_amount,
     check_spend_cap,
+    check_spend_day,
+    check_store_id,
+    clean_spend_amount,
 )
 
 
@@ -46,6 +55,9 @@ class MemoryStore:
         self._dead: dict[str, list[DeadLetter]] = defaultdict(list)
         self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
         self._kill = KillSwitch()
+        self._stops: list[
+            OpenStop
+        ] = []  # the open ones; a clear removes them (the history is not kept)
         self._ticks: dict[str, TickState] = {}
         self._tool_calls: dict[str, ToolCallRecord] = {}
         self._maps: dict[str, tuple[dict[str, str], datetime]] = {}
@@ -84,11 +96,14 @@ class MemoryStore:
             return run.model_copy(deep=True)
 
     def add_cost(self, run_id: str, usd: Decimal) -> None:
+        usd = clean_spend_amount(usd)
         with self._lock:
             run = self._runs.get(run_id)
             if run is None:
                 raise NotFound(run_id)
-            self._runs[run_id] = run.model_copy(update={"cost_usd": run.cost_usd + usd})
+            with localcontext(defaults.money_context()):
+                cost = run.cost_usd + usd
+            self._runs[run_id] = run.model_copy(update={"cost_usd": cost})
 
     def touch(self, run_id: str) -> None:
         """Heartbeat only: moves `updated_at`, never checks or changes the state (`transition` is the only
@@ -204,34 +219,46 @@ class MemoryStore:
             return [d.model_copy(deep=True) for d in self._dead.get(run_id, [])]
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+        check_store_id(agent_id, "agent_id")  # the same refusals as the definer function
+        check_spend_day(day)
+        usd = clean_spend_amount(usd)  # a bad amount is a ValueError; -0 becomes 0
         with self._lock:
-            self._spend[(agent_id, day)] += usd
-            month = sum(
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            )
-            return self._spend[(agent_id, day)], Decimal(month)
+            with localcontext(defaults.money_context()):
+                self._spend[(agent_id, day)] += usd
+                month = self._month_total(agent_id, day)
+            return self._spend[(agent_id, day)], month
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:
-            month = sum(
-                (
-                    v
-                    for (a, d), v in self._spend.items()
-                    if a == agent_id and (d.year, d.month) == (day.year, day.month)
-                ),
-                Decimal(0),
-            )
+            month = self._month_total(agent_id, day)
             return self._spend.get((agent_id, day), Decimal(0)), month
 
     def get_kill_switch(self) -> KillSwitch:
+        """ON while any stop is open (the oldest is reported), else the flag. Same reading as Postgres; the memory
+        store still guarantees nothing about who may clear (any caller can)."""
         with self._lock:
+            if self._stops:
+                first = self._stops[0]
+                return KillSwitch(on=True, by=first.by, ts=first.ts)
             return self._kill.model_copy(deep=True)
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
         with self._lock:
+            if ks.on:
+                self._stops.append(OpenStop(id=str(uuid.uuid4()), by=ks.by, ts=ks.ts))
+                return
+            self._stops.clear()
             self._kill = ks.model_copy(deep=True)
+
+    def open_stops(self) -> list[OpenStop]:
+        with self._lock:
+            return [s.model_copy() for s in sorted(self._stops, key=lambda s: s.ts)]
+
+    def clear_stops(self, by: str, stop_ids: Sequence[str], audit_seq: int | None = None) -> None:
+        with self._lock:
+            wanted = set(stop_ids)
+            self._stops = [s for s in self._stops if s.id not in wanted]
+            self._kill = KillSwitch(on=False, by=by)
 
     def get_tick_state(self, step: str) -> TickState | None:
         with self._lock:
@@ -294,14 +321,15 @@ class MemoryStore:
     # --- spend reservations: the same rules as the Postgres store, under the one lock (one process only) ------
 
     def _month_total(self, agent_id: str, day: date) -> Decimal:
-        return sum(
-            (
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            ),
-            Decimal(0),
-        )
+        with localcontext(defaults.money_context()):
+            return sum(
+                (
+                    v
+                    for (a, d), v in self._spend.items()
+                    if a == agent_id and (d.year, d.month) == (day.year, day.month)
+                ),
+                Decimal(0),
+            )
 
     def reserve_spend(
         self,
@@ -314,21 +342,42 @@ class MemoryStore:
         month_cap: Decimal,
         run_id: str | None = None,
     ) -> None:
+        check_store_id(agent_id, "agent_id")
+        if run_id is not None:
+            check_store_id(run_id, "run_id")
+        check_spend_day(day)
         check_reservation_id(reservation_id)
-        check_spend_amount(usd)
+        usd = clean_spend_amount(usd)
         check_spend_cap(day_cap)
         check_spend_cap(month_cap)
         with self._lock:
-            if reservation_id in self._reservations:
+            prior = self._reservations.get(reservation_id)
+            if prior is not None:
+                if prior.status == "open" and (
+                    prior.agent_id,
+                    prior.day,
+                    prior.reserved_usd,
+                    prior.run_id,
+                ) == (
+                    agent_id,
+                    day,
+                    usd,
+                    run_id,
+                ):
+                    return  # a retry of a committed reserve: the same row, nothing booked again
                 raise StaleState(f"spend reservation exists: {reservation_id}")
             booked = self._spend.get((agent_id, day), Decimal(0))
-            if not (booked < day_cap and booked + usd <= day_cap):
+            with localcontext(defaults.money_context()):
+                day_ok = booked < day_cap and booked + usd <= day_cap
+            if not day_ok:
                 raise SpendCapExceeded("day")
             month = self._month_total(agent_id, day)
-            if not (month < month_cap and month + usd <= month_cap):
+            with localcontext(defaults.money_context()):
+                month_ok = month < month_cap and month + usd <= month_cap
+            if not month_ok:
                 raise SpendCapExceeded("month")
-            self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
-            self._reservations[reservation_id] = SpendReservation(
+            # the row is built first: a model that refuses its input must leave the counter alone
+            row = SpendReservation(
                 reservation_id=reservation_id,
                 agent_id=agent_id,
                 day=day,
@@ -336,29 +385,40 @@ class MemoryStore:
                 reserved_usd=usd,
                 created_at=now(),
             )
+            with localcontext(defaults.money_context()):
+                self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
+            self._reservations[reservation_id] = row
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
-        check_spend_amount(actual_usd)
+        actual_usd = clean_spend_amount(actual_usd)
+        check_store_id(agent_id, "agent_id")
         with self._lock:
             row = self._reservations.get(reservation_id)
-            if row is None:
+            if row is None or row.agent_id != agent_id:
                 raise NotFound(reservation_id)
             if row.status == "settled":
                 return row, False
             # settled_usd is what stays booked: after expiry the booked amount never goes down
             booked = max(actual_usd, row.reserved_usd) if row.status == "expired" else actual_usd
-            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
+            if (row.agent_id, row.day) not in self._spend:
+                raise RuntimeError("spend counter row missing")
             run = self._runs.get(row.run_id) if row.run_id is not None else None
-            if run is not None:  # a missing run row moves only the counters
-                self._runs[run.run_id] = run.model_copy(
-                    update={"cost_usd": run.cost_usd + actual_usd}
+            with localcontext(defaults.money_context()):
+                new_run = (  # a missing run row moves only the counters
+                    run.model_copy(update={"cost_usd": run.cost_usd + actual_usd})
+                    if run is not None
+                    else None
                 )
             row = row.model_copy(
                 update={"status": "settled", "settled_usd": booked, "closed_at": now()}
             )
+            with localcontext(defaults.money_context()):
+                self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
+            if new_run is not None:
+                self._runs[new_run.run_id] = new_run
             self._reservations[reservation_id] = row
             return row, True
 
@@ -378,12 +438,27 @@ class MemoryStore:
                 )
             return len(old)
 
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]:
+        check_expiry_age(older_than_s)
+        with self._lock:
+            cutoff = now() - timedelta(seconds=older_than_s)
+            groups: dict[tuple[str, date], tuple[int, Decimal]] = {}
+            for r in self._reservations.values():
+                if r.status == "expired" and r.closed_at is not None and r.closed_at <= cutoff:
+                    n, usd = groups.get((r.agent_id, r.day), (0, Decimal(0)))
+                    groups[(r.agent_id, r.day)] = (n + 1, usd + r.reserved_usd)
+            return [
+                ExpiredHolds(agent, day, n, usd)
+                for (agent, day), (n, usd) in sorted(groups.items())[:EXPIRED_HOLDS_MAX_ROWS]
+            ]
+
     def purge_spend_reservations(self, before: datetime) -> int:
+        check_purge_bound(before)
         with self._lock:
             gone = [
                 k
                 for k, r in self._reservations.items()
-                if r.status != "open" and r.closed_at is not None and r.closed_at < before
+                if r.status == "settled" and r.closed_at is not None and r.closed_at < before
             ]
             for k in gone:
                 del self._reservations[k]

@@ -16,10 +16,11 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, localcontext
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.bundle import Bundle, bad_citations, bundle_set_sha256, load_bundles
@@ -331,7 +332,7 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
     }
     if "redaction" in first:
         info["redaction"] = first["redaction"]
-    info["usd"] = format(sum(_dec(m.get("usd")) for m in metas), "f")
+    info["usd"] = _sum_usd(metas)
     info["k"] = len(runs)
     return ScoreResult(
         runs=scores,
@@ -344,6 +345,12 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
         outputs_changed=changed,
         warnings=warnings,
     )
+
+
+def _sum_usd(metas: list[dict[str, Any]]) -> str:
+    """The total cost of the runs as text, summed in our own Decimal context, not the caller's."""
+    with localcontext(defaults.money_context()):
+        return format(sum((_dec(m.get("usd")) for m in metas), Decimal(0)), "f")
 
 
 def _dec(value: Any) -> Decimal:

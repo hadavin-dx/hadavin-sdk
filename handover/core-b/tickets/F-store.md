@@ -51,6 +51,8 @@ Review report: tickets/F-store-review-1.md. Every Blocker and Major is answered 
 | tests/spend_reservation_mutants.py | create: the mutants, in the format of tests/stage_mutants.py, each with the name of the test that kills it | T |
 Not brought in from the branches: tests/pg_dsn.py, test_pg_dsn_guard.py, meter_support.py, reserve_workers.py, test_store_time_rules.py, postgres_mutants.py, meter_mutants.py and the demo conftest edit. Decision 4.4 above is withdrawn (it would edit files outside this list); the test writer may copy ideas into its own new files. Line citations of those branch files in the test plan are pointers to ideas, not to files in this tree.
 
+tests/contracts/test_store_spend_caps.py and tests/contracts/test_store_spend_model.py (added later by the test writers, 2026-11-20 06:00 and 06:30 UTC) belong to the T rows above. Reviewer finding 16 of the hostile re-read.
+
 ### R2. Who lands what (M1)
 F-store lands SpendRefused, the Meter Protocol, Limits.reserve and Limits.settle. F-install commit 3 lands only the k1b Budget changes.
 
@@ -140,7 +142,7 @@ UPDATE spend_reservations SET status = 'settled', settled_usd = %(a)s, closed_at
 -- settle, steps 2 and 3: usd = usd + (actual - reserved) on the row's day, then its month; zero rows raises
 -- expire
 UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, closed_at = clock_timestamp()
- WHERE status = 'open' AND created_at < clock_timestamp() - make_interval(secs => %(age)s);
+ WHERE status = 'open' AND created_at <= clock_timestamp() - make_interval(secs => %(age)s);
 -- purge (purge role)
 DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %(before)s;
 ```
@@ -158,7 +160,7 @@ DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %(before)s
 9. **Amounts.** `worst_usd` and `actual_usd` are finite Decimals >= 0. The table CHECK also refuses NaN and Infinity (upper bound). Nothing is rounded.
 10. **Expiry clock.** Expiry age uses the database clock only; `created_at` is never passed by the store method.
 11. **Stated limit.** The runtime login can UPDATE its own counters (as today, `migrate.py:53-54`). Reservations protect against races and crashes, not against a hostile runtime login. The memory store guarantees nothing across processes.
-12. **Purge.** Purge deletes closed rows only. If the purge role deletes an open row, the worst case stays booked (the safe direction).
+12. **Purge.** (E11 M3, 2026-11-20: purge deletes SETTLED rows only, a row released by 0008 included; an expired unsettled hold is KEPT so a late settle still counts.) Purge deletes closed rows only. If the purge role deletes an open row, the worst case stays booked (the safe direction).
 
 ## Migration `0007_spend_reservations.sql`
 ```sql
@@ -202,7 +204,7 @@ class SpendCapExceeded(RuntimeError):
 def reserve_spend(self, reservation_id: str, agent_id: str, day: date, usd: Decimal, *,
                   day_cap: Decimal, month_cap: Decimal, run_id: str | None = None) -> None:
     """Book usd on day and month or book nothing: SpendCapExceeded, StaleState (id exists), ValueError (amount)."""
-def settle_spend(self, reservation_id: str, actual_usd: Decimal) -> SpendReservation:
+def settle_spend(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None) -> SpendReservation:  # agent_id added by ORDER 020 m2
     """The stored row after the call. NotFound for an unknown id; ValueError for a bad amount."""
 def expire_spend_reservations(self, older_than_s: int) -> int: ...
 def purge_spend_reservations(self, before: datetime) -> int: ...
@@ -385,3 +387,65 @@ T1-T2-tests with edits:
 - `C:\Users\rakes\Downloads\Hadavin\_local\scratch\wt\sdk-main\src\hadavin_sdk\`: `limits.py`, `store\protocol.py`, `store\postgres.py`, `store\memory.py`, `store\migrate.py`, `store\migrations\`, `runtime\tick.py`, `runtime\agent_loop.py`, `k1b\loop.py`, `llm\common.py`
 - `C:\Users\rakes\Downloads\Hadavin\_local\scratch\wt\sdk-main\tests\`: `contracts\test_store.py`, `contracts\kinds\store_postgres.py`, `test_p7_store.py`, `test_p7_tick.py`, `test_p2_postgres.py`, `test_migration_numbers_guards.py`, `fixtures\migrations_released.json`
 - Branches read with `git show` / `git diff` in `C:\Users\rakes\Downloads\Hadavin\projects\hadavin-sdk`
+
+## Also built
+- `check_spend_day` (store/protocol.py:104): a spend day must be exactly a `date`; a datetime or str raises ValueError. Used at store/postgres.py:628 and store/memory.py:323.
+- `Budget.charge` and `Budget.exhausted` (limits.py:63-69) exist as extras; they are not part of the Meter contract.
+- `Limits.reserve` turns an unhashable agent id into KeyError (limits.py:147-148).
+
+## ADDENDUM ORDER 020 (release command M1 and minors m1 to m5), built on local/code-REL
+- Migration 0008_release_expired_spend.sql (number to be confirmed by the lead, QUESTIONS.md). The function `hadavin_release_expired_spend(agent, day)` is SECURITY DEFINER (owner = migration owner), EXECUTE revoked from PUBLIC. One transaction: expired rows of that agent and day -> `settled`, `settled_usd` 0 (the CHECKs allow it; a late settle then returns the stored row, applied False); day and month counters lowered by the same sum with GREATEST(..., 0); a missing counter row aborts all. Open rows, settled rows, other days and agents are untouched. Order row, day, month (as settle and reserve). Also the partial index `spend_reservations_closed` on closed_at (m4).
+- Rights (a deviation from the order's wording, tighter): "SELECT/UPDATE on expired rows" cannot be a grant without row security, so the release role holds NO right on spend_reservations, spend or spend_month. It holds EXECUTE on that one function plus the audit append (audit_entries SELECT, INSERT; audit_checkpoints SELECT). GRANTS has a new field `release` with those two rows; `migrate --release-role Y` applies them, revokes EXECUTE from every other named role and refuses a run where one of them can still run it (through PUBLIC or membership). Roles must all differ and not be members of each other.
+- Store: `PostgresStore.release_expired_spend(agent_id, day, actor, audit)` (the audit is a fourth argument: the store has no audit handle of its own). Order: audit intent first (AuditUnavailable: nothing changed), one transaction, outcome row (failure logged, never raised; a refused call writes `release_failed`). Returns `SpendRelease`. It is on a separate optional protocol `SpendReleaser`, NOT on `Store` (custom stores still start). The memory store does not have it (the CLI refuses memory).
+- CLI: `hadavin-sdk release-expired AGENT --day YYYY-MM-DD --by WHO` is its own subparser and its own function `release_expired_cmd` in cli.py; dispatched right after `migrate`, before the registry load and before the limits path, so it can never reach `limits.reset`; `limits release-expired` is still an argparse error. New setting `backends.store.release_credential_ref` (the NAME of a secret; app.py counts it among the names a sender must not reuse). Refused before any connection when it is missing or equals the runtime, purge or reset secret. Exit codes 0, 2, 3, 4 (runbook).
+- Minors: m1 documented (ii-meter.md point 9, runbook Limits). m2 `settle_spend` takes optional `agent_id=` and `Limits`/`Budget` get `settle_for(agent_id, reservation_id, actual_usd)`; another agent's id is NotFound. `settle` keeps the signature that tests/test_limits_reserve.py pins (a first try changed it and that test failed). The gate should call `settle_for` (request to core-c). m3 `reservation_expire_s` clamps to MAX_EXPIRY_AGE_S (also inf, NaN). m4 index in 0008; the gate treating NotFound as "no change" is in core-c's gate, not in my files: interfaces point 4 says so, to be checked there. m5 `Budget(limit)` runs `check_spend_cap`; a reserve at the cap refuses even a zero amount.
+- Existing tests that must change (not edited here): tests/test_grants_negative_roles.py and any test that asserts the exact field list of `Grant` or that iterates every GRANTS row for roles (new `release` field: run it and adjust); tests/test_stop_state_roles.py `World` names four roles only, so its migrate calls do not name a release role (they still pass). tests/fixtures/migrations_released.json gets the 0008 hash only when the lead releases it.
+- New tests: tests/test_release_expired_spend_pg.py (PostgreSQL: what it lowers and never touches, audit order, below-zero stop, late settle, runtime/reset/portal/purge/PUBLIC cannot run it, release role holds nothing else, migrate refusals, the command end to end), tests/test_release_minors.py (m2, m3, m5, dispatch never reaches limits.reset).
+
+
+## Release command, fix round 2 (review 4)
+- m-2 (settle_for): nothing in src calls `Limits.settle` / `Budget.settle` today (`grep "\.settle(" src` is empty), so
+  there is no real caller to wire without changing the pinned two-argument `settle` signature. `settle_for(agent_id,
+  reservation_id, actual_usd)` is built and tested; core-c's gate must call `settle_for`, not `settle`, to get the
+  agent check of ORDER 020 m2.
+- M1: `_write_outcome` treats a None key from `write_outcome` (the chain parked the event) as not audited; exit 5 is
+  reachable with the real chain (tests in tests/test_release_expired_spend_pg.py).
+
+### Review 5 of the release command: CLEAN (0 Major). Stated limits
+- A `local_dir` audit with a PostgreSQL store (unusual pairing): None means the event sits in its outbox and the tick writes it later, so exit 5 can precede a row that does arrive; the runbook now says to check the chain first.
+- A lost `release_failed` outcome row is only logged; the money tables are untouched in that case.
+- The m-2 behavioural test covers the restored-hash secret source only; the refs are not checked against the runtime's backend secret names.
+
+## agent_loop follow-up (from F-store round 6, M1; request note, runtime/agent_loop.py not edited here)
+
+`Limits.charge` and `store.add_cost` now raise ValueError for a negative, NaN, infinite, float or too-large amount
+(`check_spend_amount`). `llm/common.py reply()` and `llm/fake.py` now return only valid costs (rounded UP to 12 decimals)
+and raise `ProviderError("bad_usage: ...")` for a negative or non-integer token count, which the existing
+`except ProviderError` at agent_loop.py:~506 already turns into an abstain (`provider_error`). So the model-reply
+call site (:513) cannot reach the new ValueError today. The remaining unguarded pair is the paid screen at
+agent_loop.py:353 (`verdict.cost_usd` from a detector, not from `reply()` necessarily). Requested change, to be
+made by whoever owns agent_loop.py: wrap the two lines
+
+    self.limits.charge(run.agent_id, verdict.cost_usd)
+    self.store.add_cost(run.run_id, verdict.cost_usd)
+
+(and the same two lines after `self.llm.chat` at :513) in `try: ... except ValueError:` that notes
+`self._note(run, "llm", "charge", result="failed", error_code="bad_amount")` and ends the run safely
+(`return self._abstain(run, S.NEEDS_PERSON, "bad_amount", cited)` at :513; at :353 treat the screen as failed
+closed). k1b/loop.py:174 (`budget.charge(reply.cost_usd)`) has the same shape and is reached only with a cost
+from `reply()`/FakeLLM, which are now valid by construction.
+
+## E11 M3/M4 (2026-11-20, builder F7)
+- M3 (a): `purge_spend_reservations` deletes `status = 'settled' AND closed_at < bound` in both stores; expired holds stay.
+  Tests: tests/test_purge_keeps_expired.py.
+- M4: migration `0010_money_guard.sql` (0009 is the stop-state hardening migration of builder B7, merged first; the ledger refuses a
+  tree with 0010 and no 0009). BEFORE UPDATE
+  trigger `hadavin_money_guard()` (SECURITY INVOKER, search path pinned by migrate) on spend, spend_month,
+  spend_reservations; only the owner of the release function may lower. Design correction found by test: settle of an
+  OPEN hold below its reserved amount lowers the counters legitimately, so the counters may fall by the holds settled
+  in the same transaction and never below the booked holds. Known limit (review round 2, E13, corrected): the guard is a TRIPWIRE. It stops a plain lowering UPDATE and a naive plant;
+  it does NOT stop a runtime login that composes a settle with repeated lowering UPDATEs in one transaction (H1), forges a settled
+  hold by INSERT or by raising reserved_usd (H2), or shares a login with the migration owner (L2); all reproduced, pinned as
+  xfail(strict) in tests/test_migrations_0009_0010_round2.py. The real fix is the queued redesign: the runtime without UPDATE/INSERT
+  on the money tables, reserve/settle/expire as SECURITY DEFINER (definer) functions. Index on spend_reservations (agent_id, day) added (M3).
+  Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.
