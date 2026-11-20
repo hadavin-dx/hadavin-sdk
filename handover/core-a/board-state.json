@@ -676,10 +676,10 @@
   {
    "item": "DRIFT-n8n+tests",
    "what": "drift fixes in n8n/README-trigger.md (+ test pins) and the missing tests E5 (empty document) and E11 (escaped body over the cap)",
-   "state": "QUEUED after batch7 (it copies n8n/ and tests/ into its combined tree)",
-   "percent": 0,
+   "state": "RUNNING (2 builders)",
+   "percent": 5,
    "evidence file": "DRIFT-REPORT.md",
-   "tries": 0,
+   "tries": 1,
    "reason": "batch7 running"
   }
  ],
@@ -703,6 +703,32 @@
    "model": "sonnet",
    "what exactly it is doing": "drift fixes in WINDOWS-NOTES, ticket D, ticket E, CRASH-MATRIX (documents follow the code)",
    "started UTC": "09:11",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "drift report"
+  },
+  {
+   "id": "n8n-drift",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n README follows the code: no fallbacks, --allow-non-loopback flag, connection cap and read deadline exist, SIGTERM behaviour",
+   "started UTC": "09:18",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "drift report"
+  },
+  {
+   "id": "e5-e11",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "tests for ticket D cases E5 (empty document) and E11 (escaped body over the cap); stand-ins updated; broken-guard check in a scratch copy",
+   "started UTC": "09:18",
    "expected end": "15 min",
    "percent": 5,
    "state": "running",

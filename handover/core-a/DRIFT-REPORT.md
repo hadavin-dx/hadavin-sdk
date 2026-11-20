@@ -48,3 +48,31 @@ Scope: D ticket, E ticket, n8n README and the two n8n JSON files, CRASH-MATRIX.m
 ## Not checked
 
 Anything that needs a run (no tests, no git, no n8n, no PostgreSQL, no Windows). Test pass counts and "about 91 / 193" n8n test counts are not verified (test_n8n_template.py has 55 test functions plus parametrisation). The ticket claims "no file outside triggers changed since 51c9fc4fb" cannot be checked without git; only about twenty cites outside triggers (agent_loop.py, tick.py, hmac_v0.py, defaults.py, models.py) were opened. Not opened: atlas-n8n.md and evidence-n8n-*.md line cites, S/config.py (only grepped: no `triggers` field, as the ticket says), registry.py, store and approvals files, test bodies of EP/WK/T5 beyond the names and lines named above, test_t5_postgres.py cases B1-B4, the tests for test_n8n_template.py. Whether those documents link to the code they describe: D and E tickets give file:line links; README-trigger.md and WINDOWS-NOTES.md link to worker.py by name only in some places, and none of the docs mention server.py's header refusals (D2); adding that link would make the next check cheaper.
+
+## Fix log (appended 2026-11-20T09:20Z by builder, core-a; documents brought to the code, no code, test or n8n file touched)
+
+Status per drift id. "fixed in <file> by <builder> at <UTC>" means the document now states what the code does on 2026-11-20 (checked by reading and grep, nothing run).
+
+- D1 fixed in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z (invariant 10, status table row for 503, H10 row).
+- D2 fixed in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z (two new status-table rows: stdlib 400 for underscore header names, duplicate Content-Length, Transfer-Encoding; 414).
+- D3 fixed in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z: E5 and E11 stated as OPEN TEST GAPS (no test written, as ordered), E6 and H10 marks corrected, invariant 14 "asks only for listed names" marked still untested in process. The gaps themselves stay open (tests: other work).
+- D4 fixed (document part) in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z: the README item is now DONE, the `test_t5_cases.py:112-122` item is kept and marked STILL OPEN with the `max_running: 4` and `max_body_bytes: 262144` contradictions. The code item itself is open (tests: other work).
+- D5 fixed in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z: size 720 lines and all current-state worker.py cites re-taken at the end; sections 15, 16 and d-fix2 to d-fix5 are history and keep their old numbers (said in the last line of the ticket). endpoint.py and server.py cites were checked and not changed.
+- D6 OPEN: EP, WK and T5 line cites not re-taken (the old cited lines cannot be mapped to test names without the old file); a warning was added to the ticket header (line 8) saying to find tests by name.
+- D7 fixed in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z (`Runner` signature line: `poll_s` 0.01 to 1.0).
+- D8 fixed in handover/core-a/tickets/D-signed-endpoint.md by builder at 2026-11-20T09:20Z (crash.py 295 lines; true-size sentence 1,388 lines in three modules).
+- E1 fixed in handover/core-a/tickets/E-test-helpers.md by builder at 2026-11-20T09:20Z (sizes: crash.py 295, test file 1030 with 44 tests, from wc -l; the delete retry, stuck flag, TypeErrors and name caps added to invariants 5 and 8 and to the signatures).
+- E2 fixed in handover/core-a/tickets/E-test-helpers.md by builder at 2026-11-20T09:20Z (`__exit__` second RuntimeError).
+- E3 fixed in handover/core-a/tickets/E-test-helpers.md by builder at 2026-11-20T09:20Z (section 7 says D now uses `store.touch:before`; `llm.chat:before` stays a valid point of the helper, Usage 1).
+- C1 fixed in handover/core-a/CRASH-MATRIX.md by builder at 2026-11-20T09:20Z (worker.py:220, 223-232, 232-234 replace 127, 130-139, 139-141).
+- C2 left as it was: the counts checked in the report match; "cases B2 and B3 of test_t5_postgres.py" and the agent_loop.py:485 note were not changed or re-checked (nothing wrong was found).
+- W1 fixed in handover/core-a/WINDOWS-NOTES.md by builder at 2026-11-20T09:20Z (row W01, its laptop commands' expected results, candidate fix, "Run this first" item 4, W08 note on test 2e).
+- W2 fixed in handover/core-a/WINDOWS-NOTES.md by builder at 2026-11-20T09:20Z (row W02, candidate fix, "Run this first" item 9; SIGBREAK is handled, `taskkill` and `terminate()` remain hard kills).
+- W3 fixed in handover/core-a/WINDOWS-NOTES.md by builder at 2026-11-20T09:20Z (row W03 with the `--allow-non-loopback` flag, its command, candidate fix, "Run this first" item 10).
+- W4 fixed in handover/core-a/WINDOWS-NOTES.md by builder at 2026-11-20T09:20Z (row W06 and its candidate fix; reported as W4 in this report).
+- W5 fixed in handover/core-a/WINDOWS-NOTES.md by builder at 2026-11-20T09:20Z (crash.py cites in rows W04 and W10).
+- W6 fixed in handover/core-a/WINDOWS-NOTES.md by builder at 2026-11-20T09:20Z (skip-table lines, rows W07 and W09).
+- N1, N2, N3, N4, N5, N6, N7 OPEN: all in n8n/README-trigger.md, out of scope for this fix (another work item follows). N7 needs only the README side; the WINDOWS-NOTES side is fixed (W2).
+- Other open items, not drifts of the four files: the tests named in D3 and D4 (E5, E11, in-process "asks only for listed names", `test_t5_cases.py` senders form) and the D6 test line numbers.
+
+Not verified by the builder: nothing was run; no Windows behaviour (SO_EXCLUSIVEADDRUSE effect, SIGBREAK delivery, error codes) was observed; the tests' bodies were not read beyond the lines cited; the README, n8n JSON and the history sections of the D ticket (15, 16, d-fix2 to d-fix5) were not re-checked; W05, W08 to W16 rows were only spot-checked where the report named them.
