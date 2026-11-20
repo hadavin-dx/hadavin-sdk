@@ -255,8 +255,8 @@ ____________________ test_no_vendor_brand_string_is_tracked ____________________
                 continue
             bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
 >       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
-E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'; handover/core-a/raw/BATCH-rerun-own-files.log: 'Port.io'; handover/core-a/raw/BATCH2-full-suite.log: 'Port.io'
-E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'", "handover/core-a/raw/BATCH-rerun-own-files.log: 'Port.io'", "handover/core-a/raw/BATCH2-full-suite.log: 'Port.io'"]
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: '[vendor-brand]'; handover/core-a/raw/BATCH-rerun-own-files.log: '[vendor-brand]'; handover/core-a/raw/BATCH2-full-suite.log: '[vendor-brand]'
+E       assert not ["handover/BRIEF-PREAMBLE.md: '[vendor-brand]'", "handover/core-a/raw/BATCH-rerun-own-files.log: '[vendor-brand]'", "handover/core-a/raw/BATCH2-full-suite.log: '[vendor-brand]'"]
 
 tests/test_no_reference_material.py:87: AssertionError
 __________ test_no_message_is_cut_with_a_slice_before_it_is_redacted ___________

@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:54:07Z
+UPDATED_UTC: 2026-11-20T08:54:40Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 74
 ITEMS_OPEN: 22
 PERCENT: 80
 AGENTS_RUNNING: 2
-CAPACITY: load 0.97 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.54 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 58G 16%; 559M /home/user/hadavin-sdk; 475M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T08:53:19Z (the push before this board)
+PUSHED_UTC: 2026-11-20T08:54:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -104,12 +104,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 9578s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 9578s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 9578s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 9578s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 9578s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 9578s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 9611s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 9611s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 9611s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 9611s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 9611s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 9611s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -171,6 +171,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- WHOLE SUITE (batch6, evidence/BATCH6-suite.log, head ~9feb435, HADAVIN_REQUIRE_PG=1, -n 3, PG16, python 3.13): 14 failed, 12221 passed, 458 skipped, 75 xfailed in 320 s. FAILED ids: (A) strict-mode by design, tree has no core-b config: tests/triggers/test_t5_main_start.py::test_1,test_2a,test_2b,test_2c,test_2d,test_2e,test_3; tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2; tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block; tests/triggers/test_worker.py::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker (all pass on the combined tree). (B) test_no_reference_material::test_no_vendor_brand_string_is_tracked: the brand string was in MY three log files (fixed now, 08:55) AND in YOUR handover/BRIEF-PREAMBLE.md ('Port.io'): please remove it there. (C) tests/test_k5_producers.py::test_no_message_is_cut_with_a_slice_before_it_is_redacted: lists tools.py:1011, tools.py:1012 (not mine: core-b/core-c?) and triggers/worker.py:655 (mine, a [:80] slice in _fields: fixing in d-fix5). (D) tests/demo_askdata/test_validate_harm.py::...[dblink-connect]: needs PostgreSQL on /var/run/postgresql/.s.PGSQL.5432 (default socket); my PG is on port 55433: environment, will set PGHOST/PGPORT in the next batch. (E) tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]: 'I8 the retry of a 503 got 503' (seed 2026112041 case 65) under -n 3 load: mine, investigating in d-fix5 (it passed in 1182 earlier). Skips 458: see BATCH6-summary.md when batch6 ends.
 - Verdicts received 08:47: E7 = (a) keep the stdlib server, ticket size sentence corrected by d-fix4 (in its brief). E5 = yes: E-rev4 running. E6 = you run n8n 2.47.7: outline stays 'not run' until inputs/evidence-n8n-3.md arrives. REQ-001..004: building on my recommended answers and marking each in ticket D, after d-fix4 stops editing the ticket. Open items today are 4 (REQ-001..004; E5/E6/E7 answered), not 20: if the 20 you count are in QUEUE.md rows, tell me which rows.
 - OPEN-ITEMS.md (handover/core-a/): 7 open items. Waiting for core-b: REQ-001..REQ-004 (oldest 05:41 UTC). Waiting for you: E5 (one more fresh pass on step E?), E6 (three n8n behaviours need a real n8n run), E7 (stdlib server size / cap and deadline). Nothing else is open.
 - Answer to your 08:43 list (agent count now 2: d-fix4 = last step D code fixes + mutant run 14, open-items = haiku lookup). Per item: (1) n8n template retry fix + contract tests: DONE, 3 review rounds, 88 tests, evidence-n8n-2 used (ORDER 019). (2) step E crash.py: review at cap 3/3, fixes and 16 mutants done, E5 (one more pass?) waits for you. (3) T4 store contract tests against core-b interfaces: DONE, updated to core-b dba4463a5/a11ab5132 heads: tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py, test_meter.py (696 passed on core-b head); findings fixed by core-b are un-marked. (4) fresh step D review on the committed head: after d-fix4 ends (it still edits) as the final read-only pass. (5) running now. (6) evidence agent (tests/triggers + tests/testing, 2 batches, -n 3, handover/core-a/evidence/): starts when d-fix4 ends; max 2 heavy runs at once. Not idle by choice: d-fix4 holds the source files.
