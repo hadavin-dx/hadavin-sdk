@@ -622,8 +622,8 @@
   {
    "item": "MAINT-1",
    "what": "update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "done by builder; evidence re-run RUNNING",
+   "percent": 85,
    "evidence file": "raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet)",
    "tries": 1,
    "reason": "found by the rerun"
@@ -1504,11 +1504,11 @@
    "what exactly it is doing": "adapts the six test files to the newest core-b and core-c heads without bending assertions",
    "started UTC": "07:17",
    "expected end": "about 30 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "rerun result"
+   "reason": "six files updated; its own scratch runs: core-b 696 passed 20 skipped; core-c 355 passed 1 skipped 8 xfailed (G7-F3, G7-F4 still open); our branch 86 passed 455 skipped 75 xfailed. Heads moved and ruff reformatted afterwards: evidence runner re-runs"
   },
   {
    "id": "n8n-rev2",
@@ -1548,6 +1548,19 @@
    "review round n of cap": "3 of 3",
    "retries so far": 0,
    "reason": "after n8n-fix2"
+  },
+  {
+   "id": "maint-ev2",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "re-runs the six updated test files on newest core-b/core-c heads and our branch",
+   "started UTC": "07:24",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "after maint1"
   }
  ],
  "tests": [
