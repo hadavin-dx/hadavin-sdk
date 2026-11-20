@@ -870,6 +870,8 @@ M = [
         TW,
         "test_n15_make_app_turns_a_bound_into_a_config_error",
         "ValueError: max_running must be at most 64",
+        allow_crash=True,
+        crash_type="ValueError",
     ),
 ]
 
