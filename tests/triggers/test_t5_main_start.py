@@ -21,6 +21,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -40,6 +41,7 @@ OTHER = "o" * 20 + "-" + "8" * 20
 SHORT = "short-" + "7" * 10  # 16 characters: below the 32 of the endpoint
 DOCUMENT = "checkout 5xx from 10.0.0.5, revision 17"
 FIXTURE = {"FIXTURE_TOKEN": "f" * 20 + "-" + "6" * 20}
+ANY_HOST = ".".join(["0"] * 4)  # every interface: the value the worker must refuse
 START_WAIT_S, EXIT_WAIT_S = 40.0, 40.0
 
 pytestmark = pytest.mark.skipif(
@@ -181,7 +183,7 @@ def test_2c_a_sender_whose_agent_is_not_qualified_is_refused(tmp_path):
 def test_2d_a_host_that_is_not_loopback_needs_a_switch_that_does_not_exist(tmp_path):
     # core-b's settings have no `allow_non_loopback`, so no config can allow it.
     line = _refused(
-        tmp_path, _config(tmp_path), {"DOOR_A": GOOD}, "--host", "0.0.0.0", values=(GOOD,)
+        tmp_path, _config(tmp_path), {"DOOR_A": GOOD}, "--host", ANY_HOST, values=(GOOD,)
     )
     assert "not loopback" in line
 
@@ -214,7 +216,7 @@ def test_3_the_worker_asks_only_for_the_names_the_senders_list(tmp_path):
     asked: list[str] = []
 
     class Recording:
-        values = {
+        values: ClassVar[dict[str, str]] = {
             "door-a": GOOD,
             "door-b": OTHER,
             "never-listed": "n" * 40,

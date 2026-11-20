@@ -1041,9 +1041,11 @@ def test_n5_a_store_error_is_a_warning_and_a_bug_is_an_error_both_503(caplog):
         (KeyError("secret-text-5"), "ERROR", "WARNING"),
     ):
         caplog.clear()
-        with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
-            with Runner(fake, Broken(exc)) as runner:
-                assert runner.start(_req()) == (503, {})
+        with (
+            caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"),
+            Runner(fake, Broken(exc)) as runner,
+        ):
+            assert runner.start(_req()) == (503, {})
         assert any(type(exc).__name__ in line for line in _log_lines(caplog, level)), exc
         assert _log_lines(caplog, other) == [], exc
         assert "secret-text" not in caplog.text
@@ -1059,12 +1061,14 @@ def test_n7_a_base_exception_of_a_run_thread_is_logged_by_class_name_and_frees_t
         raise Stop("private text")
 
     store = MemoryStore()
-    with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
-        with Runner(FakeRuntime(store, stops), store, ack_wait_s=0.3, poll_s=0.02) as runner:
-            assert runner.start(_req()) == (503, {})  # no row was written
-            _free(runner)
-            assert runner._slots.acquire(blocking=False)
-            runner._slots.release()
+    with (
+        caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"),
+        Runner(FakeRuntime(store, stops), store, ack_wait_s=0.3, poll_s=0.02) as runner,
+    ):
+        assert runner.start(_req()) == (503, {})  # no row was written
+        _free(runner)
+        assert runner._slots.acquire(blocking=False)
+        runner._slots.release()
     errors = _log_lines(caplog, "ERROR")
     assert len(errors) == 1 and "Stop" in errors[0] and "private text" not in caplog.text
 

@@ -320,13 +320,9 @@ def _together(count, work):
     "impl",
     [
         "limits",
-        pytest.param(
+        pytest.param(  # core-b built the Budget meter by d0cac9693; the old "NOT BUILT N1" xfail is gone
             "budget",
-            marks=pytest.mark.xfail(
-                not BUDGET_BUILT,
-                strict=True,
-                reason="NOT BUILT N1 (no finding): " + BUDGET_NOT_BUILT,
-            ),
+            marks=pytest.mark.skipif(not BUDGET_BUILT, reason=BUDGET_NOT_BUILT),
         ),
     ],
 )
