@@ -25,3 +25,15 @@ v6 6.1 re-measured 17 vs 9). Default optimises for equality with the base inside
 - SECURITY.md / CHANGELOG.md (phase 5): not edited; ticket says wording goes through the security wording review and v6 splits the bullet (section 13). Left to the SECURITY lane.
 - evidence/G8-1.md (raw phase output) not written; this file replaces it. Round 5 readiness N1-N4 are ticket-text fixes, already in v6; no code comment needed changing.
 - G9 not merged: tripwire took the no-G9 branch (green).
+
+## Review-fix round 1 (branch wip-g8b; result review 1, design + codebase)
+MAJOR measured through redact(), base = git archive of 6a852c7d3^ (parent of the G8 commits), 7 tokens (rows OL1-OL7, tests/g8_cases.py OPAQUE_LIMITS):
+base masks all as one `<HIGHENTROPY_1>`; G8 cuts the UUID/PHONE out and leaves the rest readable: `tok_<uuid>_<32 chars>` -> `tok_<UUID_1>_<32 chars>`,
+`<20>_<uuid>` -> `<20>_<UUID_1>`, `a<uuid><30>` -> `a<UUID_1><30>`, `tok_<10 digits>_<32>` (also 11 digits, and `<20>_<10 digits>_<20>`) -> same shape with
+`<PHONE_1>`; with a 40-char remainder it is `tok_<UUID_1><HIGHENTROPY_1>` (safe). So the regression is real for tails under 40 chars (up to 39 readable).
+No pattern change (no one-line boundary measured): pinned as limit L15, 6 strict xfail (desired = no 8-char run of the tail) + 7 pinned as-measured. LEAD DECISION
+needed: fix (e.g. UUID/PHONE lookbehind/lookahead `_` + long alnum run) or accept. IPv4 inside such a token is unchanged on the base (readable both) - no row.
+Other: N4 rows F5/F6 (`call tel_4155550132.`, `call tel4155550132.`) unmasked, pinned + strict xfail; N3 held-back PHONE case built
+(`<TENANT_4155550132>` key makes the phone value held) + mutant G8-S7 (runmap.py `_joins` arg); comments/docstrings N1-N5 fixed; "G8b" explained as the sweep part.
+Totals: G8 file `451 passed, 43 xfailed` (was 441/35); rows 101 (unchanged), LIMITS 33, FULL_STOP 6, OPAQUE_LIMITS 7; 35 of 35 mutants good; step 2 (15 files, -n 2)
+`6833 passed, 3 skipped, 4 xfailed`; ruff check/format clean; bandit -ll no issues (warnings only). NOT RUN: full suite, perf tests, g8_cost.
