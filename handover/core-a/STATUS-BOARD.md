@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:33:06Z
+UPDATED_UTC: 2026-11-20T10:34:07Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 78
 ITEMS_OPEN: 22
 PERCENT: 81
 AGENTS_RUNNING: 2
-CAPACITY: load 0.15 of 4 cores (1-minute average), mem 1.1/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 12G 58G 17%; 581M /home/user/hadavin-sdk; 903M /tmp/claude-0; 160M /root/.cache
+CAPACITY: load 0.45 of 4 cores (1-minute average), mem 1.2/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 58G 16%; 581M /home/user/hadavin-sdk; 903M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 10:30 UTC: BATCH8 (independent, after E1 fixes, whole suite): 12 failed = 10 strict-mode by design in the checkout (pass on the combined tree: 1376 passed 0 failed) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the DEFAULT socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md; my evidence logs redacted). None in my own code.
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T10:32:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T10:33:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -108,16 +108,16 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 15518s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 15518s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 15518s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 15518s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 15518s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 15518s ago | running | matched by name in ps |
-| 12955 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 10s ago | running | matched by name in ps |
-| 12956 | uv run python tests/endpoint_mutants.py G33 | core-a session or its agent | 10s ago | running | matched by name in ps |
-| 12961 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 16701 | /home/user/hadavin-sdk/.venv/bin/python3 -m hadavin_sdk.triggers.worke | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 15578s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 15578s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 15578s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 15578s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 15578s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 15578s ago | running | matched by name in ps |
+| 17251 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 17286 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 17289 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 17523 | postgres: postgres postgres 127.0.0.1(44130) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
