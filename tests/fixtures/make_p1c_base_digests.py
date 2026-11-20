@@ -52,6 +52,10 @@ def run(fn, text: str) -> str:
     return p1c_cases.digest(out, mapping)
 
 
+def run_out(fn, text: str) -> str:
+    return p1c_cases.digest(fn(text, {}), {})
+
+
 def main() -> None:
     base = subprocess.run(
         ["git", "rev-parse", "HEAD"],  # noqa: S607 - fixed argv
@@ -64,6 +68,11 @@ def main() -> None:
     for row_id, text in all_inputs():
         rows[f"{row_id}/text"] = run(runmap.redact_text, text)
         rows[f"{row_id}/untrusted"] = run(runmap.redact_untrusted, text)
+        if row_id.startswith(
+            "host-"
+        ):  # the OUTPUT alone, for a row whose map original grows while its output stays (host-41)
+            rows[f"{row_id}/out-text"] = run_out(runmap.redact_text, text)
+            rows[f"{row_id}/out-untrusted"] = run_out(runmap.redact_untrusted, text)
     print(
         json.dumps(
             {"base": base, "python": platform.python_version(), "rows": rows},
