@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:19:54Z
+UPDATED_UTC: 2026-11-20T05:20:57Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,22 +6,25 @@ BOOT_ID: 70253298
 ITEMS_TOTAL: 9
 ITEMS_OPEN: 7
 PERCENT: 22
-AGENTS_RUNNING: 0
-CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 0, heavy agents 0
-DISK: / 60G free, 13% used; git worktrees 1; 56K	/tmp/claude-0;116M	/root/.cache/uv;
+AGENTS_RUNNING: 2
+CAPACITY: load 0.3 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 2, heavy agents 0
+DISK: / 60G free, 13% used; git worktrees 1; 64K	/tmp/claude-0;116M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: Q2 lane map and T1 plan read-back by agents, then tickets G and F
-PUSHED_UTC: 2026-11-20T10:10:13+05:30
+PUSHED_UTC: 2026-11-20T05:19:55+00:00
 
-(10:49 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(10:50 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| a0321052 | lookup | fable | Q2: reads repo docs and src/hadavin_sdk layout, writes LANE-MAP.md | 05:20 | 05:30 | 10 | running | n/a | 0 | queue item Q2 is READY |
+| aa61ba5c | lookup | fable | T1: reads plan-v2, v3, v4-final and the two round-3 reviews, writes PLAN-READBACK.md | 05:20 | 05:35 | 10 | running | n/a | 0 | queue item T1 is READY; tickets wait for it |
+| a39c0f8b | reviewer | fable | ORDER 001 dry run, style review of the 3-line paragraph | 04:11 | 04:11 | 100 | done | 1 of 1 | 0 | proof only, finished |
+| a997db3c | reviewer | fable | ORDER 001 dry run, comprehension review of the 3-line paragraph | 04:11 | 04:12 | 100 | done | 1 of 1 | 0 | proof only, finished |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
