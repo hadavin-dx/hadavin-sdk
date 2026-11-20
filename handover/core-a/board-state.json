@@ -2,7 +2,7 @@
  "order": "020 (002 to 019 standing)",
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
- "next": "reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n",
+ "next": "e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.",
  "note": "models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -1090,6 +1090,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Answer 09:58: (1) FAILED and NEXT on the board rewritten to the real state. (2) Your list against the facts: step D code review round 1 incl. E1: DONE 09:52 (0 Blocker, 4 Major, fixes running in e1-fix2: the 'agents 2' you see is e1-fix2 + a stale evidence agent that keeps re-sending an old report); step E: 7 fresh rounds, round 7 found no Blocker/Major: ended; mutants for E1: written (G32a-j: audit event removed, result field leak, hash swap, /health extra key, no health callable, degraded start, recovery ping, ping bound, audit warning) + cap removed (G32a): hand-probed, the full run 17 waits for e1-fix2 because worker.py changes under it (a full run during edits broke the baseline twice); n8n template fixes from evidence-n8n-3: DONE and pushed (70 s waits); REQ-001..004: read from core-b's answer files and marked in ticket D (last section). Low load is because evidence runs and mutant runs need a quiet tree: they start the minute e1-fix2 ends (about 10:08), BATCH8 about 10:25: the 10:20 deadline: D review has the exact open Majors listed in reviews/D-code-result-review-5.md.",
   "09:50 TESTED COMMIT pushed for D (with E1) and E: tests/triggers + crash 1352 passed, 5 skipped (TESTED-D.md, hashes). E1 is BUILT: audit event + cap, /health, in-process recovery (store down at start), no exit 4. Running now: mut-e1 (mutants + full mutant run 17) and E1-rev (fresh review); then ONE independent batch (BATCH8). Failing ids: none on my files; whole-suite: see BATCH7.",
   "STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.",
   "E1 built (09:41): see ticket D section d-fix6 and requests/005 (the audit kind needs NO registration: AuditEvent domain='trigger' operation='conflict'; I propose core-b config field triggers.conflict_events_per_minute=10, today a keyword with default 10). e1-fix is closing 3 gaps (recovery without restart, /health ping bound, audit warning); then: mutants for E1, a fresh result review of the E1 code, ONE full batch. The 09:55 'full batch result' will NOT make it for E1 (about 10:15): I will push the tested D and E commit at 09:55 as it stands and the E1 batch after.",
@@ -1137,7 +1138,7 @@
   "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
- "failed": "TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md",
+ "failed": "09:58 UTC, none in my own files. Last independent whole suite (BATCH7, before E1): 12 failed = 10 strict-mode by design in the checkout (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree core-b 2bdbba391: 1327 passed 0 failed) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket). Builder run after E1: tests/triggers+crash 1352 passed 5 skipped.",
  "interrupted": "Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md",
  "agents_done": [
   {
