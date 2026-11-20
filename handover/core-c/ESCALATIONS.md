@@ -1,5 +1,14 @@
 # ESCALATIONS of core-c (newest on top)
 
+## E4. Fold G1: one test fails because two input heads give `has_mixed_script` opposite rules (2026-11-20T05:47Z)
+- Item: BUILD G1, tries 1. Branch wip/cloud-core-c/g1-fold (pushed, 5 commits on main 51c9fc4, tip 8e4d234). Raw output: evidence/G1-fold.md.
+- Failing test (NEW, not edited): tests/test_textnorm_round1.py::test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word, `AssertionError: assert (True is False)` for `has_mixed_script("ab" + U+0903 + "cd")`.
+- Cause: P1a fix8 (only on rebase/P1b-o140) flags a Latin word with a foreign spacing mark as mixed script (its rule b); fix round 1 item M16 (only on core/P1b-fixwip) wants it NOT flagged. The two heads never met. The fold keeps fix8.
+- Batch result with that one failure: 1 failed, 8616 passed, 17 skipped (67 test files, 3 workers, 245 s); perf file 17 passed.
+- Options: (a) keep fix8's rule and change that one test clause to fix8's answer (recommended by the builder and by me: flagging is the stricter side); (b) drop fix8 rule (b).
+- Not tried: no change to the test or to either rule (a test is never edited to get green without the lead). Whether the test also fails on a head: UNVERIFIED, no head was run.
+- Also for the lead from the same build: Python 3.12.3 carries Unicode 15.0.0 (measured), 3.13.18 carries 15.1.0: the fold's start-up check refuses pilot and prod on 3.12. And `contains` now finds MORE than main when an invisible character (U+200B, U+00AD, U+2060) sits between a letter and its accent (pinned by a named test).
+
 ## E2. The gate's mask check would refuse normal traffic as the producers work today (2026-11-20T05:31Z)
 - Item: step F, ticket review round 1, finding cb-1-B1 (tickets/F-review-1.md). Not a failed try: a design conflict found by reading, nothing executed yet.
 - Fact 1: tool inputs are masked leaf by leaf (guard/runmap.py:588-598) but sent as one composed JSON string (runtime/agent_loop.py:574-577; k1b/loop.py:147, 214). A key and a value that are each clean can match a pattern once composed.
