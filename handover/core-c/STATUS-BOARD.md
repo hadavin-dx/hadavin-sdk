@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:09:52Z
+UPDATED_UTC: 2026-11-20T08:10:58Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 10
-CAPACITY: load 10.1 of 4 cores, mem 2/15 GB, disk 59G free, 16% used, light agents 10, heavy agents 0
+AGENTS_RUNNING: 9
+CAPACITY: load 9.7 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, light agents 9, heavy agents 0
 DISK: / 59G free, 16% used; git worktrees 11; 134M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:09:13+00:00
+PUSHED_UTC: 2026-11-20T08:09:52+00:00
 
-(13:39 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:40 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -93,11 +93,12 @@ PUSHED_UTC: 2026-11-20T08:09:13+00:00
 | (new) sec4 | drafter | claude-opus-5-5 | wording v4 rewrite taking review round 3 (comprehension + style) | 07:58 | 08:30 | 100 | done | 4 | 0 | finished: SECURITY-README-v4.md (69 gaps), committed 132bb64 |
 | (new) p1dr2 | builder | claude-sonnet-5-5 | P1d-a review items M6 (independent link oracle) and N1 | 08:00 | 08:40 | 1 | running | 1 | 0 | backlog 10: P1d-a M6/N1 |
 | (new) g8 | drafter | claude-opus-5-5 | ticket G8 glued-rest gap (IPv4, phone, IBAN, UUID, host) | 08:00 | 08:35 | 1 | running | 1 | 0 | backlog 10: glued-rest ticket |
-| (new) drift | auditor | claude-sonnet-5-5 | drift report G1-G3 and G7 documents against code at HEAD | 08:00 | 08:30 | 1 | running | 1 | 0 | EGM drift report per item |
+| (new) drift | auditor | claude-sonnet-5-5 | drift report G1-G3 and G7 documents against code at HEAD | 08:00 | 08:30 | 100 | done | 1 | 0 | finished: DRIFT-G1-G2-G3.md (70 verified, 31 differ, 13 cannot check); top drift: docstrings promise a G5 re-run that does not exist (E8) |
 | (new) g4v3 | drafter | claude-opus-5-5 | ticket G4 v3 taking plan review round 2 | 08:03 | 08:35 | 1 | running | 3 | 0 | EGM draft step; then plan review round 3 |
 | (new) secC4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: comprehension | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 9 Major (SEC-wording-review-4.md) |
 | (new) secS4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: style | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 12 Major, nits |
 | (new) sec5 | drafter | claude-opus-5-5 | wording v5 rewrite taking review round 4 (comprehension + style) | 08:12 | 08:40 | 1 | running | 5 | 0 | EGM draft step (opus drafter) |
+| (new) docfix | builder | claude-sonnet-5-5 | docstring and ticket corrections from the drift report (waits for G7 round 3 and P1d-a builders) | - | - | 0 | queued | 1 | 0 | files redact.py and approvals/gate.py are owned by running builders until they report |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
