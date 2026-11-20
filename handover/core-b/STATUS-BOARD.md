@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:35:56Z
+UPDATED_UTC: 2026-11-20T06:37:43Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 0.92 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 0 heavy 4
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 945M
+CAPACITY: load 1.55 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 0 heavy 4
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 999M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:34:45Z (previous push; this board is pushed right after writing)
-IST: 12:05 IST
+PUSHED_UTC: 2026-11-20T06:35:58Z (previous push; this board is pushed right after writing)
+IST: 12:07 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -35,10 +35,11 @@ Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, 
 ## AGENTS (RESTART on the normal models after the Fable limit, 06:45 UTC; model set explicitly on every call; none on fable)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (starting) | builder | sonnet | F-store fix round 2: reservation id validated in both stores (the random-sequence test found: memory stores an id with a NUL, PostgreSQL raises DataError); worktree F4 | 06:46 | +15 min | 0 | starting | none | 0 | finding from tests/contracts/test_store_spend_model.py |
-| (starting) | builder | sonnet | step A fix round 3 (last): outage narrowed to connection-level errors; unwritable list retried once per reconcile; worktree A3 | 06:46 | +15 min | 0 | starting | none | 0 | hostile re-read findings 7 and 8 |
-| (starting) | builder (tests) | sonnet | F-install tests: test_model_gate_install.py, contracts/test_meter.py, gate_install_mutants.py; worktree FI-tests on the wip branch | 06:46 | +40 min | 0 | starting | none | 0 | F-install built, no tests of its own |
-| (starting) | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config (the Fable one was cut off by the limit, no report) | 06:46 | +15 min | 0 | starting | 1 of 1 | 1 | restart |
+| aaf3d350 | builder | sonnet | F-store fix round 2: reservation id validated in both stores (the random-sequence test found: memory stores an id with a NUL, PostgreSQL raises DataError); worktree F4 | 06:46 | +15 min | 0 | starting | none | 0 | finding from tests/contracts/test_store_spend_model.py |
+| ac5ecf28 | builder | sonnet | step A fix round 3 (last): outage narrowed to connection-level errors; unwritable list retried once per reconcile; worktree A3 | 06:46 | +15 min | 0 | starting | none | 0 | hostile re-read findings 7 and 8 |
+| a9cce047 | builder (tests) | sonnet | F-install tests: test_model_gate_install.py, contracts/test_meter.py, gate_install_mutants.py; worktree FI-tests on the wip branch | 06:46 | +40 min | 0 | starting | none | 0 | F-install built, no tests of its own |
+| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config (the Fable one was cut off by the limit, no report) | 06:46 | +15 min | 0 | starting | 1 of 1 | 1 | restart |
+| NO NEW AGENTS | | | lead 06:41Z: none until the egm plugin model lines are reverted; I did not make that edit myself (REPORT.md, MODEL SWITCH): waiting for the owner or the lead | | | | | | | |
 | a5f7551d, ae79ea4d, a439a627 | Fable agents | fable | cut off by the Fable limit at 06:44; their commits were recovered (A fix 2 and its tests, the random-sequence test); a439a627 produced no report | | | | KILLED (limit) | | | see RESUME-NOTE |
 | 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
 
