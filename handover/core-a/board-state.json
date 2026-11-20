@@ -746,34 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "rev-c-G4c",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c G4c start look-behind + 4 gate mutant fixes (G13d, G13e, E19g, E19i): STOP-guard input closed?",
-   "started UTC": "15:30",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "new landed code that answers my findings"
-  },
-  {
-   "id": "rev-b-B2",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-b F-install B2: live path reserves before / settles after the model call (my 'nothing calls reserve' finding), mutants, ungated sites",
-   "started UTC": "15:30",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "new landed code that answers my findings"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1144,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:40 core-c G4c and core-b B2 reviewed (reviews/rev-c-G4c.md, rev-b-B2.md; appended to the core-c and core-b request files). core-c G4c: closes the p1d STOP-guard input; residual Major: a host ending at a suffix (corp/lan/internal/local/...) followed DIRECTLY by a non-ASCII char stays readable (`db01.corp\u4f8b`, `db01.corp\u00e9`: end checks use Unicode \\w); the four gate-mutant fixes die for their own reasons. core-b B2 (reserve before, settle after the model call): no Blocker; cap race closed in SQL; MAJORS: (1) a provider error never releases the hold even when refused_before_response is true (nothing reads the mark): two failed runs in an outage lock the agent for the day (expiry >= 3600 s), and a non-ProviderError from chat escapes with the hold open and no audit note; (2) the document screen (agent_loop.py:517) runs BEFORE the reserve: 4 parallel runs each make an uncapped judge call; render_shadow uncharged. M5 only partly fixed (Limits.reserve still a new id per call, no retry). No agents running.",
   "15:37 core-c G13c + G12c reviewed (reviews/rev-c-G13c-G12c.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker. FIXED: my quadratic-slicing Major (4-gram tested before the slice; charge still min(len,64): bounded fail-closed cost nit), and the G12b ABC_12!/SEC/ADMIN_1/DB_PASS_2/HOST/JWT cases. STILL OPEN, all mine: (a) stacked-encoding window overlap LEAK (runmap.py:1548 unchanged: 20-char secret spelled %26%23<dec>%3B per char at VIEW_WINDOW-217 is sent; fails open; no test), (c1) `password=\u2039hunter22\u203a` core drop (deliberate, pinned by LK[\u2039hunter2zz\u203a]/G12-M33), (c2) `password=Secret!`/`Token,` NOT_A_VALUE drop (no limit recorded), (d) U+226E marker spoof (no change). Running: rev-c-G4c, rev-b-B2.",
   "15:31 AGENTS 3: found NEW code that answers my findings (heads moved: core-c 107717a7e, core-b 763d71c42): core-c G13c (net lookups: head test before slice) and G12c (core rules) = answers to my G13b/G12b Majors; core-c G4c (start look-behind) + four gate mutant fixes; core-b F-install B2 (live path reserves BEFORE and settles AFTER the model call) = answer to my 'nothing calls limits.reserve' Major. One fresh reviewer each (rev-c-G13c-G12c, rev-c-G4c, rev-b-B2). The wip/lead-b-* heads are unchanged.",
   "15:29 SINCE 15:19 (AGENTS 0): 15:19-15:21 rev-lead-tswm-2 reviewed wip/lead-b-ts-watermark de8967aba (reviews/rev-lead-tswm-2.md: no Blocker/Major, 5 nits). YOUR 15:27 LIST IS ALL DONE; I am not re-running identical work on unchanged heads: wip/lead-b-migrate = 0891d81bd (reviewed twice: reviews/rev-lead-migrate.md and rev-lead-migrate-2.md; waiting for your fix round 1: give me the new head and I review it at once); wip/lead-b-ts-watermark = de8967aba (reviewed twice: rev-lead-tswm.md, rev-lead-tswm-2.md); wip/core-a-merge-c: nothing to merge (all 4 g2/g3 commits SUPERSEDED: handover/core-c/requests/from-core-a-merge.md); CRASH-MATRIX part 2 DONE (CRASH-MATRIX.md 'Part 2', 171 points PG16 + memory); E-door-1 README DONE, reviewed, fixed. I start an agent the minute a head moves or an order names work.",
@@ -3899,6 +3873,32 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-c G13c+G12c: NO Blocker; FIXED: quadratic slicing (head 4-gram before slice, digest in seen), G12b ABC_12!/SEC/ADMIN_1/HOST cores; STILL OPEN (my findings): stacked-encoding window overlap LEAK (runmap.py:1548 unchanged), password=\u2039hunter22\u203a core drop, password=Secret!/Token, NOT_A_VALUE drop, U+226E spoof; no new leak; reviews/rev-c-G13c-G12c.md"
+  },
+  {
+   "id": "rev-c-G4c",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c G4c start look-behind + 4 gate mutant fixes (G13d, G13e, E19g, E19i): STOP-guard input closed?",
+   "started UTC": "15:30",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-c G4c + 4 gate mutant fixes: NO Blocker; closes the p1d STOP-guard input; residual Major: host ending at a suffix followed directly by a non-ASCII char (db01.corp\u4f8b, db01.corp\u00e9) NOT masked; nit na\u00efve.local over-masks; mutant fixes die for their own reasons; reviews/rev-c-G4c.md"
+  },
+  {
+   "id": "rev-b-B2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b F-install B2: live path reserves before / settles after the model call (my 'nothing calls reserve' finding), mutants, ungated sites",
+   "started UTC": "15:30",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-b F-install B2: NO Blocker; live path reserves before/settles after (worst-case pricing, cap race closed in SQL); 2 Majors: a provider error never releases the hold (refused_before_response mark unused: 2 failed runs lock the agent for the day; bare exceptions escape with hold open), ungated sites (document screen runs BEFORE the reserve, shadow cards uncharged); M5 partly fixed (Limits.reserve still new id per call, no retry); B2-3 accidental kill; reviews/rev-b-B2.md"
   }
  ]
 }
