@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "readme-fix",
-   "role": "builder (docs + test)",
-   "model": "sonnet",
-   "what exactly it is doing": "README poll section: align the poll-duration formula, add approval_missing, 'not stored' wording, test pins tied to code",
-   "started UTC": "14:35",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "rev-readme findings"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:40 README poll section fixed (formula, approval_missing, wording, test pins tied to code; 93 n8n tests pass). No agents running. All reviews on your lists are delivered; open items are other lanes' decisions (my Major lists in handover/core-c/requests/xr-from-core-a-reviews-2.md and handover/core-b/requests/xr-from-core-a-reviews.md) and the owner's E-door-1. Waiting for new landed commits or orders.",
   "14:37 README poll section reviewed fresh: NO Blocker/Major, no overclaim (every sentence traced to code: re-POST poll, no external read path, 14 RunState names, E-door-1 consistent, numbers recomputed); minor/nits being fixed by readme-fix (two poll-duration formulas disagree, tick's approval_missing NEEDS_PERSON reason omitted, 'not stored' vs per-run redaction map, test pins only 5 phrases).",
   "14:36 core-c G13b + G12b regression reviewed (reviews/rev-c-G13b.md, appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker; FIXED: G13 false refusal ('https://' beside a key), huge-secret refusal. NOT fixed: U+226E marker, stacked-encoding window overlap (still a LEAK: 20-char secret spelled %26%23<dec>%3B per char at VIEW_WINDOW-217; at the cap the overlap shrinks silently = fails open), G12b clear-core drop. NEW Majors: quadratic slicing in _touching_piece (left[i:]/right[:j] at every position: ~2 GB copying per gap at longest 65,536); G12b-reg drops the core for ANY guillemet: 'password=\u2039hunter22\u203a' leaves a later bare 'hunter22' readable.",
   "14:31 E-door-1 README section DONE (n8n/README-trigger.md 'What the sender must do: poll the run state'; default 'sender polls', option B stated OPEN). FINDING worth your attention: there is NO external way to READ a run's state: the endpoint answers POST and GET /health only (/health has no run data) and cli.py has no run command: 'polling' means re-POSTing the same signed key + same document (answer comes from the stored row), which is what the n8n template's state check does. A sender that is not n8n must implement signed re-POSTs. Fresh review of the section running (rev-readme). Unverified in the section: 'the document was kept only in the worker's memory', 'second request starts the run if the first never wrote its row'.",
@@ -3739,6 +3726,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "README poll section reviewed: NO Blocker/Major, no overclaim; every traced sentence backed by code (re-POST poll, no read path, RunState 14 states, E-door-1, numbers); 1 Minor (two different poll-duration formulas), 3 nits (approval_missing reason omitted, 'not stored' vs per-run redaction map, test pins too few claims) -> readme-fix"
+  },
+  {
+   "id": "readme-fix",
+   "role": "builder (docs + test)",
+   "model": "sonnet",
+   "what exactly it is doing": "README poll section: align the poll-duration formula, add approval_missing, 'not stored' wording, test pins tied to code",
+   "started UTC": "14:35",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "README poll section fixes: poll duration = longest run + stuck limit + one tick gap (2280/3150 labelled the floor), approval_missing reason added, 'document not stored; per-run redaction map of identifier values is' (runmap.storable checked), test now ties the section to tick.STUCK, worker.IN_PROGRESS, endpoint.METHOD/HEALTH_PATH/ANSWER_FIELDS; 93 n8n tests pass"
   }
  ]
 }
