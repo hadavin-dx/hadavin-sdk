@@ -1098,7 +1098,7 @@ def test_the_busy_rounds_outlast_the_stuck_limit_plus_one_tick_gap():
     llm, stuck = _example_stuck()
     assert stuck == EXAMPLE_STEPS * llm.call_timeout_s * llm.max_attempts + 60
     limit = stuck + tick.TICK_SLACK_S
-    assert rounds * wait["amount"] > limit, (rounds, wait["amount"], limit)  # 45 x 60 = 2700 > 2280
+    assert rounds * wait["amount"] > limit, (rounds, wait["amount"], limit)  # 45 x 70 = 3150 > 2280
     readme = " ".join(_readme().split())
     part = readme.partition("### The numbers")[2].partition("### Three limits")[0]
     for phrase in (
@@ -1712,10 +1712,10 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
         assert phrase in part, phrase
     # the three other examples of the README: the smallest whole number of checks that is NOT enough
     for steps, not_enough in re.findall(r"`max_steps` (\d+) (?:needs )?more than (\d+)", part):
-        need = int(steps) * llm.call_timeout_s * llm.max_attempts + 60 + tick.TICK_SLACK_S
-        assert int(not_enough) * wait["amount"] <= need < (int(not_enough) + 1) * wait["amount"], (
-            steps
-        )
+        limit_s = int(steps) * llm.call_timeout_s * llm.max_attempts + 60 + tick.TICK_SLACK_S
+        assert (
+            int(not_enough) * wait["amount"] <= limit_s < (int(not_enough) + 1) * wait["amount"]
+        ), steps
     assert len(re.findall(r"`max_steps` (\d+) (?:needs )?more than (\d+)", part)) == 3
 
 
@@ -1851,7 +1851,7 @@ def test_the_wait_is_above_65_seconds_and_every_number_that_follows_from_it_agre
     readme = " ".join(_readme().split())
     for phrase in (
         "about 87 minutes when each of the 46 sends times out",
-        "about 52 minutes only when the connection is refused at once",
+        "about 52 to 53 minutes only when the connection is refused at once",
         "6300 seconds of waiting, about 105 minutes",
         "70 seconds each",
     ):
@@ -1865,10 +1865,14 @@ def test_the_wait_is_above_65_seconds_and_every_number_that_follows_from_it_agre
     ):
         assert stale not in readme, stale
     # the three minimum check counts follow from the code's formula with a 70 s wait
-    for steps, need in ((6, 17), (12, 32), (20, 53)):
+    for steps, largest_failing in (
+        (6, 17),
+        (12, 32),
+        (20, 53),
+    ):  # README: needs at least 18 / 33 / 54
         limit = steps * 60 * 3 + 60 + tick.TICK_SLACK_S
-        assert need * 70 <= limit < (need + 1) * 70
-        assert f"`max_steps` {steps} " in readme and f"more than {need}" in readme
+        assert largest_failing * 70 <= limit < (largest_failing + 1) * 70
+        assert f"`max_steps` {steps} " in readme and f"more than {largest_failing}" in readme
 
 
 def test_the_restart_fact_is_a_known_fact_in_the_limits_the_checklist_and_the_status():
@@ -1880,7 +1884,7 @@ def test_the_restart_fact_is_a_known_fact_in_the_limits_the_checklist_and_the_st
         "EVERY case run ONCE",
         "lines 46 to 80",
         "was LOST: it was marked crashed, never resumed",
-        "checked up to 82 seconds past the planned end of the wait",
+        "checked up to about 73 to 82 seconds past the planned end of the wait",
         "finished with success about 2 seconds after its planned end",
         "lines 82 to 96",
         "the caller got HTTP 200 with the body of the Respond node",
