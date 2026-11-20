@@ -13,4 +13,4 @@ The door (`hadavin_sdk.triggers`) takes one signed POST per run. What it defends
 - **Memory store.** Refused outside the `demo` stage [worker.py `check_store_stage`].
 - **After the 2xx.** A run that is cut off ends as NEEDS_PERSON with no notification and no stored document; the sender must poll the run state. This is not "never lost". Whether to store the document and notify is an open owner decision [ESCALATIONS.md E-door-1].
 
-Out of scope: TLS termination, per-peer rate limiting, per-tenant secret separation across workers, the senders' own storage of events (n8n needs queue mode for no event loss), and Windows (not run) [REPORT.md; n8n/README-trigger.md].
+Out of scope: TLS termination, per-peer rate limiting, per-tenant secret separation across workers, the senders' own storage of events (for n8n we ask for queue mode, unverified: never run), and Windows (not run) [REPORT.md; n8n/README-trigger.md].
