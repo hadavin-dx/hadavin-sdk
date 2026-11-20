@@ -38,7 +38,7 @@ def _timeout():
     return urllib.error.URLError(TimeoutError("timed out"))
 
 
-def _run(errors, max_attempts=ATTEMPTS, **kw):
+def _run(errors, max_attempts=ATTEMPTS, throttled_unbilled=True, **kw):
     """Run `with_retry` over a call that raises `errors` in order; return (the error, calls made, sleeps)."""
     left, sleeps, calls = list(errors), [], []
 
@@ -47,7 +47,14 @@ def _run(errors, max_attempts=ATTEMPTS, **kw):
         raise left.pop(0)
 
     with pytest.raises(ProviderError) as caught:
-        with_retry(call, label="t", max_attempts=max_attempts, sleep=sleeps.append, **kw)
+        with_retry(
+            call,
+            label="t",
+            max_attempts=max_attempts,
+            sleep=sleeps.append,
+            throttled_unbilled=throttled_unbilled,
+            **kw,
+        )
     assert not left, "the table row lists more errors than attempts were made"
     return caught.value, len(calls), sleeps
 
@@ -187,6 +194,7 @@ def test_the_kind_status_feeds_the_mark_but_not_the_retry_decision():
                 max_attempts=ATTEMPTS,
                 sleep=sleeps.append,
                 retryable=retryable,
+                throttled_unbilled=True,
                 http_status=lambda exc: getattr(exc, "where", None),
             )
         return caught.value, len(sleeps)
@@ -443,7 +451,7 @@ def _generic_error(errors, max_attempts=ATTEMPTS):
 def test_generic_kind_keeps_the_full_status_list(code):
     assert _Generic.refused_statuses == REFUSED_STATUSES == frozenset(ALL_REFUSED)
     error = _generic_error([_Status(code)], max_attempts=1)
-    assert error.refused_before_response is True
+    assert error.refused_before_response is (code != 429)  # no override: a 429 is never unbilled
 
 
 @pytest.mark.parametrize("code", ROUTER_REFUSED)
@@ -739,6 +747,14 @@ def test_openai_compat_never_sent_every_time_is_still_marked(monkeypatch):
 
 
 @pytest.mark.parametrize("combo", list(itertools.product("RTSX", repeat=3)), ids="".join)
+def test_exhausted_with_throttled_unbilled_is_marked_iff_every_attempt_was_never_sent_or_429(combo):
+    make = {"R": _refused, "T": lambda: _Status(429), "S": lambda: _Status(500), "X": _timeout}
+    error, calls, _ = _run([make[c]() for c in combo], throttled_unbilled=True)
+    assert type(error) is ProviderExhausted and calls == ATTEMPTS
+    assert error.refused_before_response is all(c in "RT" for c in combo)
+
+
+@pytest.mark.parametrize("combo", list(itertools.product("RTSX", repeat=3)), ids="".join)
 def test_exhausted_without_throttled_unbilled_is_marked_iff_every_attempt_was_never_sent(combo):
     make = {"R": _refused, "T": lambda: _Status(429), "S": lambda: _Status(500), "X": _timeout}
     error, calls, _ = _run([make[c]() for c in combo], throttled_unbilled=False)
@@ -750,8 +766,35 @@ def test_a_single_429_attempt_is_unmarked_without_throttled_unbilled():
     error, _, _ = _run([_Status(429)], max_attempts=1, throttled_unbilled=False)
     assert type(error) is ProviderExhausted
     assert error.refused_before_response is False
-    error, _, _ = _run([_Status(429)], max_attempts=1)  # default: the direct API case
+    error, _, _ = _run(
+        [_Status(429)], max_attempts=1, throttled_unbilled=True
+    )  # the direct API case
     assert error.refused_before_response is True
+
+
+def test_with_retry_and_a_new_kind_default_to_never_unbilled_429():
+    """Fail closed: a hypothetical kind with no setting, and with_retry called without the flag."""
+    assert NetworkLLM.throttled_unbilled is False and _Generic.throttled_unbilled is False
+    assert _generic_error([_Status(429)] * 3).refused_before_response is False
+    assert (
+        _generic_error([_refused()] * 3).refused_before_response is True
+    )  # never sent still counts
+    left = [_Status(429)] * 3
+
+    def call():
+        raise left.pop(0)
+
+    with pytest.raises(ProviderExhausted) as caught:
+        with_retry(call, label="t", max_attempts=3, sleep=lambda s: None)
+    assert caught.value.refused_before_response is False
+
+
+def test_only_the_direct_kinds_set_throttled_unbilled():
+    from hadavin_sdk.llm import bedrock, gemini
+
+    assert bedrock.BedrockLLM.throttled_unbilled is True
+    assert gemini.GeminiLLM.throttled_unbilled is True
+    assert openai_compat.OpenAICompatLLM.throttled_unbilled is False
 
 
 def _anthropic_exhausted(code, direct_api):

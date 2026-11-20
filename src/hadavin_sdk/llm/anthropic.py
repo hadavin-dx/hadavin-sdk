@@ -103,7 +103,7 @@ class AnthropicLLM(NetworkLLM):
     # a 400, 413 or 422 can come from the gateway after the model started, and would settle at 0 (under-counted).
     refused_statuses = frozenset({401, 403, 404})
     # A gateway's 429 can follow model work: only the direct API counts it as unbilled.
-    throttled_unbilled = False
+    throttled_unbilled = False  # fail closed
 
     def __init__(
         self,

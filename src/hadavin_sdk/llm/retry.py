@@ -19,13 +19,16 @@ timed out, was cut off or failed to parse, and:
      status the kind counts as refused (``refused_statuses``: ``REFUSED_STATUSES`` = 400, 401, 403, 404, 413,
      422 by default; the openai_compat kind narrows it to 401, 403, 404);
   2. the retries ran out (``ProviderExhausted``) and EVERY attempt was never sent or, only for a kind with
-     ``throttled_unbilled=True`` (the direct Claude API; the default of ``with_retry``), ended in HTTP 429.
+     ``throttled_unbilled=True`` (set explicitly by the direct Claude API, gemini and bedrock kinds; the default of ``with_retry`` and of the base
+     kind is False, so a new kind never marks a 429 until someone decides it is safe), ended in HTTP 429.
      A kind behind a router or gateway (openai_compat: OpenRouter, LiteLLM; the Claude kind on any platform but "api")
      passes ``throttled_unbilled=False``: its 429 can follow upstream work, so there only never-sent attempts
      count and a 429 on any attempt leaves the mark False (the worst case stays booked).
 Everything else leaves the mark False: 408, 409 and 5xx on any attempt, a 429 followed by an error that is not
 retried (a 400 after a 429 stays unmarked), a 429 that a kind chose not to retry, and any 429 for a kind with
-``throttled_unbilled=False``. A parse failure of an
+``throttled_unbilled=False``. The True kinds assume the base URL is https-only and the operator's HTTPS_PROXY is a
+CONNECT tunnel: a plain-HTTP forward proxy answering 429 after upstream work would be wrongly marked (not reachable
+today). A parse failure of an
 answer is wrapped here into a new ``ProviderError`` like any other failure and gets the normal rule (unmarked
 unless never sent or status-refused); no adapter raises ``ProviderError`` from its own call.
 A cause chain longer than the walk limit counts as NOT never sent.
@@ -142,7 +145,7 @@ def with_retry[T](
     detail: Callable[[BaseException], str] | None = None,
     http_status: Callable[[BaseException], int | None] | None = None,
     refused_statuses: frozenset[int] = REFUSED_STATUSES,
-    throttled_unbilled: bool = True,
+    throttled_unbilled: bool = False,
 ) -> T:
     """``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
     ``status`` finds none; it only feeds the mark, never the retry decision. ``refused_statuses`` is the
