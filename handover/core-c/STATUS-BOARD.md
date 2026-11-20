@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:38:11Z
+UPDATED_UTC: 2026-11-20T06:39:26Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,21 +6,26 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 26
 ITEMS_OPEN: 12
 PERCENT: 72
-AGENTS_RUNNING: 0
-CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 0, heavy agents 0
+AGENTS_RUNNING: 5
+CAPACITY: load 0.3 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 66M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
-INTERRUPTED: container restart at 2026-11-20T06:38:11Z, BOOT_ID changed
+INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T06:36:55+00:00
+PUSHED_UTC: 2026-11-20T06:38:13+00:00
 
-(12:08 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:09 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| ad4f8f0a | builder | claude-sonnet-5-5 | restart 2: gate round 2 findings then ORDER 017 (mapping required + NO_MAP, one pre-call exception type, framing protection); progress note after phase 1 | 06:40 | 07:30 | 2 | running | 3 of 3 not used | 0 | restart after the container restart; RESUME-NOTE item 1 + addendum |
+| a5fdac4f | builder | claude-sonnet-5-5 | restart 2: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then follow-ups, one batch | 06:40 | 07:45 | 2 | running | n/a | 0 | restart after the container restart; RESUME-NOTE item 2 |
+| aaf9fc30 | builder (tests only) | claude-sonnet-5-5 | restart 2: grants negative tests for core-b step B map, local PostgreSQL 16 | 06:40 | 07:15 | 2 | running | n/a | 0 | restart after the container restart; RESUME-NOTE item 3 |
+| (new) rr-g7D | reviewer | claude-sonnet-5-5 | restart 2: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:41 | 06:56 | 2 | running | 1 of 3 | 0 | no review output exists yet |
+| (new) rr-g7C | reviewer | claude-sonnet-5-5 | restart 2: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:41 | 07:00 | 2 | running | 1 of 3 | 0 | no review output exists yet |
 | (new) r-g7D | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:42 | 06:57 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
 | (new) r-g7C | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:42 | 07:00 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
 | (new) r-gate | builder | claude-sonnet-5-5 | restart: gate round 2 findings + ORDER 017 (mapping required with NO_MAP, one pre-call exception type, framing protection); phases with progress notes | 06:40 | 07:30 | 2 | INTERRUPTED | 3 of 3 not used yet | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
@@ -140,4 +145,4 @@ PUSHED_UTC: 2026-11-20T06:36:55+00:00
 | (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-EGM SETUP PROVEN in REPORT.md: 6 opus-5-5 lines (brainstorm/draft/resolve, both copies), 66 sonnet-5-5, 0 fable. Container restarted again at 06:37 UTC; all agents stopped; restarting now on sonnet with explicit models.
+EGM proof pushed (REPORT.md: 6 opus-5-5, 66 sonnet-5-5, 0 fable). Restart running: gate round 2 + ORDER 017, integration, grants rework, G7 result review (2 reviewers). P1c waits for the integration. E1 cron denied.
