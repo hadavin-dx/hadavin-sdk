@@ -2241,23 +2241,45 @@ class _Redactor:
         reach = defaults.SPELLED_READBACK_REACH
         rules = self._rules
         starts = [t[0] for t in toks]
-        found: dict[tuple[str, str], list[int]] = {}
+        # an upper bound of the characters that can be read back on each side of an edge (`_expand` reads at most these): the characters of
+        # `out` plus what each key token adds when put back whole. A place of the anchor that would need more than that is not compared
+        # (nor counted): it cannot be an occurrence. `grow[i]` = what the first `i` tokens add.
+        mapping = self.mapping
+        grow = [0]
+        for ta, tb, tok in toks:
+            value = mapping.get(tok)
+            grow.append(grow[-1] + (len(value) - (tb - ta) if value is not None else 0))
+        found: dict[tuple[str, str, int, int], list[int]] = {}
+        searched: set[tuple[str, str]] = set()
         hits: list[tuple[int, int, str]] = []
         for b, right, anchor in deep:
+            n_left = bisect_right(starts, b - 1)  # the tokens that start before b end by b (b is an edge)
+            can_left = b + grow[n_left]
+            can_right = len(out) - b + grow[-1] - grow[n_left]
             for w in self._long:
                 self._spend(work, 1, deadline)
-                at = found.get((anchor, w))
+                if (anchor, w) not in searched:
+                    searched.add((anchor, w))
+                    self._spend(work, len(w), deadline)  # one search of the anchor in the rule (the whole rule, at most)
+                # the places of the anchor in the rule whose comparison could succeed (see `can_left`, `can_right`): `k` = `j` + `shift`
+                shift = reach if right else 1
+                lo = max(0, len(w) - can_right - shift)
+                hi = min(len(w), can_left - shift + len(anchor))
+                if hi - lo < len(anchor):
+                    continue
+                at = found.get((anchor, w, lo, hi))
                 if at is None:
-                    self._spend(work, len(w), deadline)  # one search of the anchor in the rule
                     at = []
-                    j = w.find(anchor)
+                    j = w.find(anchor, lo, hi)
                     while j >= 0:
                         self._spend(work, len(anchor), deadline)  # a further search starts there
                         at.append(j)
-                        j = w.find(anchor, j + 1)
-                    found[(anchor, w)] = at
+                        j = w.find(anchor, j + 1, hi)
+                    found[(anchor, w, lo, hi)] = at
                 for j in at:
                     k = j + reach if right else j + 1  # the characters of `w` before the edge
+                    if k > can_left or len(w) - k > can_right:
+                        continue  # the text read back is shorter than the rule on one side: not an occurrence, no comparison
                     self._spend(work, 2 * len(w) + 2, deadline)
                     lt, lch = self._expand(out, toks, starts, b, k + 1, True)
                     rt, rch = self._expand(out, toks, starts, b, len(w) - k + 1, False)
