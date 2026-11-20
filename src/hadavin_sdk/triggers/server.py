@@ -21,7 +21,7 @@ of the process environment can stand in for a header that was not sent. These re
 DEBUG: their number is chosen by whoever can reach the port.
 
 Two bounds on what a client can hold: at most `max_connections` connection threads at one time (a connection over
-the cap is closed at once, nothing is read or answered), and an absolute deadline, `read_deadline_s`, on the
+the cap is closed at once, nothing is read or answered; logged at WARNING at most once a minute), and an absolute deadline, `read_deadline_s`, on the
 TOTAL time from the accept until the request line, the headers and the body have been read (a client that
 sends one byte every few seconds never trips the pause limit of a single read, but is cut at the deadline: the
 read raises TimeoutError, which is answered 400 like a stalled client). The deadline ends with the last read;
@@ -54,7 +54,10 @@ READ_DEADLINE_S: Final[float] = (
 )
 SERVER_ERROR: Final[int] = 500  # no refusal made here has a status from this number up
 
+CAP_WARN_EVERY_S: Final[float] = 60.0  # the connection cap is logged at WARNING at most this often
+
 _LOG = logging.getLogger("hadavin_sdk.triggers")
+_monotonic = time.monotonic  # the clock of the cap warning (a test replaces it)
 
 
 def _level(exc: BaseException | None) -> int:
@@ -262,12 +265,13 @@ class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
         if max_connections < 1:
             raise ValueError("max_connections must be at least 1")
         self._slots = threading.BoundedSemaphore(max_connections)
+        self._cap_warned_at: float | None = None
         super().__init__(*args, **kwargs)
 
     def process_request(self, request: Any, client_address: Any) -> None:
         """A thread per connection up to the cap; above it the connection is closed at once, unread."""
         if not self._slots.acquire(blocking=False):
-            _LOG.debug("trigger server: connection cap reached, closed with no answer")
+            self._warn_cap()
             self.shutdown_request(request)
             return
         try:
@@ -275,6 +279,14 @@ class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
         except BaseException:
             self._slots.release()
             raise
+
+    def _warn_cap(self) -> None:
+        """One WARNING at most every `CAP_WARN_EVERY_S` (monotonic) for a connection over the cap: no client
+        address, no data; the rest of the hits in the window are dropped quietly."""
+        at = _monotonic()
+        if self._cap_warned_at is None or at - self._cap_warned_at >= CAP_WARN_EVERY_S:
+            self._cap_warned_at = at
+            _LOG.warning("trigger server: connection cap reached, connections closed with no answer")
 
     def server_bind(self) -> None:
         exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)  # only where the platform has it
@@ -290,8 +302,10 @@ class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
         except BaseException:  # noqa: BLE001 - one connection never prints or stops the server
             self.handle_error(request, client_address)
         finally:
-            self.shutdown_request(request)
-            self._slots.release()
+            try:
+                self.shutdown_request(request)
+            finally:  # a shutdown that raises must not leak the slot
+                self._slots.release()
 
     def handle_error(self, request: Any, client_address: Any) -> None:
         """The stdlib prints the traceback and the client address here; this logs the class name."""

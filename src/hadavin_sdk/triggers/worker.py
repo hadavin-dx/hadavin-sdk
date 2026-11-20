@@ -93,6 +93,8 @@ ACK_WAIT_S_CEILING: Final[float] = 30.0
 MAX_WAITING: Final[int] = 128
 CLOSE_WAIT_S: Final[float] = 30.0  # how long `close` waits for running loops
 SOCKET_SLACK_S: Final[float] = 10.0  # a connection may stay open ack_wait_s plus this
+READ_DEADLINE_S_CEILING: Final[float] = 300.0
+MAX_CONNECTIONS_CEILING: Final[int] = 4096
 LOOPBACK: Final[str] = "127.0.0.1"
 PORT: Final[int] = 8081
 TRIGGER_KIND: Final[str] = "event"
@@ -161,6 +163,11 @@ class Runner:
         self._lock = threading.Lock()  # guards _jobs and _closed
         self._jobs: set[Future[None]] = set()  # handle calls not yet ended, for `close` only
         self._closed = False
+
+    @property
+    def ack_wait_s(self) -> float:
+        """The wait for a row, in seconds, as checked and stored at construction (read-only)."""
+        return self._ack_wait_s
 
     def __enter__(self) -> Self:
         return self
@@ -296,9 +303,18 @@ def _answer(found: Run, req: Accepted) -> tuple[int, dict[str, str]]:
     return (202 if state in IN_PROGRESS else 200), {"run_id": found.run_id, "state": state.value}
 
 
+def _field(obj: Any, name: str, where: str) -> Any:
+    """`obj.name` by direct access, or a ConfigError that names the field when core-b's object lacks it (the text is
+    built here from names, never from a value)."""
+    try:
+        return getattr(obj, name)
+    except AttributeError:
+        raise ConfigError(f"{where} is missing: the config or App of core-b has no `{name}`") from None
+
+
 def trigger_settings(config: Any) -> Any:
-    """`config.triggers`, or a ConfigError when the block is missing."""
-    settings = config.triggers
+    """`config.triggers`, or a ConfigError when the block is missing (or the field is not on the config)."""
+    settings = _field(config, "triggers", "config.triggers")
     if settings is None:
         raise ConfigError("triggers block not configured (config.yaml has no `triggers:`)")
     return settings
@@ -327,7 +343,7 @@ def check_senders(
             raise ConfigError(
                 f"trigger sender {sender_id}: principal {sender.principal_id} is not in principals.yaml"
             )
-        if principal.kind != "service":
+        if _field(principal, "kind", f"principal {sender.principal_id} kind") != "service":
             raise ConfigError(
                 f"trigger sender {sender_id}: principal {sender.principal_id} is not of kind service"
             )
@@ -376,7 +392,7 @@ def secret_reader(app: Any) -> Callable[[str], str]:
     """The reader of sender secrets the App was built with: `App.trigger_secret`, a callable from a secret NAME
     to its value that refuses every name no sender lists (PermissionError). Without a reader the worker does
     not start."""
-    return app.trigger_secret  # type: ignore[no-any-return]
+    return _field(app, "trigger_secret", "App.trigger_secret")  # type: ignore[no-any-return]
 
 
 def check_durable(store: Any) -> bool:
@@ -419,7 +435,8 @@ def make_app(
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
-    max_running, ack_wait_s = settings.max_running, settings.ack_wait_s
+    max_running = _field(settings, "max_running", "triggers.max_running")
+    ack_wait_s = _field(settings, "ack_wait_s", "triggers.ack_wait_s")
     try:
         check_secrets(secrets)
         runner = Runner(
@@ -439,6 +456,30 @@ def make_app(
         raise
 
 
+def check_port(port: object) -> None:
+    """A whole number from 0 (the system picks one) to 65535, or a ConfigError."""
+    if isinstance(port, bool) or not isinstance(port, int) or not 0 <= port <= 65535:
+        raise ConfigError("--port must be a whole number from 0 to 65535")
+
+
+def check_server_bounds(max_connections: object, read_deadline_s: object) -> None:
+    """The two bounds of the quiet server, or a ConfigError (NaN and infinity are refused with the rest)."""
+    if (
+        isinstance(max_connections, bool)
+        or not isinstance(max_connections, int)
+        or not 1 <= max_connections <= MAX_CONNECTIONS_CEILING
+    ):
+        raise ConfigError(f"max_connections must be a whole number from 1 to {MAX_CONNECTIONS_CEILING}")
+    if (
+        isinstance(read_deadline_s, bool)
+        or not isinstance(read_deadline_s, int | float)
+        or not (0 < read_deadline_s <= READ_DEADLINE_S_CEILING)  # written so that NaN is refused too
+    ):
+        raise ConfigError(
+            f"read_deadline_s must be above zero and at most {READ_DEADLINE_S_CEILING:g}"
+        )
+
+
 def make_server(
     host: str,
     port: int,
@@ -452,6 +493,8 @@ def make_server(
     that is in use, or an address that cannot be bound, is a ConfigError (exit code 2 in `main`). The port
     is exclusive on every platform: on Windows because `QuietServer` turns the reuse option off and sets
     `SO_EXCLUSIVEADDRUSE`, elsewhere because the system refuses a second listener (see `QuietServer`)."""
+    check_port(port)
+    check_server_bounds(max_connections, read_deadline_s)
     handler = type(
         "TriggerHandler",
         (QuietRequestHandler,),
@@ -546,28 +589,41 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
     trigger_settings(config)  # before anything is built: no secret read, no connection
     host = args.host or LOOPBACK
     port = args.port if args.port is not None else PORT
+    check_port(port)
     check_bind(host, args.allow_non_loopback)
     app = build(args.config_dir, qualified_agents(load_registry(config)))
     wsgi, runner = make_app(app)
     check_tick(app.store)
     try:
-        timeout = runner._ack_wait_s + SOCKET_SLACK_S  # the value `make_app` read, default or not
+        timeout = runner.ack_wait_s + SOCKET_SLACK_S  # the value `make_app` read, default or not
         return make_server(host, port, wsgi, timeout), runner
     except BaseException:
         runner.close(0)
         raise
 
 
-def _log_to_stderr() -> None:
-    """INFO lines of the `hadavin_sdk` loggers on stderr. Only that logger is set: the root logger, and with
-    it the logging of every library in the process, stays as it is."""
-    top = logging.getLogger("hadavin_sdk")
+def _log_to_stderr() -> logging.Handler:
+    """INFO lines of the `hadavin_sdk.triggers` logger on stderr; returns the handler (the one already there on a
+    second call). Only that logger is set: the root logger, the rest of `hadavin_sdk` and with them the logging
+    of every library in the process stay as they are. Undone by `_unlog_stderr`."""
+    top = logging.getLogger(_LOG.name)
     top.setLevel(logging.INFO)
-    if not any(getattr(h, "_trigger_worker", False) for h in top.handlers):
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(logging.Formatter("%(message)s"))
-        handler._trigger_worker = True  # type: ignore[attr-defined]
-        top.addHandler(handler)
+    for held in top.handlers:
+        if getattr(held, "_trigger_worker", False):
+            return held
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    handler._trigger_worker = True  # type: ignore[attr-defined]
+    top.addHandler(handler)
+    return handler
+
+
+def _unlog_stderr() -> None:
+    """Remove the handler `_log_to_stderr` added (every copy) and put the logger's level back to unset."""
+    top = logging.getLogger(_LOG.name)
+    for held in [h for h in top.handlers if getattr(h, "_trigger_worker", False)]:
+        top.removeHandler(held)
+    top.setLevel(logging.NOTSET)
 
 
 def main(argv: list[str] | None = None) -> int:

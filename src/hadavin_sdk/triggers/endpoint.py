@@ -252,7 +252,10 @@ def make_wsgi(
     start: Start,
     clock: Callable[[], float] = time.time,
 ) -> Callable[..., list[bytes]]:
-    """The WSGI application for ``POST /v1/trigger``. Raises ValueError on a bad setup."""
+    """The WSGI application for ``POST /v1/trigger``. Raises ValueError on a bad setup.
+
+    Invariant 7 (a row exists before the ack, a hit is told apart by its payload hash) holds for ``Runner.start``;
+    a custom ``start`` is trusted and is not checked here."""
     tenant = settings.tenant
     senders = sender_map(settings.senders)
     max_body = settings.max_body_bytes
