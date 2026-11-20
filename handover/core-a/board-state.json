@@ -703,8 +703,8 @@
   {
    "item": "E1-fix4",
    "what": "delete the fatal-after-5 machinery (churn), WARNING per 5 min with the class name while the store is down, tests and mutant G33d adjusted, ticket",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "DONE",
+   "percent": 100,
    "evidence file": "reviews/D-code-result-review-5.md round 3",
    "tries": 1,
    "reason": "batch8 running"
@@ -725,17 +725,30 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "e1-fix4",
-   "role": "builder",
+   "id": "batch9",
+   "role": "evidence runner (never judges)",
    "model": "sonnet",
-   "what exactly it is doing": "churn decision on E1: delete the exit-3-after-5 machinery, WARNING per 5 min, tests + mutants adjusted, one test run, whole mutant run 18",
-   "started UTC": "10:29",
-   "expected end": "35 min",
+   "what exactly it is doing": "FINAL independent batch on the final tree: lint/bandit, WHOLE suite REQUIRE_PG=1 -n 3, combined tree with n8n/, mutant script",
+   "started UTC": "10:41",
+   "expected end": "25 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "fix after round 3 (no cap)",
+   "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "E1 review round 3"
+   "reason": "after e1-fix4"
+  },
+  {
+   "id": "E1-rev4",
+   "role": "fresh reviewer (zoom-out)",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 round 4 after the deletion: dead code/stale text/tests, one more adversarial pass, simplicity (top 5 deletions)",
+   "started UTC": "10:41",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "4, no cap (behaviour-changing)",
+   "retries so far": 0,
+   "reason": "after e1-fix4"
   }
  ],
  "tests": [
@@ -2656,6 +2669,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "BATCH8 (head afe4f052d, after E1 fixes): whole suite 12 failed (10 strict-mode by design; brand string: now in my BATCH7 logs too, REDACTED; dblink needs the default PG socket) / 12305 passed / 458 skipped / 75 xfailed in 326 s; combined tree core-b b32f358fd: 1376 passed 4 skipped 0 failed; ruff: 1 file to format (E-test-helpers.md, fixed), bandit 0 medium/high"
+  },
+  {
+   "id": "e1-fix4",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "churn decision on E1: delete the exit-3-after-5 machinery, WARNING per 5 min, tests + mutants adjusted, one test run, whole mutant run 18",
+   "started UTC": "10:29",
+   "expected end": "35 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix after round 3 (no cap)",
+   "retries so far": 0,
+   "reason": "exit-3-after-5 machinery deleted (worker.py 1194 -> 1157 lines); degraded worker retries forever, class-name WARNING per 5 min, /health 503 + counter; tests rewritten with kill checks; tests/triggers+crash 1370 passed 5 skipped; mutant run 18: 109 of 109 as expected, 0 problems, no known survivors; bandit no issues"
   }
  ]
 }

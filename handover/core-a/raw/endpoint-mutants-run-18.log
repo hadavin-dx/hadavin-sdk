@@ -104,3 +104,18 @@ ok  KILLED       G32b the conflict event result carries the payload text  [test_
 ok  KILLED       G32c the stored hash of the conflict event is taken from the new request  [test_e1_a_409_writes_one_audit_event_with_exactly_ids_and_both_hashes]
 ok  KILLED       G32d the /health body gets an extra key  [test_e1_start_with_the_store_down_starts_and_health_is_503[StoreUnavai]
 ok  CRASH        G32e /health is answered with no health callable (the path is not an ordinary 404)  [test_e1_without_a_health_callable_the_path_is_an_ordinary_404]
+ok  KILLED       G32f the degraded worker never starts its re-check thread  [test_e1fix_a_worker_started_with_the_store_down_recovers_in_the_same_p]
+ok  KILLED       G32g the recovery does not ping the store before it takes the real app  [test_e1fix_a_worker_started_with_the_store_down_recovers_in_the_same_p]
+ok  KILLED       G32h Runner.health starts a new ping thread on every call  [test_e1fix_the_health_ping_is_bounded_and_never_leaks_more_than_one_th]
+ok  KILLED       G32i Runner.health never times the ping out (a hung store reads as up)  [test_e1fix_the_health_ping_is_bounded_and_never_leaks_more_than_one_th]
+ok  KILLED       G32j _prepare does not warn that the App has no audit  [test_e1fix_main_warns_once_when_the_app_has_no_audit_and_make_app_does]
+ok  KILLED       G33a _recover does not close the App's store after a failed try  [test_fix2_recover_closes_the_store_on_every_failed_try]
+ok  KILLED       G33b Runner.health puts the ping in place before its thread has started  [test_fix2_a_ping_thread_that_does_not_start_is_a_counted_503_and_the_n]
+ok  KILLED       G33c the conflict audit write is waited for 30 s, not 2 s  [test_fix2_a_blocked_audit_write_costs_the_409_at_most_2_s_and_one_writ]
+ok  KILLED       G33d a degraded worker logs its re-check failure at every try, not once per 5 minutes  [test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the]
+ok  KILLED       G33e the 409 event cap uses one shared key for all senders  [test_fix2_the_cap_is_per_sender_and_the_window_dict_is_bounded_by_the_]
+ok  KILLED       G33f an unsigned request is taken as the first configured sender  [test_fix2_an_unsigned_or_wrongly_signed_conflicting_document_writes_no]
+106 killed, 3 crash-accepted (G20j, G31, G32e), 0 known survivors
+KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass
+  - (none: every mutant of the list has a killer test)
+109 of 109 run are as expected; problems: []
