@@ -899,3 +899,223 @@ def test_start_warns_once_when_no_recent_stuck_tick_is_recorded(caplog):
             assert worker.check_tick(store) is False  # a warning, never an error
             assert len(warnings()) == n and "stuck tick" in warnings()[-1]
     assert "OSError" in caplog.text and "private text" not in caplog.text
+
+
+# --- design review round 1: M2 cap, M3 close warning, N1, N3, N5, N7, N15 --------------------------------
+
+
+def _log_lines(caplog, level):
+    return [r.getMessage() for r in caplog.records if r.levelname == level]
+
+
+def test_m2_a_hung_store_cannot_pile_up_request_threads(caplog):
+    """M2. `get_run` blocks on an Event: `max_waiting` requests sit inside `start`, the next one is 503 at once
+    and the store is not asked again. (Without the cap the third call blocks in `get_run` as well.)"""
+
+    class Hung(MemoryStore):
+        reads = 0
+
+        def get_run(self, run_id):
+            type(self).reads += 1
+            release.wait(30)
+            return super().get_run(run_id)
+
+    store, release = Hung(), threading.Event()
+    fake = FakeRuntime(store, lambda *a, **kw: None)
+    with Runner(fake, store, max_waiting=2) as runner, caplog.at_level("WARNING"):
+        inside = [
+            threading.Thread(target=runner.start, args=(_req(n),), daemon=True) for n in (1, 2)
+        ]
+        try:
+            for thread in inside:
+                thread.start()
+            deadline = time.monotonic() + 10
+            while Hung.reads < 2 and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert Hung.reads == 2
+            third: list = []
+            caller = threading.Thread(target=lambda: third.append(runner.start(_req(3))), daemon=True)
+            began = time.monotonic()
+            caller.start()
+            caller.join(5)
+            assert third == [(503, {})] and time.monotonic() - began < 2.0
+            assert Hung.reads == 2  # the store was not asked for the third
+        finally:
+            release.set()
+            for thread in inside:
+                thread.join(10)
+    assert any("too many waiting" in line for line in _log_lines(caplog, "WARNING"))
+    assert runner._waiting._value == 2  # every place was given back
+
+
+def test_m2_a_place_is_given_back_after_every_answer(rt):
+    with Runner(rt, rt.store, max_waiting=1) as runner:
+        for n in range(1, 4):
+            assert runner.start(_req(n))[0] in OK
+            _settle(rt.store, _req(n).run_id)
+            _free(runner)
+
+
+def test_m2_fifty_parallel_requests_of_one_key_stay_under_the_default_cap(rt):
+    assert worker.MAX_WAITING >= 50
+    with Runner(rt, rt.store) as runner:
+        answers = _parallel(runner, [_req(1)] * 50)
+        _free(runner)
+    assert all(a[0] in OK for a in answers if isinstance(a, tuple)), answers
+    assert not any(isinstance(a, BaseException) for a in answers)
+
+
+def test_m3_close_warns_once_when_a_loop_is_still_going(rt, caplog):
+    rt.llm.gate.clear()
+    runner = Runner(rt, rt.store)
+    try:
+        assert runner.start(_req())[0] in OK
+        with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
+            runner.close(wait_s=0.05)
+        lines = _log_lines(caplog, "WARNING")
+        assert len(lines) == 1 and "1 run(s) still going" in lines[0]
+    finally:
+        rt.llm.gate.set()
+    _free(runner)
+
+
+def test_m3_close_with_nothing_running_is_quiet(rt, caplog):
+    with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
+        Runner(rt, rt.store).close()
+    assert _log_lines(caplog, "WARNING") == []
+
+
+def test_n1_the_memory_store_is_warned_about_and_the_start_goes_on(rt, caplog):
+    with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
+        assert worker.check_durable(MemoryStore()) is False
+        assert worker.check_durable(SimpleNamespace()) is True  # any other kind: quiet
+    lines = _log_lines(caplog, "WARNING")
+    assert len(lines) == 1 and "memory kind" in lines[0]
+
+
+def test_n1_make_app_warns_about_a_memory_store(rt, caplog):
+    with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
+        _wsgi, runner = worker.make_app(_app(rt, _settings(max_running=1)))
+    runner.close(0)
+    assert sum("memory kind" in line for line in _log_lines(caplog, "WARNING")) == 1
+
+
+def test_n3_a_waiter_gets_503_at_once_when_the_runner_is_closed(rt):
+    """No slot, no row: the waiter polls. `close` must end that at once, not at the end of `ack_wait_s`.
+    (Before the fix it kept polling for the whole 5 s.)"""
+    hold = threading.Event()
+    fake = FakeRuntime(rt.store, lambda store, **kw: (_insert(store, **kw), hold.wait(30)))
+    with Runner(fake, rt.store, ack_wait_s=5.0, poll_s=0.02) as runner:
+        try:
+            assert runner.start(_req(1))[0] in OK
+            answer: list = []
+            waiter = threading.Thread(target=lambda: answer.append(runner.start(_req(2))))
+            waiter.start()
+            time.sleep(0.3)
+            began = time.monotonic()
+            runner.close(wait_s=0.01)
+            waiter.join(4)
+            assert answer == [(503, {})] and time.monotonic() - began < 2.5
+        finally:
+            hold.set()
+        _free(runner)
+
+
+def test_n5_a_store_error_is_a_warning_and_a_bug_is_an_error_both_503(caplog):
+    class Broken(MemoryStore):
+        def __init__(self, exc):
+            super().__init__()
+            self.exc = exc
+
+        def get_run(self, run_id):
+            raise self.exc
+
+    fake = FakeRuntime(MemoryStore(), lambda *a, **kw: None)
+    for exc, level, other in (
+        (StoreUnavailable("secret-text-1"), "WARNING", "ERROR"),
+        (OSError("secret-text-2"), "WARNING", "ERROR"),
+        (StaleState("secret-text-3"), "WARNING", "ERROR"),
+        (ZeroDivisionError("secret-text-4"), "ERROR", "WARNING"),
+        (KeyError("secret-text-5"), "ERROR", "WARNING"),
+    ):
+        caplog.clear()
+        with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
+            with Runner(fake, Broken(exc)) as runner:
+                assert runner.start(_req()) == (503, {})
+        assert any(type(exc).__name__ in line for line in _log_lines(caplog, level)), exc
+        assert _log_lines(caplog, other) == [], exc
+        assert "secret-text" not in caplog.text
+        if level == "ERROR":
+            assert "internal error" in _log_lines(caplog, "ERROR")[0]
+
+
+def test_n7_a_base_exception_of_a_run_thread_is_logged_by_class_name_and_frees_the_slot(caplog):
+    class Stop(BaseException):
+        pass
+
+    def stops(store, **kw):
+        raise Stop("private text")
+
+    store = MemoryStore()
+    with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
+        with Runner(FakeRuntime(store, stops), store, ack_wait_s=0.3, poll_s=0.02) as runner:
+            assert runner.start(_req()) == (503, {})  # no row was written
+            _free(runner)
+            assert runner._slots.acquire(blocking=False)
+            runner._slots.release()
+    errors = _log_lines(caplog, "ERROR")
+    assert len(errors) == 1 and "Stop" in errors[0] and "private text" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("kw", "words"),
+    [
+        ({"max_running": 65}, "at most 64"),
+        ({"ack_wait_s": 30.5}, "at most 30"),
+        ({"poll_s": 0.005}, "between 0.01 and 1"),
+        ({"poll_s": 1.5}, "between 0.01 and 1"),
+        ({"max_waiting": 0}, "max_waiting"),
+        ({"max_waiting": True}, "max_waiting"),
+    ],
+)
+def test_n15_runner_bounds_are_refused(rt, kw, words):
+    with pytest.raises(ValueError, match=words):
+        Runner(rt, rt.store, **kw)
+
+
+def test_n15_the_bounds_themselves_are_allowed(rt):
+    for kw in ({"max_running": 64}, {"ack_wait_s": 30.0}, {"poll_s": 0.01}, {"poll_s": 1.0}):
+        Runner(rt, rt.store, **kw).close(0)
+
+
+def test_n15_make_app_turns_a_bound_into_a_config_error(rt):
+    with pytest.raises(ConfigError, match="at most 64"):
+        worker.make_app(_app(rt, _settings(max_running=65)))
+
+
+def test_spend_warning_only_above_one_loop_and_without_reserve(caplog):
+    plain = SimpleNamespace(limits=SimpleNamespace())
+    reserving = SimpleNamespace(limits=SimpleNamespace(reserve=lambda *a: None))
+    with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
+        assert worker.check_spend(plain, 1) is True
+        assert worker.check_spend(reserving, 4) is True
+        assert _log_lines(caplog, "WARNING") == []
+        assert worker.check_spend(plain, 4) is False
+        assert worker.check_spend(SimpleNamespace(), 2) is False
+    assert len(_log_lines(caplog, "WARNING")) == 2 and "max_running is 4" in caplog.text
+
+
+def test_make_app_reads_secrets_only_through_the_named_reader_and_refuses_other_names(rt):
+    asked: list[str] = []
+
+    def reader(name):
+        asked.append(name)
+        if name != "door-a":
+            raise PermissionError("not one of the secret names")
+        return SECRET
+
+    app = _app(rt, _settings(max_running=1))
+    app.trigger_secret = reader
+    _wsgi, runner = worker.make_app(app)
+    runner.close(0)
+    assert asked == ["door-a"]
