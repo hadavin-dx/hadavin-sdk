@@ -83,7 +83,7 @@ NOT_RUN = (
     "INSIDE the full chain",
     'The "Answer caller: taken" node',
     "A manual retry of a failed execution from the n8n editor",
-    "45 rounds with 60 second waits",
+    "45 rounds with 70 second waits",
     "The state check after a 202 or 200 answer",
     "The real Hadavin endpoint (a stub answered)",
     "One webhook call that starts two executions",
@@ -114,6 +114,7 @@ BUSY_EXPRESSION = (
     + ") && $('Stamp time').last().json.round < 45 }}"
 )
 EVIDENCE_2 = "handover/core-a/inputs/evidence-n8n-2.md"
+EVIDENCE_3 = "handover/core-a/inputs/evidence-n8n-3.md"
 # What n8n 2.47.7 put in the field `error` of the failed item (evidence-n8n-2.md, lines 117 to 208).
 ERROR_ITEMS = {
     "refused connection": {
@@ -162,7 +163,7 @@ VERIFY_ITEMS = (
     "placeholder `webhookId`",
     "reads `error.status` only",
     "runs the sign node again",
-    "45 rounds with 60 second waits",
+    "45 rounds with 70 second waits",
     "the real Hadavin endpoint",
     "two executions still yields one run",
     "n8n Cloud, queue mode",
@@ -443,7 +444,10 @@ def test_a_node_that_was_not_in_the_run_does_not_claim_it_was_seen():
     for name in [*added, _sign_node(_load(MAIN)), _load(MAIN)["nodes"][0]["name"]]:
         assert nodes[name]["notes"].startswith(OPEN), name
     for name in added:
-        assert SEEN not in nodes[name]["notes"] and "NOT part of the run" in nodes[name]["notes"]
+        # the node as written was never run; what its Respond node does was seen once, in the third record
+        note = nodes[name]["notes"]
+        assert "NOT part of any run as written" in note, name
+        assert f"SEEN IN n8n 2.47.7 ({EVIDENCE_3}, each case ran once)" in note, name
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
@@ -697,7 +701,7 @@ def test_the_caller_is_answered_and_the_readme_says_this_was_not_run():
     for name in answers:
         assert "body" not in json.dumps(nodes[name]["parameters"]).lower()  # an empty answer
     readme = " ".join(_readme().split())
-    assert "This branch was NOT run in n8n." in readme
+    assert "This branch was NOT run in n8n as written." in readme
     assert "the caller got HTTP 200 from n8n although the guard had stopped the event" in readme
     assert "It does NOT mean that Hadavin accepted it" in readme
     assert "IN SERIES on the guard's first output" in readme
@@ -839,7 +843,7 @@ def test_the_new_stated_limits_and_verify_items_are_in_the_readme():
     for phrase in (
         "15. The caller's 202 is given before anything is stored in Hadavin",
         "If n8n stops, restarts or is updated",
-        "keep 60 s; do not restart n8n while events are in flight",
+        "keep the wait above 65 seconds (70); do not restart n8n while events are in flight",
         "16. WAITING_FOR_APPROVAL ends the workflow as a success",
         "`approval_missing`",
         "17. n8n keeps the document.",
@@ -1669,7 +1673,8 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
     assert 1 <= rounds <= 1000
     # the span of the checks against the code's own numbers, for the README's example agent
     wait = nodes[_one(flow, "wait")]["parameters"]
-    assert wait["unit"] == "seconds" and 0 < wait["amount"] <= 60  # a wait above 65 s was never run
+    # above 65 s on purpose: a 60 s wait was lost in a restart of n8n, a 120 s wait survived (third record)
+    assert wait["unit"] == "seconds" and wait["amount"] == 70
     llm = SimpleNamespace(
         call_timeout_s=table.AnthropicSettings.model_fields["call_timeout_s"].default,
         max_attempts=table.AnthropicSettings.model_fields["max_attempts"].default,
@@ -1813,3 +1818,145 @@ def test_readme_states_the_three_limits_of_the_state_check():
     assert "ONLY notice a person gets today" in notify
     for state in ENDED_BADLY:
         assert state.value in notify, state
+
+
+# ---- the third record: restart during a wait, Respond then Stop and Error, two Respond nodes ----
+
+
+def test_the_wait_is_above_65_seconds_and_every_number_that_follows_from_it_agrees():
+    flow = _load(MAIN)
+    nodes = _nodes(flow)
+    wait = nodes[_one(flow, "wait")]
+    assert wait["parameters"]["unit"] == "seconds" and wait["parameters"]["amount"] == 70
+    assert wait["parameters"]["amount"] > 65
+    note = wait["notes"]
+    for phrase in (
+        EVIDENCE_3,
+        "lines 46 to 80",
+        "a wait of 60 seconds, restarted at about second 20, was LOST",
+        "never resumed",
+        "A wait of 120 seconds, restarted at about second 30, was saved as waiting, survived",
+        "about 2 seconds after its planned end",
+        "THE WAIT IS 70 SECONDS ON PURPOSE",
+        "each case once",
+    ):
+        assert phrase in note, phrase
+    assert note.startswith(OPEN) and "was not run" in note  # 70 s itself in a restart: an inference
+    # 45 rounds and 45 checks of 70 s: 3150 s, 52 minutes, 105 minutes together, and the old numbers are gone
+    assert 45 * 70 == 3150 and 3150 // 60 == 52 and 2 * 3150 // 60 == 105
+    assert 3150 + 46 * 45 == 5220 and 5220 // 60 == 87  # 45 waits and 46 sends of 45 s at the most
+    texts = " ".join(_params(flow)) + " " + " ".join(n.get("notes", "") for n in flow["nodes"])
+    assert "about 45 minutes" not in texts and "2700" not in texts
+    assert "real 60 second wait" not in texts and "wait of 60 seconds it gives" not in texts
+    readme = " ".join(_readme().split())
+    for phrase in (
+        "about 87 minutes when each of the 46 sends times out",
+        "about 52 minutes only when the connection is refused at once",
+        "6300 seconds of waiting, about 105 minutes",
+        "70 seconds each",
+    ):
+        assert phrase in readme, phrase
+    for stale in (
+        "about 79 minutes",
+        "2700 seconds",
+        "about 45 minutes",
+        "45 waits of 60",
+        "(45 minutes)",
+    ):
+        assert stale not in readme, stale
+    # the three minimum check counts follow from the code's formula with a 70 s wait
+    for steps, need in ((6, 17), (12, 32), (20, 53)):
+        limit = steps * 60 * 3 + 60 + tick.TICK_SLACK_S
+        assert need * 70 <= limit < (need + 1) * 70
+        assert f"`max_steps` {steps} " in readme and f"more than {need}" in readme
+
+
+def test_the_restart_fact_is_a_known_fact_in_the_limits_the_checklist_and_the_status():
+    readme = " ".join(_readme().split())
+    assert f"`{EVIDENCE_3}`" in readme.split("## Words used here")[0]  # in the status paragraph
+    assert "each case run once" in readme.split("## Words used here")[0]
+    run_part = readme.partition("A third run (record:")[2].partition("NOT run by anybody")[0]
+    for phrase in (
+        "EVERY case run ONCE",
+        "lines 46 to 80",
+        "was LOST: it was marked crashed, never resumed",
+        "checked up to 82 seconds past the planned end of the wait",
+        "finished with success about 2 seconds after its planned end",
+        "lines 82 to 96",
+        "the caller got HTTP 200 with the body of the Respond node",
+        "the error workflow ran once, 0.12 seconds after the execution began",
+        "lines 98 to 118",
+        "the caller got the first body only",
+        "no warning and no error",
+    ):
+        assert phrase in run_part, phrase
+    limits = readme.partition("## Stated limits")[2].partition("## VERIFY ON A REAL n8n")[0]
+    for phrase in (
+        "SEEN IN n8n 2.47.7 (third record",
+        "an execution in a wait of 60 seconds, restarted at about second 20, was LOST",
+        "an execution in a wait of 120 seconds, restarted at about second 30, was saved as waiting, survived",
+        "that a wait of exactly 70 seconds is saved like the 120 seconds one",
+        "(an inference from the threshold, not run)",
+        "whether the error workflow runs for a lost execution",
+    ):
+        assert phrase in limits, phrase
+    steps = readme.partition("## Set-up")[2].partition("## The webhook address")[0]
+    assert "12. Operating rule, a known fact in n8n 2.47.7 (stated limit 15)" in steps
+    assert "do not restart or update n8n while an event is in flight" in steps
+    assert "a wait of 60 seconds at a restart is lost for good" in steps
+    assert "keep it ABOVE 65 seconds, 70 here" in steps
+    # the old "not known" wording is gone
+    assert "nobody has run either" not in readme and "keep 60 s" not in readme
+    assert "said to be saved in n8n's database" not in readme
+
+
+def test_respond_then_stop_and_error_is_seen_and_the_guard_shape_relies_on_it():
+    flow = _load(MAIN)
+    nodes, edges = _nodes(flow), _edges(flow)
+    note = nodes["Answer caller: taken"]["notes"]
+    for phrase in (
+        "lines 82 to 96",
+        "did NOT change what the caller got",
+        "the caller kept the Respond answer (HTTP 200)",
+        "the execution ended in error",
+        "the error workflow started once, 0.12 s after the execution began",
+        "a person is told through the error workflow",
+        "A SECOND Respond node in one execution never reaches the caller",
+        "no warning in the log",
+        "never add another answer node to this chain",
+    ):
+        assert phrase in note, phrase
+    # the shape that relies on it: one answer node, and every node after it that can fail ends in Stop and Error
+    answers = [n for n, node in nodes.items() if node["type"] == PREFIX + "respondToWebhook"]
+    assert answers == ["Answer caller: taken"]
+    after = _reach(flow, "Answer caller: taken")
+    assert not after & set(answers)  # no second Respond node can run after the first
+    ends = [n for n in after if not edges.get(n)]
+    assert ends and {nodes[n]["type"] for n in ends} <= {PREFIX + "stopAndError", PREFIX + "noOp"}
+    assert "SEEN" in nodes["Stop: id or text missing"]["notes"].replace("UNVERIFIED", "")
+    assert (
+        "that is not this case, because here no answer node has run"
+        in nodes["Stop: id or text missing"]["notes"]
+    )
+    readme = " ".join(_readme().split())
+    part = readme.partition("This branch was NOT run in n8n as written.")[2].partition(
+        "## Webhook authentication"
+    )[0]
+    for phrase in (
+        "SEEN IN n8n 2.47.7 (third record",
+        "the caller KEPT the Respond answer (HTTP 200 there)",
+        "This chain relies on exactly that",
+        "never add another answer node to this chain",
+        "UNVERIFIED: this node as written",
+        "that n8n answers the caller before it starts the long sending chain",
+    ):
+        assert phrase in part, phrase
+    # the error workflow's note carries the same fact, and says what is NOT shown
+    notify = _load(ERROR)["nodes"][-1]["notes"]
+    assert EVIDENCE_3 in notify and "0.12 seconds after the failed execution began" in notify
+    assert (
+        "NOT shown: whether this workflow runs for an execution that is lost in a restart" in notify
+    )
+    # the top-level note of the main file names the third record, each case once
+    top = flow["notes"]
+    assert EVIDENCE_3 in top and "each case once" in top
