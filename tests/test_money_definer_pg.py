@@ -822,7 +822,7 @@ def test_month_cap_refuses_and_rolls_the_day_back(w):
 
 def test_duplicate_reservation_id_is_23505_and_books_nothing_twice(w):
     reserve(w, "dup", usd="1")
-    assert refused(w, "reserve", "dup", "ag", DAY, D(1), BIG, BIG, None)[0] == "23505"
+    assert refused(w, "reserve", "dup", "ag", DAY, D(2), BIG, BIG, None)[0] == "23505"
     assert refused(w, "reserve", "dup", "other", DAY, D(1), BIG, BIG, None)[0] == "23505"
     assert counters(w) == (1, 1) and w.count("spend_reservations") == 1
 

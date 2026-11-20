@@ -139,6 +139,12 @@ class Model:
         if not _is_amount(usd):
             return ("ValueError",)
         if rid in self.rows:
+            row = self.rows[rid]
+            if (row["agent"], row["day"], row["reserved"], row["run"]) == (agent, day, usd, run):
+                return (
+                    "ok",
+                    None,
+                )  # a retry of a committed reserve: the same row, nothing booked again
             return ("StaleState",)
         for which, booked, cap in (
             ("day", self.day[(agent, day)], day_cap),
@@ -773,8 +779,9 @@ def _id_outcome(store, rid):
         return f"reserve raised {type(raised).__module__}.{type(raised).__name__}"
     try:
         assert set(_rows(store)) == {rid}
+        store.reserve_spend(rid, AGENTS[2], DAY, amount, day_cap=BIG, month_cap=BIG)  # the retry
         with pytest.raises(StaleState):
-            store.reserve_spend(rid, AGENTS[2], DAY, amount, day_cap=BIG, month_cap=BIG)
+            store.reserve_spend(rid, AGENTS[2], DAY, amount + 1, day_cap=BIG, month_cap=BIG)
         with pytest.raises(NotFound):
             store.settle_spend(
                 rid[:-1] + ("0" if rid[-1] != "0" else "1"), actual

@@ -88,7 +88,7 @@ def test_a_duplicate_id_is_stale_state_an_unknown_id_is_not_found(w):
     rt = w.store(w.runtime)
     rid = _reserve(rt)
     with pytest.raises(StaleState, match=f"spend reservation exists: {rid}"):
-        _reserve(rt, rid=rid)
+        _reserve(rt, "2.00", rid=rid)
     with pytest.raises(NotFound):
         rt.settle_spend("unknown-id", D("1.00"))
     with pytest.raises(NotFound):

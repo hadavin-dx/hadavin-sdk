@@ -68,7 +68,7 @@ ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;
 
 -- hadavin_reserve_spend: book the worst case of one model call on the day and month counters, in the transaction that
 -- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
--- back with the caller's transaction). A duplicate id is the native unique_violation (23505).
+-- back with the caller's transaction). A duplicate id with different arguments is a unique_violation (23505); the same arguments are a retry and succeed.
 CREATE OR REPLACE FUNCTION hadavin_reserve_spend(
     p_id TEXT, p_agent TEXT, p_day DATE, p_usd NUMERIC, p_run_id TEXT
 )
@@ -129,8 +129,18 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'caps' USING ERRCODE = 'HD005'; END IF;
     v_month := pg_catalog.date_trunc('month', p_day)::date;
 
+    -- idempotent: a retry of a committed reserve (same id, agent, day, amount, run) finds its own row and returns success
+    -- without booking again; any difference is a collision and stays the native unique_violation (23505).
     INSERT INTO spend_reservations (reservation_id, agent_id, day, run_id, reserved_usd)
-    VALUES (p_id, p_agent, p_day, p_run_id, p_usd);
+    VALUES (p_id, p_agent, p_day, p_run_id, p_usd)
+    ON CONFLICT (reservation_id) DO NOTHING;
+    IF NOT FOUND THEN
+        PERFORM 1 FROM spend_reservations r
+         WHERE r.reservation_id = p_id AND r.agent_id = p_agent AND r.day = p_day
+           AND r.reserved_usd = p_usd AND r.run_id IS NOT DISTINCT FROM p_run_id;
+        IF FOUND THEN RETURN; END IF;
+        RAISE EXCEPTION 'reservation exists' USING ERRCODE = '23505';
+    END IF;
     INSERT INTO spend (agent_id, day, usd) VALUES (p_agent, p_day, 0) ON CONFLICT DO NOTHING;
     -- strictly day before month: seed and book the day, then the month; a refusal raises and everything rolls back
     UPDATE spend s SET usd = s.usd + p_usd

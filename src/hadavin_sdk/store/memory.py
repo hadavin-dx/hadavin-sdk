@@ -347,7 +347,15 @@ class MemoryStore:
         check_spend_cap(day_cap)
         check_spend_cap(month_cap)
         with self._lock:
-            if reservation_id in self._reservations:
+            prior = self._reservations.get(reservation_id)
+            if prior is not None:
+                if (prior.agent_id, prior.day, prior.reserved_usd, prior.run_id) == (
+                    agent_id,
+                    day,
+                    usd,
+                    run_id,
+                ):
+                    return  # a retry of a committed reserve: the same row, nothing booked again
                 raise StaleState(f"spend reservation exists: {reservation_id}")
             booked = self._spend.get((agent_id, day), Decimal(0))
             with localcontext(defaults.money_context()):

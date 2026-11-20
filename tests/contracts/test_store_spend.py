@@ -241,11 +241,35 @@ def test_a_refused_reserve_leaves_the_totals_and_the_rows_unchanged(store):
     assert _totals(store) == (D("3.00"), D("3.00"))
 
 
+def test_a_retry_with_the_same_arguments_succeeds_and_books_nothing_more(store):
+    """M5: reserve commits, the reply is lost, the retry must see its own success, not a collision."""
+    rid = _reserve(store, "1.00")
+    first = _rows(store)[rid]
+    store.reserve_spend(rid, AGENT, DAY, D("1.00"), day_cap=BIG, month_cap=BIG)
+    assert _rows(store) == {rid: first}
+    assert _totals(store) == (D("1.00"), D("1.00"))
+    store.reserve_spend(rid, AGENT, DAY, D("1.00"), day_cap=D("0.01"), month_cap=D("0.01"))
+    assert _totals(store) == (
+        D("1.00"),
+        D("1.00"),
+    )  # a cap that is now passed does not turn it into a refusal
+    for agent, day, usd, run in (
+        (OTHER, DAY, "1.00", None),
+        (AGENT, EVE, "1.00", None),
+        (AGENT, DAY, "1.01", None),
+        (AGENT, DAY, "1.00", "other-run"),
+    ):
+        with pytest.raises(StaleState):
+            store.reserve_spend(rid, agent, day, D(usd), day_cap=BIG, month_cap=BIG, run_id=run)
+    assert _rows(store) == {rid: first}
+    assert _totals(store) == (D("1.00"), D("1.00"))
+
+
 def test_a_duplicate_id_is_stale_state_and_is_booked_once(store):
     rid = _reserve(store, "1.00")
     first = _rows(store)[rid]
     with pytest.raises(StaleState, match=f"spend reservation exists: {rid}"):
-        store.reserve_spend(rid, AGENT, DAY, D("1.00"), day_cap=BIG, month_cap=BIG)
+        store.reserve_spend(rid, AGENT, DAY, D("1.01"), day_cap=BIG, month_cap=BIG)
     with pytest.raises(StaleState):
         store.reserve_spend(rid, OTHER, EVE, D("7.00"), day_cap=BIG, month_cap=BIG)
     assert _rows(store) == {rid: first}
