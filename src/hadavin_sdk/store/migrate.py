@@ -7,7 +7,9 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 
 from __future__ import annotations
 
+import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -15,8 +17,9 @@ from typing import Literal
 from psycopg import errors, sql
 
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.store.postgres import connect
+from hadavin_sdk.store.postgres import connect, names_of
 
+_log = logging.getLogger("hadavin_sdk.migrate")
 MIGRATIONS = Path(__file__).parent / "migrations"
 
 
@@ -389,17 +392,13 @@ def who_else_can_clear(db, reset_role: str | None) -> list[str]:
 
 
 def _paths(config_value: str) -> list[str]:
-    return [
-        n
-        for n in (p.strip().strip('"').strip("'") for p in config_value.split(","))
-        if n and n != "pg_catalog" and not n.startswith("pg_temp")
-    ]
+    return names_of(config_value)
 
 
-def _path_rows(db, named: list[str], schema: str):
+def _path_rows(db, named: list[str]):
     """(role oid, role name, database name or None, setting) of every search_path default that reaches the named
-    roles and is not the schema."""
-    rows = db.execute(
+    roles: the role-wide row, the row for this database, and the database-wide and server-wide rows."""
+    return db.execute(
         "SELECT s.setrole, pg_catalog.pg_get_userbyid(s.setrole), d.datname, c "
         "FROM pg_catalog.pg_db_role_setting s CROSS JOIN LATERAL unnest(s.setconfig) c "
         "LEFT JOIN pg_catalog.pg_database d ON d.oid = s.setdatabase "
@@ -407,18 +406,36 @@ def _path_rows(db, named: list[str], schema: str):
         "AND (s.setrole = 0 OR s.setrole IN (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = ANY(%s)))",
         (named,),
     ).fetchall()
-    return [r for r in rows if _paths(r[3].split("=", 1)[1]) != [schema]]
+
+
+def _effective_rows(rows, schema: str):
+    """The rows that decide a named role's path in this database, and are not the schema. The row for this
+    database overrides the role-wide row (PostgreSQL applies role-in-database, then role, then database, then
+    server), so a role-wide row under a pinned row is shadowed and does not count."""
+    pinned = {r[1] for r in rows if r[0] and r[2] and _paths(r[3].split("=", 1)[1]) == [schema]}
+    return [
+        r
+        for r in rows
+        if _paths(r[3].split("=", 1)[1]) != [schema] and not (r[0] and not r[2] and r[1] in pinned)
+    ]
 
 
 def check_role_settings(db, named: list[str]) -> list[str]:
     """Per-role and per-database `search_path` defaults that reach the named logins (`pg_db_role_setting`). A role
     may change its OWN default (`ALTER ROLE r SET search_path`), so a login could be sent to a decoy schema it owns
-    and read a decoy stop table. A role row (with or without `IN DATABASE`) whose path is not the migrated schema is
-    reset (the repair) and the reset is read back; a database-wide or server-wide row that is not the schema cannot
-    be repaired for one role and is refused. Returns what was reset."""
-    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
-    reset = []
-    for setrole, role, dbname, config in _path_rows(db, named, schema):
+    and read a decoy stop table. A role row is a role's setting for EVERY database of the cluster, so it is never
+    erased: for a role-wide row that is not the migrated schema this database gets
+    `ALTER ROLE r IN DATABASE <this database> SET search_path = <schema>` (it takes precedence here, other databases
+    keep their setting). A row for this database only is reset. Roles that are not named are never touched. A
+    database-wide or server-wide row cannot be repaired for one role and is refused. The result is read back.
+    Returns one line per change (role, database scope, old value, new value)."""
+    schema, dbname_now = db.execute(
+        "SELECT pg_catalog.current_schema(), pg_catalog.current_database()"
+    ).fetchone()
+    rows = _path_rows(db, named)
+    changes = []
+    wide = {r[1] for r in _effective_rows(rows, schema) if r[0] and not r[2]}
+    for setrole, role, dbname, config in _effective_rows(rows, schema):
         if setrole == 0:
             raise ConfigError(
                 f"a {'database-wide' if dbname else 'server-wide'} search_path default ({config}) reaches the "
@@ -426,17 +443,38 @@ def check_role_settings(db, named: list[str]) -> list[str]:
                 "schema. Run ALTER DATABASE ... RESET search_path (or ALTER ROLE ALL ... RESET search_path) as a "
                 "role that may"
             )
-        stmt = sql.SQL("ALTER ROLE {}").format(sql.Identifier(role))
+        old = config.split("=", 1)[1]
         if dbname:
-            stmt += sql.SQL(" IN DATABASE {}").format(sql.Identifier(dbname))
-        db.execute(stmt + sql.SQL(" RESET search_path"))
-        reset.append(f"{role}: {config}")
-    if left := _path_rows(db, named, schema):
+            if role in wide:
+                continue  # overwritten by the SET below
+            stmt = sql.SQL("ALTER ROLE {} IN DATABASE {} RESET search_path").format(
+                sql.Identifier(role), sql.Identifier(dbname)
+            )
+            note = f"role {role} in database {dbname}: search_path {old} reset (was the decoy of this database)"
+        else:
+            stmt = sql.SQL("ALTER ROLE {} IN DATABASE {} SET search_path = {}").format(
+                sql.Identifier(role), sql.Identifier(dbname_now), sql.Identifier(schema)
+            )
+            note = (
+                f"role {role} (role-wide default, kept for other databases) in database {dbname_now}: "
+                f"search_path {old} -> {schema}"
+            )
+        try:
+            db.execute(stmt)
+        except errors.InsufficientPrivilege as exc:
+            raise ConfigError(
+                f"cannot change the search_path default of role {role} (it is {old}, not the schema {schema!r}): "
+                "ALTER ROLE needs a migrate login with CREATEROLE and the ADMIN OPTION on that role "
+                "(PostgreSQL 16 and later; before 16 CREATEROLE or superuser). Run migrate with such a login, or "
+                f"run ALTER ROLE {role} IN DATABASE {dbname_now} SET search_path = {schema} as a role that may"
+            ) from exc
+        changes.append(note)
+    if left := _effective_rows(_path_rows(db, named), schema):
         raise ConfigError(
-            "a search_path default of a named role could not be reset: "
+            "a search_path default of a named role could not be repaired: "
             + ", ".join(f"{r[1]}: {r[3]}" for r in left)
         )
-    return reset
+    return changes
 
 
 def _maintainers(db, schema: str):
@@ -448,6 +486,16 @@ def _maintainers(db, schema: str):
         "AND a.privilege_type = 'MAINTAIN' AND a.grantee <> c.relowner ORDER BY 1, 2",
         (schema, list(_STOP_TABLES)),
     ).fetchall()
+
+
+def _holds(db, role: str, schema: str, table: str, privilege: str) -> bool:
+    """Whether the role holds the privilege on schema.table; the relation name is built with quote_ident, so a
+    schema with capitals or special characters resolves to itself."""
+    return db.execute(
+        "SELECT pg_catalog.has_table_privilege(%s, "
+        "(pg_catalog.quote_ident(%s) || '.' || pg_catalog.quote_ident(%s))::regclass, %s)",
+        (role, schema, table, privilege),
+    ).fetchone()[0]
 
 
 def check_maintain(db, named: list[str]) -> None:
@@ -477,10 +525,7 @@ def check_maintain(db, named: list[str]) -> None:
         )
     for role in named:
         for table in _STOP_TABLES:
-            if db.execute(
-                "SELECT pg_catalog.has_table_privilege(%s, %s::regclass, 'MAINTAIN')",
-                (role, f"{schema}.{table}"),
-            ).fetchone()[0]:
+            if _holds(db, role, schema, table, "MAINTAIN"):
                 raise ConfigError(
                     f"{role} holds MAINTAIN on {table} (through pg_maintain or a role it is a member of), so it "
                     "could LOCK the stop tables and block every read of the stop: remove that membership"
@@ -556,6 +601,7 @@ def migrate(
     region: str | None = None,
     sslmode: str | None = None,
     sslrootcert: str | None = None,
+    on_role_change: Callable[[str], None] | None = None,
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
@@ -563,7 +609,8 @@ def migrate(
     old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
     role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
-    clear a stop, and exit 0."""
+    clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
+    `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning)."""
     roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
@@ -651,7 +698,10 @@ def migrate(
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
         if named:
-            check_role_settings(db, named)
+            for note in check_role_settings(db, named):
+                _log.warning("migrate changed a role setting: %s", note)
+                if on_role_change:
+                    on_role_change(note)
             check_maintain(db, named)
         if named and (others := who_else_can_clear(db, reset_role)):
             raise ConfigError(

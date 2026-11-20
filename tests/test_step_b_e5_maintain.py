@@ -143,15 +143,34 @@ def test_on_a_real_postgresql_17_a_runtime_role_cannot_lock_a_stop_table():
             db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
     try:
         w.migrate()
-        w.grant("GRANT MAINTAIN ON kill_switch TO {}", w.runtime)
-        w.grant("GRANT MAINTAIN ON kill_switch_stops TO PUBLIC")
+        tables = ("kill_switch", "kill_switch_stops", "kill_switch_clears")
+        for t in tables:
+            w.grant("GRANT MAINTAIN ON {} TO PUBLIC", t)
+            w.grant("GRANT MAINTAIN ON {} TO {}", t, w.runtime)
         w.migrate()
-        with w.as_(w.runtime, autocommit=False) as db, pytest.raises(errors.InsufficientPrivilege):
-            db.execute(
-                sql.SQL("LOCK TABLE {}.kill_switch IN ACCESS EXCLUSIVE MODE").format(
-                    sql.Identifier(w.schema)
+        # no MAINTAIN grant is left on any stop table, for PUBLIC or any role (the owner's own is not listed)
+        left = w.run(
+            "SELECT c.relname, a.grantee FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, "
+            "aclexplode(c.relacl) a WHERE n.nspname = %s AND c.relname = ANY(%s) "
+            "AND a.privilege_type = 'MAINTAIN' AND a.grantee <> c.relowner",
+            (w.schema, list(tables)),
+        )
+        assert left == []
+        for t in tables:  # the runtime login cannot LOCK any of the three, in the strongest mode
+            with (
+                w.as_(w.runtime, autocommit=False) as db,
+                pytest.raises(errors.InsufficientPrivilege),
+            ):
+                db.execute(
+                    sql.SQL("LOCK TABLE {}.{} IN ACCESS EXCLUSIVE MODE").format(
+                        sql.Identifier(w.schema), sql.Identifier(t)
+                    )
                 )
-            )
+        # membership in pg_maintain cannot be revoked per table: migrate refuses and names the cause
+        with psycopg.connect(w.dsn, autocommit=True) as db:
+            db.execute(sql.SQL("GRANT pg_maintain TO {}").format(sql.Identifier(w.runtime)))
+        with pytest.raises(ConfigError, match="MAINTAIN|pg_maintain"):
+            w.migrate()
     finally:
         with psycopg.connect(w.dsn, autocommit=True) as db:
             db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(w.schema)))

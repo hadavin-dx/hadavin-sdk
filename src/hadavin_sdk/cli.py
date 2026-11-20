@@ -126,7 +126,7 @@ def _main(argv: list[str] | None = None) -> int:
     mig.add_argument(
         "--no-roles",
         action="store_true",
-        help="apply the schema naming no role (no role is granted or checked); without it a migrate that names no role is refused",
+        help="apply the schema naming no role (no role is granted or checked; do NOT use it on an existing deployment: old grants stay and nothing is checked); without it a migrate that names no role is refused",
     )
     mig.add_argument(
         "--purge-role",
@@ -450,6 +450,7 @@ def _migrate(
         region=store.region,
         sslmode=store.sslmode,
         sslrootcert=ca,
+        on_role_change=lambda note: print(f"changed: {note}", file=sys.stderr),
     )
     print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
     if applied and not runtime_role:

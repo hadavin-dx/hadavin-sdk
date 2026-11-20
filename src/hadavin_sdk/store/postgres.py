@@ -170,21 +170,34 @@ def connect(
     return conn
 
 
-_PIN = re.compile(r"search_path[=\s]+(\S+)")
+_PIN = re.compile(r"search_path\s*=\s*(.*?)(?=\s+-c\s|\s+--|$)")
 _STOP_TABLES = ("kill_switch", "kill_switch_stops", "kill_switch_clears")
 
 
+def names_of(text: str) -> list[str]:
+    """The schema names of a search_path value as the server reads them: a quoted name keeps its case and `""` is one
+    quote, an unquoted name is folded to lower case; without the implicit pg_catalog and pg_temp."""
+    out: list[str] = []
+    for m in re.finditer(r'\s*(?:"((?:[^"]|"")*)"|([^,"]*?))\s*(?:,|$)', text):
+        quoted, bare = m.group(1), m.group(2)
+        name = quoted.replace('""', '"') if quoted is not None else (bare or "").strip().lower()
+        if name and name != "pg_catalog" and not name.startswith("pg_temp"):
+            out.append(name)
+    return out
+
+
 def _names(text: str) -> list[str]:
-    """The schema names of a search_path value, unquoted, without the implicit pg_catalog and pg_temp."""
-    out = [p.strip().strip('"').strip("'") for p in text.split(",")]
-    return [n for n in out if n and n != "pg_catalog" and not n.startswith("pg_temp")]
+    return names_of(text)
 
 
 def expected_schemas(dsn: str, schema: str | None) -> list[str]:
     """The schemas this store is configured for: `settings.db_schema`, else what the DSN pins, else `public`. A
     setting that disagrees with the DSN's pin is a configuration error."""
     pinned: list[str] = []
-    if m := _PIN.search(conninfo_to_dict(dsn).get("options") or ""):
+    options = re.sub(
+        r"\\(.)", r"\1", conninfo_to_dict(dsn).get("options") or ""
+    )  # libpq: \\<char> is <char>
+    if m := _PIN.search(options):
         pinned = _names(m.group(1))
     if schema and pinned and pinned != [schema]:
         raise ConfigError(
@@ -210,9 +223,12 @@ def verify_schema(conn: psycopg.Connection, expected: list[str]) -> str:
     if effective != expected or schema != expected[0]:
         raise ConfigError(
             f"store postgres: the effective search_path of this login is {', '.join(effective) or 'empty'} "
-            f"(current_schema() is {schema!r}) but the store is configured for {', '.join(expected)}. Pin it "
-            "in the DSN (options=-c search_path=<schema>), set backends.store.db_schema, and run "
-            "hadavin-sdk migrate: it resets a search_path default set on the role or the database"
+            f"(current_schema() is {schema!r}) but the store is configured for {', '.join(expected)}. "
+            "backends.store.db_schema is the EXPECTED schema (the check), it does not choose the schema of the "
+            "login. Make the login really use it: pin it in the DSN (options=-c search_path=<schema>), or make "
+            "the role default equal to it (ALTER ROLE <login> SET search_path = <schema>; "
+            "hadavin-sdk migrate does this for this database when it names the role), then set db_schema to "
+            "the same schema"
         )
     found = {
         r[0]
