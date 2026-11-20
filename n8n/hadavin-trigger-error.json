@@ -1,0 +1,53 @@
+{
+  "name": "hadavin-trigger-error (outline, not run in n8n)",
+  "active": false,
+  "nodes": [
+    {
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {},
+      "notes": "UNVERIFIED: typeVersion. Atlas: an error workflow must start with an Error Trigger, is chosen in the main workflow's Workflow Settings, must be published, and one error workflow can serve many workflows."
+    },
+    {
+      "name": "Build message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "message",
+              "type": "string",
+              "value": "={{ 'Workflow: ' + $json.workflow.name + '\\nExecution: ' + $json.execution.url + '\\nLast node: ' + $json.execution.lastNodeExecuted + '\\nError: ' + $json.execution.error.message }}"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      },
+      "notes": "UNVERIFIED: typeVersion, the 'assignments' shape and the exact field paths. Atlas: the payload holds execution id and url, error message and stack, last node, mode, workflow id and name; execution id and url are missing when the trigger node itself failed; retryOf is present only on retries. Do not add the request body or any header to the message."
+    },
+    {
+      "name": "Notify placeholder",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [440, 0],
+      "parameters": {},
+      "notes": "UNVERIFIED: the node type name and typeVersion. Replace this node with the client's chat or e-mail node and send {{ $json.message }}. A 401 or 409 from the trigger endpoint lands here by design: a person must look."
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [[{ "node": "Build message", "type": "main", "index": 0 }]]
+    },
+    "Build message": {
+      "main": [[{ "node": "Notify placeholder", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "notes": "UNVERIFIED: the top-level export shape and the settings keys; the atlas does not document the workflow JSON format. Outline, not run in n8n."
+}

@@ -1,0 +1,136 @@
+{
+  "name": "hadavin-trigger (outline, not run in n8n)",
+  "active": false,
+  "nodes": [
+    {
+      "name": "Trigger placeholder",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "replace-with-your-path",
+        "responseMode": "onReceived"
+      },
+      "notes": "UNVERIFIED: typeVersion and the parameter names httpMethod, path, responseMode (the atlas names the respond mode 'Immediately' but gives no JSON field names). Replace this node with the client's own trigger (webhook, mailbox, schedule). A webhook call can start two executions; the key rule in the next node is what keeps that to one run."
+    },
+    {
+      "name": "Build request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [220, 0],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "ts",
+              "type": "string",
+              "value": "={{ Math.floor(Date.now() / 1000).toString() }}"
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": "={{ JSON.stringify({ key: String($json.body.record_id), document: String($json.body.text) }) }}"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      },
+      "notes": "UNVERIFIED: typeVersion and the whole 'assignments' shape (the atlas does not describe the Set node). key = a STABLE business id (a mail Message-ID, or record id plus event name), never the execution id; allowed characters A-Z a-z 0-9 . _ : - and 1 to 128 long. $json.body.record_id and $json.body.text are placeholders for the client's fields. body is ONE string and is used unchanged for signing and for sending. ts = Unix seconds as text."
+    },
+    {
+      "name": "Sign (option A, Crypto node)",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [440, 0],
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ 'v0:' + $json.ts + ':' + $json.body }}",
+        "dataPropertyName": "hmac",
+        "secret": "={{ $env.HADAVIN_TRIGGER_SECRET }}",
+        "encoding": "hex"
+      },
+      "notes": "UNVERIFIED: every parameter of this node (the atlas does not cover the Crypto node), whether it keeps ts and body on the item, and whether $env is readable in an expression on your n8n. The secret is NOT in this file: HADAVIN_TRIGGER_SECRET is a placeholder reference to an environment variable of the n8n server. If you type the secret into this field instead, it is stored as plain text in the workflow JSON: do not export or commit such a file. Signed text is exactly: v0:<ts>:<body>."
+    },
+    {
+      "name": "Sign (option B, Code node)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 200],
+      "disabled": true,
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const crypto = require('crypto');\nconst secret = $env.HADAVIN_TRIGGER_SECRET; // placeholder reference, never a literal\nconst base = 'v0:' + $json.ts + ':' + $json.body;\n$json.hmac = crypto.createHmac('sha256', secret).update(base, 'utf8').digest('hex');\nreturn $json;"
+      },
+      "notes": "UNVERIFIED: typeVersion, the parameter names mode, language, jsCode, the return shape, and whether a Code node can read $env or a credential (the atlas says credential access is not mentioned). Atlas: n8n Cloud provides the crypto module; on self-hosted it may have to be allowed. Disabled and not connected: use it INSTEAD of option A, not together with it."
+    },
+    {
+      "name": "Send to Hadavin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.invalid/v1/trigger",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Hadavin-Request-Timestamp", "value": "={{ $json.ts }}" },
+            { "name": "X-Hadavin-Signature", "value": "={{ 'v0=' + $json.hmac }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "notes": "UNVERIFIED: typeVersion; the names retryOnFail, maxTries, waitBetweenTries and their limits; the raw-body fields contentType, rawContentType, body; the header list shape; the unit and default of options.timeout; and that the body leaves n8n byte-identical to the signed string. Atlas: the node succeeds only on a 2xx answer unless Never Error is on, so keep Never Error OFF. Retry On Fail is on for THIS node only, so a retry reuses the same ts and signature (valid for 300 seconds)."
+    },
+    {
+      "name": "Check state (optional)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 0],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.state }}",
+              "rightValue": "NEEDS_PERSON",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "notes": "UNVERIFIED: typeVersion and the whole 'conditions' shape. Optional. The answer of a 202 or 200 holds only run_id and state; a 202 state is usually still in progress, so this branch is useful mainly on a repeat (200)."
+    }
+  ],
+  "connections": {
+    "Trigger placeholder": {
+      "main": [[{ "node": "Build request", "type": "main", "index": 0 }]]
+    },
+    "Build request": {
+      "main": [[{ "node": "Sign (option A, Crypto node)", "type": "main", "index": 0 }]]
+    },
+    "Sign (option A, Crypto node)": {
+      "main": [[{ "node": "Send to Hadavin", "type": "main", "index": 0 }]]
+    },
+    "Send to Hadavin": {
+      "main": [[{ "node": "Check state (optional)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "REPLACE-WITH-THE-ID-OF-hadavin-trigger-error"
+  },
+  "notes": "UNVERIFIED: the top-level export shape (name, active, nodes, connections, settings) and the settings keys; the atlas does not document the workflow JSON format. Outline, not run in n8n."
+}
