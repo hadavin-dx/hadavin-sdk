@@ -168,6 +168,28 @@ def assert_qualified(registry: Registry, agent_id: str) -> None:
     raise Unqualified(agent_id)
 
 
+def qualified_agents(
+    registry: Registry, on_unqualified: Callable[[str], None] | None = None
+) -> list[str]:
+    """Every agent id (registry order) for which `assert_qualified` passes.
+
+    The lenient loop for callers that must keep going (the tick command, the trigger worker). Each other agent
+    is reported once, in order, to `on_unqualified(agent_id)`: only the id, never the reason. Any exception from
+    `assert_qualified` (not only `Unqualified`, e.g. a bad golden reference) counts as unqualified; its text
+    is dropped, never logged or passed on. `Runtime.__init__` does not use this: it must refuse start-up.
+    """
+    agents: list[str] = []
+    for agent_id in registry.agents:
+        try:
+            assert_qualified(registry, agent_id)
+        except Exception:  # noqa: BLE001 - any failure to qualify means "not qualified"; the text is dropped
+            if on_unqualified is not None:
+                on_unqualified(agent_id)
+        else:
+            agents.append(agent_id)
+    return agents
+
+
 @dataclass
 class Hooks:
     """Injected by the app wiring so runtime never imports the executor or holds secrets."""
@@ -203,7 +225,9 @@ class Runtime:
         agents: list[str],
         hooks: Hooks | None = None,
     ) -> None:
-        for agent_id in agents:  # start-up refuses an unqualified agent
+        # Start-up refuses an unqualified agent: strict, it raises for the first one. `qualified_agents` is the
+        # lenient list (it skips), so this loop stays apart from it on purpose.
+        for agent_id in agents:
             assert_qualified(registry, agent_id)
         self.registry, self.store, self.audit = registry, store, audit
         self.llm, self.detector, self.limits = llm, detector, limits

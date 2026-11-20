@@ -363,22 +363,19 @@ def score_cmd(audit, args) -> int:
 def _tick() -> int:
     """Build the app with every qualified agent (an unqualified one must not stop approvals expiring)."""
     from hadavin_sdk.app import build
-    from hadavin_sdk.runtime.agent_loop import Unqualified, assert_qualified
+    from hadavin_sdk.runtime.agent_loop import qualified_agents
     from hadavin_sdk.runtime.tick import run_tick
 
     # The summary line and step errors go to stderr (the logger is otherwise silent below WARNING).
     logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
     try:
         reg = load_registry(load_config())
-        agents = []
-        for agent_id in reg.agents:
-            try:
-                assert_qualified(reg, agent_id)
-                agents.append(agent_id)
-            except Unqualified:
-                print(
-                    f"tick: {agent_id} is not qualified; its new runs are refused", file=sys.stderr
-                )
+        agents = qualified_agents(
+            reg,
+            lambda agent_id: print(
+                f"tick: {agent_id} is not qualified; its new runs are refused", file=sys.stderr
+            ),
+        )
         app = build(None, agents)
     except StoreUnavailable as exc:
         print(f"tick: {exc}", file=sys.stderr)
