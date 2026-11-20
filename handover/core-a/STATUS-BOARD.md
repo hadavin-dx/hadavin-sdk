@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:03:07Z
+UPDATED_UTC: 2026-11-20T06:03:19Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 25
 ITEMS_OPEN: 6
 PERCENT: 81
 AGENTS_RUNNING: 4
-CAPACITY: load 0.67 of 4 cores (1-minute average), mem 0.9/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.4G 60G 14%; 351M /home/user/hadavin-sdk; 57M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 0.64 of 4 cores (1-minute average), mem 0.9/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.5G 60G 14%; 351M /home/user/hadavin-sdk; 57M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T06:02:20Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:03:10Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -74,19 +74,10 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 4773 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 61s ago | running | matched by name in ps |
-| 4774 | postgres: checkpointer  | core-a session or its agent | 61s ago | running | matched by name in ps |
-| 4775 | postgres: background writer  | core-a session or its agent | 61s ago | running | matched by name in ps |
-| 4777 | postgres: walwriter  | core-a session or its agent | 60s ago | running | matched by name in ps |
-| 4778 | postgres: autovacuum launcher  | core-a session or its agent | 60s ago | running | matched by name in ps |
-| 4779 | postgres: logical replication launcher  | core-a session or its agent | 60s ago | running | matched by name in ps |
-| 4873 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 56s ago | running | matched by name in ps |
-| 4899 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 56s ago | running | matched by name in ps |
-| 5524 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 5s ago | running | matched by name in ps |
-| 5542 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 5s ago | running | matched by name in ps |
-| 5548 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 5s ago | running | matched by name in ps |
-| 5598 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 5599 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 4873 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 67s ago | running | matched by name in ps |
+| 4899 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 67s ago | running | matched by name in ps |
+| 5598 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 14s ago | running | matched by name in ps |
+| 5599 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 13s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
