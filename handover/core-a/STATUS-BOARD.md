@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:08:20Z
+UPDATED_UTC: 2026-11-20T06:09:08Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 26
 ITEMS_OPEN: 3
 PERCENT: 93
 AGENTS_RUNNING: 1
-CAPACITY: load 0.15 of 4 cores (1-minute average), mem 0.7/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.5G 60G 14%; 351M /home/user/hadavin-sdk; 63M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 0.29 of 4 cores (1-minute average), mem 0.8/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.5G 60G 14%; 352M /home/user/hadavin-sdk; 69M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: gate contract test for core-c lands: record findings; then report block; then waiting for the lead or core-b
-PUSHED_UTC: 2026-11-20T06:08:12Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:08:22Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -75,7 +75,9 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| none | | | | | |
+| 9105 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 9187 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rs tes | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 9191 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

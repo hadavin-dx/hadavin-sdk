@@ -1,0 +1,9 @@
+core-c commit: 619a3e5 (origin/cloud/core-c, unpacked with git archive into /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/corec; checkout untouched)
+module under test: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/corec/src/hadavin_sdk/guard/model_gate.py
+command: PYTHONPATH=/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/corec/src:/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/corec /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovider -rxs tests/contracts/test_model_gate_contract.py
+........................................................................ [ 35%]
+.....................................................s.................. [ 71%]
+..........................................................               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:883: contract point 10: no worst-case formula on this branch (neither llm.common.worst_case_usd nor one in the gate); the tests above use the formula of the interface text, not shipped code
+201 passed, 1 skipped in 0.50s
