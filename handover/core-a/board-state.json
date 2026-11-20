@@ -1682,11 +1682,11 @@
    "what exactly it is doing": "rewrite the superseded ticket D passages to the code as it is; re-cite line numbers",
    "started UTC": "07:45",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "2 of 3 (fix)",
    "retries so far": 0,
-   "reason": "round 2 Major"
+   "reason": "ticket D rewritten to the code (invariants 7,8,10-16, sections 6,7,7b,9,10b,14); ~75 cites re-done, ~45 checked; test-file line numbers and cites outside triggers/ not re-verified; 'main exits 3 on this tree' from reading only"
   }
  ],
  "tests": [
