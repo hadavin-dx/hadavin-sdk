@@ -1,0 +1,7 @@
+# endpoint mutants run, python 3.13.18, platform linux
+# sha256 8ff23e60491745b59f2840d04d516179300edbc8eecca18d619812ce8a2131cf  src/hadavin_sdk/triggers/__init__.py
+# sha256 fdd9ae116d6add8229daefdae674975d80582fa9528bf693c3d65b86a804651f  src/hadavin_sdk/triggers/endpoint.py
+# sha256 20b0cfe1064ac1a9c0b463d4583f82d238aad628ba692c73c53526cf5efa0da3  src/hadavin_sdk/triggers/server.py
+# sha256 915d60690d9f304eb3dac4295f6d58ee77fcb78d0d30b0646ba663c7276df6d0  src/hadavin_sdk/triggers/worker.py
+# sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
+# sha256 1917f2cb81f44457405ca5a0d474b31e66299756e9ce3af9427c62bc669fd4d4  tests/endpoint_mutants.py
