@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:04:11Z
+UPDATED_UTC: 2026-11-20T06:07:52Z
 SESSION: core-b
 ORDER: 011
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 13
 ITEMS_OPEN: 7
 PERCENT: 80
 AGENTS_RUNNING: 5
-CAPACITY: load 2.05 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, agents light 2 heavy 3
-DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 753M
+CAPACITY: load 1.41 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 2 heavy 3
+DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 778M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: batch run 2: 13 failed, 1 error (11 mine in one test file, fixed and re-run; 1 error passes alone, cause not established; 2 not from my code); F-store review round 2 NOT clean, answered; step B used 3 fix rounds; E1 cron refused
 NEXT: land the test commits; resolve ticket C review; F-install review round; wait for core-c gate module before building F-install
-PUSHED_UTC: 2026-11-20T06:02:49Z (previous push; this board is pushed right after writing)
-IST: 11:34 IST
+PUSHED_UTC: 2026-11-20T06:04:11Z (previous push; this board is pushed right after writing)
+IST: 11:37 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
