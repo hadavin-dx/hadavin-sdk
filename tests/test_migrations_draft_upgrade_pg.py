@@ -310,12 +310,14 @@ def test_reset_draft_spares_functions_an_older_shipped_file_creates(w, monkeypat
 
 
 def test_the_migration_files_are_idempotent_over_a_draft_database_and_check_columns(w):
-    # re-running the unreleased files over what exists keeps tables and rows, and a draft table with other columns stops
+    # re-running the unreleased files over what exists keeps tables and rows, and a draft table that lacks a NOT NULL column holding rows stops
     w.do("INSERT INTO hadavin_caps (agent_id, day_cap, month_cap, set_by) VALUES ('k', 1, 2, 'op')")
     w.do(f"DELETE FROM schema_migrations WHERE version IN ('{V10}', '{V11}')")
     assert w.migrate() == [V10, V11]
     assert w.run("SELECT count(*) FROM hadavin_caps")[0][0] == 1
-    w.do("ALTER TABLE hadavin_caps ADD COLUMN extra int")
+    w.do(
+        "ALTER TABLE hadavin_caps DROP COLUMN set_by"
+    )  # a draft table missing a NOT NULL column that has rows
     w.do(f"DELETE FROM schema_migrations WHERE version = '{V11}'")
-    with pytest.raises(psycopg.Error, match="other columns"):
+    with pytest.raises(psycopg.Error, match="set_by"):
         w.migrate()

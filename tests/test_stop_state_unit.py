@@ -409,6 +409,7 @@ def test_cli_passes_every_migrate_flag_by_keyword(cfg_dir, monkeypatch):
         "migrate",
         *("--runtime-role", "rt", "--portal-role", "pt", "--purge-role", "pu"),
         *("--reset-role", "rs", "--release-role", "re", "--accept-admin-role", "aa"),
+        *("--caps-role", "cp"),
         *("--accept-changed-draft", "0009_x", "--reset-draft", "0010_y"),
     ]
     assert cli.main(argv) == 0
@@ -419,6 +420,7 @@ def test_cli_passes_every_migrate_flag_by_keyword(cfg_dir, monkeypatch):
         "purge_role": "pu",
         "reset_role": "rs",
         "release_role": "re",
+        "caps_role": "cp",
         "no_roles": False,
         "accepted_admin_roles": ("aa",),
         "accept_changed_draft": ("0009_x",),

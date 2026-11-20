@@ -98,9 +98,13 @@ def static_problems(text: str) -> list[str]:
         problems.append("hadavin_limits is not revoked from PUBLIC")
     # the one allowed ALTER: the usd range CHECKs of the counter tables (review N1), added NOT VALID and validated
     allowed = re.compile(
-        r"ALTER\s+TABLE\s+spend(?:_month)?\s+(?:ADD\s+CONSTRAINT\s+\w+\s+CHECK\s*\([^;]*\)\s+NOT\s+VALID|VALIDATE\s+CONSTRAINT\s+\w+)\s*;"
+        r"ALTER\s+TABLE\s+spend(?:_month)?\s+(?:ADD\s+CONSTRAINT\s+\w+\s+CHECK\s*\([^;]*\)\s+NOT\s+VALID|VALIDATE\s+CONSTRAINT\s+\w+|DROP\s+CONSTRAINT\s+IF\s+EXISTS\s+\w+)\s*;"
     )
-    rest = allowed.sub("", code)
+    # and, so the draft tables are re-runnable, the columns of the two tables this file creates
+    allowed_cols = re.compile(
+        r"ALTER\s+TABLE\s+hadavin_(?:limits|caps)\s+ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+\w+\s+[^;]*;"
+    )
+    rest = allowed_cols.sub("", allowed.sub("", code))
     if "SECURITY DEFINER" in code and re.search(r"\bALTER\s+(?:FUNCTION|TABLE)\b", rest):
         problems.append("the file alters an object (owner and pins are migrate's)")
     return problems
