@@ -46,7 +46,9 @@ _LOG = logging.getLogger("hadavin_sdk.app")
 
 def _refuse_shared_login(store, purge_store, checkpoint_store) -> None:
     """The checkpoint connection must be a different database login from the runtime's and the purge's (two secret
-    names can hold one DSN). Names only in the message; stores without a connection (memory) are not compared."""
+    names can hold one DSN). Names only in the message; stores without a connection (memory) are not compared.
+    Only these two logins are open in `build`: the release, reset and caps logins are opened by their own commands, never
+    here, so for them the secret NAMES are compared (above) and the database refuses a shared login at `migrate`."""
 
     def login(s) -> str | None:
         conn = getattr(s, "_db", None)
@@ -324,48 +326,51 @@ def build(
             secrets,
         )
     checkpoint_store = None
-    if ck_name:
-        # Only the tick `checkpoint` step writes a checkpoint, on this connection (its own role: SELECT on the chain,
-        # INSERT on audit_checkpoints). The runtime login holds no INSERT there.
-        checkpoint_store = make(
-            "store",
-            b.store.model_copy(
-                update={
-                    "dsn_secret_name": ck_name,
-                    "purge_dsn_secret_name": None,
-                    "checkpoint_dsn_secret_name": None,
-                }
-            ),
-            secrets,
-        )
-        try:
+    try:
+        if ck_name:
+            # Only the tick `checkpoint` step writes a checkpoint, on this connection (its own role: SELECT on the chain,
+            # INSERT on audit_checkpoints). The runtime login holds no INSERT there.
+            checkpoint_store = make(
+                "store",
+                b.store.model_copy(
+                    update={
+                        "dsn_secret_name": ck_name,
+                        "purge_dsn_secret_name": None,
+                        "checkpoint_dsn_secret_name": None,
+                    }
+                ),
+                secrets,
+            )
             _refuse_shared_login(store, purge_store, checkpoint_store)
-        except BaseException:
-            conn = getattr(checkpoint_store, "_db", None)
+        elif (
+            getattr(b.store, "kind", "") == "postgres"
+            and getattr(b.audit, "kind", "") == "chain"
+            and getattr(b.signer, "kind", "none") != "none"
+            and _runtime_lacks_checkpoint_insert(store)
+        ):
+            _LOG.warning(
+                "audit checkpoints: a signer is set but backends.store.checkpoint_dsn_secret_name is not, and the "
+                "runtime login has no INSERT on audit_checkpoints (migrate --runtime-role took it away), so NO "
+                "checkpoint is written and the chain stays unsigned. Create a checkpoint role, run hadavin-sdk migrate "
+                "--checkpoint-role <role>, and set backends.store.checkpoint_dsn_secret_name to its secret"
+            )
+        audit = make(
+            "audit",
+            b.audit,
+            secrets,
+            store=store,
+            signer=signer,
+            anchor=anchor,
+            checkpoint_store=checkpoint_store,
+        )
+    except BaseException:
+        # A refusal or a failure here (the login comparison, `make("audit")`) must not leave a logged-in connection
+        # behind in a test or an embedding process: close every store this function opened, then re-raise.
+        for opened in {id(x): x for x in (store, purge_store, checkpoint_store)}.values():
+            conn = getattr(opened, "_db", None)
             if conn is not None:
                 conn.close()
-            raise
-    elif (
-        getattr(b.store, "kind", "") == "postgres"
-        and getattr(b.audit, "kind", "") == "chain"
-        and getattr(b.signer, "kind", "none") != "none"
-        and _runtime_lacks_checkpoint_insert(store)
-    ):
-        _LOG.warning(
-            "audit checkpoints: a signer is set but backends.store.checkpoint_dsn_secret_name is not, and the "
-            "runtime login has no INSERT on audit_checkpoints (migrate --runtime-role took it away), so NO "
-            "checkpoint is written and the chain stays unsigned. Create a checkpoint role, run hadavin-sdk migrate "
-            "--checkpoint-role <role>, and set backends.store.checkpoint_dsn_secret_name to its secret"
-        )
-    audit = make(
-        "audit",
-        b.audit,
-        secrets,
-        store=store,
-        signer=signer,
-        anchor=anchor,
-        checkpoint_store=checkpoint_store,
-    )
+        raise
     llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
     summary_detector = detector
     if detector is None:

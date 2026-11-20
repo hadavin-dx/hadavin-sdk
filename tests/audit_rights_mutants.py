@@ -84,6 +84,13 @@ HAND = [
             (MEMBER_FUNC, MEMBER_FUNC.replace("elif db.execute(", "elif False and db.execute(")),
         ),
     ),
+    Hand("A10 quarantine of a duplicate deletes the EXISTING quarantined row instead of the new one", SQL12,
+        "DELETE FROM audit_outbox o WHERE o.event_id = p_event_id;  -- the NEW row, an exact duplicate",
+        "DELETE FROM audit_outbox o WHERE o.event_id = v_cand;",
+        f"{ROLES}::test_quarantine_of_a_row_that_duplicates_a_quarantined_one_removes_only_the_new_row", "dup-1"),
+    Hand("A11 quarantine refuses a rename onto an existing name again (no unique name)", SQL12,
+        "FOR v_i IN 0..1000 LOOP", "FOR v_i IN 0..0 LOOP",
+        f"{ROLES}::test_quarantine_renames_and_never_deletes", "== [(1,)]"),
 ]  # fmt: skip
 
 

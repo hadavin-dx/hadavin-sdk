@@ -593,8 +593,9 @@ def _migrate(
         )
     if runtime_role and not checkpoint_role:
         print(
-            "warning: no checkpoint role was named, so the runtime login still writes the audit checkpoints; run "
-            "again with --checkpoint-role <role> and set backends.store.checkpoint_dsn_secret_name",
+            "warning: no checkpoint role was named, so the runtime login holds SELECT only on audit_checkpoints and NO "
+            "checkpoint is written at all (the chain stays unsigned); run again with --checkpoint-role <role> and "
+            "set backends.store.checkpoint_dsn_secret_name",
             file=sys.stderr,
         )
     return 0

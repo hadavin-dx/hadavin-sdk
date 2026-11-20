@@ -37,8 +37,12 @@ REVOKE ALL ON FUNCTION hadavin_audit_outbox_done(TEXT) FROM PUBLIC;
 
 -- hadavin_audit_outbox_quarantine: mark a poison row by RENAMING it to p_prefix || p_event_id (nothing is lost; the row
 -- stays and every later drain read skips it). The prefix is an argument so the package default stays the one source, but
--- it must not be empty. A row already under the prefix is not renamed again, and a rename onto an existing row is
--- refused (returns 0): a rename can never replace, hence never remove, another parked event. Returns rows renamed.
+-- it must not be empty. A row already under the prefix is not renamed again. When the target name is taken (the same
+-- event was parked and quarantined before) the row goes to the first free name p_prefix || p_event_id || '#' || n
+-- (n = 1 to 1000), so a repeat converges; but when a row at a candidate name holds an IDENTICAL body, the NEW row is
+-- deleted (it is a duplicate: nothing is lost). The function never deletes a row it did not look at as the new row, and
+-- never replaces one: a runtime-inserted row named p_prefix || X cannot be used to delete X unless it holds X's own
+-- body. Returns rows renamed or removed as duplicates (0 or 1; 0 also when 1000 names are taken).
 CREATE OR REPLACE FUNCTION hadavin_audit_outbox_quarantine(p_event_id TEXT, p_prefix TEXT)
 RETURNS integer
 LANGUAGE plpgsql
@@ -47,7 +51,10 @@ SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
 AS $fn$
 DECLARE
-    v_n integer;
+    v_body TEXT;
+    v_cand TEXT;
+    v_other TEXT;
+    v_i integer;
 BEGIN
     IF p_event_id IS NULL OR pg_catalog.char_length(p_event_id) = 0 THEN
         RAISE EXCEPTION 'invalid argument p_event_id' USING ERRCODE = '22023';
@@ -55,13 +62,25 @@ BEGIN
     IF p_prefix IS NULL OR pg_catalog.char_length(p_prefix) = 0 THEN
         RAISE EXCEPTION 'invalid argument p_prefix' USING ERRCODE = '22023';
     END IF;
-    UPDATE audit_outbox o
-       SET event_id = p_prefix || o.event_id
+    SELECT o.body INTO v_body FROM audit_outbox o
      WHERE o.event_id = p_event_id
        AND pg_catalog.left(o.event_id, pg_catalog.char_length(p_prefix)) <> p_prefix
-       AND NOT EXISTS (SELECT 1 FROM audit_outbox x WHERE x.event_id = p_prefix || p_event_id);
-    GET DIAGNOSTICS v_n = ROW_COUNT;
-    RETURN v_n;
+       FOR UPDATE;
+    IF NOT FOUND THEN
+        RETURN 0;
+    END IF;
+    FOR v_i IN 0..1000 LOOP
+        v_cand := p_prefix || p_event_id || CASE WHEN v_i = 0 THEN '' ELSE '#' || v_i::text END;
+        SELECT x.body INTO v_other FROM audit_outbox x WHERE x.event_id = v_cand;
+        IF NOT FOUND THEN
+            UPDATE audit_outbox o SET event_id = v_cand WHERE o.event_id = p_event_id;
+            RETURN 1;
+        ELSIF v_other = v_body THEN
+            DELETE FROM audit_outbox o WHERE o.event_id = p_event_id;  -- the NEW row, an exact duplicate
+            RETURN 1;
+        END IF;
+    END LOOP;
+    RETURN 0;
 END
 $fn$;
 REVOKE ALL ON FUNCTION hadavin_audit_outbox_quarantine(TEXT, TEXT) FROM PUBLIC;

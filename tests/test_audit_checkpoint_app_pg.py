@@ -125,10 +125,36 @@ def test_the_same_login_under_two_names_is_refused_and_closes_the_checkpoint_con
         assert app is None
         stores = [s for c, s in made if c == "store"]
         assert len(stores) == 3  # runtime, purge, checkpoint: the last one was opened and refused
-        assert stores[-1]._db.closed
+        assert all(s._db.closed for s in stores)  # the runtime and purge stores too
         assert "same database login" in str(exc)
-        for s in stores[:2]:
-            s._db.close()
+
+
+def test_a_failing_audit_build_closes_every_store_it_opened(tmp_path, monkeypatch):
+    for dsn in pg_schema(runtime=True):
+        cfg = pilot_cfg(tmp_path)
+        made: list = []
+        real = app_mod.make
+
+        def make(capability, *a, real=real, made=made, **kw):
+            if capability == "audit":
+                raise ConfigError("audit chain: the checkpoint login needs the postgres store")
+            out = real(capability, *a, **kw)
+            made.append((capability, out))
+            return out
+
+        monkeypatch.setattr(app_mod, "make", make)
+        qualify(load_registry(load_config(cfg)), "ito-agent")
+        with pytest.raises(ConfigError, match="needs the postgres store"):
+            app_mod.build(
+                cfg,
+                ["ito-agent"],
+                secrets=FakeSecretProvider(_values(dsn)),
+                channel=FakeChannel(),
+                llm=ScriptedLLM(),
+                allow_test_doubles=True,
+            )
+        stores = [s for c, s in made if c == "store"]
+        assert len(stores) == 3 and all(s._db.closed for s in stores)
 
 
 def test_a_demo_start_with_a_signer_and_no_checkpoint_login_warns_once_and_starts(tmp_path, caplog):

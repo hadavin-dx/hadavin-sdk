@@ -247,12 +247,41 @@ def test_quarantine_renames_and_never_deletes(w):
     assert body == '{"x": 1}'
     # already under the prefix: not renamed again
     assert _as_runtime(w, f"SELECT {QUARANTINE}(%s, %s)", (PREFIX + "poison-1", PREFIX)) == [(0,)]
-    # a rename onto an existing row is refused: it can never replace (hence remove) a parked event
-    w.do(
-        "INSERT INTO audit_outbox (event_id, body) VALUES ('poison-1', '{}') ON CONFLICT DO NOTHING"
+    # parked AGAIN under the same id, with another body: renamed to the first free unique name, nothing replaced
+    _park(w, "poison-1", '{"x": 2}')
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('poison-1', %s)", (PREFIX,)) == [(1,)]
+    ids = _outbox(w)
+    assert "poison-1" not in ids and {PREFIX + "poison-1", PREFIX + "poison-1#1"} <= ids
+    assert (
+        w.run("SELECT body FROM audit_outbox WHERE event_id = %s", (PREFIX + "poison-1",))[0][0]
+        == '{"x": 1}'
     )
-    assert _as_runtime(w, f"SELECT {QUARANTINE}('poison-1', %s)", (PREFIX,)) == [(0,)]
-    assert {"poison-1", PREFIX + "poison-1"} <= _outbox(w)
+    assert (
+        w.run("SELECT body FROM audit_outbox WHERE event_id = %s", (PREFIX + "poison-1#1",))[0][0]
+        == '{"x": 2}'
+    )
+
+
+def test_quarantine_of_a_row_that_duplicates_a_quarantined_one_removes_only_the_new_row(w):
+    _park(w, PREFIX + "dup-1", '{"d": 1}')
+    _park(w, "dup-1", '{"d": 1}')
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('dup-1', %s)", (PREFIX,)) == [(1,)]
+    ids = _outbox(w)
+    assert "dup-1" not in ids and PREFIX + "dup-1" in ids and PREFIX + "dup-1#1" not in ids
+    assert (
+        w.run("SELECT body FROM audit_outbox WHERE event_id = %s", (PREFIX + "dup-1",))[0][0]
+        == '{"d": 1}'
+    )
+
+
+def test_a_planted_quarantine_name_cannot_be_used_to_delete_a_parked_event(w):
+    _park(w, "victim-1", '{"real": true}')
+    _park(w, PREFIX + "victim-1", '{"forged": true}')
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('victim-1', %s)", (PREFIX,)) == [(1,)]
+    bodies = {
+        r[0] for r in w.run("SELECT body FROM audit_outbox WHERE event_id LIKE %s", ("%victim-1%",))
+    }
+    assert bodies == {'{"real": true}', '{"forged": true}'}
 
 
 @pytest.mark.parametrize("args", ["NULL, 'p'", "'', 'p'", "'a', NULL", "'a', ''"])
