@@ -691,3 +691,105 @@ def test_n11_a_process_variable_cannot_stand_in_for_a_missing_header(monkeypatch
         assert not leaked - genuine, leaked
     assert control_env["CONTENT_TYPE"] == "text/plain"  # the stdlib's own default, not the variable
     check_quiet(unsigned, capsys, caplog)
+
+
+# --- code review 1: connection faults (DC1-5) and a fault in setup or finish (mutant gap) -------------------
+
+
+class Boom(BaseException):
+    """Not an Exception: the stdlib thread code does not hand it to `handle_error`."""
+
+
+def _server_lines(caplog) -> list[tuple[str, str]]:
+    return [
+        (r.levelname, r.getMessage())
+        for r in caplog.records
+        if r.name == "hadavin_sdk.triggers" and r.getMessage().startswith("trigger server:")
+    ]
+
+
+@pytest.mark.parametrize(
+    ("where", "error", "level"),
+    [
+        ("setup", RuntimeError, "WARNING"),
+        ("finish", RuntimeError, "WARNING"),
+        ("setup", Boom, "WARNING"),
+        ("finish", Boom, "WARNING"),
+        ("setup", ConnectionResetError, "DEBUG"),
+        ("finish", BrokenPipeError, "DEBUG"),
+        ("finish", OSError, "DEBUG"),
+    ],
+)
+def test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line(
+    where, error, level, monkeypatch, capsys, caplog
+):
+    """The stdlib prints a traceback for this (and, for a BaseException, through the thread hook of the process).
+    Here stderr stays empty, the log has one line with the class name, and the server goes on. A reset or a
+    dropped connection (an OSError) is DEBUG, anything else WARNING. Fails on the old code: the BaseException
+    cases print a traceback; deleting `QuietServer.handle_error` prints one for the others; the OSError cases
+    were WARNING."""
+
+    def fault(self):
+        raise error(BOOM_MARK)
+
+    start = FakeStart()
+    with serving(make_wsgi(start)) as server:
+        with monkeypatch.context() as broken:
+            broken.setattr(server_module.QuietRequestHandler, where, fault)
+            seen = drive_signed(server.server_port)
+            assert _handlers_done()
+        after = drive_signed(server.server_port)
+    assert after.status == 202  # the server goes on
+    lines = _server_lines(caplog)
+    assert lines == [(level, f"trigger server: connection error: {error.__name__}")], lines
+    check_quiet(seen, capsys, caplog)
+
+
+@pytest.mark.parametrize(
+    ("error", "level"),
+    [(ConnectionResetError, "DEBUG"), (TimeoutError, "DEBUG"), (ValueError, "WARNING")],
+)
+def test_a_fault_inside_a_request_is_debug_for_a_connection_and_warning_otherwise(
+    error, level, monkeypatch, capsys, caplog
+):
+    def fault(self):
+        raise error(BOOM_MARK)
+
+    with serving(make_wsgi(FakeStart())) as server:
+        monkeypatch.setattr(server_module.QuietRequestHandler, "_serve", fault)
+        seen = drive_signed(server.server_port)
+        assert _handlers_done()
+    lines = _server_lines(caplog)
+    assert lines == [(level, f"trigger server: connection ended: {error.__name__}")], lines
+    check_quiet(seen, capsys, caplog)
+
+
+# --- code review 1, DC1-1: the port is exclusive ------------------------------------------------------------
+
+
+def test_a_port_in_use_by_a_plain_socket_is_not_bound_a_second_time():
+    """The occupier is a PLAIN listening socket: no exclusive flag, no reuse flag. On Windows a second bind of
+    the port would pass if `QuietServer` kept the stdlib reuse option; here it must fail with ConfigError."""
+    taken = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        taken.bind((worker.LOOPBACK, 0))
+        taken.listen(1)
+        port = taken.getsockname()[1]
+        with pytest.raises(worker.ConfigError, match="cannot listen"):
+            worker.make_server(worker.LOOPBACK, port, make_wsgi(FakeStart()), 1.0)
+    finally:
+        taken.close()
+
+
+def test_the_reuse_option_is_off_on_windows_and_the_exclusive_option_is_set_where_it_exists(
+    monkeypatch,
+):
+    """Shown on any platform: the class attribute follows `os.name`, and a stand-in for the constant (a
+    harmless option number) is set on the listening socket before the bind. Fails on the old code, which
+    set nothing."""
+    import os
+
+    assert server_module.QuietServer.allow_reuse_address is (os.name != "nt")
+    monkeypatch.setattr(socket, "SO_EXCLUSIVEADDRUSE", socket.SO_KEEPALIVE, raising=False)
+    with serving(make_wsgi(FakeStart())) as server:
+        assert server.socket.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE) == 1
