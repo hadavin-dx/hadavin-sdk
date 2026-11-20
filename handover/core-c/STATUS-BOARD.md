@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:07:48Z
+UPDATED_UTC: 2026-11-20T09:08:46Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,24 +6,27 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 3
-CAPACITY: load 2.6 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 3, heavy agents 0
-DISK: / 58G free, 17% used; git worktrees 15; 918M	/tmp/claude-0;259M	/root/.cache/uv;
+AGENTS_RUNNING: 6
+CAPACITY: load 1.6 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 6, heavy agents 0
+DISK: / 58G free, 17% used; git worktrees 15; 937M	/tmp/claude-0;259M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: Only failure seen: tests/test_runmap_enforce_map.py::test_m_new_1_enforce_map_has_the_redactors_time_budget under -n load (the test patched runmap.time only); fix is in the working tree, being verified by merged-tree batch 3.
-NEXT: LIVE only. G7 round 5 cherry-picked and pushed (builder batch 2619 passed 4 xfailed 1 failed: the flaky gate test, fixed locally by patching redact.time too). Merged-tree batch 3 (15 files, -n 3) running now; then commit the test fix, fresh egm reviews of G7 round 5, wording refresh.
-PUSHED_UTC: 2026-11-20T09:07:46+00:00
+NEXT: LIVE only. Landed: G7 round 5 d1384342; gate time-budget test fix 833a86b (47 and 441 passed after; batch 3 before the fix 1 failed 2671 passed). Next: reviews in, G8 v2 plan review, tnmut evidence, wording refresh, E12 mutant snippet.
+PUSHED_UTC: 2026-11-20T09:08:39+00:00
 
-(14:37 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:38 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) g4v4 | drafter | claude-opus-5-5 | ticket G4 v4 taking plan review round 3 | 08:40 | 09:10 | 1 | running | 4 | 0 | EGM draft step; then plan review round 4 |
 | (new) g8v2 | drafter | claude-opus-5-5 | ticket G8 v2 taking plan review round 1 (PHONE redesign, traces run, host rows vs G4 v3) | 08:53 | 09:25 | 1 | running | 2 | 0 | EGM draft step |
 | (new) tnmut | evidence runner | claude-sonnet-5-5 | textnorm mutant list run on HEAD (238 of 240 was on an older tree) + map the 30 changed code points to killer mutants (Q9) | 08:53 | 09:35 | 1 | running | 1 | 0 | ORDER 022 Q9 |
+| (new) g7D5 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 5 of G7 (design) | 09:09 | 09:22 | 2 | running | 5 | 0 | fresh reviewer after fixes |
+| (new) g7C5 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 5 of G7 (codebase) | 09:09 | 09:22 | 2 | running | 5 | 0 | fresh reviewer after fixes |
+| (new) g4R4 | reviewer | claude-sonnet-5-5 | G4 v4 PLAN review round 4: implementation readiness | 09:13 | 09:28 | 2 | running | 4 | 0 | build P1c only after a clean plan review |
+| (new) g4C4 | reviewer | claude-sonnet-5-5 | G4 v4 PLAN review round 4: codebase details | 09:13 | 09:28 | 2 | running | 4 | 0 | same |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
