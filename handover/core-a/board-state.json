@@ -720,17 +720,17 @@
    "reason": "lead verdicts E1a/E1b 09:29"
   },
   {
-   "id": "E-nits2",
-   "role": "builder",
+   "id": "E-rev6",
+   "role": "fresh reviewer (codebase-details)",
    "model": "sonnet",
-   "what exactly it is doing": "step E round-5 nits (crash.py __exit__ read error, tests, ticket E stale lines) then the helper's callers once",
-   "started UTC": "09:31",
-   "expected end": "20 min",
+   "what exactly it is doing": "step E round 6: adversarial review of the behaviour change in crash.py __exit__ (lead: no cap, repeat until a fresh pass finds none)",
+   "started UTC": "09:36",
+   "expected end": "15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "fixes after round 5 (a clean pass: rounds end per lead rule)",
+   "review round n of cap": "6, no cap (lead ruling)",
    "retries so far": 0,
-   "reason": "after E-rev5"
+   "reason": "behaviour changed after round 5"
   }
  ],
  "tests": [
@@ -2450,6 +2450,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "G30a killed, G30b re-pinned (not re-run), G31 crash-accepted; full run did NOT complete: baseline failed twice because e1 is editing worker/endpoint at the same time (a /health endpoint appeared; G17a anchor made unique) and a port 8081 clash; the full mutant run is redone after e1 ends"
+  },
+  {
+   "id": "E-nits2",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "step E round-5 nits (crash.py __exit__ read error, tests, ticket E stale lines) then the helper's callers once",
+   "started UTC": "09:31",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fixes after round 5 (a clean pass: rounds end per lead rule)",
+   "retries so far": 0,
+   "reason": "7 nits done; crash.py behaviour changed (_look, __exit__ still deletes after a refused read): test_testing_crash 107 passed 2 skipped, callers (crash matrices, PG) 429 passed; two earlier iterations killed pytest (own edit bugs, fixed)"
   }
  ]
 }
