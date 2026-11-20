@@ -205,7 +205,9 @@ To change that, one node was added AFTER the run, and the webhook node's respons
   business id". It answers the caller with 202 and an empty body. This 202 means only that n8n took the event and will
   try to send it. It does NOT mean that Hadavin accepted it; a later refusal reaches a person through the error
   workflow, not the caller. In plain words: the caller's 202 means "taken by the workflow", not "done". The caller
-  never learns from this answer how the run ended.
+  never learns from this answer how the run ended. What 202 really means: nothing is durable yet, neither in n8n beyond
+  this one execution nor in Hadavin. Queue mode required for no event loss: without it, an n8n restart loses the event
+  after the caller was told 202.
 - A refused event (the guard's second output) has NO answer node. "Stop: id or text missing" is the only node on that
   output, so a refused event always fails the execution and the error workflow tells a person. The caller then gets
   n8n's own error answer. SEEN IN n8n 2.47.7 (fourth record, once each, lines 59, 62 to 64 and 83): with the response mode `responseNode` and no answer node run, that answer is HTTP 500 with the body
@@ -389,7 +391,7 @@ The fourth record (lines 50, 98 to 102, once each) adds, against the endpoint an
 
 Still UNVERIFIED: 520 to 524 (added to the list after the run), a redirect, a TLS failure, a receiver that answers after
 the timeout, Retry On Fail switched on, the loop with the real values (45 rounds, 70 second wait, 45 second timeout),
-the real Hadavin endpoint behind a real proxy, n8n Cloud and queue mode.
+the real Hadavin endpoint behind a real proxy, n8n Cloud and queue mode. Queue mode required for no event loss: the 202 to the caller is given before anything is stored in Hadavin, and in the default (non-queue) mode an n8n restart loses the execution that holds the event.
 
 Two things follow from "no answer counts as busy", and both are meant:
 
@@ -752,6 +754,10 @@ These are known limits of this version. They are written down so that nobody ass
 14. The worker tells no person about an interrupted run. The tick sets the state and writes an audit record; no
     chat card, no mail. The error workflow of this template is the only notice today.
 
+14a. What an acknowledged request is worth (door review B1): a request that was acknowledged (202 or 200) and then cut off is acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender must poll the run state. It is not "never lost" and not "handed to a person": Hadavin stores only the document hash, and the tick sends nothing. The state check of this template is the poll.
+14b. Reverse proxy required (door review M2): the worker has 256 global connection slots and no limit per peer, so a reverse proxy with per-peer connection limits is required in front of it; without one, 256 slow connections from one peer make a full outage for the read deadline (30 s).
+14c. One secret per tenant and per stage (door review M3): the tenant is not in the signed string, so a request signed for tenant A, stage demo, is valid at tenant B, stage pilot within 300 seconds if the two share a secret. Use one secret per tenant and per stage; the worker's start check only finds equal secrets inside one worker.
+14d. Operator notes (door review N2, N3, N6): a 413 and a 400 before the body is read close the connection with the body unread, so a client may see a reset instead of the status; GET /health is unauthenticated and costs one store ping, so limit it at the proxy; the audit event of a 409 conflict stores the request key in `object_ref` (accepted).
 15. The caller's 202 is given before anything is stored in Hadavin, and the sending loops live in n8n. The workflow
     answers the caller (202) first and sends afterwards. From then on the event exists only inside one n8n execution:
     until Hadavin has answered 202 or 200 there is no record of it anywhere else, and the caller will not send it again,

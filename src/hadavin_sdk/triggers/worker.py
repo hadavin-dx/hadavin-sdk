@@ -33,6 +33,14 @@ Several threads at once: what was read, and what was not
   short `get_run` reads of request threads still run next to it.
 - `handle` runs on a pool thread. If it raises, the class name is logged and nothing else; the process goes on and
   a run that was cut off is ended by the tick's stuck step, so the tick MUST run in the deployment.
+  What the sender gets then: acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender
+  must poll the run state. This is not "never lost" and not "handed to a person".
+
+Deployment conditions (door review M2, M3)
+- A reverse proxy with per-peer connection limits is required in front of this server: it has 256 global slots and no
+  per-peer limit.
+- One secret per tenant and per stage: the tenant is not part of the signed string, so a shared secret makes a request
+  for one tenant or stage valid for another within the 300 second window.
 
 Start: `python -m hadavin_sdk.triggers.worker --config-dir <dir> [--host H] [--port P] [--allow-non-loopback]`.
 The stdlib server is not hardened: by default it listens on 127.0.0.1 only (a host that is not loopback needs
