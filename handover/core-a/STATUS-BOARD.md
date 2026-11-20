@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:41:14Z
+UPDATED_UTC: 2026-11-20T05:42:45Z
 SESSION: core-a
 ORDER: 009 (002 to 008 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 16
-ITEMS_OPEN: 6
-PERCENT: 76
+ITEMS_OPEN: 5
+PERCENT: 80
 AGENTS_RUNNING: 3
-CAPACITY: load 2.14 of 4 cores (1-minute average), mem 1.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.5G 60G 14%; 345M /home/user/hadavin-sdk; 40M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 0.97 of 4 cores (1-minute average), mem 0.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.3G 60G 14%; 345M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
-FAILED: 1 rule test fails on the branch because of handover/BRIEF-PREAMBLE.md (lead's file): test_no_vendor_brand_string_is_tracked
+FAILED: 2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: batch suite ends: classify every failure as INHERITED or NEW in REPORT.md; then my own files once with PostgreSQL 16; mutant script and ticket fix land
-PUSHED_UTC: 2026-11-20T05:41:05Z (the push before this board)
+NEXT: socket test and slot fix land: tests/triggers 5 times, then my own files once with PostgreSQL 16; mutant script re-run on the final code; ticket fix lands; then REPORT.md block
+PUSHED_UTC: 2026-11-20T05:41:16Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -33,7 +33,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | T5-SKEL | T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/) | DONE (n8n part is an outline, NOT run in n8n: ESCALATIONS E4) | 100 | tests/triggers/test_t5_cases.py (645 lines), n8n/ (3 files) | 1 | 65 passed, 66 skipped (64 need the database variable, 1 crash case still skip-marked, 1 other); one early run showed 3 failures while the code under it was being rewritten, not captured: a timing flake is NOT ruled out; every n8n node parameter is from memory and marked UNVERIFIED (12 notes) |
 | BUILD-D-endpoint | src/hadavin_sdk/triggers/endpoint.py + tests/triggers/test_endpoint.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-endpoint-tests.log, -guards.log, -mutants.log (not yet) | 1 | endpoint.py 300 lines (draft guessed 130), 190 tests pass, 2 skipped; 3 mutants caught; NOT run: bandit, real socket, timing of the secret comparison |
 | BUILD-D-worker | src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-worker-tests.log, -mutants.log (not yet) | 1 | worker.py 391 lines, 32 tests pass 4 times in a row (about 5.4 s), 4 mutants caught; in-process key table removed, no-slot path polls the stored row; KNOWN COST: a pool-full 503 for a new key takes the full ack wait (5 s) and holds a server thread, no cap on waiting requests; NOT run: main past its two refusal paths, PostgreSQL, two real processes |
-| BATCH | ONE batch test run when E and D are both coded | RUNNING | 20 | raw/BATCH-lint.log, raw/BATCH-bandit.log, raw/BATCH-full-suite.log | 1 | lint and format clean on src tests demos tools (331 files), bandit -ll on the new code: no finding; whole suite running once with 3 workers, database tests skip (no DSN); then ONE run of my own files with PostgreSQL 16 |
+| BATCH | ONE batch test run when E and D are both coded | DONE with 2 failures (1 INHERITED-from-handover, 1 NEW flaky in my T5 test, fix in work) | 90 | raw/BATCH-full-suite.log, raw/BATCH-rerun-own-files.log, raw/BATCH-lint.log, raw/BATCH-bandit.log | 1 | whole suite once: 2 failed, 10723 passed, 527 skipped in 99 s (no database variable, so database tests skipped; python 3.13 only). PostgreSQL 16 run of my own files still to do after the worker change |
 | MUTANTS | tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants | RUNNING | 5 | raw/endpoint-mutants-run.log (not yet) | 1 | ORDER 008: a guarantee with no mutant script counts as not done |
 | E2-SOCKET | real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2) | RUNNING | 5 | raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet) | 1 | lead decision: in scope, do it without asking |
 
@@ -52,16 +52,12 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | egm-codebase | reviewer | fable | egm:egm-codebase-details checks ticket D claims against the code | 05:31 | ended | 100 | done | 1 of 1 | 0 | finished, 200k tokens: 1 Blocker, 7 Major, 10 Nit |
 | ticket-fix | builder (ticket text only) | fable | applies the 33 accepted review fixes to ticket D and writes request 001 draft 3 | 05:38 | about 12 min after start | 30 | running | 1 of 1 (resolve step) | 0 | egm-resolve output must be applied; 3 agents run (worker change, T5 skeleton, ticket fix) |
 | mutants | builder (test tooling) | fable | writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py | 05:39 | about 20 min after start | 5 | running | n/a | 0 | ORDER 008 item 1 |
-| e2-socket | builder | fable | writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line | 05:41 | about 25 min after start | 5 | running | n/a | 0 | ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers) |
+| e2-socket | builder | fable | writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run | 05:41 | about 25 min after start | 25 | running | n/a | 0 | ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 11496 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 69s ago | running | matched by name in ps |
-| 11499 | timeout 1500 uv run --all-extras --group test pytest -q -n 3 -m not li | core-a session or its agent | 69s ago | running | matched by name in ps |
-| 11501 | uv run --all-extras --group test pytest -q -n 3 -m not live and not pe | core-a session or its agent | 69s ago | running | matched by name in ps |
-| 11507 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 69s ago | running | matched by name in ps |
-| 17568 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 2s ago | running | matched by name in ps |
+| none | | | | | |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -74,8 +70,9 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | tests/triggers/test_t5_cases.py (skeleton, another agent's file) | working tree | 1 (worker builder, not ordered) | 65 / 0 / 0, 66 skipped | none | interim | skeleton writer still running; 66 skips must be explained before this counts |
 | ruff check + ruff format --check (src tests demos tools) | a748ab3 + working tree | 1 | clean, 331 files | none | done | batch part 1 |
 | bandit -ll (triggers package, crash.py) | same | 1 | no finding, exit 0 | none | done | batch part 1 |
-| whole suite: pytest -n 3 -m 'not live and not perf' | same | 1 of 1 | running | - | running | the ONE batch run; lead baseline for main: 10821 passed, 2 failed (missing .git in the lead copy) |
+| whole suite: pytest -n 3 -m 'not live and not perf' | same | 1 of 1 | 10723 / 2 / 0, 527 skipped (99 s) | (1) tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked: handover/BRIEF-PREAMBLE.md holds a vendor brand name; (2) tests/triggers/test_t5_cases.py::test_further_pool_full_is_503_and_a_later_retry_is_accepted: assert 503 in (200, 202) | done | (1) NOT from core-a code: the lead's handover file trips a repo rule; main without handover/ does not have it. (2) NEW and mine: timing race, the slot is freed a moment after the run's final state is visible; passed in the re-run of my files, so it is FLAKY, not fixed; fix sent to the builder |
 | 8 rule test files (skeleton writer) | working tree | 1 | 446 / 1 / 0 | test_no_vendor_brand_string_is_tracked: handover/BRIEF-PREAMBLE.md contains a vendor brand name (rule 15 text) | done | FAILURE is in the lead's file handover/BRIEF-PREAMBLE.md, not in core-a files: see LEAD ACTIONS |
+| my 4 test files + 3 repo rule files (re-run to name the failures) | working tree | 1 | 431 / 1 / 0, 70 skipped | test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md) | done | the T5 failure did not repeat: flaky |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -86,6 +83,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | item | tries | review rounds | last error | reason it keeps failing |
 |---|---|---|---|---|
 | E test file with PostgreSQL | 2 | 0 | connection refused (server not started) | it does not: try 1 failed on my own start script permission, try 2 passed 73 of 73 |
+| T5 pool-full test | failed 1 of 2 runs | 0 | assert 503 in (200, 202) | race between the run's final state and the slot release; code change in work (waiting requests take a freed slot) |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
