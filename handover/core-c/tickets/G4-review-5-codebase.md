@@ -1,0 +1,11 @@
+# G4 v5 plan review round 5 (codebase details, fresh, sonnet) — 2026-11-20 ~10:20Z
+Snapshot scratchpad/refs/g4v5. Read-only by reading, nothing run. No Blocker. Three Majors, three Nits.
+- M1: retiring gate mutant R8 (L24 default) leaves 104 entries in tests/gate_mutants.py M; tests/test_gate_mutants_picked_up.py MIN_MUTANTS=105 goes red. Not listed in 9.3/section 11/Phase 2. Fix: list the MIN_MUTANTS 105->104 edit with reason (or keep R8 and re-point its killer; none exists).
+- M2: snapshot is not the tree the numbers describe: Q9 (30 mutants) present, redact_mutants M = 96 (63 m + 3 E9 + 30 Q9), mutants touching runmap/redact = 146 not 116; N15 occurs once (redact.py:1933-1935), not zero; redact.py line cites from _OWN_TOKEN on are +6. Fix 13.1(g), 13.3, L18, header; table by name.
+- M3: G9 not reconciled like G8: G9 edits _build, sweep (pass loop), _place_union (kind rule D-3), settle, adds InputTooLarge SpelledNotSettled/SpelledOverlap; G4 touches _build rules loop and _LABELS/SECRET_KINDS. Need order (default: either side), 0.3b, list new refusals in 2.6 and 8, say ENCODED tokens are outside G9's read-back (place_encoded bypasses _place) or add a G9 row; G4 0.2 should name sweep/_place_union/_build.
+- N1: tie-break moves rule index: runmap.py:730-733 docstring "(the earlier in the map when equal)" and test_e5 docstring (test_runmap_enforce_map.py:519-520) go stale; add a fifth TB-2.8 map {"<TENANT_1>":"cd-ef","<SECRET_1>":"ab-cd","<SECRET_2>":"cd-ef"} (x ab-cd-ef y: before x ab-<TENANT_1> y, after x <SECRET_1>-ef y).
+- N2: suites calling channel.clean not in a phase selection (test_g4_parity, test_s4_llm_guard, test_s6_approvals, test_gate_install_callers, test_review_pr3_round2): add to Phase 3 step 2 and Phase 4 step 2.
+- N3: b64 tie-break-removed mutant `old` is over 100 columns; ruff format wraps it (already allowed).
+Verified by reading: L19 neutralise choice, E9/ENCODED behaviour (password=<ENCODED_1> kept, ‹ENCODED_1› and <ENC masked), R8 equivalence, test_e5 red at line 523 only, 229/76/77/1,978 numbers, p1d row cells. Kinds neither SECRET nor stored (UUID, BANKCODE, BANKACCT, SSN, AADHAAR, PAN): list them under L8.
+Not run: probe measurements, 3,268 passed run, perf ratios.
+Resolution (core-c): all three Majors accepted; v6 drafter briefed. Round 6 review follows v6.
