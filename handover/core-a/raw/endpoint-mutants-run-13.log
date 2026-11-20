@@ -62,3 +62,6 @@ ok  KILLED       G17b a request that did not verify is logged at INFO  [test_n10
 ok  KILLED       G18a no cap on the requests waiting inside start  [test_m2_a_hung_store_cannot_pile_up_request_threads]
 ok  KILLED       G18b the waiting place is not given back  [test_m2_a_place_is_given_back_after_every_answer]
 ok  KILLED       G18c serve does not close the runner  [test_serve_gives_the_previous_sigterm_handler_back]
+ok  KILLED       G18d close writes no warning for a loop still going  [test_m3_close_warns_once_when_a_loop_is_still_going]
+ok  KILLED       G18e close warns although nothing is running  [test_m3_close_with_nothing_running_is_quiet]
+ok  KILLED       G18f a waiter keeps polling after the runner was closed  [test_n3_a_waiter_gets_503_at_once_when_the_runner_is_closed]
