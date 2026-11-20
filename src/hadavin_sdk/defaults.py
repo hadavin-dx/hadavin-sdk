@@ -338,3 +338,9 @@ TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS
 # on the build box (16.0 s; a constructed text took 185 s; G10 ticket, D4); on a machine more than about 1.9x slower that text is flagged on every run. CPU only: waiting for the GIL,
 # a lock or I/O does not count, and no call site of the injection check has a wall-clock limit.
 INJECTION_BUDGET_S = 30.0
+# INJECTION_WALL_FACTOR (guard.injection and guard.textnorm, M3 of the lead review xr-textfold-lead-1): the wall-clock allowance of one check, as a
+# multiple of the CPU budget, read from time.monotonic() in the calling thread when the check starts. The CPU clock does not advance while a thread
+# waits for the GIL, a lock or I/O, so without it a loaded machine stretches the 30 s without limit. 2.0 (the lead's "about 2x"): a check that is
+# starved for more than half of its wall time is flagged guard_unavailable (fail closed, as for the CPU budget). A finite number of at least 1;
+# anything else flags every run (a wall allowance below the CPU budget would flag a check that is on time). Not used when INJECTION_BUDGET_S is None.
+INJECTION_WALL_FACTOR = 2.0

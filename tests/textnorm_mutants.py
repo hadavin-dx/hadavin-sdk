@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-256 mutants (the list of P1b, 216, the 10 of P1a fix8 and the 14 of the two P1b fix rounds, 9 of round 1 and 5 of round 2, and the 16 of G10, the deadline of the fold, last), in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
+263 mutants (the list of P1b, 216, the 10 of P1a fix8 and the 14 of the two P1b fix rounds, 9 of round 1 and 5 of round 2, and the 23 of G10 and M3, the deadline of the fold and its wall clock, last), in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -869,12 +869,12 @@ M = [
         "                _LAZY_TABLES = tables\n", "                pass\n",
         "test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names", "the lazy tables are never kept", test_file=RO),
     mutant("deadline: the clock is never read", TN,
-        "    if deadline is not None and time.thread_time() >= deadline:\n",
+        "    if deadline is not None and (\n        time.thread_time() >= deadline[0] or time.monotonic() >= deadline[1]\n    ):\n",
         "    if False:\n",
         "test_a_spent_budget_raises_and_never_answers", "DEADLINE-SPENT", test_file=DL),
     mutant("deadline: a spent deadline answers no hit", TN,
         "    _checked(text, value)\n    _tick(deadline)\n",
-        "    _checked(text, value)\n    if deadline is not None and time.thread_time() >= deadline:\n        return False\n",
+        "    _checked(text, value)\n    if deadline is not None and time.thread_time() >= deadline[0]:\n        return False\n",
         "test_a_spent_budget_raises_and_never_answers", "DEADLINE-NOT-FALSE", test_file=DL),
     mutant("deadline: the error is a TextTooLong", TN,
         "class DeadlinePassed(TextnormError):",
@@ -921,17 +921,45 @@ M = [
         "    if False:\n",
         "test_the_injection_budget_setting_is_checked", "BUDGET-UNCHECKED", test_file=DL),
     mutant("deadline: the budget is taken as a deadline", TN,
-        "    return time.thread_time() + budget_s\n",
-        "    return budget_s\n",
+        "    return time.thread_time() + budget_s, time.monotonic() + factor * budget_s\n",
+        "    return budget_s, budget_s\n",
         "test_the_budget_is_counted_on_the_thread_that_runs_the_scan", "DEADLINE-THREAD", test_file=DL),
     mutant("injection: the deadline is passed as the budget", INJ,
-        "    return None if deadline is None else deadline - time.thread_time()\n",
+        "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
         "    return deadline\n",
         "test_the_injection_check_flags_a_run_past_its_budget", "DEADLINE-INJECTION", test_file=DL),
     mutant("deadline: no reading in the second loop of the insertion match", TN,
         "        hits += 1\n        if not hits % 4096:\n            _tick(deadline)\n        lo = max(start - h - 1, 0)\n",
         "        hits += 1\n        lo = max(start - h - 1, 0)\n",
         "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: the wall clock is never read", TN,
+        "        time.thread_time() >= deadline[0] or time.monotonic() >= deadline[1]\n",
+        "        time.thread_time() >= deadline[0]\n",
+        "test_a_wait_the_cpu_clock_does_not_count_raises_at_twice_the_budget", "WALL-DEADLINE", test_file=DL),
+    mutant("deadline: the wall allowance is the CPU budget", TN,
+        "    return time.thread_time() + budget_s, time.monotonic() + factor * budget_s\n",
+        "    return time.thread_time() + budget_s, time.monotonic() + budget_s\n",
+        "test_a_wait_the_cpu_clock_does_not_count_raises_at_twice_the_budget", "WALL-DEADLINE", test_file=DL),
+    mutant("deadline: the wall factor is not checked", TN,
+        "    if type(factor) not in (int, float) or not 1 <= factor < math.inf:\n",
+        "    if False:\n",
+        "test_the_wall_factor_setting_is_checked", "WALL-FACTOR-UNCHECKED", test_file=DL),
+    mutant("deadline: the wall clock is read without a budget", TN,
+        "    if budget_s is None:\n        return None\n",
+        "    if budget_s is None:\n        time.monotonic()\n        return None\n",
+        "test_the_wall_clock_is_not_read_without_a_budget", "WALL-NONE", test_file=DL),
+    mutant("injection: the wall factor is not checked", INJ,
+        "    if type(factor) not in (int, float) or not 1 <= factor < float(\"inf\"):\n",
+        "    if False:\n",
+        "test_the_wall_factor_setting_is_checked", "WALL-FACTOR-UNCHECKED", test_file=DL),
+    mutant("injection: the wall deadline is not set", INJ,
+        "    return time.thread_time() + budget, time.monotonic() + factor * budget\n",
+        "    return time.thread_time() + budget, float(\"inf\")\n",
+        "test_the_injection_check_flags_a_wall_wait_and_hands_both_deadlines_to_the_fold", "WALL-INJECTION", test_file=DL),
+    mutant("injection: the seconds left ignore the wall clock", INJ,
+        "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
+        "    return deadline[0] - time.thread_time()\n",
+        "test_the_injection_check_flags_a_wall_wait_and_hands_both_deadlines_to_the_fold", "WALL-INJECTION", test_file=DL),
 ]  # fmt: skip
 
 
