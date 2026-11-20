@@ -87,3 +87,101 @@ Summary of the probe: tests notice 10 of the 30 (U+2013, U+2014, U+2018, U+2019,
 - Causes of survivors 4 and 7 (which other path finds the phrase) not traced.
 - The probe is an in-process patch, not the mutation runner; it is evidence of test sensitivity, not a list result.
 - Amendment for Q9 in G-text-deltas.md: no list of 30 found there; used G3-p2d-port.md section 6.
+
+
+## Round 2 (ORDER 022 Q9 and ORDER 023 E12), worktree `/tmp/core-c-q9`, branch `wip-q9`
+
+Run on the worktree copy with `PYTHONPATH=/tmp/core-c-q9/src`, one runner at a time, load below 4. Nothing pushed.
+
+### R2.1 `tests/textnorm_mutants.py`: raw SUMMARY lines and the 7 former problems
+
+```
+240 mutants: 228 change behaviour, 12 change only words
+240 of 240 good; problems: []
+```
+
+The 7 problems of section 3, now (raw lines):
+
+```
+ok  KILLED       mixed: a mark of the word's own script flags  [test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a]
+ok  KILLED       runmap: the composed view is not listed  [test_q9_a_decomposed_name_behind_a_json_escape_is_masked_by_]
+ok  KILLED       injection: the pieces do not overlap  [test_q9_a_padded_window_before_a_boundary_moves_the_start_of]
+ok  KILLED       injection: the new piece ignores the letters it holds  [test_q9_a_look_alike_phrase_padded_across_a_piece_boundary_i]
+ok  KILLED       injection: a boundary with too few letters passes  [test_a_pad_longer_than_the_largest_overlap_is_flagged_never_]
+ok  KILLED       injection: the settings are not checked  [test_the_settings_of_the_chunked_read_are_checked]
+ok  KILLED       injection: the second half of a halved piece starts at the halfway point  [test_q9_a_look_alike_phrase_padded_across_the_halving_point_]
+```
+
+How each was closed:
+- WRONG_REASON x3: `mixed: a mark of the word's own script flags` expects `own script group flags` (the assertion's real text); `injection: a boundary with too few letters passes` (`test_a_pad_longer_than_the_largest_overlap_is_flagged_never_passed`) now has a message `HOSTILE-LONG-PAD: the text was read to the end (...)` on the reason-code assert; `injection: the settings are not checked` (`test_the_settings_of_the_chunked_read_are_checked`) no longer lets a TextTooLong escape out of `pytest.raises`: any other failure of the read on a bad setting is turned into `GEOMETRY-UNCHECKED: ...`.
+- SURVIVED x4, new killers in `tests/test_textnorm_q9.py`: (a) `runmap: the composed view is not listed`: a name with a literal `&amp;` (or `%25`) stored, written with JSON escapes (letter, U+200B, accent): `undone` decodes the `&amp;`, `canonical(unescaped)` composes nothing, only `composed(unescaped)` holds the stored name. `composed(undone)` alone is EQUIVALENT to `undone` (200,000 seeded texts, never different: `undo` ends at a fixed point of the whole text NFKC that drops invisible characters), so the mutant that removes all three lines is killed by the `composed(unescaped)` line and no separate killer for `composed(undone)` exists. (b) the two overlap mutants: an ASCII phrase padded by invisible, digit or Han characters is ALSO found by the raw squash of the whole text (`_SQUASH` keeps only a-z), whatever the pieces hold, which is why the old killers passed on the mutants; the new ones write the phrase with Cyrillic look-alike letters (not in the raw squash, only found by the views of a piece): `test_q9_a_padded_window_before_a_boundary_moves_the_start_of_the_next_piece_back` (a 300 character pad before the boundary: `_start_of_next` must start before it) and `test_q9_a_look_alike_phrase_padded_across_a_piece_boundary_is_found_only_by_the_moved_back_start` [300] (pads 300, 450, 600). (c) the halved piece started at the halfway point: `test_q9_a_look_alike_phrase_padded_across_the_halving_point_of_a_heavy_piece_is_found_by_value` (look-alike phrase, 300 pad on the halving point, a heavy piece), fails by value (flag missing).
+- The mutant count stays 240 (replaced killers, no new textnorm mutant): the pins in `tests/test_textnorm_meta.py` and the changelog count (`len(mm.M) == 240`) are unchanged. `Q9` was added to the killer file list `TESTS` and a parametrized killer may pin one parameter id (`param=`).
+
+### R2.2 `tests/redact_mutants.py`: raw SUMMARY line
+
+```
+88 of 93 good; problems: ['8 a set compare hides a look-alike copy', 'N1 U+2044 is no longer mapped to a slash', 'N14 the slash replace is deleted from the alignment return', 'N15 the alias build asks for no budget', 'DM-1 no check per stored original']
+```
+
+93 = 63 of before + 30 new `Q9 U+XXXX` mutants; `tests/test_redact_g3_port.py` is now in the killer list (prefix `tests/test_redact_g3_port::`). All 30 Q9 mutants KILLED. Raw non-Q9 BAD lines of that run (the first run, with N15 not yet re-expected):
+
+```
+BAD SURVIVED     8 a set compare hides a look-alike copy  []
+      first line: 
+BAD SURVIVED     N1 U+2044 is no longer mapped to a slash  []
+      first line: 
+BAD SURVIVED     N14 the slash replace is deleted from the alignment return  []
+      first line: 
+BAD WRONG_REASON N15 the alias build asks for no budget  [test_budget_3_the_alias_build_is_budgeted]
+      first line: E       AssertionError: 300
+BAD SURVIVED     DM-1 no check per stored original  []
+      first line: 
+```
+
+N15 (E12): its `old` snippet is re-pointed at the budget check that is now inside `_build` (`if deadline is not None:\n self._over_budget(deadline)\n for key in _alias_keys(original):`; G7 rounds 3 to 6 made it a local `deadline`); the killer `test_budget_3_the_alias_build_is_budgeted` now has the assertion message `N15-ALIAS-BUDGET: ...` (the first line was `AssertionError: 300`, WRONG_REASON against `DID NOT RAISE`). Re-run `python tests/redact_mutants.py N15`:
+
+```
+ok  KILLED       N15 the alias build asks for no budget  [test_budget_3_the_alias_build_is_budgeted]
+1 of 1 good; problems: []
+```
+
+So the full list is 88 of 93 on the raw first run, 89 of 93 with N15 fixed (the raw N15 line above is the re-run): 4 problems left that are not in this order (see ESCALATIONS.md E13): `8 a set compare hides a look-alike copy`, `N1 U+2044 ...`, `N14 the slash replace ...`, `DM-1 no check per stored original`, all SURVIVED.
+
+### R2.3 The three slashes (U+2215, U+2571, U+29F8)
+
+The probe of section 4 gave "no test fails" for them because with the P2d-1 class `(itself, 0)` the primary view's alignment finds `"a" + c + "b" != fold("a"+c+"b") == "a/b"` and steps aside (`None`), the very same outcome as the port's refused class `None`, so `redact` withholds the line either way and every typography test (which asserts the line is withheld) is satisfied. Only the views that drop a subscript iota differ (they read the character through `fold_view` as a live `/`). The new test `test_q9_a_slash_lookalike_is_refused_by_every_view_of_the_alignment` calls `_Redactor._aligned_fold` for all four view specs directly and fails by value (`Q9-SLASH-VIEW`).
+
+### R2.4 The 30 code points: killer mutant and test
+
+| code point | name | killer mutant | killer test (id) | result |
+|---|---|---|---|---|
+| U+058A | ARMENIAN HYPHEN | Q9 U+058A ARMENIAN HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+058A]) | KILLED |
+| U+05BE | HEBREW PUNCTUATION MAQAF | Q9 U+05BE HEBREW PUNCTUATION MAQAF is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+05BE]) | KILLED |
+| U+1400 | CANADIAN SYLLABICS HYPHEN | Q9 U+1400 CANADIAN SYLLABICS HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+1400]) | KILLED |
+| U+1806 | MONGOLIAN TODO SOFT HYPHEN | Q9 U+1806 MONGOLIAN TODO SOFT HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+1806]) | KILLED |
+| U+2010 | HYPHEN | Q9 U+2010 HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2010]) | KILLED |
+| U+2012 | FIGURE DASH | Q9 U+2012 FIGURE DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2012]) | KILLED |
+| U+2013 | EN DASH | Q9 U+2013 EN DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2013]) | KILLED |
+| U+2014 | EM DASH | Q9 U+2014 EM DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2014]) | KILLED |
+| U+2015 | HORIZONTAL BAR | Q9 U+2015 HORIZONTAL BAR is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2015]) | KILLED |
+| U+2018 | LEFT SINGLE QUOTATION MARK | Q9 U+2018 LEFT SINGLE QUOTATION MARK is given back its P2d-1 class | test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit (tests/test_redact_g3_port.py, id [U+2018]) | KILLED |
+| U+2019 | RIGHT SINGLE QUOTATION MARK | Q9 U+2019 RIGHT SINGLE QUOTATION MARK is given back its P2d-1 class | test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit (tests/test_redact_g3_port.py, id [U+2019]) | KILLED |
+| U+201B | SINGLE HIGH-REVERSED-9 QUOTATION MARK | Q9 U+201B SINGLE HIGH-REVERSED-9 QUOTATION MARK is given back its P2d-1 class | test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit (tests/test_redact_g3_port.py, id [U+201B]) | KILLED |
+| U+201C | LEFT DOUBLE QUOTATION MARK | Q9 U+201C LEFT DOUBLE QUOTATION MARK is given back its P2d-1 class | test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit (tests/test_redact_g3_port.py, id [U+201C]) | KILLED |
+| U+201D | RIGHT DOUBLE QUOTATION MARK | Q9 U+201D RIGHT DOUBLE QUOTATION MARK is given back its P2d-1 class | test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit (tests/test_redact_g3_port.py, id [U+201D]) | KILLED |
+| U+201F | DOUBLE HIGH-REVERSED-9 QUOTATION MARK | Q9 U+201F DOUBLE HIGH-REVERSED-9 QUOTATION MARK is given back its P2d-1 class | test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit (tests/test_redact_g3_port.py, id [U+201F]) | KILLED |
+| U+2212 | MINUS SIGN | Q9 U+2212 MINUS SIGN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2212]) | KILLED |
+| U+2215 | DIVISION SLASH | Q9 U+2215 DIVISION SLASH is given back its P2d-1 class | test_q9_a_slash_lookalike_is_refused_by_every_view_of_the_alignment (tests/test_redact_g3_port.py, id [U+2215]) | KILLED |
+| U+2571 | BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT | Q9 U+2571 BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT is given back its P2d-1 class | test_q9_a_slash_lookalike_is_refused_by_every_view_of_the_alignment (tests/test_redact_g3_port.py, id [U+2571]) | KILLED |
+| U+29F8 | BIG SOLIDUS | Q9 U+29F8 BIG SOLIDUS is given back its P2d-1 class | test_q9_a_slash_lookalike_is_refused_by_every_view_of_the_alignment (tests/test_redact_g3_port.py, id [U+29F8]) | KILLED |
+| U+2E17 | DOUBLE OBLIQUE HYPHEN | Q9 U+2E17 DOUBLE OBLIQUE HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2E17]) | KILLED |
+| U+2E1A | HYPHEN WITH DIAERESIS | Q9 U+2E1A HYPHEN WITH DIAERESIS is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2E1A]) | KILLED |
+| U+2E3A | TWO-EM DASH | Q9 U+2E3A TWO-EM DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2E3A]) | KILLED |
+| U+2E3B | THREE-EM DASH | Q9 U+2E3B THREE-EM DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2E3B]) | KILLED |
+| U+2E40 | DOUBLE HYPHEN | Q9 U+2E40 DOUBLE HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2E40]) | KILLED |
+| U+2E5D | OBLIQUE HYPHEN | Q9 U+2E5D OBLIQUE HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+2E5D]) | KILLED |
+| U+301C | WAVE DASH | Q9 U+301C WAVE DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+301C]) | KILLED |
+| U+3030 | WAVY DASH | Q9 U+3030 WAVY DASH is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+3030]) | KILLED |
+| U+30A0 | KATAKANA-HIRAGANA DOUBLE HYPHEN | Q9 U+30A0 KATAKANA-HIRAGANA DOUBLE HYPHEN is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+30A0]) | KILLED |
+| U+FFFD | REPLACEMENT CHARACTER | Q9 U+FFFD REPLACEMENT CHARACTER is given back its P2d-1 class | test_q9_the_replacement_character_is_dropped_by_the_fold_and_is_ordina (tests/test_redact_g3_port.py, id [U+FFFD]) | KILLED |
+| U+10EAD | YEZIDI HYPHENATION MARK | Q9 U+10EAD YEZIDI HYPHENATION MARK is given back its P2d-1 class | test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_i (tests/test_redact_g3_port.py, id [U+10EAD]) | KILLED |

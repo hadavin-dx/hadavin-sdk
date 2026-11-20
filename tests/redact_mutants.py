@@ -1,4 +1,4 @@
-"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones, the 16 of review round w3 and the 5 of round w4
+"""The mutants of the fold scan (P2d-1; the 30 mutants "Q9 U+XXXX" of ORDER 022 Q9 are at the end): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones, the 16 of review round w3 and the 5 of round w4
 (the views that drop spacing marks, the control-character gate, the block that grows over a second block, the line end of a withheld block).
 
 ``tools.mutation_runner`` replaces EVERY occurrence of a mutant's ``old`` text. Mutant 21 therefore removes both
@@ -34,8 +34,10 @@ FS = "tests/test_redact_fold_seams.py"
 FP = "tests/test_redact_fold_property.py"
 FZ = "tests/test_k5_round12_fuzz.py"
 FM = "tests/test_redact_marks.py"
+G3 = "tests/test_redact_g3_port.py"
 PREFIX = {
     FM: "tests/test_redact_marks::",
+    G3: "tests/test_redact_g3_port::",
     F1: "tests/test_redact_fold::",
     FB: "tests/test_redact_fold_budget::",
     FS: "tests/test_redact_fold_seams::",
@@ -136,8 +138,9 @@ M = [
     m("N14 the slash replace is deleted from the alignment return", RD,
       'whole = fold_view(body, marks_dropped=marks, iota=iota).replace("\\u2044", "/")', "whole = fold_view(body, marks_dropped=marks, iota=iota)", F1,
       "test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place", "ssert"),
-    m("N15 the alias build asks for no budget", RD, "            if self._deadline is not None:\n                self._over_budget(self._deadline)\n", "", FB,
-      "test_budget_3_the_alias_build_is_budgeted", "DID NOT RAISE"),
+    m("N15 the alias build asks for no budget", RD, "            if deadline is not None:\n                self._over_budget(deadline)\n            for key in _alias_keys(original):\n",
+      "            for key in _alias_keys(original):\n", FB,
+      "test_budget_3_the_alias_build_is_budgeted", "N15-ALIAS-BUDGET"),
     m("R1 the budget is the wall clock in runmap", GM, "started = time.thread_time()", "started = time.monotonic()", FB,
       "test_the_budget_is_cpu_time_of_the_thread_not_the_wall_clock", "ssert", allow_crash=True, crash_type="AssertionError"),
     m("R2 the check after stage 1 is removed", GM, "if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:", "if False:", FB,
@@ -212,6 +215,48 @@ M = [
       "test_view_1_the_clock_is_read_before_each_view_of_a_line", "ssert"),
 ]  # fmt: skip
 
+# ---- ORDER 022 Q9: one mutant per code point whose `_char_class` class changed from P2d-1 (fold4) to the port (fold5) ----
+# Each gives ONE character back its P2d-1 class `(itself, 0)`: the clause is inserted at the top of `_char_class` (the search text occurs once).
+Q9_AT = "    f = fold(ch)\n    flag = 0\n"
+Q9_NAMES = {
+    0x058A: "ARMENIAN HYPHEN", 0x05BE: "HEBREW PUNCTUATION MAQAF", 0x1400: "CANADIAN SYLLABICS HYPHEN", 0x1806: "MONGOLIAN TODO SOFT HYPHEN",
+    0x2010: "HYPHEN", 0x2012: "FIGURE DASH", 0x2013: "EN DASH", 0x2014: "EM DASH", 0x2015: "HORIZONTAL BAR",
+    0x2018: "LEFT SINGLE QUOTATION MARK", 0x2019: "RIGHT SINGLE QUOTATION MARK", 0x201B: "SINGLE HIGH-REVERSED-9 QUOTATION MARK",
+    0x201C: "LEFT DOUBLE QUOTATION MARK", 0x201D: "RIGHT DOUBLE QUOTATION MARK", 0x201F: "DOUBLE HIGH-REVERSED-9 QUOTATION MARK",
+    0x2212: "MINUS SIGN", 0x2215: "DIVISION SLASH", 0x2571: "BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT", 0x29F8: "BIG SOLIDUS",
+    0x2E17: "DOUBLE OBLIQUE HYPHEN", 0x2E1A: "HYPHEN WITH DIAERESIS", 0x2E3A: "TWO-EM DASH", 0x2E3B: "THREE-EM DASH", 0x2E40: "DOUBLE HYPHEN",
+    0x2E5D: "OBLIQUE HYPHEN", 0x301C: "WAVE DASH", 0x3030: "WAVY DASH", 0x30A0: "KATAKANA-HIRAGANA DOUBLE HYPHEN",
+    0xFFFD: "REPLACEMENT CHARACTER", 0x10EAD: "YEZIDI HYPHENATION MARK",
+}  # fmt: skip
+Q9_KILLER = {  # code point -> (killer test function, a fragment of its first failing assertion line)
+    **dict.fromkeys(
+        [0x058A, 0x05BE, 0x1400, 0x1806, 0x2010, 0x2012, 0x2013, 0x2014, 0x2015, 0x2212, 0x2E17, 0x2E1A, 0x2E3A, 0x2E3B, 0x2E40, 0x2E5D, 0x301C, 0x3030, 0x30A0, 0x10EAD],
+        ("test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_inside_a_value", "Q9-ORDINARY"),
+    ),
+    **dict.fromkeys(
+        [0x2018, 0x2019, 0x201B, 0x201C, 0x201D, 0x201F],
+        ("test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit", "Q9-ORDINARY"),
+    ),
+    **dict.fromkeys(
+        [0x2215, 0x2571, 0x29F8],
+        ("test_q9_a_slash_lookalike_is_refused_by_every_view_of_the_alignment", "Q9-SLASH-VIEW"),
+    ),
+    0xFFFD: ("test_q9_the_replacement_character_is_dropped_by_the_fold_and_is_ordinary_beside_a_fold_hit", "Q9-ORDINARY"),
+}  # fmt: skip
+M += [
+    Mutant(
+        f"Q9 U+{cp:04X} {Q9_NAMES[cp]} is given back its P2d-1 class",
+        RD,
+        Q9_AT,
+        Q9_AT + f'    if ch == "\\u{cp:04x}":\n        return ch, 0\n' if cp <= 0xFFFF else Q9_AT + f'    if ch == "\\U{cp:08x}":\n        return ch, 0\n',
+        Q9_KILLER[cp][1],
+        test_file=G3,
+        only_test=Q9_KILLER[cp][0],
+        pinned=f"{PREFIX[G3]}{Q9_KILLER[cp][0]}[U+{cp:04X}]",
+    )
+    for cp in Q9_NAMES
+]
+
 if __name__ == "__main__":
     only = sys.argv[1:]
     if only and not any(o in mm.name for mm in M for o in only):
@@ -231,7 +276,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [F1, FB, FS, FP, FZ, FM],
+        [F1, FB, FS, FP, FZ, FM, G3],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,

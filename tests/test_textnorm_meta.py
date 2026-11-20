@@ -158,7 +158,11 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
         assert path.is_file(), (m.name, m.test_file)
         defined.setdefault(m.test_file, _functions(path))
         assert m.only_test in defined[m.test_file], (m.name, m.only_test, "is not in", m.test_file)
-        assert m.pinned == m.test_file.removesuffix(".py") + "::" + m.only_test, (m.name, m.pinned)
+        base = m.test_file.removesuffix(".py") + "::" + m.only_test
+        assert m.pinned == base or (m.pinned.startswith(base + "[") and m.pinned.endswith("]")), (
+            m.name,
+            m.pinned,
+        )  # a parametrized killer pins the id of the one parameter that must fail
         # ``expect`` is a fragment of an assertion MESSAGE, never of the killer's own name
         assert m.expect.replace(" ", "_").lower() not in m.only_test, (
             m.name,
@@ -172,7 +176,7 @@ def test_a_the_test_list_puts_the_killer_files_first_and_leaves_out_perf_meta_an
     assert mm.TESTS[-1] == mm.D, "the differential and golden file runs last"
     for left_out in ("perf", "meta", "notices"):
         assert not any(left_out in t for t in mm.TESTS), left_out
-    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB, mm.FB, mm.O, mm.RO, mm.R2}
+    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB, mm.FB, mm.O, mm.RO, mm.R2, mm.Q9}
 
 
 def test_a_the_moved_tests_and_the_new_killers_exist_once_each():

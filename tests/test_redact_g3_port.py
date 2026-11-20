@@ -8,7 +8,10 @@
 Every value here is made up; the look-alike letters are built from escapes.
 """
 
+import importlib
 import re
+
+import pytest
 
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.redact import FOLD_NOTE, RedactionResult, redact
@@ -201,3 +204,90 @@ def test_typography_the_box_drawing_diagonal_u2571_withholds_a_line_with_a_looka
 
 def test_typography_the_big_solidus_u29f8_withholds_a_line_with_a_lookalike_value():
     _slash_lookalike(0x29F8)
+
+
+# ---- 5. Q9 (ORDER 022): one test per code point whose ``_char_class`` class changed from P2d-1 (fold4) to the port (fold5) ----------------
+# Every test below fails when ONE of these 30 characters is given back its P2d-1 class ``(itself, 0)``; ``tests/redact_mutants.py`` holds one
+# mutant per code point (names ``Q9 U+XXXX ...``) and names the test of its family as the killer.
+Q9_DASHES = [
+    0x058A, 0x05BE, 0x1400, 0x1806, 0x2010, 0x2012, 0x2013, 0x2014, 0x2015, 0x2212,
+    0x2E17, 0x2E1A, 0x2E3A, 0x2E3B, 0x2E40, 0x2E5D, 0x301C, 0x3030, 0x30A0, 0x10EAD,
+]  # fmt: skip
+Q9_QUOTES = {0x2018: "'", 0x2019: "'", 0x201B: "'", 0x201C: '"', 0x201D: '"', 0x201F: '"'}
+Q9_SLASHES = [0x2215, 0x2571, 0x29F8]
+Q9_DROPPED = [0xFFFD]
+Q9_ALL = Q9_DASHES + list(Q9_QUOTES) + Q9_SLASHES + Q9_DROPPED
+
+
+def _ids(cps):
+    return [f"U+{cp:04X}" for cp in cps]
+
+
+def _typed_text_is_ordinary(c: str) -> None:
+    """The character beside a fold hit does not withhold the line: the value is masked in the line as written, the character stays."""
+    out = redact(f"mail {ACCENTED} {c} thanks")
+    assert out.text == f"mail <EMAIL_1> {c} thanks", f"Q9-ORDINARY: {out.text!r}"
+    assert out.mapping == {"<EMAIL_1>": ACCENTED} and out.actions == 1, out
+    inside = redact(f"x{c}y {ACCENTED}")
+    assert inside.text == f"x{c}y <EMAIL_1>", f"Q9-INSIDE: {inside.text!r}"
+    assert inside.actions == 1 and FOLD_NOTE not in inside.text
+
+
+@pytest.mark.parametrize("cp", Q9_DASHES, ids=_ids(Q9_DASHES))
+def test_q9_a_dash_or_minus_is_ordinary_typography_beside_a_fold_hit_and_inside_a_value(cp):
+    c = chr(cp)
+    _typed_text_is_ordinary(c)
+    uid = f"123e4567{c}e89b{c}12d3{c}a456{c}426614174000"  # not a UUID as written, one once the dash reads as "-"
+    out = redact(f"uid {uid} end")
+    assert out.text == "uid <UUID_1> end", f"Q9-DASH-UUID: {out.text!r}"
+    assert out.mapping == {"<UUID_1>": uid}  # the map keeps the spelling as written
+
+
+@pytest.mark.parametrize("cp", list(Q9_QUOTES), ids=_ids(Q9_QUOTES))
+def test_q9_a_typographic_quote_is_ordinary_typography_beside_a_fold_hit(cp):
+    c = chr(cp)
+    _typed_text_is_ordinary(c)
+    quoted = redact(f"{c} {ACCENTED} {c} said")
+    assert quoted.text == f"{c} <EMAIL_1> {c} said", f"Q9-QUOTED: {quoted.text!r}"
+
+
+@pytest.mark.parametrize("cp", Q9_DROPPED, ids=_ids(Q9_DROPPED))
+def test_q9_the_replacement_character_is_dropped_by_the_fold_and_is_ordinary_beside_a_fold_hit(cp):
+    c = chr(cp)
+    _typed_text_is_ordinary(c)
+    module = importlib.import_module("hadavin_sdk.guard.redact")
+    assert fold(c) == "" and module._char_class(c) == ("", 0)
+    # dropped, so a value with one inside is read whole by the fold and masked as written
+    split = f"josé@exam{c}ple.com"
+    out = redact(f"mail {split} end")
+    assert out.text == "mail <EMAIL_1> end", f"Q9-DROPPED: {out.text!r}"
+
+
+@pytest.mark.parametrize("cp", Q9_ALL, ids=_ids(Q9_ALL))
+def test_q9_the_class_of_each_changed_code_point_is_pinned_one_by_one(cp):
+    module = importlib.import_module("hadavin_sdk.guard.redact")
+    c = chr(cp)
+    want = (
+        None
+        if cp in Q9_SLASHES
+        else ("", 0)
+        if cp in Q9_DROPPED
+        else (Q9_QUOTES.get(cp, "-"), 0)
+    )
+    assert module._char_class(c) == want, f"Q9-CLASS: U+{cp:04X} is {module._char_class(c)!r}, not {want!r}"
+    assert module._char_class(c) != (c, 0)  # the class P2d-1 gave it
+
+
+@pytest.mark.parametrize("cp", Q9_SLASHES, ids=_ids(Q9_SLASHES))
+def test_q9_a_slash_lookalike_is_refused_by_every_view_of_the_alignment(cp):
+    """WHY the three typography tests above passed when one of these characters was given back its P2d-1 class ``(itself, 0)``: with that
+    class the primary view's alignment finds ``"a∕b" != fold("a∕b") == "a/b"`` and steps aside (``None``), exactly as for the refused
+    class ``None``, so ``redact`` withholds the line either way. Only the views that drop a subscript iota differ: they read the character
+    as ``/`` by ``fold_view`` and would accept it (``("a/b", ...)``, a live slash); ``redact`` never reaches them because the primary view
+    refuses first. This test reads the alignment of EVERY view directly, so the revert fails by value."""
+    module = importlib.import_module("hadavin_sdk.guard.redact")
+    aligned = module._Redactor._aligned_fold
+    c = chr(cp)
+    for spec in ((False, True), (False, False), (True, True), (True, False)):
+        assert aligned(f"a{c}b", 1e18, spec) is None, f"Q9-SLASH-VIEW: view {spec} reads U+{cp:04X} as a slash"
+        assert aligned(f"a{c}b ü", 1e18, spec) is None
