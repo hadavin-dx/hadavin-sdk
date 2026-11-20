@@ -63,6 +63,21 @@ def _refuse_shared_login(store, purge_store, checkpoint_store) -> None:
         )
 
 
+def _runtime_lacks_checkpoint_insert(store) -> bool:
+    """One query: True when the store's login cannot INSERT into audit_checkpoints. A store without a connection, or
+    a query that fails, is not reported (False)."""
+    conn = getattr(store, "_db", None)
+    if conn is None:
+        return False
+    try:
+        row = conn.execute(
+            "SELECT has_table_privilege(current_user, to_regclass('audit_checkpoints'), 'INSERT')"
+        ).fetchone()
+        return row is not None and row[0] is False
+    except Exception:  # noqa: BLE001 - a start-up hint, never a reason to stop
+        return False
+
+
 @dataclass
 class App:
     config: Config
@@ -210,28 +225,6 @@ def build(
     file_backed = getattr(b.secrets, "kind", None) == "mounted_file" or bool(
         getattr(secrets, "file_backed", False)
     )
-    platform_secrets.check_senders(
-        secrets,
-        sender_names,
-        set().union(
-            extra_secret_names,
-            executor_names,
-            *(platform_secrets.secret_names(s) for _, s in b.entries()),
-            # The reset login is never read by this process; a sender must not carry its name all the same.
-            {getattr(b.store, "reset_credential_ref", None)} - {None},
-            {getattr(b.store, "release_credential_ref", None)} - {None},
-            {getattr(b.store, "caps_credential_ref", None)} - {None},
-        ),
-        file_backed=file_backed,
-    )
-    # The reset, release and caps logins are read only by their own commands, never by this process: NO secret name the
-    # runtime reads (tool, source, executor, restored-hash key, any backend, sender) may be, or fold to, either.
-    runtime_names = set().union(
-        extra_secret_names,
-        executor_names,
-        *(platform_secrets.secret_names(s) for _, s in b.entries()),
-        *(set(names) for names in sender_names.values()),
-    )
     if ck_name:
         file_backed_ck = file_backed
         if path_form_problem(ck_name, file_backed_ck):
@@ -256,6 +249,28 @@ def build(
                 "backends.store.checkpoint_dsn_secret_name names the same secret as the runtime, purge, release, "
                 "reset or caps login: the checkpoint role needs its own login"
             )
+    platform_secrets.check_senders(
+        secrets,
+        sender_names,
+        set().union(
+            extra_secret_names,
+            executor_names,
+            *(platform_secrets.secret_names(s) for _, s in b.entries()),
+            # The reset login is never read by this process; a sender must not carry its name all the same.
+            {getattr(b.store, "reset_credential_ref", None)} - {None},
+            {getattr(b.store, "release_credential_ref", None)} - {None},
+            {getattr(b.store, "caps_credential_ref", None)} - {None},
+        ),
+        file_backed=file_backed,
+    )
+    # The reset, release and caps logins are read only by their own commands, never by this process: NO secret name the
+    # runtime reads (tool, source, executor, restored-hash key, any backend, sender) may be, or fold to, either.
+    runtime_names = set().union(
+        extra_secret_names,
+        executor_names,
+        *(platform_secrets.secret_names(s) for _, s in b.entries()),
+        *(set(names) for names in sender_names.values()),
+    )
     for ref_field in ("release_credential_ref", "reset_credential_ref", "caps_credential_ref"):
         ref = getattr(b.store, ref_field, None)
         if ref and path_form_problem(ref, file_backed):
@@ -323,7 +338,25 @@ def build(
             ),
             secrets,
         )
-        _refuse_shared_login(store, purge_store, checkpoint_store)
+        try:
+            _refuse_shared_login(store, purge_store, checkpoint_store)
+        except BaseException:
+            conn = getattr(checkpoint_store, "_db", None)
+            if conn is not None:
+                conn.close()
+            raise
+    elif (
+        getattr(b.store, "kind", "") == "postgres"
+        and getattr(b.audit, "kind", "") == "chain"
+        and getattr(b.signer, "kind", "none") != "none"
+        and _runtime_lacks_checkpoint_insert(store)
+    ):
+        _LOG.warning(
+            "audit checkpoints: a signer is set but backends.store.checkpoint_dsn_secret_name is not, and the "
+            "runtime login has no INSERT on audit_checkpoints (migrate --runtime-role took it away), so NO "
+            "checkpoint is written and the chain stays unsigned. Create a checkpoint role, run hadavin-sdk migrate "
+            "--checkpoint-role <role>, and set backends.store.checkpoint_dsn_secret_name to its secret"
+        )
     audit = make(
         "audit",
         b.audit,
