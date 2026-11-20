@@ -143,7 +143,14 @@ def password_source(iam_auth: bool, region: str | None) -> PasswordSource | None
     return auth_aws.rds_iam(region)
 
 
-_SESSION_PINS = (("default_transaction_read_only", "off"), ("synchronous_commit", "on"))
+# default_transaction_isolation is also set by SET SESSION CHARACTERISTICS above; listing it here reads it back, and
+# the audit chain relies on it: its advisory-lock wait must end with a fresh snapshot (a repeatable-read snapshot
+# taken before the wait would see a stale last seq: duplicate seq 23505 / guard 23514, quarantined as a poison row).
+_SESSION_PINS = (
+    ("default_transaction_read_only", "off"),
+    ("synchronous_commit", "on"),
+    ("default_transaction_isolation", "'read committed'"),
+)
 
 
 def connect(
@@ -179,7 +186,7 @@ def connect(
     for setting, value in _SESSION_PINS:
         conn.execute(f"SET {setting} = {value}")
         got = conn.execute(f"SHOW {setting}").fetchone()[0]
-        if got != value:
+        if got != value.strip("'"):
             conn.close()
             raise ConfigError(f"the database session did not take {setting} = {value}")
     return conn
