@@ -134,7 +134,7 @@ def test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing(st
     assert caught.value.which == "day"
     assert store.spend_totals("a", D1) == (_usd("2.00"), _usd("2.00"))
     with pytest.raises(NotFound):  # no row was kept for the refused reservation
-        store.settle_spend(refused, Decimal(0))
+        store.settle_spend(refused, Decimal(0), agent_id="a")
     _reserve(store, _usd("1.00"), day_cap=cap)
     assert store.spend_totals("a", D1) == (_usd("3.00"), _usd("3.00"))
     with pytest.raises(_cap_error()):
@@ -155,7 +155,7 @@ def test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stay
     assert store.spend_totals("a", D2) == (Decimal(0), _usd("2.00"))
     assert store.spend_totals("a", D1) == (_usd("2.00"), _usd("2.00"))
     with pytest.raises(NotFound):
-        store.settle_spend(refused, Decimal(0))
+        store.settle_spend(refused, Decimal(0), agent_id="a")
     _reserve(store, _usd("1.00"), day=D2, day_cap=_usd("5.00"), month_cap=_usd("3.00"))
     assert store.spend_totals("a", D2) == (_usd("1.00"), _usd("3.00"))
 
@@ -180,17 +180,26 @@ def test_spend_already_on_the_counters_counts_towards_the_cap(store):
 
 
 def test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice(store):
-    """S1.reserve: StaleState (id exists). The first row is left exactly as it was."""
+    """S1.reserve: a duplicate id never books twice. core-b F-store (core-a M5, I1 review M1): the very same call
+    again on a still OPEN hold is an idempotent retry (returns, nothing booked again); the same id with other
+    content, or on a hold that is no longer open, is StaleState. The first row is left exactly as it was."""
     rid = _reserve(store, _usd("1.00"))
+    _reserve(
+        store, _usd("1.00"), rid=rid
+    )  # the very same call again: a retry, not a second booking
+    assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     with pytest.raises(StaleState):
-        _reserve(store, _usd("1.00"), rid=rid)  # the very same call again
+        _reserve(store, _usd("0.50"), rid=rid)  # same id, other amount
     with pytest.raises(StaleState):
         _reserve(store, _usd("0.25"), agent="b", day=D2, rid=rid)  # same id, other content
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     assert store.spend_totals("b", D2) == (Decimal(0), Decimal(0))
-    row, applied = store.settle_spend(rid, _usd("1.00"))
+    row, applied = store.settle_spend(rid, _usd("1.00"), agent_id="a")
     assert applied is True
     assert (row.agent_id, row.day, row.reserved_usd) == ("a", D1, _usd("1.00"))
+    with pytest.raises(StaleState):  # the identical call on a CLOSED hold is not a retry
+        _reserve(store, _usd("1.00"), rid=rid)
+    assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
 
 
 @pytest.mark.parametrize("bad", HOSTILE)
@@ -201,7 +210,7 @@ def test_reserve_refuses_a_bad_amount_and_books_nothing(store, bad):
         _reserve(store, bad, rid=refused)
     assert store.spend_totals("a", D1) == (Decimal(0), Decimal(0))
     with pytest.raises(NotFound):
-        store.settle_spend(refused, Decimal(0))
+        store.settle_spend(refused, Decimal(0), agent_id="a")
     _reserve(store, _usd("1.00"), rid=refused)  # the id was not used up by the refused call
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
 
@@ -210,11 +219,13 @@ def test_zero_is_an_allowed_amount(store):
     """S1.reserve and S1.settle: ">= 0" includes zero, for the reservation and for the real cost."""
     rid = _reserve(store, Decimal(0), day_cap=_usd("3.00"), month_cap=_usd("3.00"))
     assert store.spend_totals("a", D1) == (Decimal(0), Decimal(0))
-    row, applied = store.settle_spend(rid, Decimal(0))
+    row, applied = store.settle_spend(rid, Decimal(0), agent_id="a")
     assert applied is True
     assert (row.reserved_usd, row.settled_usd) == (Decimal(0), Decimal(0))
     other = _reserve(store, _usd("1.00"))
-    row, applied = store.settle_spend(other, Decimal(0))  # a call that cost nothing frees it all
+    row, applied = store.settle_spend(
+        other, Decimal(0), agent_id="a"
+    )  # a call that cost nothing frees it all
     assert applied is True and row.settled_usd == Decimal(0)
     assert store.spend_totals("a", D1) == (Decimal(0), Decimal(0))
 
@@ -230,7 +241,7 @@ def test_nothing_is_rounded(store):
     run_id = _run(store)
     rid = _reserve(store, long_reserved, run_id=run_id)
     assert store.spend_totals("a", D1) == (long_reserved, long_reserved)
-    row, applied = store.settle_spend(rid, long_actual)
+    row, applied = store.settle_spend(rid, long_actual, agent_id="a")
     assert applied is True
     assert (row.reserved_usd, row.settled_usd) == (long_reserved, long_actual)
     assert store.spend_totals("a", D1) == (long_actual, long_actual)
@@ -244,7 +255,7 @@ def test_first_settle_closes_the_row_and_returns_it(store):
     """S1.settle: the returned row carries the nine columns of the published SpendReservation."""
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), run_id=run_id)
-    row, applied = store.settle_spend(rid, _usd("0.40"))
+    row, applied = store.settle_spend(rid, _usd("0.40"), agent_id="a")
     assert applied is True
     assert (row.reservation_id, row.agent_id, row.day, row.run_id) == (rid, "a", D1, run_id)
     assert (row.reserved_usd, row.settled_usd, row.status) == (
@@ -262,7 +273,7 @@ def test_a_lower_actual_frees_headroom(store):
     rid = _reserve(store, _usd("3.00"), day_cap=cap, month_cap=cap)
     with pytest.raises(_cap_error()):
         _reserve(store, _usd("0.50"), day_cap=cap, month_cap=cap)
-    store.settle_spend(rid, _usd("0.75"))
+    store.settle_spend(rid, _usd("0.75"), agent_id="a")
     assert store.spend_totals("a", D1) == (_usd("0.75"), _usd("0.75"))
     _reserve(store, _usd("2.25"), day_cap=cap, month_cap=cap)
     assert store.spend_totals("a", D1) == (_usd("3.00"), _usd("3.00"))
@@ -272,7 +283,7 @@ def test_a_higher_actual_books_the_overshoot_in_full_even_past_the_cap(store):
     """S1.settle; invariant "overshoot booked in full": settle never refuses and never clips at the cap."""
     cap = _usd("3.00")
     rid = _reserve(store, _usd("3.00"), day_cap=cap, month_cap=cap)
-    row, applied = store.settle_spend(rid, _usd("4.75"))
+    row, applied = store.settle_spend(rid, _usd("4.75"), agent_id="a")
     assert applied is True and row.settled_usd == _usd("4.75")
     assert store.spend_totals("a", D1) == (_usd("4.75"), _usd("4.75"))
     with pytest.raises(_cap_error()) as caught:
@@ -288,10 +299,10 @@ def test_settle_moves_the_counters_of_the_rows_own_day_not_of_today(store):
     store.add_spend("a", today, _usd("0.30"))
     rid = _reserve(store, _usd("1.00"), day=D1)
     higher = _reserve(store, _usd("1.00"), day=D2)
-    row, _ = store.settle_spend(rid, _usd("0.25"))
+    row, _ = store.settle_spend(rid, _usd("0.25"), agent_id="a")
     assert row.day == D1
     assert store.spend_totals("a", D1) == (_usd("0.25"), _usd("1.25"))
-    store.settle_spend(higher, _usd("1.50"))
+    store.settle_spend(higher, _usd("1.50"), agent_id="a")
     assert store.spend_totals("a", D2) == (_usd("1.50"), _usd("1.75"))
     assert store.spend_totals("a", today) == (_usd("0.30"), _usd("0.30"))
     assert store.spend_totals("a", now().date()) == (_usd("0.30"), _usd("0.30"))
@@ -301,10 +312,10 @@ def test_a_second_settle_returns_the_stored_row_with_false_and_changes_nothing(s
     """S1.settle; invariant "idempotent settle": the first call wins, whatever the later amount is."""
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), run_id=run_id)
-    first, applied = store.settle_spend(rid, _usd("0.40"))
+    first, applied = store.settle_spend(rid, _usd("0.40"), agent_id="a")
     assert applied is True
     for later in (_usd("0.90"), Decimal(0), _usd("7.00"), _usd("0.40")):
-        again, applied = store.settle_spend(rid, later)
+        again, applied = store.settle_spend(rid, later, agent_id="a")
         assert applied is False
         assert again == first
         assert again.settled_usd == _usd("0.40")
@@ -316,7 +327,7 @@ def test_settle_of_an_unknown_id_is_not_found(store):
     """S1.settle: NotFound, and nothing moves."""
     _reserve(store, _usd("1.00"))
     with pytest.raises(NotFound):
-        store.settle_spend(_rid(), _usd("0.10"))
+        store.settle_spend(_rid(), _usd("0.10"), agent_id="a")
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
 
 
@@ -326,10 +337,10 @@ def test_settle_refuses_a_bad_amount_and_leaves_the_row_open(store, bad):
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), run_id=run_id)
     with pytest.raises(ValueError):
-        store.settle_spend(rid, bad)
+        store.settle_spend(rid, bad, agent_id="a")
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     assert store.get_run(run_id).cost_usd == Decimal(0)
-    row, applied = store.settle_spend(rid, _usd("0.20"))
+    row, applied = store.settle_spend(rid, _usd("0.20"), agent_id="a")
     assert applied is True and row.settled_usd == _usd("0.20")
     assert store.spend_totals("a", D1) == (_usd("0.20"), _usd("0.20"))
 
@@ -341,17 +352,19 @@ def test_settle_adds_the_actual_amount_to_the_runs_cost_once(store):
     with_run = _reserve(store, _usd("1.00"), run_id=run_id)
     without_run = _reserve(store, _usd("1.00"))
     assert store.get_run(run_id).cost_usd == _usd("0.10")  # assumption A6: reserve adds nothing
-    store.settle_spend(with_run, _usd("0.40"))
+    store.settle_spend(with_run, _usd("0.40"), agent_id="a")
     assert store.get_run(run_id).cost_usd == _usd("0.50")
-    _, applied = store.settle_spend(with_run, _usd("0.90"))
+    _, applied = store.settle_spend(with_run, _usd("0.90"), agent_id="a")
     assert applied is False
     assert store.get_run(run_id).cost_usd == _usd("0.50")
-    row, _ = store.settle_spend(without_run, _usd("0.70"))
+    row, _ = store.settle_spend(without_run, _usd("0.70"), agent_id="a")
     assert row.run_id is None
     assert store.get_run(run_id).cost_usd == _usd("0.50")
     assert store.get_run(other_run).cost_usd == Decimal(0)
     over = _reserve(store, _usd("1.00"), run_id=other_run)
-    store.settle_spend(over, _usd("2.50"))  # the whole actual amount, not only the overshoot
+    store.settle_spend(
+        over, _usd("2.50"), agent_id="a"
+    )  # the whole actual amount, not only the overshoot
     assert store.get_run(other_run).cost_usd == _usd("2.50")
 
 
@@ -366,7 +379,7 @@ def test_two_threads_settling_one_row_exactly_one_applies(store):
     def settle(amount):
         gate.wait()
         try:
-            results.append((amount, *store.settle_spend(rid, amount)))
+            results.append((amount, *store.settle_spend(rid, amount, agent_id="a")))
         except Exception as exc:  # noqa: BLE001 - anything raised is a failure, reported below
             problems.append(exc)
 
@@ -391,7 +404,7 @@ def test_expire_marks_old_open_rows_and_the_counters_do_not_move(store):
     _reserve(store, _usd("1.00"))
     _reserve(store, _usd("0.50"))
     done = _reserve(store, _usd("0.25"))
-    store.settle_spend(done, _usd("0.25"))
+    store.settle_spend(done, _usd("0.25"), agent_id="a")
     before = store.spend_totals("a", D1)
     assert before == (_usd("1.75"), _usd("1.75"))
     assert store.expire_spend_reservations(3600) == 0  # nothing is an hour old
@@ -399,7 +412,7 @@ def test_expire_marks_old_open_rows_and_the_counters_do_not_move(store):
     assert store.spend_totals("a", D1) == before
     assert _expire_all(store) == 0  # an expired row is not expired twice
     assert store.spend_totals("a", D1) == before
-    again, applied = store.settle_spend(done, _usd("9.00"))
+    again, applied = store.settle_spend(done, _usd("9.00"), agent_id="a")
     assert applied is False and again.status == "settled"
 
 
@@ -411,9 +424,9 @@ def test_expire_takes_only_rows_older_than_the_bound(store):
     time.sleep(1.3)
     fresh = _reserve(store, _usd("1.00"), day=D2)
     assert store.expire_spend_reservations(1) == 1
-    store.settle_spend(fresh, _usd("0.25"))
+    store.settle_spend(fresh, _usd("0.25"), agent_id="a")
     assert store.spend_totals("a", D2) == (_usd("0.25"), _usd("1.25"))  # still open: freed
-    store.settle_spend(old, _usd("0.25"))
+    store.settle_spend(old, _usd("0.25"), agent_id="a")
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.25"))  # expired: stays booked
 
 
@@ -423,7 +436,7 @@ def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), run_id=run_id)
     assert _expire_all(store) == 1
-    row, applied = store.settle_spend(rid, _usd("0.40"))
+    row, applied = store.settle_spend(rid, _usd("0.40"), agent_id="a")
     assert applied is True
     assert row.status == "settled" and row.closed_at is not None  # 003 G3
     # version 2.3 (003 G3): settled_usd is what stays booked, max(actual, reserved); under 2.1 this test read 0.40.
@@ -431,7 +444,7 @@ def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
     assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("1.00"))
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     assert store.get_run(run_id).cost_usd == _usd("0.40")
-    again, applied = store.settle_spend(rid, _usd("5.00"))
+    again, applied = store.settle_spend(rid, _usd("5.00"), agent_id="a")
     assert applied is False and again == row
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     assert store.get_run(run_id).cost_usd == _usd("0.40")
@@ -443,11 +456,11 @@ def test_settle_after_expiry_with_a_higher_actual_books_the_difference(store):
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), day_cap=cap, month_cap=cap, run_id=run_id)
     assert _expire_all(store) == 1
-    row, applied = store.settle_spend(rid, _usd("1.75"))
+    row, applied = store.settle_spend(rid, _usd("1.75"), agent_id="a")
     assert applied is True and (row.settled_usd, row.status) == (_usd("1.75"), "settled")
     assert store.spend_totals("a", D1) == (_usd("1.75"), _usd("1.75"))
     assert store.get_run(run_id).cost_usd == _usd("1.75")
-    _, applied = store.settle_spend(rid, _usd("9.00"))
+    _, applied = store.settle_spend(rid, _usd("9.00"), agent_id="a")
     assert applied is False
     assert store.spend_totals("a", D1) == (_usd("1.75"), _usd("1.75"))
     assert _expire_all(store) == 0  # a claimed row is closed for the sweep too
@@ -473,34 +486,43 @@ def test_purge_deletes_closed_rows_only_and_returns_the_count(store):
     kept_open = _reserve(store, _usd("1.00"))
     closed = [_reserve(store, _usd("0.50")) for _ in range(2)]
     for rid in closed:
-        store.settle_spend(rid, _usd("0.25"))
+        store.settle_spend(rid, _usd("0.25"), agent_id="a")
     totals = store.spend_totals("a", D1)
     assert totals == (_usd("1.50"), _usd("1.50"))
     assert _purge(store, now() - timedelta(days=1)) == 0  # closed, but after the bound
-    _, applied = store.settle_spend(closed[0], _usd("0.25"))
+    _, applied = store.settle_spend(closed[0], _usd("0.25"), agent_id="a")
     assert applied is False  # still stored
     assert _purge(store, now() + timedelta(days=1)) == 2
     for rid in closed:
         with pytest.raises(NotFound):
-            store.settle_spend(rid, _usd("0.25"))
+            store.settle_spend(rid, _usd("0.25"), agent_id="a")
     assert _purge(store, now() + timedelta(days=1)) == 0
     assert store.spend_totals("a", D1) == totals
-    row, applied = store.settle_spend(kept_open, _usd("1.00"))  # the open row outlived both purges
+    row, applied = store.settle_spend(
+        kept_open, _usd("1.00"), agent_id="a"
+    )  # the open row outlived both purges
     assert applied is True and row.status == "settled"
 
 
-def test_purge_deletes_an_expired_row_nobody_settled_and_a_late_settle_is_not_found(store):
-    """S1.purge; inv 12 and the stated limit (003 C1): an expired row counts as closed, so the purge deletes it; a
-    settle that arrives afterwards raises NotFound and the worst case stays on the counters."""
+def test_purge_keeps_an_expired_row_until_it_is_settled_and_then_a_late_settle_is_not_found(store):
+    """S1.purge; inv 12. core-b F-store (E11 M3) replaced the 003 C1 limit: an expired hold is NOT closed for the
+    purge, it stays so that a late settle can still raise the booking (inv 4); only a settled row is deleted, and a
+    settle that arrives after that raises NotFound. The worst case stays on the counters throughout."""
     crashed = _reserve(store, _usd("1.00"))
     assert _expire_all(store) == 1
     still_open = _reserve(store, _usd("0.50"))
-    assert _purge(store, now() - timedelta(days=1)) == 0  # expired, but after the bound
-    assert _purge(store, now() + timedelta(days=1)) == 1
-    with pytest.raises(NotFound):
-        store.settle_spend(crashed, _usd("0.10"))
+    assert _purge(store, now() + timedelta(days=1)) == 0  # expired and open rows are both kept
+    row, applied = store.settle_spend(
+        crashed, _usd("0.10"), agent_id="a"
+    )  # the late settle still applies
+    assert applied is True and row.settled_usd == _usd("1.00")  # upward only: max(actual, reserved)
     assert store.spend_totals("a", D1) == (_usd("1.50"), _usd("1.50"))
-    _, applied = store.settle_spend(still_open, _usd("0.50"))
+    assert _purge(store, now() - timedelta(days=1)) == 0  # settled, but closed after the bound
+    assert _purge(store, now() + timedelta(days=1)) == 1  # now the settled row goes
+    with pytest.raises(NotFound):
+        store.settle_spend(crashed, _usd("0.10"), agent_id="a")
+    assert store.spend_totals("a", D1) == (_usd("1.50"), _usd("1.50"))
+    _, applied = store.settle_spend(still_open, _usd("0.50"), agent_id="a")
     assert applied is True
 
 
@@ -546,7 +568,7 @@ def test_reserve_refuses_a_bad_cap_and_books_nothing(store, bad, which):
         _reserve(store, _usd("1.00"), rid=refused, **{which: bad})
     assert store.spend_totals("a", D1) == (Decimal(0), Decimal(0))
     with pytest.raises(NotFound):
-        store.settle_spend(refused, Decimal(0))
+        store.settle_spend(refused, Decimal(0), agent_id="a")
 
 
 def test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error(store):
@@ -600,7 +622,7 @@ def test_a_run_id_without_a_run_row_is_booked_and_settled_without_a_run_cost(sto
     """003 G6: reserve does not check the run; settle moves the counters, closes the row and skips the run cost.
     NotFound at settle always means "no such reservation"."""
     rid = _reserve(store, _usd("1.00"), run_id="run-that-does-not-exist")
-    row, applied = store.settle_spend(rid, _usd("0.40"))
+    row, applied = store.settle_spend(rid, _usd("0.40"), agent_id="a")
     assert applied is True
     assert (row.run_id, row.status, row.settled_usd) == (
         "run-that-does-not-exist",
@@ -616,8 +638,11 @@ def test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_compar
     """003 G7: ValueError (amount, then caps), then StaleState, then SpendCapExceeded."""
     cap = _usd("1.00")
     rid = _reserve(store, _usd("1.00"), day_cap=cap)
-    with pytest.raises(StaleState):  # a duplicate id that would also pass the cap
-        _reserve(store, _usd("1.00"), day_cap=cap, rid=rid)
+    _reserve(
+        store, _usd("1.00"), day_cap=cap, rid=rid
+    )  # the identical call on the open hold: a retry, no cap check
+    with pytest.raises(StaleState):  # a duplicate id with other content, before the cap comparison
+        _reserve(store, _usd("0.50"), day_cap=cap, rid=rid)
     with pytest.raises(ValueError):  # a duplicate id with a bad amount
         _reserve(store, Decimal("NaN"), day_cap=cap, rid=rid)
     with pytest.raises(ValueError):  # a duplicate id with a bad cap
@@ -625,7 +650,7 @@ def test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_compar
     with pytest.raises(_cap_error()):  # a fresh id against the full counter
         _reserve(store, _usd("1.00"), day_cap=cap)
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
-    _, applied = store.settle_spend(rid, _usd("1.00"))
+    _, applied = store.settle_spend(rid, _usd("1.00"), agent_id="a")
     assert applied is True  # the first row is untouched by the four refused calls
 
 
@@ -652,7 +677,7 @@ def test_expire_refuses_a_bad_age_and_expires_nothing(store, bad):
     rid = _reserve(store, _usd("1.00"))
     with pytest.raises(ValueError):
         store.expire_spend_reservations(bad)
-    store.settle_spend(rid, _usd("0.25"))
+    store.settle_spend(rid, _usd("0.25"), agent_id="a")
     assert store.spend_totals("a", D1) == (
         _usd("0.25"),
         _usd("0.25"),
@@ -696,7 +721,7 @@ def test_fifty_threads_against_a_cap_of_three_exactly_three_succeed(store, which
     assert set(refused) == {which}
     assert store.spend_totals("a", D1) == (_usd("3.00"), _usd("3.00"))
     for rid in granted:  # each granted id is a real open row
-        _, applied = store.settle_spend(rid, _usd("1.00"))
+        _, applied = store.settle_spend(rid, _usd("1.00"), agent_id="a")
         assert applied is True
     assert store.spend_totals("a", D1) == (_usd("3.00"), _usd("3.00"))
 
@@ -756,7 +781,7 @@ def test_a_random_sequence_keeps_the_counters_equal_to_the_rows(store, seed):
             rid = rng.choice(sorted(rows))
             day, reserved, state, _ = rows[rid]
             actual = Decimal(rng.randrange(0, 400)) / 100
-            row, applied = store.settle_spend(rid, actual)
+            row, applied = store.settle_spend(rid, actual, agent_id="a")
             assert applied is (state in ("open", "expired"))
             if state == "open":
                 rows[rid] = [day, reserved, "closed", actual]
