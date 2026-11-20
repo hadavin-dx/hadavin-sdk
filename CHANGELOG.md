@@ -3,9 +3,9 @@
 ## Unreleased
 
 ### Money status (read this first)
-Exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+Exact money and the no-lowering wall are in force. No-overspend now holds ONLY for call sites that go through the live loop (`Runtime.handle`, which reserves the worst case before each model call and settles after it, builder B2); the sites listed below are not gated.
 - In force: exact decimal money; on PostgreSQL the runtime login cannot lower a booked amount or change a cap (grants flip in `migrate`, migrations 0010 and 0011); caps live in `hadavin_caps`; `Limits.reserve` and `Limits.settle` exist and are tested.
-- NOT in force: the live path does not reserve before a model call (it calls `Limits.blocked()` before and books after), so concurrent runs can each pass the check and overshoot a cap by up to (concurrent runs x one call's cost). Nothing in this changelog should be read as a hard spend cap until F-install lands.
+- NOT gated (no reserve before the call; they still charge or count after it, or not at all): the injection screen's `llm_judge` call in the live loop (`Runtime._screen`, charged after the fact with `Limits.charge`), `k1b/loop.py` (own in-memory budget), `evals.py` and `guard/judge.py` called outside the loop. Concurrent use of those can overshoot a cap. The core-c model gate will move the reserve/settle pair.
 - Migrations in this release: 0006 `stop_state`, 0007 `spend_reservations`, 0008 `release_expired_spend`, 0009 `stop_state_hardening`, 0010 `money_guard`, 0011 `money_definer` (0007 to 0011 are unreleased and may still change; see `handover/core-b/MIGRATIONS.md`).
 - Operator sequence: stop the tick scheduler and every runtime-side process; `hadavin-sdk migrate` naming ALL roles (including `--reset-role`); `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke `tick`. Every run is refused (`limits_unavailable`) until `sync-caps` has completed. There is no rolling upgrade.
 

@@ -1269,17 +1269,23 @@ def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(
     owner = w.run("SELECT current_user")[0][0]
     w.new_role("st")
     of_owner, writer = w.new_role("mw", "LOGIN NOINHERIT"), w.new_role("wa")
-    w.grant("GRANT {} TO {}", owner, of_owner)
-    w.grant("GRANT pg_write_all_data TO {}", writer)
-    try:
-        assert _who(w.scoped, w.reset) == []
-        # a member of pg_write_all_data can write the money tables: refused as such (step 4), not by the stop check
-        with pytest.raises(ConfigError, match=f"can write a money table.*{writer}"):
-            w.migrate()
-        w.grant("REVOKE pg_write_all_data FROM {}", writer)
-        assert w.migrate() == []
-    finally:
-        w.grant("REVOKE {} FROM {}", owner, of_owner)
+    # A member of pg_write_all_data writes every table of the SERVER: another worker's migrate with named roles would
+    # refuse it as a writer of the money tables. The exclusive gate (cross-process) keeps those migrates out while the
+    # membership exists; it is revoked before the gate is released.
+    with pg_gate.exclusive():
+        w.grant("GRANT {} TO {}", owner, of_owner)
+        w.grant("GRANT pg_write_all_data TO {}", writer)
+        try:
+            assert _who(w.scoped, w.reset) == []
+            # a member of pg_write_all_data can write the money tables: refused as such (step 4), not by the stop
+            # check; a member of the owner is outside the guarantee
+            with pytest.raises(ConfigError, match=f"can write a money table.*{writer}"):
+                w.migrate()
+            w.grant("REVOKE pg_write_all_data FROM {}", writer)
+            assert w.migrate() == []
+        finally:
+            w.grant("REVOKE {} FROM {}", owner, of_owner)
+            w.grant("REVOKE pg_write_all_data FROM {}", writer)
 
 
 def _second_schema(w):

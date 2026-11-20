@@ -43,7 +43,6 @@ ROUTES = {
         "max_tokens": 1000,
     }
 }
-xfail_b2 = pytest.mark.xfail(strict=True, reason="B2: live path not gated yet")
 
 
 class StubLLM:
@@ -149,7 +148,6 @@ def _worst(llm: StubLLM, rt) -> Decimal:
 # (1) the cap holds across runs: a second run is refused BEFORE its model call ------------------------------
 
 
-@xfail_b2
 def test_second_sequential_run_is_refused_before_its_model_call(world, store):
     llm = StubLLM(cost="0.60")
     rt, _spy = world(llm)
@@ -164,7 +162,6 @@ def test_second_sequential_run_is_refused_before_its_model_call(world, store):
     assert _day(store) <= D("1.00")
 
 
-@xfail_b2
 def test_overlapping_runs_cannot_book_more_than_the_cap(world, store):
     llm = StubLLM(cost="0.60", hold_first=True)
     rt, _spy = world(llm)
@@ -185,7 +182,6 @@ def test_overlapping_runs_cannot_book_more_than_the_cap(world, store):
 # (2) the reservation comes before the model call, priced from the route -----------------------------------
 
 
-@xfail_b2
 def test_reserve_comes_before_the_model_call_with_the_worst_case(world):
     llm = StubLLM(cost="0.20")
     rt, spy = world(llm)
@@ -202,7 +198,6 @@ def test_reserve_comes_before_the_model_call_with_the_worst_case(world):
 # (3) a normal reply settles once with the real cost ------------------------------------------------------
 
 
-@xfail_b2
 def test_settle_once_with_the_actual_cost(world, store):
     llm = StubLLM(cost="0.20")
     rt, spy = world(llm)
@@ -217,7 +212,6 @@ def test_settle_once_with_the_actual_cost(world, store):
 # (4) a provider error leaves the hold at the worst case: no settle at 0 ----------------------------------
 
 
-@xfail_b2
 @pytest.mark.parametrize("error", [ProviderExhausted("quota"), ProviderError("boom")])
 def test_provider_error_keeps_the_hold_at_the_worst_case(world, store, error):
     llm = StubLLM(error=error)
@@ -231,7 +225,6 @@ def test_provider_error_keeps_the_hold_at_the_worst_case(world, store, error):
 # (5) a refused reserve ends the run in the spend-refused state with an audit code ------------------------
 
 
-@xfail_b2
 def test_refused_reserve_ends_run_with_audit_code(world, store):
     llm = StubLLM(cost="0.60")
     rt, spy = world(llm)
@@ -251,7 +244,6 @@ def test_refused_reserve_ends_run_with_audit_code(world, store):
 # (6) no double counting ---------------------------------------------------------------------------------
 
 
-@xfail_b2
 def test_day_total_is_the_actual_cost_not_actual_plus_worst_case(world, store):
     llm = StubLLM(cost="0.20")
     rt, spy = world(llm)

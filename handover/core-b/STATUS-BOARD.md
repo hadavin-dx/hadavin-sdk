@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T14:33:48Z
+UPDATED_UTC: 2026-11-20T14:55:35Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,17 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.24 of 4 cores, mem 1/15 GB, disk 43G free, 39% used, agents light 4 heavy 2
-DISK: / 43G free, 39% used; worktrees /tmp/core-b-wt 4.1G
+CAPACITY: load 2.25 of 4 cores, mem 1/15 GB, disk 42G free, 41% used, agents light 4 heavy 2
+DISK: / 42G free, 41% used; worktrees /tmp/core-b-wt 4.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T14:33:24Z (previous push; this board is pushed right after writing)
-IST: 20:03 IST
+PUSHED_UTC: 2026-11-20T14:54:21Z (previous push; this board is pushed right after writing)
+IST: 20:25 IST
+
+MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -307,3 +309,15 @@ B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the m
 14:10Z MERGED since 13:58Z: A3 fix round (23aaddb6b: ASCII audit patterns, leap-year ts regex, _note fallback keeps fields), price guard from the laptop (wip/lead-b-price-guard, ledger row FIXED-UNVERIFIED), M6 fix round (repeating warning, --accept-changed-draft/--reset-draft, packaged released hashes), limits-test fix, I1 (db9cd8c58: reserve idempotent retry = core-a M5; settle requires agent_id everywhere = lead M2; memory add_spend/reserve parity = core-a M6; ~130 test call sites). Lead items status: B1 DONE (G), B2 IN PROGRESS (builder MB2), B3 DONE, M1 DONE, M2 DONE, M3 DONE, M4 laptop, M5 DONE, M6 DONE (fixed after review), M7 DONE except column grants (laptop), N1 DONE, N2/N3 laptop (lead-b-ts-watermark), N8 DECISIONS. ABC: M1 DONE, M2 DONE, M3 DONE + allowlist, nit 2/3 DONE, nit 7 merged. AGENTS LIVE (sonnet, 4): B2 builder (MB2) | F7 regression fixer for the 16 PG failures I1 found on the base (MF7; tests only; own database hadavin_test_mf7) | R13 reviewer of I1 diff (read-only; own database) | none else. Known open: laptop evidence PG15/17 pending; evidence batch 11 on the merged head to start after F7 and B2 land (cap 2 heavy).
 
 13:52Z MODEL CHECK (get_session on core-b): configured_model=claude-sonnet-5-5, session_context.model=claude-sonnet-5-5, external_metadata.model=claude-sonnet-5-5, last_served_model=claude-sonnet-5-5. NOT FABLE-SERVED. Running agents (B2 builder, F7 fixer, R13 reviewer): model sonnet set explicitly, none inherited.
+
+14:15Z LASER EVIDENCE (laptop, PG15/17, head 7e1b9750d: NOT GREEN) vs newest head: item | builder | state.
+(1) money_definer_pg / _mutants collection unpack: fixed in G/H1/F7 for the pg file; mutants file + whole battery re-run: builder R1 (MR1, since 14:14Z, sonnet, own DB hadavin_test_mr1)
+(2) test_audit_drain 7 failures: fixed by T1+T2 (merged); re-confirm: R1
+(3) test_spend_reservations_pg 6 failures: step order fixed by T1, rest by F7+I1 (merged); re-confirm: R1
+(4) test_stop_state_roles 11 failures + e7 flag test: builder S1 (MS1, since 14:14Z, sonnet, own DB hadavin_test_ms1)
+(5) contracts test_store_spend_ids_caps 3: FIXED by F7 (money_caps_seed DataError), merged 84fa98213
+(6) test_store_spend_model seed137 PG17-only: R1 tries to reproduce
+(7) test_limits_reserve refusal-log-line: FIXED by me (log names class only, 79 tests); test_money_definer_review_fixes::test_m2: FIXED by F7; test_migrations_0009_0010_round2: S1 re-confirms
+(8) mutant baselines: audit_drain/reserve/price/stage repinned by T1 (merged; kill counts 20/20, 31/31, 22/22, 37/37 on its run); reserve --hand H7/H9/H10 + price/stage re-run: R1; stop_state_mutants --hand (2 survivors S12 isfinite, 13 other): S1
+(9) Port.io in handover/BRIEF-PREAMBLE.md: lead's file, ignored.
+Also live: B2 builder (MB2). Waiting: laptop wip/lead-b-migrate (M4, isolation, audit-rights, column grants). After S1+R1+B2 land: I re-request laptop PG evidence on the final head.
