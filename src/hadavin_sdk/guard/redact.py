@@ -1734,13 +1734,20 @@ class _Redactor:
             prev = stop
         return "".join(out) + body[prev:] if claims else body
 
+    def _held(self, label: str, full: str) -> str | None:
+        """The placeholder already held for `full`, for a find labelled `label`: any kind, EXCEPT that a SECRET-labelled find never reuses a
+        non-secret placeholder (G9c, as `_place_union` since G9b: a gate restores a TENANT_1, so a SECRET value must not end under one);
+        None then, and the caller registers a SECRET entry of its own, which `_build` prefers for the value's rule."""
+        got = self.reverse.get(full)
+        if got is not None and label in SECRET_KINDS and _kind(got) not in SECRET_KINDS:
+            return None
+        return got
+
     def _register_written(self, label: str, written: str) -> str:
         """The placeholder of a value masked in place: found by its WRITTEN spelling (two spellings of one folded value get two
         placeholders), a new one when it is new, whose map value is the written slice. The alias index learns the folded spelling."""
         full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), written)
-        placeholder = (
-            self.reverse[full] if full in self.reverse else self._place(label, full, written)
-        )
+        placeholder = self._held(label, full) or self._place(label, full, written)
         self.actions += 1
         if not _plain(full):
             for key in _alias_keys(full):
@@ -1907,9 +1914,7 @@ class _Redactor:
         if original is None:
             return None
         full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), original)
-        placeholder = (
-            self.reverse[full] if full in self.reverse else self._place(label, full, original)
-        )
+        placeholder = self._held(label, full) or self._place(label, full, original)
         return original, placeholder
 
     def _place(self, label: str, full: str, original: str, derived: bool = True) -> str:
@@ -2318,7 +2323,8 @@ class _Redactor:
         at least one free character AND part of at least one token and no separator, merged when they overlap in `out`; tokens are taken
         whole, free text as far as the occurrences reach. `kind`: SECRET when any token of the run or any occurrence is of a secret kind,
         else the first token's kind. `masked`: only for a redactor that may not register (`_masked`), else None. Units: one per
-        character of E (as it is built), one per occurrence (charged every `_OCC_CHARGE_EVERY` found, G9b); the finder groups and slow values read the deadline, uncounted."""
+        character of E (as it is built), `_OCC_UNITS` (3) per accepted occurrence and `_REJECT_UNITS` (1) per rejected call (charged every
+        `_OCC_CHARGE_EVERY` units found, G9b/G9c); the finder groups and slow values read the deadline, uncounted."""
         if "<" not in out:
             return []
         # a union of written forms in this pass's `_spelled_sweep` grew the map
@@ -2331,8 +2337,10 @@ class _Redactor:
         E, segs, toks, deep = rb
         rules = self._rules
         occ: list[tuple[int, int, str]] = []
+        pending = 0  # G9c M1: units found since the last charge (`_OCC_UNITS` per accepted occurrence, `_REJECT_UNITS` per rejected call)
 
         def add(word: str, at: int) -> None:
+            nonlocal pending
             rule = rules.get(word)
             if rule is None:
                 return
@@ -2341,12 +2349,15 @@ class _Redactor:
             if rule[2] is not _EVERY_COPY and (
                 E[at - 1 : at] in joins or E[end : end + 1] in joins
             ):
-                return
-            occ.append((at, end, word))
-            if len(occ) % _OCC_CHARGE_EVERY == 0:
-                # G9b M1: charged AS THEY ARE FOUND, so a text with ~4e8 occurrences (a nested chain of 200 secrets) is refused after
-                # about `SPELLED_MAX_WORK` tuples, not after the list exists; the remainder is charged after the scans
-                self._spend(work, _OCC_CHARGE_EVERY, deadline)
+                pending += _REJECT_UNITS  # G9c M1b: a rejected call is work too (a chain of identifier values is rejected almost everywhere)
+            else:
+                occ.append((at, end, word))
+                pending += _OCC_UNITS
+            if pending >= _OCC_CHARGE_EVERY:
+                # charged AS FOUND (G9b M1), so a text with ~4e8 occurrences (a nested chain of 200 secrets) is refused after about
+                # `SPELLED_MAX_WORK / _OCC_UNITS` tuples, not after the list exists; the remainder is charged after the scans
+                self._spend(work, pending, deadline)
+                pending = 0
 
         for finder, prefixes in self._finders:
             if deadline is not None:
@@ -2364,10 +2375,13 @@ class _Redactor:
             while j >= 0:
                 add(w, j)
                 j = E.find(w, j + 1)
-        self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)
+        self._spend(work, pending, deadline)
         starts = [s[0] for s in segs]
         hits: list[tuple[int, int, str]] = []  # (out start, out end, the occurrence's placeholder)
-        for a, b, w in occ:
+        for n_hit, (a, b, w) in enumerate(occ):
+            if deadline is not None and n_hit and n_hit % _OCC_CHARGE_EVERY == 0:
+                # G9c M1a: the loop over the occurrences reads the clock too
+                self._over_budget(deadline)
             i0 = bisect_right(starts, a) - 1
             i1 = bisect_right(starts, b - 1) - 1
             covered = segs[i0 : i1 + 1]
@@ -2417,7 +2431,7 @@ class _Redactor:
         `out` plus what each key token adds when put back whole). A place outside the window needs more text than can be read back, so it
         is not searched, not compared and not counted. Units: one per (edge, long rule); `len(w)` once per distinct anchor and rule (the
         search of the anchor in the rule); `hi - lo` once per distinct window (the scan of the window, E17 review: the scan runs per
-        window, not per anchor); `len(anchor)` more per place found; `2 * len(w) + 2` per comparison (the rule compared whole with the text
+        window, not per anchor); `len(anchor) // _ANCHOR_SHARE + 1` more per place found; for the first comparison of an edge and rule `2 * (len(w) // _COMPARE_SHARE + 1)` and `_CHUNK_UNITS` per chunk read back, `len(w) // _COMPARE_SHARE + _COMPARE_UNITS` for each further place (the rule compared whole with the text
         read back on both sides of the edge, `_expand`). Returns hits as `_overlaps` makes them: (out start, out end, placeholder)."""
         reach = defaults.SPELLED_READBACK_REACH
         rules = self._rules
@@ -2458,8 +2472,11 @@ class _Redactor:
                     # the scan of the window [lo, hi) is counted, once per distinct window (the same window is not scanned again)
                     self._spend(work, hi - lo, deadline)
                     j = w.find(anchor, lo, hi)
+                    place_units = (
+                        len(anchor) // _ANCHOR_SHARE + 1
+                    )  # G9c M3: 2.9 us measured per place of a 1,025-character anchor
                     while j >= 0:
-                        self._spend(work, len(anchor), deadline)  # a further search starts there
+                        self._spend(work, place_units, deadline)  # a further search starts there
                         at.append(j)
                         j = w.find(anchor, j + 1, hi)
                     found[(anchor, w, lo, hi)] = at
@@ -2470,14 +2487,17 @@ class _Redactor:
                         continue  # the text read back is shorter than the rule on one side: not an occurrence, no comparison
                     if read is None:
                         # the first comparison of the edge pays for the read-back of the rule's length on both sides (what it cost per place
-                        # before G9b); each further place only compares slices of it: `len(w) // _COMPARE_SHARE + 1` units
-                        self._spend(work, 2 * len(w) + 2, deadline)
+                        # before G9b); each further place only compares slices of it: `len(w) // _COMPARE_SHARE + _COMPARE_UNITS` units
+                        self._spend(work, 2 * (len(w) // _COMPARE_SHARE + 1), deadline)
                         read = (
                             self._expand(out, toks, starts, b, len(w) + 1, True),
                             self._expand(out, toks, starts, b, len(w) + 1, False),
                         )
+                        # G9c M3: `_expand` costs per CHUNK (a token put back is one), not per character: charged once it is known
+                        chunk_units = _CHUNK_UNITS * (len(read[0][1]) + len(read[1][1]))
+                        self._spend(work, chunk_units, deadline)
                     else:
-                        self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)
+                        self._spend(work, len(w) // _COMPARE_SHARE + _COMPARE_UNITS, deadline)
                     (lt, lch), (rt, rch) = read
                     if len(lt) < k or len(rt) < len(w) - k:
                         continue  # the text read back ends (or a token that is not a key stands) before the rule would
@@ -2611,7 +2631,6 @@ class _Redactor:
                 )
                 self._spend(work, size, deadline)  # the union's value, before it is built
                 current = self._built_for == len(self.mapping)
-                self._union_upgraded = False
                 placeholder = self._place_union(out[start:end], kind, derived=False)
                 # a G9 union needs no rule of its own: no rebuild of the finders for it (design M6); one that upgraded a held value to SECRET does
                 keep_rules = current and not self._union_upgraded
@@ -2636,10 +2655,11 @@ class _Redactor:
         """The placeholder of an overlap: `union` is the text of the whole run (`xyz<SECRET_1>ab`), registered under `kind` as a value of
         its own (its restored text) unless that value has a placeholder already: then that placeholder, whatever its kind (as before G9), EXCEPT that a SECRET
         union never takes a non-secret placeholder (G9b M2: `ab-<SECRET_1>` must not become `<TENANT_1>`, which a gate restores): it is
-        registered as a SECRET entry of its own, which `_build` prefers for the value's rule (`_union_upgraded` makes `_close` rebuild).
+        registered as a SECRET entry of its own, which `_build` prefers for the value's rule (`_union_upgraded`, reset at each call, makes `_close` rebuild).
         `derived=False` (G9's unions): the value only, no written form and no pieces; its characters are counted per call
         (`self._union_chars`) and the call is refused past `defaults.SPELLED_MAX_UNION_CHARS` (`InputTooLarge("SpelledUnionTooMuch")`,
         nothing stored by the refused registration)."""
+        self._union_upgraded = False  # G9c: set below, for this call only (a G7 union leaves it as it finds it otherwise)
         full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), union)
         held = self.reverse.get(full)
         if held is not None and not (kind in SECRET_KINDS and _kind(held) not in SECRET_KINDS):
@@ -2863,7 +2883,12 @@ def _out_at(chunks: list[tuple[int, int, int, bool]], x: int, end: bool) -> int:
 _SETTLE_ROUNDS = 4
 # The scan of the written forms (`_spelled_sweep`) checks its deadline every this many units of work (a placeholder token of the text, or one step of a trie walk).
 _SPELL_CHECK_EVERY = 1024
-_COMPARE_SHARE = 32  # G9b M3: a further place of an anchor at one edge costs `len(rule) // this + 1` units (`_deep_hits`)
+_COMPARE_SHARE = 1024  # G9c M3 (G9b: 32): characters of the rule per unit in a comparison (memcmp; measured 0.3 us at 1,100 and at 8,000 characters)
+_COMPARE_UNITS = 3  # G9c M3: the fixed cost of a further place (two slices and compares, 0.3 us)
+_ANCHOR_SHARE = 32  # G9c M3 (G9b: 1): characters of the anchor per unit for a place of it found in the rule (`str.find` of a periodic needle: 2.9 us per place at 1,025)
+_CHUNK_UNITS = 5  # G9c M3: units per chunk `_expand` builds (0.44 us measured per chunk of 4 characters; G9b charged per character)
+_OCC_UNITS = 3  # G9c M1a: units per accepted occurrence (a tuple, two bisects, a slice, a hit: measured ~3 us, `defaults.py` G9c)
+_REJECT_UNITS = 1  # G9c M1b: units per rejected `add` call
 _OCC_CHARGE_EVERY = (
     256  # G9b M1: occurrences of a read-back found between two charges (`_overlaps`)
 )
