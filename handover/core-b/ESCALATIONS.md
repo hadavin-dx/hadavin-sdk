@@ -53,3 +53,6 @@
 1. test_model_gate::test_no_error_the_adapters_raise_today_carries_the_mark, and test_model_gate_install::...[usd_cap]: core-c must honour the mark on ProviderExhausted and add usd_cap to SPEND_REASONS (requests/to-core-c-1, 2).
 2. test_repo_rules::test_k5_no_transitive_import_of_actions_from_tools: chain tools -> guard -> guard.injection (function-local import of limits.SpendRefused, line 234) -> limits -> registry -> actions.contract. Fails on the Y tree before the merge too. guard/injection.py is core-c's; fix is to move SpendRefused to a module that does not import registry.
 Tests were not changed. Not pushed from the Y worktree yet.
+
+## E8 (2026-11-20 07:12Z) full suite on integration tree Y: 13506 passed, 14 failed, 1 error
+Mine, being fixed (local/code-GR): grants tests 2,4,5 (purge DELETE on spend_reservations was deliberate). Lead's (step B, reset_role, kill_switch grants): test_grants_negative_roles identities, stop-table, runtime-role switch tests. core-c's: model_gate mark, usd_cap, K5 import chain. Environment: two tests ignore HADAVIN_TEST_PG_DSN and use the default socket (test_step_b_the_runtime_role_cannot_switch_the_stop_off, demo_askdata dblink). Lead's: handover/BRIEF-PREAMBLE.md vendor string. Open: test_runmap_is_masked (owner being found), a setup error in test_spend_reservations_pg[TRUNCATE spend] under -n 3 only (to check).
