@@ -671,19 +671,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "d-fix4",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "round-3 fixes (config error text, log time+level, --host '', start/stop lines, stale text), strict-mode failure at test time not collection, G13b expect, ticket sizes and cites",
-   "started UTC": "08:27",
-   "expected end": "about 30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "3 of 3 (fix)",
-   "retries so far": 0,
-   "reason": "after batch5 and round 3"
-  },
-  {
    "id": "E-rev4",
    "role": "fresh reviewer (codebase-details)",
    "model": "sonnet",
@@ -695,6 +682,32 @@
    "review round n of cap": "extra pass granted by the lead",
    "retries so far": 0,
    "reason": "lead verdict E5 = yes"
+  },
+  {
+   "id": "batch6",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "WHOLE suite with REQUIRE_PG=1 -n 3 (FAILED ids, skip table), combined tree core-b + our files with n8n/, mutants; logs in handover/core-a/evidence/",
+   "started UTC": "08:47",
+   "expected end": "about 25 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "lead: full suite, failing ids"
+  },
+  {
+   "id": "D-rev4",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "extra fresh read-only pass on step D: do the tests really fail if a guarantee breaks; d-fix4 code; strict-mode hook",
+   "started UTC": "08:47",
+   "expected end": "about 15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "extra pass ordered by the lead",
+   "retries so far": 0,
+   "reason": "lead: fresh result review on the committed head"
   }
  ],
  "tests": [
@@ -2194,6 +2207,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "OPEN-ITEMS.md written: 7 open (REQ-001..004 wait for core-b; E5, E6, E7 wait for the lead)"
+  },
+  {
+   "id": "d-fix4",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "round-3 fixes (config error text, log time+level, --host '', start/stop lines, stale text), strict-mode failure at test time not collection, G13b expect, ticket sizes and cites",
+   "started UTC": "08:27",
+   "expected end": "about 30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "3 of 3 (fix)",
+   "retries so far": 0,
+   "reason": "8 of 9 done (R3-7 declined: anchor of G18f); tests/triggers 1182 passed 5 skipped (no REQUIRE_PG set); mutants 89 killed + 1 crash-accepted, 90 of 90 (run 14: first run wrote only its header and stopped, cause not found, re-run ok); strict mode fails at test time; ticket sizes true (352+704+316)"
   }
  ]
 }
