@@ -273,6 +273,8 @@ def test_e1_health_needs_no_signature_and_leaks_nothing(tmp_path, caplog):
         assert (
             _post(wsgi, DOCUMENT, sign=False)[0] == 401
         )  # the trigger path still needs the signature
+        assert _post(wsgi, OTHER_DOCUMENT, sign=False)[0] == 401  # unsigned and conflicting:
+        assert len([e for e in app.audit.events() if e.domain == "trigger"]) == 1  # no new event
         for down in (False, True):
             store.down = down
             status, body, headers = _get(wsgi)  # no header at all
