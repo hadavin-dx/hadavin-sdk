@@ -380,6 +380,12 @@ def _migrate(
             "warning: new tables have no runtime grants; run again with --runtime-role <role>",
             file=sys.stderr,
         )
+    if runtime_role and not reset_role:
+        print(
+            "warning: no reset role was named, so nobody but the owner can reset the kill switch; run again "
+            "with --reset-role <role>",
+            file=sys.stderr,
+        )
     return 0
 
 

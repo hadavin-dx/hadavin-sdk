@@ -58,7 +58,6 @@ GRANTS: dict[str, Grant] = {
     # the reset role clears stops (and turns the old flag off), and it writes the reset into the audit chain.
     "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
     "kill_switch_stops": Grant("table", _APPEND, reset="SELECT"),
-    "kill_switch_stops_id_seq": Grant("sequence", "USAGE"),
     "kill_switch_clears": Grant("table", "SELECT", reset=_APPEND),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND),

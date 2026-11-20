@@ -248,7 +248,10 @@ class Runtime:
             _LOG.warning("run %s: audit write for card %s failed", run.run_id, operation)
 
     def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None:
-        blocked = self.limits.blocked(run.agent_id)
+        try:  # limits unreadable: stop means stop, so the run goes to a person
+            blocked = self.limits.blocked(run.agent_id)
+        except Exception:  # noqa: BLE001
+            return self._to(run, S.NEEDS_PERSON, "limits_unavailable")
         if "kill_switch" in blocked:
             return self._to(run, S.STOPPED, "kill_switch")
         if blocked:
@@ -782,12 +785,16 @@ class Runtime:
             return "recheck.unknown_agent_or_action"
         if plan.hash() != decision.plan_hash:
             return "plan_changed"
+        try:
+            blocked_now = self.limits.blocked(agent.id)
+        except Exception:  # noqa: BLE001 - limits unreadable: stop means stop
+            return "recheck.limits_unavailable"
         now_d = authorize(
             self._principal(run),
             agent,
             contract,
             plan,
-            self.limits.blocked(agent.id),
+            blocked_now,
             self.inputs_view(run, plan),
         )
         if now_d.outcome == "deny":

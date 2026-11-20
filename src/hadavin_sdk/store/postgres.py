@@ -455,7 +455,7 @@ class PostgresStore:
         ):  # the flag is off: any stop with no clear still means ON (the oldest one is reported)
             stop = self._exec(
                 'SELECT s."by", s.ts FROM kill_switch_stops s WHERE NOT EXISTS '
-                "(SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id) ORDER BY s.id LIMIT 1"
+                "(SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id) ORDER BY s.ts, s.id LIMIT 1"
             ).fetchone()
         if stop is not None:
             return KillSwitch(on=True, by=stop["by"], ts=stop["ts"])
@@ -472,7 +472,8 @@ class PostgresStore:
         # transaction. A stop committed during or after it has no clear, so the switch stays ON.
         with self._lock, self._db.transaction():
             self._exec(
-                'UPDATE kill_switch SET "on" = FALSE, "by" = %s, ts = %s WHERE "on"', (ks.by, ks.ts)
+                'UPDATE kill_switch SET "on" = FALSE, "by" = %s, ts = %s WHERE id = 1',
+                (ks.by, ks.ts),
             )
             self._exec(
                 'INSERT INTO kill_switch_clears (stop_id, "by", ts) SELECT s.id, %s, %s '

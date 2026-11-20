@@ -259,18 +259,25 @@ def test_a_golden_input_over_the_cap_is_a_config_error_naming_it(live_cfg_dir):
 
 def _folder(tmp_path, names):
     """The real migrations' SQL (so the grant map still matches the tables) under the renamed file names:
-    0005_reservations stands in for #49's file (empty), 0006_evidence is today's 0005_evidence."""
+    0005_reservations stands in for #49's file (empty), 0006_evidence is today's 0005_evidence and 0007_stop_state
+    is today's 0006_stop_state."""
     folder = tmp_path / "migrations"
     folder.mkdir(parents=True)
     for n in names:
-        real = mig.MIGRATIONS / (n if n[:4] <= "0004" else "0005_evidence.sql")
+        real = mig.MIGRATIONS / (
+            n
+            if n[:4] <= "0004"
+            else "0006_stop_state.sql"
+            if n == "0007_stop_state.sql"
+            else "0005_evidence.sql"
+        )
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
     return mig._migration_files(folder)
 
 
 _REAL = sorted(p.name for p in mig.MIGRATIONS.glob("*.sql"))
-RENAMED = [*_REAL[:4], "0005_reservations.sql", "0006_evidence.sql"]
+RENAMED = [*_REAL[:4], "0005_reservations.sql", "0006_evidence.sql", "0007_stop_state.sql"]
 
 
 def test_the_renamed_tree_is_a_valid_ledger_and_two_files_with_one_number_are_not(tmp_path):

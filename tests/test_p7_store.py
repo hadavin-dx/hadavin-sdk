@@ -199,7 +199,7 @@ def test_a_reset_clears_the_stops_it_can_see_and_a_later_stop_reads_on_again(sto
     store.set_kill_switch(KillSwitch(on=False, by="admin"))
     assert store.get_kill_switch().on is False
     with store._lock:
-        clears = store._exec('SELECT "by" FROM kill_switch_clears ORDER BY stop_id').fetchall()
+        clears = store._exec('SELECT "by" FROM kill_switch_clears').fetchall()
     assert [c["by"] for c in clears] == ["admin", "admin"]
     store.set_kill_switch(KillSwitch(on=False, by="admin"))  # nothing open: a reset is still fine
     store.set_kill_switch(KillSwitch(on=True, by="third"))
