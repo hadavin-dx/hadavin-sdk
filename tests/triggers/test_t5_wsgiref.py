@@ -785,7 +785,10 @@ def test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line(
     assert after.status == 202  # the server goes on
     lines = _server_lines(caplog)
     assert lines == [(level, f"trigger server: connection error: {error.__name__}")], lines
-    assert seen.raw == b"", seen
+    if where == "setup":  # nothing was read or answered; `finish` runs after the answer was sent
+        assert seen.raw == b"", seen
+    else:
+        assert seen.raw.startswith(b"HTTP/1.0 202 "), seen
     check_quiet(seen, capsys, caplog, silent=True)
 
 

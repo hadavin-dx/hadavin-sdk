@@ -1370,7 +1370,7 @@ M = [
         "        self.rfile.count_head(0)  # type: ignore[attr-defined]\n",
         T18,
         "test_m1_boundary_a_request_line_alone_over_the_cap_is_431",
-        "assert b'HTTP/1.0 20",
+        "AssertionError: b'HTTP/1.0 404 Not Found",
     ),
     mutant(
         "G36j the header cap is 64 bytes too generous",
@@ -1379,7 +1379,7 @@ M = [
         "        self._head_left = MAX_HEADER_BYTES + 64 - used\n",
         T18,
         "test_m1_boundary_one_byte_more_is_431[16383]",
-        "assert b'HTTP/1.0 20",
+        "AssertionError: b'HTTP/1.0 202 Accepted",
     ),
 ]
 
