@@ -427,8 +427,9 @@ M = [
     mutant(
         "G8c send_error is the standard library's again (an HTML page as the refusal)",
         SERVER,
-        EMPTY_REFUSAL,
-        "        super().send_error(code, message, explain)\n",
+        "        if code >= SERVER_ERROR or code not in REFUSAL_TEXT:\n",
+        "        super().send_error(code, message, explain)\n        return\n"
+        "        if code >= SERVER_ERROR or code not in REFUSAL_TEXT:\n",
         TS,
         "test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_headers_then_stall]",
         "<!DOCTYPE HTML",
@@ -678,8 +679,11 @@ M = [
     mutant(
         "G16a an HTTP version of 2.0 or higher is answered 505 again",
         SERVER,
-        "            code >= SERVER_ERROR\n",
-        "            False\n",
+        "        if code >= SERVER_ERROR or code not in REFUSAL_TEXT:\n",
+        "        if code == 505:\n"
+        '            self.wfile.write(b"HTTP/1.0 505 HTTP Version Not Supported\\r\\nContent-Length: 0\\r\\n\\r\\n")\n'
+        "            return\n"
+        "        if code >= SERVER_ERROR or code not in REFUSAL_TEXT:\n",
         TS,
         "test_f1_http_version_2_or_higher_is_400_empty_never_a_5xx[HTTP/2.0]",
         "Seen(raw=b'HTTP/1.0 505 HTTP Version Not Supported",
@@ -687,8 +691,8 @@ M = [
     mutant(
         "G16b a request line with no version is not closed quietly",
         SERVER,
-        NO_VERSION,
-        "        if False:\n",
+        'self.request_version == "HTTP/0.9" or ',
+        "",
         TS,
         "test_f2_a_request_line_without_a_version_is_closed_on_purpose",
         "assert [('WARNING', ...ributeError')] == [('DEBUG', 't...h no answer')]",
