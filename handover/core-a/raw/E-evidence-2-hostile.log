@@ -1,1 +1,61 @@
-simulate crash
+outside pytest rc 1 ['RuntimeError: CrashPoints is a test tool: it can only be built inside a pytest run']
+arm empty -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm upper -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm path -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm newline -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm hash -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm 300 -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm nonstr -> RAISED ValueError a point is <name>.<method>:before or <name>.<method>:after, lower case
+arm nth True -> RAISED TypeError nth is a whole number, not a bool: True
+arm nth 0 -> RAISED ValueError nth must be 1 or more: 0
+arm nth huge -> RAISED ValueError nth must be 1 or more: 1000000000000000000000000000000
+arm nth neg -> RAISED ValueError nth must be 1 or more: -1
+arm nth float -> RAISED ValueError nth must be 1 or more: 1.0
+arm nth 1e9 -> RAISED ValueError nth must be 1 or more: 1000000000
+arm nth 999999999 -> None
+wrap __len__ -> RAISED TypeError s.__len__: dunder methods cannot be wrapped
+wrap a -> RAISED TypeError s.a: async and generator methods cannot be wrapped
+wrap g -> RAISED TypeError s.g: async and generator methods cannot be wrapped
+wrap ag -> RAISED TypeError s.ag: async and generator methods cannot be wrapped
+wrap go -> <hadavin_sdk.testing.crash._Proxy object at 0x7faeb389eda0>
+wrap nope -> RAISED AttributeError 'S' object has no attribute 'nope'
+wrap __x -> RAISED AttributeError 'S' object has no attribute '__x'
+wrap str methods -> RAISED TypeError methods is a collection of method names, not one string
+wrap bad name -> RAISED ValueError bad name: 'S'
+flagfile garbage armed() -> None
+  child rc 0 out 'survived\n' err '' flag exists after: True
+flagfile empty armed() -> None
+  child rc 0 out 'survived\n' err '' flag exists after: True
+flagfile point#0 armed() -> None
+  child rc 0 out 'survived\n' err '' flag exists after: True
+flagfile point#-1 armed() -> None
+  child rc 0 out 'survived\n' err '' flag exists after: True
+flagfile point# armed() -> None
+  child rc 0 out 'survived\n' err '' flag exists after: True
+flagfile nl armed() -> 's.go:before'
+  child rc 137 out 'simulate crash\n' err '' flag exists after: False
+flagfile crlf armed() -> 's.go:before'
+  child rc 137 out 'simulate crash\n' err '' flag exists after: False
+flagfile point#01 armed() -> None
+  child rc 0 out 'survived\n' err '' flag exists after: True
+race 0 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 1 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 2 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 3 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 4 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 5 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 6 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 7 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 8 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 9 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 10 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 11 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 12 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 13 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 14 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 15 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 16 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 17 [(137, 'simulate crash'), (0, 'survived')] crashed 1
+race 18 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+race 19 [(0, 'survived'), (137, 'simulate crash')] crashed 1
+races not exactly one: 0
