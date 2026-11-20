@@ -212,3 +212,6 @@ S12 (nits). Code: the stop INSERT does not pass ts (the database clock sets it) 
 - PostgresStore refuses to start when the search path names no existing schema.
 - Open code findings of the hostile re-read (2 to 6, 11 to 16) are with the lead: ESCALATIONS.md E5. Step B is at its 3-try cap; core-b changes no step B code.
 
+
+## NOTE (E12 item 5, code B6b): session pins and a migrate follow-up for the lead
+`store/postgres.py connect()` now pins `default_transaction_read_only = off` and `synchronous_commit = on` per session after login and reads both back with SHOW (ConfigError naming the setting if not taken). A role default can therefore no longer weaken a stop. Open for the lead (migrate.py, not touched here): `migrate` could print the role defaults of the named roles (`pg_db_role_setting`) so an operator sees an `ALTER ROLE ... SET` that is now overridden by the pin. Limit verified: SET at session level wins over role and database defaults; a connection-level PGOPTIONS cannot beat a SET issued after login.
