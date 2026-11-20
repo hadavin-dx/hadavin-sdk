@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:45:33Z
+UPDATED_UTC: 2026-11-20T12:46:57Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.32 of 4 cores, mem 1/15 GB, disk 46G free, 34% used, agents light 4 heavy 2
+CAPACITY: load 4.05 of 4 cores, mem 1/15 GB, disk 46G free, 34% used, agents light 4 heavy 2
 DISK: / 46G free, 34% used; worktrees /tmp/core-b-wt 3.8G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T12:44:45Z (previous push; this board is pushed right after writing)
-IST: 18:15 IST
+PUSHED_UTC: 2026-11-20T12:46:28Z (previous push; this board is pushed right after writing)
+IST: 18:16 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -260,3 +260,7 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 MONEY B1 step 4 grants flip + docs: G (since 11:49Z, running; migrate.py GRANTS, tests) | B2 live path gate on reserve/settle: NOT DONE TODAY, needs core-c (F-install); decision sent to lead: PR text says "no-overspend not in force; exact money and the no-lowering wall are" | B3 p_day window: H1 (since 12:53Z, 0011 + defaults.py + date-dependent tests) | M1 min_expiry_age: H1 | M2 p_agent NOT NULL, agent-less settle removed from Meter/Limits: H1 | M3 purge="": G | M4 own role for set_cap: QUEUED after G (migrate.py conflict), default decision "own role" | M5 stale 0011 text + HD005 list: DONE (D6 docs merged 929b08d7c) except HD005 list: H1 | M6 manifest rows 0008-0011 + per-file checksum: QUEUED after G (merge-time item) | M7 unnamed roles' table write rights: G. Nits: N1 CHECK usd>=0: H1 | N2,N3(watermark: cut only if no reader, decide after H2),N8: QUEUED | N4..N7: one sentence in DECISIONS.
 ABC M1 isolation pin: H2 (since 12:53Z; postgres.py _SESSION_PINS + PG test) | M2 delete both mark tests: H2 | M3 narrow Anthropic mark to 401/403/404: H2 | nit 2 AuditEvent limits, nit 3 outbox order, nit 1/6 docs: H2 | rest one sentence each in DECISIONS.
 Also running: F6 (step 6 review fixes, since 12:41Z, worktree MF6). After all land: fresh re-review of each diff, ONE evidence batch (cap 2).
+
+13:05Z requests/lead-build-1.md written for the laptop (item 1 lead-b-ts-watermark: 0009 ts CHECK validation + watermark table; item 2 lead-b-price-guard: non-fake route price guard). Builders running (sonnet): G, H1, H2 (see 12:55Z lines). Stale 07:12 rows: the AGENTS table above is history; the live list is the latest dated paragraph.
+
+12:48Z LOAD 1.6 of 4 cores. AGENTS (5 live + 2 started now): G step 4 (sonnet, MG) | H1 0011 findings (sonnet, MH1) | H2 ABC findings (sonnet, MH2) | R7 fresh review of F6 diff, read-only (sonnet, since 12:47Z) | E10 non-PG mutant batteries + unit tests (haiku, since 12:47Z, evidence/batch-10-nonpg.md). PG evidence waits for the laptop (evidence-bpg, PG 15 and 17). Reviews of H1/H2/G diffs start the moment each reports.
