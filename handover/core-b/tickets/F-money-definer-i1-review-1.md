@@ -46,5 +46,9 @@
 - check_spend_day (< 1970-01-01 refused): callers are add_spend, reserve_spend, release_expired_spend (postgres.py:645,931,1005) and the
   memory add_spend/reserve_spend. The DB already refuses these (reserve: 22023; add: same limit), so no legitimate caller regresses; only tests use pre-1970 dates (updated).
 
-## Tests
-Requested two test files were started on own DB hadavin_test_rv1 but had not finished inside the review window; no result claimed.
+## Tests (own DB hadavin_test_rv1)
+tests/contracts/test_store_spend_model.py + tests/test_money_h1_pg.py: 110 passed, 2 FAILED:
+- test_a_random_sequence_matches_the_model_after_every_call[postgres-seed23]
+- test_the_same_seed_gives_the_same_outcomes_on_memory_and_postgres[seed23]
+Cause not diagnosed (output was tailed). Likely a memory-vs-PG parity divergence on the model sequence at seed 23 (candidate: the
+new idempotent-retry or pre-1970/skew day handling in the random sequence). Builder must reproduce with `pytest -k seed23` and fix; treat as Major until explained.
