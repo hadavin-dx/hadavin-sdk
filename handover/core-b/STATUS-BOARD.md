@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:24:58Z
+UPDATED_UTC: 2026-11-20T06:26:58Z
 SESSION: core-b
 ORDER: 016
 STATE: WORKING
@@ -6,20 +6,37 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 3
-CAPACITY: load 0.43 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 1 heavy 2
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 867M
+AGENTS_RUNNING: 5
+CAPACITY: load 1.33 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 874M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: step B BLOCKED-LEAD at its 3-try cap: who-else check trips over other roles on a shared server (E4); batch run 2: 13 failed, 1 error (11 mine, fixed); F-store and F-install ticket reviews not clean, answered; E1 cron refused
 NEXT: land F-store tests and the provider-mark tests; F-install build and its tests; resolve the hostile re-read; batch run 3 on a merged tree when F-install is coded
-PUSHED_UTC: 2026-11-20T06:23:41Z (previous push; this board is pushed right after writing)
-IST: 11:54 IST
+PUSHED_UTC: 2026-11-20T06:24:59Z (previous push; this board is pushed right after writing)
+IST: 11:56 IST
+
+## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
+| # | item | state | where |
+|---|---|---|---|
+| 1 | requests/001.answer.md with the reader bound to the sender names; trigger-config fixes | DONE and pushed 06:17 UTC | requests/001.answer.md DRAFT 2; commit "code D-config: fix round 1"; core-a's test file against it: 92 passed, 17 failed (16 are its expected-failure marks now passing, 1 a changed refusal text) |
+| 2 | requests/003.answer.md and corrected interfaces | DONE and pushed 06:08 UTC | requests/003.answer.md; interfaces/README.md 2.3; ii-meter.md (six reasons) |
+| 3 | F-store build with review round 2 | DONE | source 8db9c29, fix round 1 (caps, sweep age), review-2 answered; core-a's 187 contract and T1 tests against it: 183 passed, 4 expected failures |
+| 4 | ORDER 011: A-1, B-2, B role tests and mutants | DONE | A fix 15c86e5 with tests; B fix round 3 358361e with tests 6fb410a (also covers lead AB-1, AB-2: stop_state_mutants.py updated, 40 of 40 killed alone; CLI tests for still-ON and same-secret) |
+| 5 | ORDER 013 refused-before-response mark | DONE | commits "code F: providers mark ..." (two) and tests/test_refused_before_response.py; request to core-c open (its gate ignores the mark on exhausted retries) |
+| 6 | F-install review round and build | RUNNING | review rounds 1 and 2 answered (V and W sections); builder a70b774c on a local merge of core-c |
+| 7 | reserve_mutants.py, stop_state_mutants.py | DONE, re-run on the head RUNNING | tests/reserve_mutants.py 31 of 31 and 26 of 26 by hand; agent ae79ea4d re-runs all four scripts on the head |
+| 8 | docs for A, B, C, F | DONE for A, B, C, F-store; F-install's sentences come with its build | README.md, SECURITY.md, CHANGELOG.md, docs/stop-state-runbook.md |
+| 9 | ONE batch whole-suite run when 1 to 7 are coded | NOT YET (batch run 2 at 06:00 covered A, B, C, F-store source) | batch run 3 after F-install lands, on a tree with core-c's gate |
+| 10 | hostile re-read of A, B, C code | RUNNING | reviewer a39cf764 |
+Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, contracts/test_store_spend.py, contracts/test_t1_reserve_cap.py, test_spend_reservations_pg.py incl. settle racing expire); F-2 and F-3 done (caps and sweep age validated); F-4, F-5, AB-5 done (docs); AB-4 running (ae79ea4d); AB-3 is the lead's.
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a5f7551d | builder (tests) | fable | random-sequence model test of the reservation store on both stores (30 seeds x 200 operations); worktree P | 06:33 | +25 min | UNVERIFIED | running | none | 0 | STANDING ORDER 016 item 4b: more hostile tests for a guarantee path |
+| a6dd2beb | lookup | fable | reads core-c's gate, its enforce step and tests against my meter and install plan; writes CROSS-LANE-gate.md | 06:33 | +15 min | UNVERIFIED | running | n/a | 0 | STANDING ORDER 016 item 4c; mismatches found now are cheaper than at integration |
 | a70b774c | builder | fable | F-install: local merge of core-c's gate, then extract.py deletion, Budget meter, gate installed in run loop, judge, evals, replay, charge sites removed, docs; worktree FI | 06:22 | +45 min | UNVERIFIED | running | round 2 alongside | 0 | lead ORDER 014 GO BUILD F-install |
 | ae79ea4d | builder then tests | fable | step A fix round 2 (failure text counts events never written), M1 re-pin, all four mutant scripts re-run on the head; worktree M | 06:28 | +20 min | UNVERIFIED | running | none | 1 | lead review round 2 item AB-4; ORDER 008 mutant scripts must end good |
 | a86f0e17 | builder then tests | fable | provider mark for calls that ended only in 429 or refused connections; tests for the mark and for cap validation: landed | 06:22 | done | 100 | done | none | 0 | 425 passed, 1 skipped; narrow reading: a 429 followed by a 400 or 401 stays unmarked |
@@ -60,6 +77,7 @@ IST: 11:54 IST
 | F-store test files (contract, T1 with 50 connections, limits, crash and roles) | local/code-F-tests 92aabbd | 1 | 471 passed / 0 / 0 | none | done | evidence/F-store-tests-evidence.txt; written before the cap validation fix |
 | mark and cap validation tests | local/code-F3 3aa3ba7 | 1 | 425 passed / 0 / 0, 1 skipped | none | done | |
 | core-a's tests/test_trigger_config.py against my fixed config code | cloud/core-b b2547a2 with their file copied in, not committed | 1 | 92 passed / 17 failed, 20 skipped | Regex pattern did not match: 'secret names used by both' | done | 16 are their expected-failure marks that now pass; 1 is a refusal text I changed; told core-a in requests/001.answer.md |
+| core-a's tests/contracts/test_store_spend_reservations.py and test_t1_reserve_cap.py against my store code | cloud/core-b 20bc17d with their two files copied in, not committed | 1 | 183 passed / 0 failed, 4 expected failures | none | done | their file, my code; PostgreSQL 16 |
 | full suite, batch run 2 | 21c869b | 1 | 11249 passed / 13 failed / 1 error, 1 skipped, 193 s | tests/test_audit_drain.py f2: assert 0 == 1 | done | evidence/batch-run-2.log (last 120 lines). NEW, mine: 11 failures in tests/test_audit_drain.py (the fix-round tests picked the LAST tick step, and F-store added a step after audit_drain): fixed by selecting the step by name, re-run 150 of 150. 1 ERROR in tests/test_stop_state_roles.py::test_h2: passes when run alone; cause NOT established (the shared test database had two other agents creating roles at the same time). Not from my code: demo dblink test (needs a server on the default socket), vendor-name guard on handover/BRIEF-PREAMBLE.md |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
