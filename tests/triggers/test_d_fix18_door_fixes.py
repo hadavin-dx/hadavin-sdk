@@ -14,7 +14,7 @@ import pytest
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.store.memory import MemoryStore
-from hadavin_sdk.triggers import server, worker
+from hadavin_sdk.triggers import endpoint, server, worker
 from hadavin_sdk.triggers.server import QuietRequestHandler
 from tests.triggers.test_d_fix13_single_write import (
     CLIENT_TIMEOUT_S,
@@ -65,6 +65,48 @@ def test_m1_headers_under_the_cap_are_still_taken():
     raw, _log = _exchange(_with_headers(50))  # about 10 KB
     assert raw.startswith(b"HTTP/1.0 202 "), raw[:60]
     assert server.MAX_HEADER_BYTES == 16384
+
+
+def _sized(head_bytes: int, path: str = endpoint.PATH) -> bytes:
+    """A signed POST whose request line and headers (the blank line that ends them NOT counted) are exactly
+    `head_bytes` long, padded by one header; the cap is 16384 with that blank line, so 16382 without."""
+    data = _post(path=path)
+    head, sep, body = data.partition(b"\r\n\r\n")
+    room = head_bytes - (len(head) + 2) - len(b"X-Pad: \r\n")
+    assert room >= 0, room
+    out = head + b"\r\nX-Pad: " + b"a" * room + sep + body
+    assert out.index(sep) + 2 == head_bytes, (out.index(sep) + 2, head_bytes)
+    return out
+
+
+_ANSWER_431 = b"HTTP/1.0 431 Request Header Fields Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+
+
+@pytest.mark.parametrize("head_bytes", [16381, 16382])
+def test_m1_boundary_request_line_and_headers_up_to_16382_bytes_pass(head_bytes):
+    """16382 bytes + the 2-byte blank line = 16384 = the cap: taken."""
+    raw, _log = _exchange(_sized(head_bytes))
+    assert raw.startswith(b"HTTP/1.0 202 "), raw[:60]
+
+
+@pytest.mark.parametrize("head_bytes", [16383, 16384, 16385])
+def test_m1_boundary_one_byte_more_is_431(head_bytes):
+    raw, log = _exchange(_sized(head_bytes))
+    assert raw == _ANSWER_431, raw[:60]
+    assert len(log) == 1 and len(log[0]) == 1, [w[:30] for w in log[0]]
+
+
+def test_m1_boundary_a_request_line_alone_over_the_cap_is_431():
+    raw, _log = _exchange(_post(path="/" + "a" * 16384))  # 16385 bytes of path
+    assert raw == _ANSWER_431, raw[:60]
+
+
+def test_m1_boundary_a_flood_of_empty_header_lines_over_the_cap_is_431():
+    data = _post()
+    head, sep, body = data.partition(b"\r\n\r\n")
+    flood = b"".join(b"\r\nX-E%d:" % i for i in range(4000))  # ~28 KB of empty values
+    raw, _log = _exchange(head + flood + sep + body)
+    assert raw == _ANSWER_431, raw[:60]
 
 
 # --- M4: the memory store is for demo only --------------------------------------------------------------------

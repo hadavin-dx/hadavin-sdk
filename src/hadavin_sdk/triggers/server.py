@@ -8,7 +8,7 @@ request line, a header or the body.
 
 Answers written here, before the endpoint is reached: 400 for a request line or header block that is
 not HTTP, and for a client that sends nothing more until the socket timeout; 414 for a request line
-over the stdlib cap; 431 for too many or too long headers, or more than 16 KB of request line and headers together. A 503 is also written here when the application
+over the stdlib cap; 431 for too many or too long headers, or more than 16384 bytes of request line, headers and the blank line that ends them together (so at most 16382 bytes before the blank line). A 503 is also written here when the application
 raised: that is a failure, not a refusal of the request. A client
 that is gone gets nothing; its connection is closed.
 
@@ -54,7 +54,9 @@ HEADERS_TOO_LARGE_STATUS: Final[int] = 431
 MAX_CONNECTIONS: Final[int] = (
     256  # connection threads at one time; above `MAX_WAITING` of the worker
 )
-MAX_HEADER_BYTES: Final[int] = 16384  # request line and headers TOGETHER; more is 431
+MAX_HEADER_BYTES: Final[int] = (
+    16384  # request line + headers + the 2-byte blank line TOGETHER; more is 431
+)
 READ_DEADLINE_S: Final[float] = (
     30.0  # total time to read the request line, the headers and the body
 )
@@ -280,7 +282,10 @@ class QuietRequestHandler(WSGIRequestHandler):
             return
         except _HeadersTooLarge:
             self.requestline = self.request_version = self.command = ""
-            self.send_error(HEADERS_TOO_LARGE_STATUS)
+            try:
+                self.send_error(HEADERS_TOO_LARGE_STATUS)
+            except TimeoutError:  # the write of the refusal timed out: as on the stdlib 431 path
+                self._refuse_stalled()
             return
         finally:
             self.rfile.stop_count()  # type: ignore[attr-defined]

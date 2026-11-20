@@ -576,6 +576,35 @@ def test_n9_a_timeout_while_a_refusal_is_written_gives_no_second_status_line(
     check_quiet(seen, capsys, caplog, silent=True)
 
 
+def test_n2_a_timeout_while_the_431_of_the_header_cap_is_written_is_closed_like_the_stdlib_one(
+    monkeypatch, capsys, caplog
+):
+    """Review d-fix18 N2. Many small headers over `MAX_HEADER_BYTES` are refused by `_serve` itself (not by
+    the stdlib parser); when that write times out, the log line and the close are those of the stdlib-431
+    path: one attempt, no second write, DEBUG 'timeout while an answer was written, closed'."""
+    attempts: list[bytes] = []
+    real_setup = server_module.QuietRequestHandler.setup
+
+    def setup(self):
+        real_setup(self)
+        self.wfile = _TimesOutOnce(attempts)
+
+    monkeypatch.setattr(server_module.QuietRequestHandler, "setup", setup)
+    start = FakeStart()
+    many = tuple(
+        f"X-N{i}: {'a' * 190}" for i in range(90)
+    )  # 90 headers, ~18 KB: under 100, over the cap
+    with serving(make_wsgi(start)) as server:
+        seen = exchange(server.server_port, custom(body_bytes(), more=many))
+    assert seen.raw == b"", seen
+    assert len(attempts) == 1 and attempts[0].startswith(b"HTTP/1.0 431 "), attempts
+    lines = trigger_records(caplog)
+    assert ("DEBUG", "trigger server: timeout while an answer was written, closed") in lines
+    assert not any("connection ended" in text for _level, text in lines), lines
+    assert start.calls == []
+    check_quiet(seen, capsys, caplog, silent=True)
+
+
 LARGE_ANSWER = 8 * 1024 * 1024
 
 
@@ -756,6 +785,7 @@ def test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line(
     assert after.status == 202  # the server goes on
     lines = _server_lines(caplog)
     assert lines == [(level, f"trigger server: connection error: {error.__name__}")], lines
+    assert seen.raw == b"", seen
     check_quiet(seen, capsys, caplog, silent=True)
 
 
@@ -775,6 +805,7 @@ def test_a_fault_inside_a_request_is_debug_for_a_connection_and_warning_otherwis
         assert _handlers_done()
     lines = _server_lines(caplog)
     assert lines == [(level, f"trigger server: connection ended: {error.__name__}")], lines
+    assert seen.raw == b"", seen
     check_quiet(seen, capsys, caplog, silent=True)
 
 

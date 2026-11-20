@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Thirty-six groups (G32 is E1: ten mutants, G33 is E1 fix2: six, G34 is d-fix13: one, G35 is d-fix14: one, G36 is d-fix18: eight), one per guarantee:
+first failing line that holds `expect`. Thirty-six groups (G32 is E1: ten mutants, G33 is E1 fix2: six, G34 is d-fix13: one, G35 is d-fix14: one, G36 is d-fix18: eight, G36i and G36j are d-fix19), one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -1362,6 +1362,24 @@ M = [
         T18,
         "test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer",
         "AssertionError: the application was reached",
+    ),
+    mutant(
+        "G36i the header cap does not count the request line",
+        SERVER,
+        "        self.rfile.count_head(len(self.raw_requestline))  # type: ignore[attr-defined]\n",
+        "        self.rfile.count_head(0)  # type: ignore[attr-defined]\n",
+        T18,
+        "test_m1_boundary_a_request_line_alone_over_the_cap_is_431",
+        "assert b'HTTP/1.0 20",
+    ),
+    mutant(
+        "G36j the header cap is 64 bytes too generous",
+        SERVER,
+        "        self._head_left = MAX_HEADER_BYTES - used\n",
+        "        self._head_left = MAX_HEADER_BYTES + 64 - used\n",
+        T18,
+        "test_m1_boundary_one_byte_more_is_431[16383]",
+        "assert b'HTTP/1.0 20",
     ),
 ]
 
