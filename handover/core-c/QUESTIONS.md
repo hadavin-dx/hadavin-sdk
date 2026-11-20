@@ -19,3 +19,6 @@
 14. P1d-a fix: commit 22d2e0d changes approvals/channel.py (SPINE's file): `clean` re-reads its result until stable, at most 3 times, so every `clean` costs at least one more redaction call. Without it test_stored_card_round_trip fails again. Accept the commit (recommended) or have SPINE write it?
 15. P1d-a, not fixed, found on the way: an e-mail address with a digit or underscore glued behind it (`anna.m@example.org9`) is masked neither for the model nor on the card. Fix in step G (recommended, same glued-rest class as the e-mail fix) or stated limit?
 
+
+## 16 (08:50Z) Declare `linkify-it-py==2.0.3` in the dev dependency group and regenerate uv.lock? (P1d-a round 3)
+The P1d-a link oracle is checked against linkify-it-py (markdown-it's linkifier; one recorded run in evidence/G2-p1d-a.md: linkify-it-py 2.0.3, markdown-it-py 4.2.0). The builder added `linkify-it-py==2.0.3` to `[dependency-groups] dev` in pyproject.toml; I did NOT commit that (pyproject.toml and uv.lock are outside the src/tests/tools code lane, and CI runs `uv sync --locked`, so the lock must be regenerated with `uv lock` in the same change). The agreement test skips where the package is missing and fails hard only when HADAVIN_REQUIRE_LINKIFY is set. Default if the lead agrees: add the dependency and the lock in one commit by the lead, then set HADAVIN_REQUIRE_LINKIFY in CI.

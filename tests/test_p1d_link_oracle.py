@@ -3,46 +3,58 @@
 The properties in test_p1d_a_paths.py use the defanger's own regexes (`_DOMAIN`, `_DOMAIN_LAST`, `_NON_ASCII_HOST`) as the
 oracle, so defanger and oracle share their blind spots (`see/evil.com`, `[evil.com]`, `evil.com-x` match none of them).
 This oracle shares no code with `hadavin_sdk`: its own top-level-domain list, its own code-span reader, and a rule that
-is wider than a renderer's linkifier (a host is any dotted name ending in a known suffix, found at ANY position, behind
-any character, with any dot look-alike). A text that is not linkable by this rule is not linkable by a renderer.
+is wider than a renderer's linkifier (a host is any dotted name ending in a suffix of its own list, touching no letter or
+digit on either side, with any dot look-alike; `_`, `-`, `/` and `.` save nothing). The remaining limits are in
+handover/core-c/evidence/G2-p1d-a.md (round 3).
 """
 
+import os
 import re
+import sys
 import unicodedata
 
 import pytest
 
-from hadavin_sdk.approvals import channel
+from hadavin_sdk.approvals import channel, gate
 
 # Written here, not imported: an independent list (a superset of the plausible ones plus the internal suffixes).
-_SUFFIXES = "com|org|net|io|dev|app|co|us|uk|de|fr|ru|cn|info|biz|edu|gov|ai|me|xyz|cc|tv|sh|internal|corp|local|lan|test|example"
+_SUFFIXES = "com|org|net|io|dev|app|co|us|uk|de|fr|ru|cn|info|biz|edu|gov|ai|me|xyz|cc|tv|sh|zip|digital|internal|corp|local|lan|test|example"
 _DOTS = ".\u3002\uff0e\uff61"  # ASCII dot and the three a URL parser maps to it (UTS 46); U+2024 and the like are not dots there
-_NAME = r"[^\W_]"  # letters and digits of any script
-# A host starts where no name character, dot, hyphen or slash precedes it and ends before a letter, digit, `_` or `-`:
-# what markdown-it's linkifier does (checked with linkify-it-py, see the last test): `x/evil.com`, `evil.com-x` and
-# `..evil.com` are not linked there, `[evil.com]` and `!!evil.com??` are.
+_ALNUM = r"[^\W_]"  # letters and digits of any script
+_LABEL = rf"{_ALNUM}(?:[\w-]*{_ALNUM})?"
+# A host is a run of dotted labels ending in a suffix from the list above, with NO boundary rule of the defanger's: it
+# only must not touch a letter or digit on either side (`xevil.com` and `evil.comx` are other names). `_`, `-`, `/` and
+# `.` are not boundaries that save a host: a Slack or markdown-it renderer may link `x/evil.com`, `evil.com-x`,
+# `..evil.com` and `_evil.com_` (emphasis is parsed first and leaves `evil.com` in a text token), and a fail-closed
+# check assumes it does. The stated limit of this oracle: the suffix list is its own and finite, see the evidence file.
 _HOST = re.compile(
-    rf"(?<![\w.\-])(?<![\w\-]/){_NAME}(?:[\w-]*{_NAME})?(?:[{re.escape(_DOTS)}]{_NAME}(?:[\w-]*{_NAME})?)*"
-    rf"[{re.escape(_DOTS)}](?:{_SUFFIXES})(?![\w-])",
+    rf"(?<!{_ALNUM})(?:{_LABEL}[{re.escape(_DOTS)}])+(?:{_SUFFIXES})(?!{_ALNUM})",
     re.IGNORECASE,
 )
+_FENCE_OPEN = re.compile(r"^(?:[ ]{0,3}(?:>[ ]?|[-*+][ ]+|\d{1,9}[.)][ ]+))*[ ]{0,3}(`{3,})[^`]*$")
 
 
 def _without_code(text: str) -> str:
-    """Own reader: drop closed fences and single-line backtick pairs when every backtick is paired (else keep all)."""
+    """Own reader, CommonMark's rules: a fence is at most 3 spaces of indent (after any quote or list marker) and
+    closes on a line of at least as many backticks and nothing else; a backslash-escaped backtick is no code marker;
+    closed fences and single-line backtick pairs are dropped when every backtick is paired (else keep all)."""
     lines = text.split("\n")
-    out, fence = [], False
-    for ln in lines:
-        if ln.strip().startswith("```"):
-            fence = not fence
+    out, i = [], 0
+    while i < len(lines):
+        m = _FENCE_OPEN.match(lines[i])
+        if not m:
+            out.append(lines[i])
+            i += 1
             continue
-        if not fence:
-            out.append(ln)
-    if fence:  # an unclosed fence is not code
-        return text
+        closer = re.compile(rf"^(?:[ ]{{0,3}}>[ ]?)*[ ]{{0,3}}`{{{len(m.group(1))},}}[ \t]*$")
+        j = next((k for k in range(i + 1, len(lines)) if closer.match(lines[k])), None)
+        if j is None:  # an unclosed fence is not code here: read everything
+            return text
+        i = j + 1
     kept = []
     for ln in out:
-        pairs = re.sub(r"`[^`\n]+`", "", ln)
+        plain = ln.replace("\\`", " ")
+        pairs = re.sub(r"`[^`\n]+`", "", plain)
         if "`" in pairs:
             return "\n".join(
                 out
@@ -130,6 +142,18 @@ SHAPES = [
     ("hyphen_label", "see " + "my-evil-site" + "." + "io"),
     ("trailing_slash_only", f"{EVIL}/"),
     ("query_only", f"?u={EVIL}&v={PUB}"),
+    ("slash_before", f"x/{EVIL}"),
+    ("slash_before_word", f"see/{EVIL}"),
+    ("hyphen_after", f"{EVIL}-x"),
+    ("double_dot_before", f"..{EVIL}"),
+    ("triple_dot_before", f"...{EVIL}"),
+    ("underscores_around", f"_{EVIL}_"),
+    ("residue_defanged_label_then_underscore", "docs[.]example" + ".com_x"),
+    ("suffix_sh", "run " + "get" + "." + "sh" + " now"),
+    ("suffix_zip", "grab " + "evil" + "." + "zip"),
+    ("suffix_digital", "see " + "evil" + "." + "digital"),
+    ("fence_indented_four", f"    ```\n{EVIL}\n    ```"),
+    ("escaped_backticks", f"\\`{EVIL}\\`"),
     ("after_email_placeholder", "a@" + "example" + "." + "org" + " then " + EVIL),
 ]
 
@@ -145,6 +169,9 @@ NOT_HOSTS = [
     "x.commerce",
     "a.b",
     "no dots here",
+    "src/app.py and docs/readme.txt",
+    "a[0].b and [1] and x[.]y",
+    "evil[.]com and docs[.]example[.]com",
 ]
 
 
@@ -156,9 +183,8 @@ def test_oracle_does_not_flag_a_text_without_a_host(text):
 # The oracle must SEE the host in the raw text of every shape whose host a renderer would read, or the table checks
 # nothing. Shapes written so that the raw text has no readable host (encoded, entity, HTML-split, zero width) are
 # excluded here: they are checked on the card only.
-_RAW_BLIND = {"glued_underscore_before", "glued_word_after", "encoded_dot", "entity_dot", "html_tag_in_host", "fullwidth_letters", "cyrillic_lookalike",
-              "greek_lookalike", "html_entity_lt", "unicode_label", "code_then_prose", "shifted_code",
-              "double_backtick", "fence_then_prose", "unclosed_fence", "zero_width_in_host", "soft_hyphen_in_host"}  # fmt: skip
+_RAW_BLIND = {"glued_word_after", "encoded_dot", "entity_dot", "html_tag_in_host", "fullwidth_letters", "cyrillic_lookalike",
+              "greek_lookalike", "html_entity_lt", "unicode_label", "zero_width_in_host", "soft_hyphen_in_host"}  # fmt: skip
 
 
 @pytest.mark.parametrize(("name", "text"), [s for s in SHAPES if s[0] not in _RAW_BLIND])
@@ -174,17 +200,90 @@ def test_card_has_no_linkable_host(name, text):
     assert links(channel.clean(shown)) == [], f"{name} again: {shown!r}"
 
 
-def test_oracle_agrees_with_a_real_linkifier():
-    """The oracle against markdown-it's own linkifier (linkify-it-py), on every shape's raw text: whatever that linkifier
-    links, the oracle flags (the oracle is the wider one). Skipped where linkify-it-py is not installed."""
-    linkify_it = pytest.importorskip("linkify_it")
-    lf = linkify_it.LinkifyIt()
+def _linkifier():
+    """linkify-it-py (a dev dependency; markdown-it's linkifier, NOT the channel's renderer, not Slack). Where it is
+    missing the test skips locally, and FAILS when the environment variable HADAVIN_REQUIRE_LINKIFY is set (a skip would hide that the
+    agreement was never checked)."""
+    try:
+        import linkify_it
+    except ImportError:
+        if os.environ.get("HADAVIN_REQUIRE_LINKIFY"):
+            pytest.fail("linkify-it-py is missing and HADAVIN_REQUIRE_LINKIFY is set")
+        pytest.skip(
+            "linkify-it-py not installed (not declared in pyproject.toml yet: see QUESTIONS.md 16)"
+        )
+    return linkify_it.LinkifyIt()
+
+
+def test_oracle_agrees_with_linkify_it_py():
+    """The oracle against linkify-it-py on every shape's raw text: whatever that linkifier links, the oracle flags (the
+    oracle is the wider one); and it links nothing on a shown card. One recorded run: evidence/G2-p1d-a.md."""
+    lf = _linkifier()
     for name, text in SHAPES:
         found = [m.text for m in (lf.match(_strip_placeholders(_without_code(text))) or [])]
         if found:
             assert links(text), (
                 f"{name}: linkify-it links {found} in {text!r}, the oracle sees nothing"
             )
-    shown_checks = [channel.clean(t) for _, t in SHAPES]
-    for (name, _), shown in zip(SHAPES, shown_checks, strict=True):
+    for name, text in SHAPES:
+        shown = channel.clean(text)
         assert not (lf.match(_strip_placeholders(_without_code(shown))) or []), f"{name}: {shown!r}"
+
+
+def test_agreement_test_fails_when_the_linkifier_is_required_and_missing(monkeypatch):
+    monkeypatch.setitem(sys.modules, "linkify_it", None)  # `import linkify_it` raises ImportError
+    monkeypatch.setenv("HADAVIN_REQUIRE_LINKIFY", "true")
+    with pytest.raises(pytest.fail.Exception):
+        _linkifier()
+    monkeypatch.delenv("HADAVIN_REQUIRE_LINKIFY")
+    with pytest.raises(pytest.skip.Exception):
+        _linkifier()
+
+
+# The oracle's own code reader (CommonMark): a 4-space-indented line is no fence, an escaped backtick no code marker.
+@pytest.mark.parametrize(
+    ("text", "seen"),
+    [
+        (f"```\n{EVIL}\n```", False),
+        (f"   ```\n{EVIL}\n   ```", False),
+        (f"    ```\n{EVIL}\n    ```", True),
+        (f"> ```\n> {EVIL}\n> ```", False),
+        (f"- ```\n  {EVIL}\n  ```", False),
+        (f"````\n{EVIL}\n```\n{PUB}\n````", False),
+        (f"\\`{EVIL}\\`", True),
+        (f"`{EVIL}`", False),
+    ],
+)
+def test_oracle_code_reader_follows_commonmark(text, seen):
+    assert bool(links(text)) is seen
+
+
+# The honest-text side of the defanger. Bracket rule: `[` before a host no longer saves it, `a[0].b`, `[1]`, `x[.]y`
+# have no host in them. The stated cost of dropping `.`, `/` and `-` from the boundaries: a path whose file name ends in
+# a letters-only extension (`src/app.py`) is defanged like `file.txt` already was, and `undefang_text` recovers it.
+def test_honest_text_is_unchanged_by_the_bracket_rule():
+    for text in ("a[0].b", "[1]", "see [1] and [2]", "v1.2 and 3.14", "version 2.0.1", "Dr. Smith"):
+        assert gate.defang_text(text) == text
+    assert gate.defang_text("x[.]y") == "x.y"  # the old gate's dot, read back; `y` is no suffix
+
+
+def test_bracketed_file_name_is_defanged_and_recovered():
+    shown = gate.defang_text("[draft.md] and [config.yaml]")
+    assert shown == "[draft[.]md] and [config[.]yaml]"
+    assert gate.undefang_text(shown) == "[draft.md] and [config.yaml]"
+
+
+def test_paths_and_file_names_are_over_defanged_and_recovered():
+    for plain, shown in (
+        ("src/app.py", "src/app[.]py"),
+        ("see docs/readme.txt", "see docs/readme[.]txt"),
+        ("file.txt", "file[.]txt"),
+    ):
+        assert gate.defang_text(plain) == shown
+        assert gate.undefang_text(shown) == plain
+
+
+def test_bracketed_non_ascii_host_is_defanged_like_an_unbracketed_one():
+    host = "\u00e9." + "x1"  # `_DOMAIN` finds no suffix here, only the non-ASCII rule does
+    assert gate.defang_text(host) == "\u00e9[.]x1"
+    assert gate.defang_text(f"[{host}]") == "[\u00e9[.]x1]"
