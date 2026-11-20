@@ -262,7 +262,8 @@ def test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_
 
 def test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept():
     """`redact._replace_standalone`: an identifier is replaced only where no ASCII letter or digit touches
-    it. An underscore, a dash, a dot or a letter outside ASCII beside it does not protect it."""
+    it. An underscore, a dash, a dot or a letter outside ASCII beside it does not protect it. A PHONE value: only
+    a digit beside it protects it (ticket G8, `redact._joins`)."""
     mapping = {"<TENANT_1>": "abc123"}
     assert _enforce("xabc123 abc1234 9abc123 abc123z", mapping) == "xabc123 abc1234 9abc123 abc123z"
     assert (
@@ -270,6 +271,11 @@ def test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept():
         == "<TENANT_1>_ -<TENANT_1>- .<TENANT_1>. \u00e9<TENANT_1>"
     )
     assert _enforce("x123456 1234567", {"<TENANT_1>": "123456"}) == "x123456 1234567"
+    phone = "415" + "555" + "0132"
+    assert (
+        _enforce(f"build{phone} x{phone}_ 7{phone}", {"<PHONE_1>": phone})
+        == f"build<PHONE_1> x<PHONE_1>_ 7{phone}"
+    )
     secret = {"<SECRET_1>": TOKEN}  # a secret is replaced in every copy
     assert _enforce(f"x{TOKEN}9", secret) == "x<SECRET_1>9"
 

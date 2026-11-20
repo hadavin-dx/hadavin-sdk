@@ -10,7 +10,8 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   characters or more (those are replaced in every copy).
   E::test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_swept
 - Any value that is not a secret kind of 4 or more (an identifier: tenant, host, address, id) is replaced only
-  where no ASCII letter or digit touches it: `abc123` inside `xabc1234` stays.
+  where no ASCII letter or digit touches it: `abc123` inside `xabc1234` stays. A PHONE value is replaced where no
+  digit touches it (ticket G8): a known `4155550132` in `build4155550132` is sent to the model as `build<PHONE_1>`.
   E::test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept
 - Only the spelling the map holds is replaced: a percent-, entity- or backslash-encoded copy, a full-width or
   other look-alike spelling and a copy split by a zero-width character pass as written. EXCEPTION (code review round

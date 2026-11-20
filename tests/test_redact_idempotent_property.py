@@ -4,7 +4,8 @@ For every input x of the corpora below, through `runmap.redact_text` with one ru
   (a) a second pass changes nothing: `redact_text(redact_text(x, m), m)` is the first result and `m` is the same;
   (b) no original value of the map occurs raw in the output, by the redactor's own rule for copies (`redact._sweep`):
       a value of a secret kind of 4 characters or more, nowhere outside a placeholder; any other value, nowhere as a
-      token of its own (no ASCII letter or digit touching it). Values the rule never sweeps (under 3 characters,
+      token of its own (no ASCII letter or digit touching it; for a PHONE value no digit, `redact._joins`, ticket G8).
+      Values the rule never sweeps (under 3 characters,
       all digits under 6, a common word such as `prod`) are not checked: that is the redactor's stated rule, not a
       finding of this test.
 An input the redactor REFUSES (InputTooLarge, TooDeep: nothing is returned) satisfies both vacuously and is counted.
@@ -138,7 +139,10 @@ def raw_copies(out: str, mapping: dict[str, str]) -> list[str]:
         rule = R._sweep(placeholder, original)
         if rule is None or original not in free:
             continue
-        if rule is R._EVERY_COPY or R._replace_standalone(free, original, "\x00") != free:
+        if (
+            rule is R._EVERY_COPY
+            or R._replace_standalone(free, original, "\x00", R._joins(placeholder)) != free
+        ):
             found.append(placeholder)
     return found
 

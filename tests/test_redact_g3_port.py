@@ -58,10 +58,10 @@ def test_actions_a_text_that_is_left_as_it_is_counts_zero():
 def test_actions_each_kind_of_change_is_counted():
     # a pattern mask: one per value masked
     assert redact("mail bob@example.com").actions == 1
-    # the sweep: one per copy replaced (the second copy touches `_`, which the pattern's word boundary does not accept)
-    uid = "123e4567-e89b-12d3-a456-426614174000"
-    swept = redact(f"uid {uid} and x_{uid}_0")
-    assert swept.text == "uid <UUID_1> and x_<UUID_1>_0" and swept.actions == 2
+    # the sweep: one per copy replaced (the second copy is not after the tenant key, so only the sweep reaches it; since
+    # G8 a UUID glued to `_` is the UUID pattern's own match and no longer shows the sweep)
+    swept = redact("tenant_id=acme42 and x_acme42_0")
+    assert swept.text == "tenant_id=<TENANT_1> and x_<TENANT_1>_0" and swept.actions == 2
     # a known value written in clear: every copy
     again = redact(f"mail {MAIL} and {MAIL}", mapping=dict(KNOWN))
     assert again.text == "mail <EMAIL_1> and <EMAIL_1>" and again.actions == 2
