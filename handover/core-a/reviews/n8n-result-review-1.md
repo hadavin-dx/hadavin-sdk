@@ -85,3 +85,23 @@ Checks: both JSON files load; ruff check and format clean; pytest log `handover/
 | Major 3 | Step 12: the operator's check is "no execution is Running or Waiting" in the n8n Executions list (whether the list shows a Waiting state for a Wait node is UNVERIFIED: the evidence has the word only in database rows); a crash or host reboot has the same effect; 105 minutes is the worst case; step 6's restart happens before any event is sent. |
 | Nits | "at least 70 s, about 73 to 82 s" replaces "82 s" (README, Wait note, test); error-workflow cite is lines 34 to 35; Respond passes the item unchanged except the headers (evidence 104 to 105); "about 52 to 53 minutes" in the prose (the errorMessage text and the "(52 minutes)" phrase the tests pin are unchanged); test variable renamed largest_failing (README: needs at least 18 / 33 / 54 is the same as more than 17 / 32 / 53); stale "45 x 60" comment fixed; steps 2 to 4 reordered (create credentials, edit the JSON, import and check). |
 | Checks | Both JSON files load; ruff clean. Test runs 1 to 3 hit the three-try cap (log n8n-template-tests-10.log is the 3rd run: 90 passed, 1 failed on the "(52 minutes)" phrase). A last text fix to README limit 15 line was made after it and has NOT been run. |
+
+## n8n-fix6 (builder, core-a; evidence `handover/core-a/inputs/evidence-n8n-4.md`, real n8n 2.47.7, head 02226ce0, each case ran once)
+
+Marks changed: 8 node notes from UNVERIFIED to SEEN IN n8n 2.47.7 (evidence-n8n-4.md, once): Stop: id or text missing (lines 59, 62 to 64, 83), Answer caller: taken (47 to 49, 84 to 86), Build request (89), Stamp time (90), Next round (104), Run still going? (112), Next check (115), Done (118). 11 more notes keep UNVERIFIED for the part not run and gain a SEEN sentence with lines: Trigger placeholder, Id and text present?, Hash business id, Sign, Send to Hadavin, Busy and rounds left?, Wait before next round, Stop: refused or gave up, Checks left?, Run ended well?, Notify placeholder (error file). Stop: run did not end well and Stop: still running stay open (lines 119, 120). Both file-level notes and names changed. README: 7 verify items marked DONE with lines (1, 2, 4, 9, 21, 22, 24), new item 26.
+
+| Template claim | Evidence | Fixed in |
+|---|---|---|
+| Respond noData, code 202 and the early answer were not seen; node "NOT part of any run as written" | seen: 202, empty body, item unchanged, answered in 0.10 to 0.33 s while executions ran up to 73 s (lines 47 to 49, 84 to 86) | README status, "What was run", "caller is told", verify 4 and 25, limit 18; node note; tests |
+| Refused event: caller's answer "UNVERIFIED: its status and body" | HTTP 500, body {"message":"Error in workflow"} (lines 59, 62 to 64, 83) | README, Stop: id or text missing note, verify 24, test |
+| Wait of exactly 70 s in a restart is "an inference, not run" | survived once, resumed, success (line 66) | Wait note, README limit 15, step 12, verify 22, test |
+| "Nobody has run this exact version"; files "not imported or run in any n8n since"; names "this version not re-imported" | imported, published and run (lines 46, 47) | README status, both files' notes and names, tests |
+| Authentication shape "written from memory, never imported" | enforced: 202 with header, 403 without or wrong (lines 35, 60, 75) | README auth section, Trigger note, verify 21 |
+| "Nobody has measured a run"; real numbers "were not run"; Docker reach UNVERIFIED | 3 rounds with real 70 s wait, 72.8 to 75.6 s between sends (lines 102, 105); container reached worker as host.docker.internal (lines 28, 34) | README "One run at a time", Docker bullet |
+| Real endpoint "a stub answered" | endpoint.py and worker.py of the tree (line 97) | README, NOT_RUN, verify 9 |
+
+New fact documented: a receiver that is down and then recovers is silent (success, no error workflow; late success in the client's records; bound 45 x 70 s, 52 minutes) in a new README section, the error workflow's Notify note and a new test (line 50, 124).
+
+Still UNVERIFIED: timeout 45 s, 3xx, 502/503/504 with body, 520 to 524, Retry-After, 45 rounds to the end, every state but NO_ACTION/RECEIVED/WORKING, lone surrogate, null values, empty id, falsy rerun, placeholder values, lost execution notice, editor paths, Cloud/queue, other versions.
+
+Checks: both JSON files load; ruff check and format clean; pytest log `handover/core-a/raw/n8n-template-tests-13.log` (92 passed; run 2 of 3, run 1 failed on three pins, log overwritten).
