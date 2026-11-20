@@ -235,7 +235,7 @@ def test_a_settle_step_that_validates_a_planted_row_too_is_killed(mw, monkeypatc
 
 def test_a_settle_step_without_timeouts_is_killed(mw, monkeypatch):
     @contextlib.contextmanager
-    def no_timeouts(db):
+    def no_timeouts(db, lock_only=False):
         yield
 
     mw.migrate()
@@ -250,7 +250,7 @@ def test_a_settle_step_without_timeouts_is_killed(mw, monkeypatch):
 
 def test_a_settle_step_that_leaves_its_timeouts_behind_is_killed(mw, monkeypatch):
     @contextlib.contextmanager
-    def leaky(db):
+    def leaky(db, lock_only=False):
         db.execute(
             "SELECT set_config('lock_timeout', '5s', true), set_config('statement_timeout', '60s', true)"
         )

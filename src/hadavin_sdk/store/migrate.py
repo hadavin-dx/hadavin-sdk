@@ -615,10 +615,21 @@ def _check_stop_relations(db) -> None:
         )
 
 
+def _current_schema(db) -> str:
+    """`current_schema()`, or a ConfigError when it is NULL (a search_path with no existing schema: nothing of ours
+    can be found there, and `None.replace` / `Identifier(None)` would be a crash with exit 3)."""
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    if schema is None:
+        raise ConfigError(
+            "the search_path of this connection names no existing schema (current_schema() is NULL): set the "
+            "search_path of HADAVIN_MIGRATE_DSN to the schema that holds the hadavin tables"
+        )
+    return schema
+
+
 def _in_schema(db, table: str) -> sql.Composable:
     """`current_schema()`.`table` as a quoted identifier pair (a bare name follows the search_path: see `_qualified`)."""
-    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
-    return sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(table))
+    return sql.SQL("{}.{}").format(sql.Identifier(_current_schema(db)), sql.Identifier(table))
 
 
 # The constraints 0009 adds NOT VALID (so an upgrade never fails on a planted row): (table, constraint).
@@ -689,7 +700,7 @@ def _validate_one(db, table: str, name: str) -> None:
 
 
 @contextlib.contextmanager
-def _stop_timeouts(db):
+def _stop_timeouts(db, lock_only: bool = False):
     """Set the lock and statement timeouts for the validation step only (`set_config(..., true)`, the same effect
     as `SET LOCAL`), and put the transaction's previous values back afterwards, also when the step raises
     (`migrate` runs the step inside its one transaction: the grant and function steps after it must not inherit a
@@ -697,10 +708,11 @@ def _stop_timeouts(db):
     is skipped then (the caller rolls back) so the original error is never replaced by InFailedSqlTransaction."""
     names = ("lock_timeout", "statement_timeout")
     old = [db.execute("SELECT pg_catalog.current_setting(%s)", (n,)).fetchone()[0] for n in names]
+    new = (VALIDATE_LOCK_TIMEOUT, old[1] if lock_only else VALIDATE_STATEMENT_TIMEOUT)
     db.execute(
         "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
         "pg_catalog.set_config('statement_timeout', %s, true)",
-        (VALIDATE_LOCK_TIMEOUT, VALIDATE_STATEMENT_TIMEOUT),
+        new,
     )
     try:
         yield
@@ -745,19 +757,20 @@ def settle_stop_constraints(db) -> list[tuple[str, str]]:
     step only. Errors are mapped as in `_validate_mapped`; a login that may not read the stop tables is a refusal
     too (migrate rolls back as a whole in every case). `planted_ts_rows` and the loop each read the catalog list
     once more: both read the same transaction snapshot, and the list is two names."""
-    with _stop_timeouts(db):
-        try:
-            planted = planted_ts_rows(db)
-            for pair in not_valid_constraints(db):
-                if pair not in planted:
-                    _validate_mapped(db, *pair)
-        except errors.InsufficientPrivilege as exc:
-            raise ConfigError(
-                f"cannot read the stop tables: {type(exc).__name__} (this login is not the table owner); "
-                "run migrate as the owner of the stop tables"
-            ) from None
-        except errors.OperationalError as exc:
-            raise _busy(exc, "validate the stop-year constraints") from None
+    try:  # the whole step, the timeout setup and restore included: a lost connection anywhere is exit 75
+        with _stop_timeouts(db):
+            try:
+                planted = planted_ts_rows(db)
+                for pair in not_valid_constraints(db):
+                    if pair not in planted:
+                        _validate_mapped(db, *pair)
+            except errors.InsufficientPrivilege as exc:
+                raise ConfigError(
+                    f"cannot read the stop tables: {type(exc).__name__} (this login is not the table owner); "
+                    "run migrate as the owner of the stop tables"
+                ) from None
+    except errors.OperationalError as exc:
+        raise _busy(exc, "validate the stop-year constraints") from None
     return planted
 
 
@@ -766,24 +779,30 @@ def validate_constraints(db) -> list[str]:
     step of its own (`hadavin-sdk migrate --validate-constraints`): a planted row (CheckViolation) or a login that
     is not the table owner (InsufficientPrivilege) is a refusal (ConfigError); the stop tables must be in
     `current_schema()` (else ConfigError); a lock wait, a time limit or a lost connection is `StopTablesBusy`."""
-    missing = [
-        table
-        for table, _ in NOT_VALID_BY_DESIGN
-        if not db.execute(
-            "SELECT pg_catalog.to_regclass(pg_catalog.format('%%I.%%I', pg_catalog.current_schema(), %s::text))",
-            (table,),
-        ).fetchone()[0]
-    ]
-    if missing:
-        raise ConfigError(
-            f"the stop tables are not in the schema this connection uses ({', '.join(missing)} missing): run "
-            "hadavin-sdk migrate first, and check the search_path of HADAVIN_MIGRATE_DSN"
-        )
     done = []
-    with _stop_timeouts(db):
-        for table, name in not_valid_constraints(db):
-            _validate_mapped(db, table, name)
-            done.append(name)
+    try:  # the whole step (lookups, setup, catalog read, VALIDATE, restore): a lost connection anywhere is exit 75
+        _current_schema(
+            db
+        )  # NULL (no existing schema in the search_path) is a ConfigError, not a crash
+        missing = [
+            table
+            for table, _ in NOT_VALID_BY_DESIGN
+            if not db.execute(
+                "SELECT pg_catalog.to_regclass(pg_catalog.format('%%I.%%I', pg_catalog.current_schema(), %s::text))",
+                (table,),
+            ).fetchone()[0]
+        ]
+        if missing:
+            raise ConfigError(
+                f"the stop tables are not in the schema this connection uses ({', '.join(missing)} missing): run "
+                "hadavin-sdk migrate first, and check the search_path of HADAVIN_MIGRATE_DSN"
+            )
+        with _stop_timeouts(db):
+            for table, name in not_valid_constraints(db):
+                _validate_mapped(db, table, name)
+                done.append(name)
+    except errors.OperationalError as exc:
+        raise _busy(exc, "validate the stop-year constraints") from None
     return done
 
 
@@ -981,10 +1000,13 @@ def _excess_privileges(db, role: str) -> list[str]:
             privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE")
             q = "SELECT has_table_privilege(%s, %s, %s)"
         allowed = {"SELECT"} if grant.portal else set()
+        target = _qualified(
+            db, name
+        )  # a bare name would follow the search_path (a TEMP table first)
         extra += [
             f"{name}:{p}"
             for p in privs
-            if p not in allowed and db.execute(q, (role, name, p)).fetchone()[0]
+            if p not in allowed and db.execute(q, (role, target, p)).fetchone()[0]
         ]
     return extra
 
@@ -994,7 +1016,7 @@ def _qualified(db, name: str) -> str:
     resolved through the whole search_path, so with an odd one it finds ANOTHER schema's object of that name and the
     step would alter, grant on or read it. Every catalog lookup and every ALTER / GRANT / REVOKE on one of OUR
     objects goes through this."""
-    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    schema = _current_schema(db)
     return '"' + schema.replace('"', '""') + '".' + name
 
 
@@ -1188,12 +1210,19 @@ def _seed_limits(db) -> None:
     limits = money_limits()
     for name, value in limits.items():
         db.execute(
-            "INSERT INTO hadavin_limits (name, value) VALUES (%s, %s) "
-            "ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value",
+            sql.SQL(
+                "INSERT INTO {} (name, value) VALUES (%s, %s) "
+                "ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value"
+            ).format(_in_schema(db, "hadavin_limits")),
             (name, value),
         )
     # a row nobody reads (a planted one, or a limit an older package seeded) is removed, never left to look meaningful
-    db.execute("DELETE FROM hadavin_limits WHERE name <> ALL(%s::text[])", (list(limits),))
+    db.execute(
+        sql.SQL("DELETE FROM {} WHERE name <> ALL(%s::text[])").format(
+            _in_schema(db, "hadavin_limits")
+        ),
+        (list(limits),),
+    )
 
 
 def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
@@ -1510,16 +1539,23 @@ def migrate(
             _reset_draft(db, reset_draft, files)
             done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
-        for path in files:
-            if path.stem in done:
-                continue
-            text, digest = texts[path]
-            db.execute(text)  # a file shipped in this package
-            db.execute(
-                "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
-                (path.stem, digest),
-            )
-            applied.append(path.stem)
+        try:
+            # a lock limit, set only now that the advisory lock is held (a limit before it would end the wait for
+            # another migrate) and only for the file loop: an ACCESS EXCLUSIVE wait behind a long reader would
+            # otherwise queue for ever, and every stop read and write queues behind it
+            with _stop_timeouts(db, lock_only=True):
+                for path in files:
+                    if path.stem in done:
+                        continue
+                    text, digest = texts[path]
+                    db.execute(text)  # a file shipped in this package
+                    db.execute(
+                        "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                        (path.stem, digest),
+                    )
+                    applied.append(path.stem)
+        except errors.LockNotAvailable as exc:
+            raise _busy(exc, "get the table lock a migration file needs") from None
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
         for a in named:
             for b in named:

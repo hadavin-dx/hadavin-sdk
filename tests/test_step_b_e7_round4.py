@@ -172,7 +172,7 @@ def test_the_runbook_states_the_numbers_the_code_uses():
         assert exit_code in RUNBOOK.read_text(encoding="utf-8")
     # m2: the lock lasts to commit, the wait has no limit, and why
     assert "holds that lock until the whole run commits" in text
-    assert "Stop the runtimes" in text
+    assert "stop the runtimes" in text
     assert "advisory lock" in text
 
 
