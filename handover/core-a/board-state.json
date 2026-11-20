@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "cfull-run",
-   "role": "evidence runner (never judges)",
-   "model": "sonnet",
-   "what exactly it is doing": "LANE 2: cfull tests (test_hostile_1 'fdfa', py3.12 Unicode test, glued-linear perf margin, settle-loop thread_time) at core-c head on py3.13 and 3.12, quiet box -> evidence/cfull-fix-check.md",
-   "started UTC": "15:50",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead OWNER ORDER 15:43"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:53 LANE 2 DONE (evidence/cfull-fix-check.md): the cfull ids ALL PASS at core-c fc4af41a7 on py3.13.12 (3 repeats) and py3.12.3 (1 run) on a quiet box (start load 0.04): 17 passed, 0 failed per run: test_hostile_1 'fdfa', the py3.12 Unicode 15.1.0 test (passes, not skipped), test_glued_patterns_are_linear all 12 params, settle-loop thread_time test; whole-test times 3.2-4.3 s (3.13) and up to 5.25 s (3.12) for the glued ids, 11-12 s settle-loop, 39-42 s fold_budget. No fix needed from core-a: core-c's earlier fixes hold. ALL FOUR LANES DONE. AGENTS 0; nothing open on my side; waiting for new heads or orders.",
   "15:46 LANE TABLE (your 15:43 order; your 15:47 GO crossed my pushes): LANE 1 grant tests: DONE (agent grants-run; both versions green on core-b fa21e8fbb PG16.15: core-c 85 passed, mine 88 passed, take mine (superset); evidence/grants-a-vs-b.md; handover/core-c/requests/from-core-a-grants.md). LANE 2 cfull fixes: RUNNING (agent cfull-run: verifies fdfa / py3.12 Unicode / glued-linear perf margin / settle-loop on py3.13 AND 3.12 on a quiet box; core-c says these were fixed earlier on cloud/core-c) -> evidence/cfull-fix-check.md. LANE 3 reviews lead-b-migrate (0891d81bd) and lead-b-ts-watermark (de8967aba): DONE twice each, findings in handover/core-b/requests/xr-review-wip-lead-b-migrate.md and xr-review-wip-lead-b-ts-watermark.md (heads unchanged: tell me when fix round 1 lands and I review the delta). LANE 4 crash matrix part 2 + E-door-1 README: DONE (reviewed fresh, fixed). AGENTS 1 (cfull-run). 3 lanes are finished, not skipped; no open lane without an agent.",
   "15:57 LANE 1 DONE (evidence/grants-a-vs-b.md): both grant-test versions are GREEN against core-b's current head fa21e8fbb on PG16.15: core-c's (wip/cloud-core-c/grants b55d21865) 85 passed [its commit message says 117: not reproduced], mine (wip/core-a-for-grant-tests 3ffb442f1) 88 passed; no failing id in either; every test of A is also in B and B has 3 more pins (release identity cells; runtime writes no money table and books through functions; money functions are SECURITY DEFINER with EXECUTE only to the named roles): TAKE B (superset). Without a DSN: A 46 passed/39 skipped, B 48/40. Running: cfull-run (LANE 2).",
   "15:50 OWNER ORDER 15:43, lanes: LANE 1 grant tests: BOTH versions exist (core-c's wip/cloud-core-c/grants b55d21865 117 passed PG16; mine wip/core-a-for-grant-tests 3ffb442f1 88 passed): grants-run now runs both on core-b's CURRENT head (handover/core-c/requests/from-core-a-grants.md written). LANE 2 cfull: core-c says fdfa/py3.12/E22 are already fixed on cloud/core-c: cfull-run verifies on py3.13 AND 3.12 on a quiet box (perf 3 repeats; load now ~0.1). LANE 3: reviews of wip/lead-b-migrate (0891d81bd) and wip/lead-b-ts-watermark (de8967aba) DONE earlier; written to handover/core-b/requests/xr-review-wip-lead-b-migrate.md and xr-review-wip-lead-b-ts-watermark.md as asked (heads unchanged: tell me when fix round 1 lands). LANE 4 CRASH-MATRIX part 2 + E-door-1 README: DONE. AGENTS 2.",
@@ -3944,6 +3931,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "grants A (core-c b55d21865) vs B (mine 3ffb442f1) at core-b fa21e8fbb on PG16.15: A 85 passed, B 88 passed, no failing id either; every A test is in B, B alone has 3 pins (release identity cells, runtime writes no money table, definer functions only named roles); A's claimed 117 not reproduced; evidence/grants-a-vs-b.md"
+  },
+  {
+   "id": "cfull-run",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "LANE 2: cfull tests (test_hostile_1 'fdfa', py3.12 Unicode test, glued-linear perf margin, settle-loop thread_time) at core-c head on py3.13 and 3.12, quiet box -> evidence/cfull-fix-check.md",
+   "started UTC": "15:50",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "cfull ids all PASS at core-c fc4af41a7 on py3.13.12 (x3) and py3.12.3: 17 passed 0 failed per run (fdfa, py3.12 Unicode, glued-linear 12 params, settle-loop); glued call times 3.2-5.25 s (the 3.0 s limit is measured inside the test); evidence/cfull-fix-check.md"
   }
  ]
 }
