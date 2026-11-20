@@ -442,3 +442,15 @@ def test_glued_search_for_the_end_of_the_token_is_bounded():
     assert calls, "the glued rest was never tried"
     assert all(e is not None and e - p <= R._GLUED_WINDOW for p, e in calls), calls[:3]
     assert "@" not in out and "example" not in out
+
+
+def test_undefang_reads_a_shifted_pair_as_defang_does():
+    """Review N1: `defang_text` treats a line as prose when an unpaired backtick elsewhere shifts the pairs (`certain`);
+    `undefang_text` read inline code per line, so `` `a[.]b` `` after an unpaired backtick was written but not undone."""
+    shifted = "a ` b\n`" + PUBLIC + "` c"
+    written = gate.defang_text(shifted)
+    assert written == "a ` b\n`" + PUBLIC_DEFANGED + "` c"
+    assert gate.undefang_text(written) == shifted
+    # unambiguous code keeps its dots in both directions
+    code = "run `" + PUBLIC_DEFANGED + "` now"
+    assert gate.undefang_text(code) == code
