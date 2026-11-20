@@ -38,3 +38,13 @@ No leftovers of the deleted code in src (exit_code, stop_server, _is_store_down 
 | E1d-4 | Nit | two tests check 'retried forever' | DECLINE | cheap, each pins its own path |
 | E1d-5 | Nit | AUDIT_WRITE_TIMEOUT_S 2.0 plus a store read: a 409 can take slightly over 2 s | DECLINE | stated as 'about 2 s' in the ticket |
 | E1d-6 | Option | deletions ranked: _ack_wait_of (18 lines), _warn_no_audit (11), the 5-minute warning limit (10), the conflict-drop warning throttle (8), param validation (7) | DECLINE | each has a test and a use; not needed for the verdict; listed for the lead |
+
+## d-fix16 review (fresh, codebase-details; behaviour-changing shipped code): NO Blocker, NO Major, 4 nits
+Every send_error call of parse_request (400 version/syntax/HTTP/0.9 non-GET, 505, 431 line/headers) goes through our override on 3.12.3 and 3.13; 414 is ours; handle_one_request is never called; a valid HTTP/1.0 or 1.1 request is never closed without an answer; wire bytes equal the goldens; logs carry the status code only at DEBUG.
+| id | sev | finding | category | action |
+|---|---|---|---|---|
+| S-1 | Nit | `hasattr(self, "request_version")` in _refuse_stalled is dead | PROPOSE FIX | remove (after the lead's mutant run: it validates the current head) |
+| S-2 | Nit | 408/417 in REFUSAL_TEXT unreachable; no test for 431, the unknown-code fallback (404/500) and close_connection | PROPOSE FIX | add rows and assert close_connection |
+| S-3 | Nit | docstring 'no answer' for a versionless line holds only for a COMPLETE request: on 3.12 a stalled or over-limit request after `GET /path` still gets 400 via _refuse_stalled / 431->400, on 3.13 silence | PROPOSE FIX (docs) | 'no answer once the request is complete' |
+| S-4 | Nit | server.py:223 f-string over 100 characters | PROPOSE FIX | split |
+Known limit (reviewer, not a finding): handle_expect_100 writes its interim 100 outside send_error; dead today (WSGIRequestHandler protocol_version stays HTTP/1.0); reappears if protocol_version is raised to 1.1.

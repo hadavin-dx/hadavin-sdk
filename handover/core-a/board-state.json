@@ -735,23 +735,18 @@
    "evidence file": "lead's run",
    "tries": 1,
    "reason": "permission denial for me: the lead runs the script and fixes line 1251 on their side"
-  }
- ],
- "agents": [
+  },
   {
-   "id": "rev-send-error",
-   "role": "fresh reviewer (codebase-details)",
-   "model": "sonnet",
-   "what exactly it is doing": "read-only review of d-fix16: every stdlib refusal path on 3.12.3/3.13.12/3.13.18 routed through our send_error? the _serve condition: can a legit request be closed? phrase table; blind spots of the 3.13.18-only box",
-   "started UTC": "12:04",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1 (behaviour-changing shipped code, no cap)",
-   "retries so far": 0,
-   "reason": "after py-product"
+   "item": "S-nits",
+   "what": "d-fix16 review nits S-1..S-4 (cosmetic: dead guard, test rows, docstring, long line)",
+   "state": "QUEUED until the lead's full mutant run on the current head reports (a cosmetic change must not move the tree they validate; G34/G35 anchors will stay)",
+   "percent": 0,
+   "evidence file": "reviews/D-code-result-review-5.md (d-fix16 review)",
+   "tries": 0,
+   "reason": "the lead validates head 743690369"
   }
  ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1122,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:08 d-fix16 reviewed by a fresh reader: NO Blocker, NO Major; 4 cosmetic nits queued until your full mutant run reports (so that I do not change the head you validate; the G34/G35 anchors will not move). One real limit stated by the reviewer: on 3.12 a versionless `GET /path` followed by a STALLED or over-limit request still gets a 400 (via _refuse_stalled / 431->400) while on 3.13 the connection is closed silently: 'closed without an answer on every Python' holds for a complete request only (docstring fix queued).",
   "12:06 PUSHED, re-run the full mutant script now (head = the head of this board push; server.py anchors of G34 `self._answer += data` and G35 `self.headers_sent = True` unchanged). d-fix16 (the stdlib-patch-version defect, YOUR call was right): our own send_error writes the whole refusal in ONE write (400/408/414/417/431 table, 505 and unknown codes -> 400, no request_version, same bytes as the golden), a second dependence fixed (versionless line `GET /path`: 3.12 answered it, 3.13 did not: closed without answer on every Python), the 400-garbage relaxation REVERTED. RAW COUNTS on my box (t5_wsgiref + d_fix13 + d_fix14 = 104 tests): 3.12.3: 104 passed; 3.13.12: 104 passed; 3.13.18: 104 passed (raw/PYMATRIX2-<ver>.log). BEFORE (old send_error, 3.12.3): 12 failed 92 passed (the 6 wsgiref tests you named + test_f2 + 400-garbage x3 + 414 golden + the new test). WHOLE D/E (tests/triggers + crash) on system 3.12.3: 1431 passed 5 skipped 0 failed: nothing else depends on the stdlib patch version; box venv 1431 passed. The exit-code question stays as in my 11:53 message (send me your command line). A fresh read-only review of d-fix16 runs now (rev-send-error, 12:06): you need not wait for it for the script run.",
   "11:53 TAKEN, you are right and my py-matrix call was wrong: I relaxed the 400-garbage test to 'nothing or one write' and called it a test dependence; but the ticket's contract is a 400 (and test_t5_wsgiref asserts it since step D: it only passed because my box is the newest patch release). py-product started 11:53: our OWN send_error (ONE write, 400 empty, 505 mapped to 400, our own phrase table, no stdlib request_version), the relaxation of 400-garbage REVERTED (strict again) and the 414 phrase golden restored, the 6 wsgiref tests + T13 + T14 on 3.12.3 / 3.13.12 / 3.13.18 with raw logs (raw/PYMATRIX2-<ver>.log), then the WHOLE D/E set once on system 3.12.3: every stdlib-patch-version dependence listed and fixed. EXIT CODE (your item 3): I read tests/mutation_exit.py and the end of tests/endpoint_mutants.py: `sys.exit(exit_guard(main))`; exit_guard prints the traceback and RETURNS 1 for any exception (RuntimeError included): tests/test_mutation_runner_exit.py runs it in a REAL subprocess and pins exit 1 for RuntimeError and ValueError. So on my reading the python process cannot exit 0 after that traceback; the EXIT=0 you saw is the shell's: how did you run it? `... | tee log; echo EXIT=$?` reports tee's status (use `set -o pipefail` or ${PIPESTATUS[0]}); if you ran it WITHOUT a pipe and still got 0, send me the exact command line and the first lines of the log and I debug it: that would contradict the unit tests. I do not run the script. Head will be posted when py-product is pushed.",
   "11:48 PUSHED for your re-run (head of cloud/core-a at the next board push): (1) THE 3 [400-garbage] FAILURES: a TEST that depended on stdlib internals, not a product defect: that request line (`\\x16\\x03\\x01\\x02 junk`) goes through parse_request's HTTP/0.9 branch: on 3.13.12 and 3.12.3 send_error runs while request_version is still HTTP/0.9 and writes nothing (the server just closes: a legitimate answer; the property that matters, never a SPLIT answer, holds); 3.13.18 sets request_version = '' first (4 lines added in parse_request) and answers 400 once. Results per Python on my box, BEFORE the fix: 3.12.3: 4 failed (the 3 + the 414 golden: HTTPStatus(414).phrase is 'Request-URI Too Long' up to 3.12, 'URI Too Long' from 3.13); 3.13.12: 3 failed (400-garbage only: the same as your laptop); 3.13.18: 55 passed. AFTER the fix: 55 passed on all three (raw/PYMATRIX-3.12.log, -3.13.12.log, -3.13.18.log). The fix is in the test only: 400-garbage may write NOTHING or exactly ONE complete write; the 414 phrase is not compared. CORRECTION: at 11:43 I told the owner the failure 'does not reproduce on 3.13.12 here': WRONG: the logs I read were the AFTER-fix runs; before the fix it reproduced exactly as on your laptop. (2) mut-guard (11:43): T13+T14 in TESTS, G35, missing-test-file guard (exit 2, no traceback), exit_guard (uncaught exception = exit 1): tests/test_mutation_runner_exit.py 6 tests. The exit 0 you saw: by the code the script exits 1 on an uncaught ValueError: I think the 0 came from a pipe (`| tail`: use set -o pipefail): unconfirmed. (3) OPEN CHOICE for you: if the server should ALWAYS answer a garbage line with 400 (not close on old Pythons), the smallest product change is request_version = '' in QuietRequestHandler.send_error for HTTP/0.9: say so and I do it. Your line-1251 anchor edit is still yours. The G-list header/docstring ('Thirty-four groups') lacks G35: cosmetic.",
@@ -2923,6 +2919,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "PRODUCT FIX d-fix16: QuietRequestHandler.send_error writes the whole refusal itself in ONE write (REFUSAL_TEXT table 400/408/414/417/431, any other or >=500 code incl. 505 -> 400, never reads request_version, bytes identical to the old golden); a SECOND version dependence found and fixed in _serve (versionless line `GET /path`: 3.12 parses a header block and let the endpoint answer: now closed without an answer on every Python); relaxation of 400-garbage REVERTED (strict) + 414 phrase restored; new test for HTTP/0.9, '', 1.1, 2.0 x codes 400/414/505; MATRIX (t5_wsgiref + d_fix13 + d_fix14 = 104 tests) AFTER: 3.12.3 104 passed, 3.13.12 104 passed, 3.13.18 104 passed (raw/PYMATRIX2-<ver>.log); BEFORE-proof (old send_error on 3.12.3): 12 failed 92 passed (the 6 wsgiref tests + test_f2 + 400-garbage x3 + 414 golden + the new test); WHOLE tests/triggers + crash on system 3.12.3: 1431 passed 5 skipped 0 failed (first run had 6 errors: psycopg missing in that venv): nothing else in D/E depends on the stdlib patch version; box venv 1431 passed 5 skipped (raw/D-fix16-tests.log); ruff/bandit clean; mutant anchors G34/G35 unmoved; not read: evidence-mutants-19-run3.md (not in my checkout)"
+  },
+  {
+   "id": "rev-send-error",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "read-only review of d-fix16: every stdlib refusal path on 3.12.3/3.13.12/3.13.18 routed through our send_error? the _serve condition: can a legit request be closed? phrase table; blind spots of the 3.13.18-only box",
+   "started UTC": "12:04",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 (behaviour-changing shipped code, no cap)",
+   "retries so far": 0,
+   "reason": "d-fix16 review: NO Blocker, NO Major; 4 nits (dead hasattr guard, unreachable 408/417 + missing rows for 431/unknown code/close_connection, docstring 'no answer' only for a complete versionless request (3.12 still answers a stalled/over-limit one), a long f-string); known limit: handle_expect_100 writes the interim 100 outside send_error (dead while protocol_version stays HTTP/1.0)"
   }
  ]
 }
