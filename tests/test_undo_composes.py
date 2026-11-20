@@ -17,13 +17,13 @@ def _nfd(s: str) -> str:
 
 
 # built from parts so the file holds no literal credential
-_NAME = "Mü" + "ller"
-_VIET = "Việ" + "t" + "Ấn"  # stacked marks: e + dot below + circumflex, A + circumflex + acute
-_HANGUL = "한" + "글"  # two precomposed syllables
-_JAMO = "한글"  # the same two syllables as conjoining jamo
+_NAME = "M\u00fc" + "ller"
+_VIET = "Vi\u1ec7" + "t" + "\u1ea4n"  # stacked marks: e + dot below + circumflex, A + circumflex + acute
+_HANGUL = "\ud55c" + "\uae00"  # two precomposed syllables
+_JAMO = "\u1112\u1161\u11ab\u1100\u1173\u11af"  # the same two syllables as conjoining jamo
 
 
-@pytest.mark.parametrize("precomposed", [_NAME, _VIET, _HANGUL, "café-" + "Pw1"])
+@pytest.mark.parametrize("precomposed", [_NAME, _VIET, _HANGUL, "caf\u00e9-" + "Pw1"])
 def test_undo_of_nfd_input_is_the_precomposed_text(precomposed):
     assert _nfd(precomposed) != precomposed
     assert runmap.undo(_nfd(precomposed)) == precomposed
@@ -40,11 +40,11 @@ def test_undo_composes_inside_an_escape_layer():
 
 
 def test_undo_still_drops_format_characters():
-    assert runmap.undo("pa​ss⁠word") == "password"
-    assert runmap.undo("ＡＢ") == "AB"
+    assert runmap.undo("pa\u200bss\u2060word") == "password"
+    assert runmap.undo("\uff21\uff22") == "AB"
 
 
-_SECRET = "Mü" + "ller-" + "Zq7" + "Rt2" + "xK9"
+_SECRET = "M\u00fc" + "ller-" + "Zq7" + "Rt2" + "xK9"
 
 
 def test_handed_out_secret_shown_decomposed_is_scrubbed():

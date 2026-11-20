@@ -79,6 +79,7 @@ messages, dicts and documents are never changed in place.
 from __future__ import annotations
 
 import contextlib
+import re
 from collections.abc import Callable, Mapping
 from decimal import Decimal
 from typing import Any, Protocol
@@ -87,6 +88,7 @@ from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import AuditEvent, Reply
+from hadavin_sdk.tools import END_MARKER, START_MARKER
 
 # ======================================================================================================
 # INTERFACE (ii), version 2 (README 2.1), as core-b PUBLISHED it: switch here if it changes
@@ -150,6 +152,7 @@ CODE_WORST_CASE_FAILED = (
 CODE_WORST_CASE_INVALID = "worst_case_invalid"  # it returned no finite Decimal >= 0: no reserve
 CODE_RESERVE_REFUSED = "reserve_refused"  # the meter's exception has no published `.reason`
 CODE_RESERVATION_INVALID = "reservation_invalid"  # reserve returned no usable id: no provider call
+CODE_FRAMING_REFUSED = "framing_refused"  # a known value equals a word of the trusted framing: no call
 CODE_PROVIDER_REFUSED = (
     "provider_refused"  # rule (b): marked refused before any response, settled at 0
 )
@@ -163,6 +166,16 @@ CODE_OVERSHOOT = "overshoot"  # a paid call (result ok) whose real cost was abov
 # The `decision` field of every row: whether this bound gate enforces a run map (design review D1).
 MODE_ENFORCED = "map_enforced"
 MODE_NO_MAP = "no_map"
+# The trusted framing of a tool result (runtime/agent_loop.py builds `<<TOOL RESULT call_id=ID tool=NAME>>`, the
+# text, then `<<END TOOL RESULT>>`; the markers are `tools.START_MARKER` and `tools.END_MARKER`). The gate never
+# replaces inside these tokens, and refuses a call when a known value EQUALS one of their words, a tool name or a
+# call id (ORDER 017 item 6; reproduced with the real producers in tests/test_model_gate.py).
+FRAMING_WORDS = frozenset(
+    {*START_MARKER.strip("<>").split(), *END_MARKER.strip("<>").split(), "call_id", "tool"}
+)
+_FRAMING_START = re.escape(START_MARKER) + r" call_id=([^\s>]+) tool=([^\s>]+)>>"
+FRAMING = re.compile(_FRAMING_START + "|" + re.escape(END_MARKER))
+_ASSISTANT_CALL = re.compile(r"tool ([^\s{]+) ")  # the assistant line `tool NAME {inputs}` of the same loop
 # The reasons ii_meter.py publishes for `SpendRefused.reason` (README contract 1). Only these are copied from
 # a meter's exception into an audit row: a `.reason` on any other exception that is not one of them (urllib's
 # URLError has one) is never copied.
@@ -185,6 +198,7 @@ AUDIT_CODES = SPEND_REASONS | {
     CODE_WORST_CASE_INVALID,
     CODE_RESERVE_REFUSED,
     CODE_RESERVATION_INVALID,
+    CODE_FRAMING_REFUSED,
     CODE_PROVIDER_REFUSED,
     CODE_PROVIDER_ERROR,
     CODE_PROVIDER_EXHAUSTED,
@@ -220,12 +234,42 @@ def usable_cost(reply: Any) -> Decimal | None:
 # ======================================================================================================
 
 
+def framing_free(
+    messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None, mapping: Mapping[str, str]
+) -> bool:
+    """False when a value the map holds EQUALS a word of the trusted framing, a tool name or a call id: a
+    hostile document can plant such a value (`password=RESULT`) and every later copy of the framing word would be
+    rewritten. Tool names come from the `tools` list and from the framing and assistant lines of the messages,
+    call ids from the framing. Equality only: a value that merely lies inside a framing token is protected by
+    `_enforce_text`. Returns a bool; the value is never returned or logged."""
+    names = set(FRAMING_WORDS)
+    for tool in tools or ():
+        if isinstance(tool, dict) and isinstance(tool.get("name"), str):
+            names.add(tool["name"])
+    for message in messages:
+        content = message["content"]
+        for token in FRAMING.finditer(content):
+            names.update(group for group in token.groups() if group)
+        if message.get("role") == "assistant":
+            call = _ASSISTANT_CALL.match(content)
+            if call:
+                names.add(call.group(1))
+    return names.isdisjoint(mapping.values())
+
+
 class GateRefused(RuntimeError):
-    """The gate made no model call. Carries a stable `code` and nothing else: never text, never a secret."""
+    """THE gate exception: the gate made NO provider call. Every failure before the provider call that is not a
+    `SpendRefused` (the enforce step, `worst_case`, the meter's `reserve` failing with anything but a SpendRefused
+    such as a KeyError or a store that is down, a bad reservation id, a framing conflict) is raised as this type or
+    one of its subclasses. It carries a stable `code` and nothing else: never text, never a secret, no cause and
+    no context (it is raised outside any `except` block). A `SpendRefused` passes unchanged and an error of the
+    client passes unchanged; core-b catches `GateRefused` for 'no call made, nothing booked by the gate'."""
 
     code = CODE_GATE_REFUSED
 
-    def __init__(self) -> None:
+    def __init__(self, code: str | None = None) -> None:
+        if code is not None:
+            self.code = code
         super().__init__(self.code)
 
 
@@ -248,6 +292,26 @@ class ReservationInvalid(GateRefused):
     against, so no call was made. Whatever the meter booked stays booked until its sweep."""
 
     code = CODE_RESERVATION_INVALID
+
+
+class FramingRefused(GateRefused):
+    """A value of the run's map equals a word of the trusted tool-result framing, a tool name or a call id."""
+
+    code = CODE_FRAMING_REFUSED
+
+
+class _NoMap:
+    """The type of `NO_MAP`. One instance; it is not a mapping and holds nothing."""
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "NO_MAP"
+
+
+# `bind(..., mapping=NO_MAP)` says, on purpose and in the call, that this call site has no run map: no enforce step
+# runs and every audit row says `no_map`. Only the eval and replay command lines (which have no run) may use it.
+NO_MAP = _NoMap()
 
 
 class ModelGate:
@@ -275,16 +339,20 @@ class ModelGate:
         agent_id: str,
         run_id: str,
         *,
-        mapping: Mapping[str, str] | None = None,
+        mapping: Mapping[str, str] | _NoMap,
         principal: str | None = None,
         source: str = DEFAULT_SOURCE,
     ) -> BoundGate:
-        """A gate for one call site. `mapping` is the run's LIVE map, kept by reference and never written:
-        every `chat` takes one copy of it (`runmap.snapshot`), so a value the run masks later is replaced in
-        earlier text on the next call. The map has ONE writer at a time (the run's own thread, through
-        `redact_text`); the gate may read it from another thread. None (a site with no run map) means no
-        enforce step, and every audit row then says `no_map`. `principal` defaults to the agent id.
-        The ids go into audit rows: one that is not a str is a TypeError here, not a row lost later."""
+        """A gate for one call site. `mapping` is REQUIRED (ORDER 017 item 1): the run's LIVE map, kept by
+        reference and never written: every `chat` takes one copy of it (`runmap.snapshot`), so a value the run
+        masks later is replaced in earlier text on the next call. The map has ONE writer at a time (the run's own
+        thread, through `redact_text`); the gate may read it from another thread. A site with no run map says so
+        with `mapping=NO_MAP` (the eval and replay command lines only): no enforce step runs and every audit row
+        says `no_map` in its `decision` field. None, or anything that is not a Mapping, is a TypeError: a
+        forgotten map can no longer switch the guarantee off without a trace. `principal` defaults to the agent
+        id. The ids go into audit rows: one that is not a str is a TypeError here, not a row lost later."""
+        if not isinstance(mapping, Mapping | _NoMap):
+            raise TypeError("mapping must be a Mapping (the run's map) or NO_MAP")
         if not all(isinstance(value, str) for value in (agent_id, run_id, source)):
             raise TypeError("agent_id, run_id and source must be str")
         if principal is not None and not isinstance(principal, str):
@@ -301,7 +369,7 @@ class BoundGate:
         gate: ModelGate,
         agent_id: str,
         run_id: str,
-        mapping: Mapping[str, str] | None,
+        mapping: Mapping[str, str] | _NoMap,
         principal: str,
         source: str,
     ) -> None:
@@ -309,7 +377,7 @@ class BoundGate:
         self._worst_case, self._enforce = gate._worst_case, gate._enforce
         self._agent_id, self._run_id, self._mapping = agent_id, run_id, mapping
         self._principal, self._source = principal, source
-        self._mode = MODE_NO_MAP if mapping is None else MODE_ENFORCED
+        self._mode = MODE_NO_MAP if isinstance(mapping, _NoMap) else MODE_ENFORCED
 
     def chat(
         self,
@@ -321,29 +389,39 @@ class BoundGate:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
-        enforced = self._enforced(messages, documents)
-        if enforced is None:
-            self._note(RESULT_REFUSED, CODE_MASK_REFUSED)
+        enforced = self._enforced(messages, documents, tools)
+        if isinstance(enforced, str):  # a failure code: nothing was sent, nothing is reserved
+            self._note(RESULT_REFUSED, enforced)
+            if enforced == CODE_FRAMING_REFUSED:
+                raise FramingRefused  # raised outside any `except`: no cause and no context to leak
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
         messages, documents = enforced  # from here on only the enforced copies are used
+        failure: str | None = None
+        reserved, reservation = Decimal(0), ""
         try:
             reserved = self._worst_case(route, system, messages, tools, documents, output_schema)
-        except Exception:
-            self._note(RESULT_REFUSED, CODE_WORST_CASE_FAILED)
-            raise
-        if not usable_amount(reserved):
-            self._note(RESULT_REFUSED, CODE_WORST_CASE_INVALID)
-            raise WorstCaseInvalid
-        try:
-            reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
-        except Exception as exc:
-            reason = getattr(exc, "reason", None)
-            published = isinstance(reason, str) and reason in SPEND_REASONS
-            self._note(RESULT_REFUSED, reason if published else CODE_RESERVE_REFUSED)
-            raise
-        if not (isinstance(reservation, str) and reservation):
-            self._note(RESULT_REFUSED, CODE_RESERVATION_INVALID)
-            raise ReservationInvalid
+        except Exception:  # noqa: BLE001 - its error is NOT passed on (it may carry text): a code instead
+            failure = CODE_WORST_CASE_FAILED
+        if failure is None and not usable_amount(reserved):
+            failure = CODE_WORST_CASE_INVALID
+        if failure is None:
+            try:
+                reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
+            except Exception as exc:
+                reason = getattr(exc, "reason", None)
+                if isinstance(reason, str) and reason in SPEND_REASONS:
+                    self._note(RESULT_REFUSED, reason)
+                    raise  # a SpendRefused passes unchanged
+                failure = CODE_RESERVE_REFUSED  # a KeyError, a store that is down ...: a code instead
+        if failure is None and not (isinstance(reservation, str) and reservation):
+            failure = CODE_RESERVATION_INVALID
+        if failure is not None:  # no provider call; raised outside the handlers above, so with no chain
+            self._note(RESULT_REFUSED, failure)
+            if failure == CODE_WORST_CASE_INVALID:
+                raise WorstCaseInvalid
+            if failure == CODE_RESERVATION_INVALID:
+                raise ReservationInvalid
+            raise GateRefused(failure)
         try:
             reply = self._llm.chat(
                 messages,
@@ -390,47 +468,72 @@ class BoundGate:
         self._note(result, code, reservation)
 
     def _enforced(
-        self, messages: list[dict[str, Any]], documents: list[bytes] | None
-    ) -> tuple[list[dict[str, Any]], list[bytes] | None] | None:
-        """New lists holding what will be sent, or None when the step failed (then nothing is sent). A message
-        or document in which nothing is replaced is passed on as the same object, so the bytes are the
-        caller's; one with a replaced value is a new dict or new bytes. A content that is not `str` is refused
-        with or without a map. Documents are read as the adapters read them (`llm/common.py` `turns`: UTF-8,
-        bad bytes replaced). The live map is copied ONCE here (`runmap.snapshot`): every text of this call is
-        enforced against the same entries, and the patterns are built at most once per call."""
+        self,
+        messages: list[dict[str, Any]],
+        documents: list[bytes] | None,
+        tools: list[dict[str, Any]] | None,
+    ) -> tuple[list[dict[str, Any]], list[bytes] | None] | str:
+        """New lists holding what will be sent, or a failure code (`mask_refused`, `framing_refused`) when the step
+        failed (then nothing is sent). A message or document in which nothing is replaced is passed on as the
+        same object, so the bytes are the caller's; one with a replaced value is a new dict or new bytes. A
+        content that is not `str` is refused with or without a map. Documents are read as the adapters read them
+        (`llm/common.py` `turns`: UTF-8, bad bytes replaced). The live map is copied ONCE here (`runmap.snapshot`):
+        every text of this call is enforced against the same entries, and the patterns are built at most once
+        per call. The framing tokens of a tool result are never replaced inside (`_enforce_text`)."""
         mapping = self._mapping
         try:
-            if mapping is not None:
+            if isinstance(mapping, _NoMap):
+                mapping = None
+            else:
                 mapping = runmap.snapshot(mapping)
             sent: list[dict[str, Any]] = []
             for message in messages:
                 content = message["content"] if isinstance(message, dict) else None
                 if not isinstance(content, str):
-                    return None
+                    return CODE_MASK_REFUSED
                 if mapping is not None:
-                    fixed = self._enforce(content, mapping)
+                    fixed = self._enforce_text(content, mapping)
                     if not isinstance(fixed, str):
-                        return None
+                        return CODE_MASK_REFUSED
                     if fixed != content:
                         message = {**message, "content": fixed}
                 sent.append(message)
+            if mapping is not None and not framing_free(messages, tools, mapping):
+                return CODE_FRAMING_REFUSED
             if documents is None:
                 return sent, None
             docs: list[bytes] = []
             for document in documents:
                 if not isinstance(document, bytes):
-                    return None
+                    return CODE_MASK_REFUSED
                 if mapping is not None:
                     text = document.decode("utf-8", "replace")
                     fixed = self._enforce(text, mapping)
                     if not isinstance(fixed, str):
-                        return None
+                        return CODE_MASK_REFUSED
                     if fixed != text:
                         document = fixed.encode("utf-8")
                 docs.append(document)
         except Exception:  # noqa: BLE001 - fail closed: a step that cannot finish means no call
-            return None
+            return CODE_MASK_REFUSED
         return sent, docs
+
+    def _enforce_text(self, text: str, mapping: Mapping[str, str]) -> str:
+        """Enforce the map on one message content, leaving every framing token of a tool result exactly as the
+        agent loop wrote it (`<<TOOL RESULT call_id=ID tool=NAME>>`, `<<END TOOL RESULT>>`): only the stretches
+        between them are enforced. A text with no framing token is enforced whole."""
+        parts: list[str] = []
+        end = 0
+        for token in FRAMING.finditer(text):
+            if token.start() > end:
+                parts.append(self._enforce(text[end : token.start()], mapping))
+            parts.append(token.group(0))
+            end = token.end()
+        if end == 0:
+            return self._enforce(text, mapping)
+        if end < len(text):
+            parts.append(self._enforce(text[end:], mapping))
+        return "".join(parts)
 
     def _note(self, result: str, error_code: str | None, reservation: str | None = None) -> None:
         """One audit row: codes only, and the reservation id (when one was made) as the object reference, so

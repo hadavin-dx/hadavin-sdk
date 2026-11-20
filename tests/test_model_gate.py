@@ -19,7 +19,13 @@ import pytest
 
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard import model_gate, runmap
-from hadavin_sdk.guard.model_gate import BoundGate, GateRefused, ModelGate, UnmaskedInput
+from hadavin_sdk.guard.model_gate import (
+    NO_MAP,
+    BoundGate,
+    GateRefused,
+    ModelGate,
+    UnmaskedInput,
+)
 from hadavin_sdk.llm.fake import FakeLLM, UnknownRecording
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import Reply
@@ -107,7 +113,7 @@ def worst(route, system, messages, tools, documents, output_schema) -> Decimal:
     return WORST
 
 
-def build(client=None, *, meter=None, sink=None, mapping=None, worst_case=worst, log=None, **bind):
+def build(client=None, *, meter=None, sink=None, mapping=NO_MAP, worst_case=worst, log=None, **bind):
     """(bound gate, client, meter, sink) sharing one call log."""
     log = [] if log is None else log
     client = Client(log) if client is None else client
@@ -120,7 +126,7 @@ def build(client=None, *, meter=None, sink=None, mapping=None, worst_case=worst,
     return gate.bind("agent-1", "run-1", mapping=mapping, **bind), client, meter, sink
 
 
-def refused(bound, client, meter, sink, messages=CLEAN, documents=None, mapping=None):
+def refused(bound, client, meter, sink, messages=CLEAN, documents=None, mapping=None):  # mapping: only to compare
     """A hostile input: UnmaskedInput, zero client calls, zero reservations, map unchanged, one refused row."""
     before = copy.deepcopy(dict(mapping)) if mapping is not None else None
     with pytest.raises(UnmaskedInput) as caught:
@@ -397,7 +403,7 @@ def test_t8_input_over_the_cap_is_refused_with_a_map_and_not_looked_at_without_o
     )  # the enforce step's own cap (E1), not the redaction cap
     refused(*build(mapping={}), messages=[{"role": "user", "content": big}])
     refused(*build(mapping=known()), documents=[big.encode()])
-    bound, client, _, _ = build(mapping=None)  # no map: no enforce step (ORDER 007 item 4)
+    bound, client, _, _ = build(mapping=NO_MAP)  # no map: no enforce step (ORDER 007 item 4)
     bound.chat(CLEAN, system="s", route="main", documents=[big.encode()])
     assert len(client.sent) == 1
 
@@ -603,7 +609,7 @@ def test_no_map_means_no_enforce_step_at_all():
 
     client = Client()
     gate = ModelGate(client, meter=Meter(), audit=None, worst_case=worst, enforce=enforce)
-    bound = gate.bind("agent-1", "run-1")
+    bound = gate.bind("agent-1", "run-1", mapping=NO_MAP)
     message = {"role": "user", "content": f"host {IP} key {KEY}"}
     bound.chat([message], system="s", route="main", documents=[TOKEN.encode()])
     assert calls == [] and bound._mapping is None
@@ -614,7 +620,7 @@ def test_two_bound_gates_share_only_the_client_the_meter_and_the_sink():
     client, meter, sink = Client(), Meter(), Sink()
     gate = ModelGate(client, meter=meter, audit=sink, worst_case=worst)
     with_map = gate.bind("agent-a", "run-a", mapping={"<TENANT_1>": "abc123"}, principal="svc:a")
-    without = gate.bind("agent-b", "run-b")
+    without = gate.bind("agent-b", "run-b", mapping=NO_MAP)
     text = [{"role": "user", "content": "ref abc123"}]
     with_map.chat(text, system="s", route="main")
     without.chat(text, system="s", route="main")  # the other gate's map is not this one's
@@ -1163,7 +1169,7 @@ def test_pin_every_outcome_writes_exactly_one_audit_row():
 
 def test_pin_a_gate_is_never_wrapped_twice_in_either_form():
     gate = ModelGate(Client(), meter=Meter(), audit=None, worst_case=worst)
-    for inner in (gate, gate.bind("agent-1", "run-1", mapping=None)):
+    for inner in (gate, gate.bind("agent-1", "run-1", mapping=NO_MAP)):
         try:
             ModelGate(inner, meter=Meter(), audit=None, worst_case=worst)
         except TypeError:
@@ -1235,7 +1241,7 @@ def test_audit_may_be_none_on_every_path():
         (Client(), {"settle_raises": RuntimeError("x")}, None),
     ]:
         gate = ModelGate(client, meter=Meter(**meter_kw), audit=None, worst_case=worst)
-        bound = gate.bind("agent-1", "run-1")
+        bound = gate.bind("agent-1", "run-1", mapping=NO_MAP)
         if expect is None:
             assert bound.chat(CLEAN, system="s", route="main") is client.reply
         else:
@@ -1502,7 +1508,7 @@ def test_i9_the_guard_fails_on_each_planted_leak_anywhere_in_the_module(old, new
 def test_t19_an_unbound_gate_has_no_chat_and_a_bound_one_has_the_protocol_signature():
     gate = ModelGate(Client(), meter=Meter(), audit=None, worst_case=worst)
     assert not hasattr(gate, "chat")
-    bound = gate.bind("agent-1", "run-1")
+    bound = gate.bind("agent-1", "run-1", mapping=NO_MAP)
     assert isinstance(bound, BoundGate)
     assert inspect.signature(BoundGate.chat) == inspect.signature(LLM.chat)
     assert inspect.signature(FakeLLM.chat) == inspect.signature(BoundGate.chat)
@@ -1519,7 +1525,7 @@ def test_bind_has_the_published_signature():
 
 def test_a_gate_is_never_wrapped_twice():
     gate = ModelGate(Client(), meter=Meter(), audit=None, worst_case=worst)
-    for inner in (gate, gate.bind("agent-1", "run-1")):
+    for inner in (gate, gate.bind("agent-1", "run-1", mapping=NO_MAP)):
         with pytest.raises(TypeError):
             ModelGate(inner, meter=Meter(), audit=None, worst_case=worst)
 
@@ -1754,7 +1760,7 @@ def test_the_gate_in_front_of_fake_llm_keeps_the_worst_case_booked_when_the_reco
     }
     llm = FakeLLM(tmp_path, routes)
     meter, sink = Meter(), Sink()
-    bound = ModelGate(llm, meter=meter, audit=sink, worst_case=worst).bind("agent-1", "run-1")
+    bound = ModelGate(llm, meter=meter, audit=sink, worst_case=worst).bind("agent-1", "run-1", mapping=NO_MAP)
     with pytest.raises(UnknownRecording):
         bound.chat(CLEAN, system="s", route="main", documents=[b"a clean doc"])
     assert len(llm.calls) == 1 and meter.settles == [] and meter.open() == {"res_1"}
