@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T17:24:01Z
+UPDATED_UTC: 2026-11-20T17:28:50Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.86 of 4 cores, mem 1/15 GB, disk 36G free, 49% used, agents light 4 heavy 2
-DISK: / 36G free, 49% used; worktrees /tmp/core-b-wt 4.3G
+CAPACITY: load 4.09 of 4 cores, mem 1/15 GB, disk 36G free, 49% used, agents light 4 heavy 2
+DISK: / 36G free, 49% used; worktrees /tmp/core-b-wt 4.4G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T17:20:02Z (previous push; this board is pushed right after writing)
-IST: 22:54 IST
+PUSHED_UTC: 2026-11-20T17:26:08Z (previous push; this board is pushed right after writing)
+IST: 22:58 IST
 
 MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
@@ -389,3 +389,5 @@ wip/lead-b-ts-watermark 5c4d1faf8: NOT merged by me; assigned to P5 as the ONE b
 17:17Z LOAD 2.54 2.53 2.08, pytest procs 7. P1 tip: 8c5569fad docs F-install: status, SECURITY.md spend-limits sentence follows the install | P5 tip: b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook). Both still running (P1 F-install gate/meter integration; P5 review fixes then the ts-watermark merge). Nothing newly merged on cloud/core-b since 5d2095124.
 
 17:20Z NOTE (idle fix, lead 17:20Z): I did NOT create a CronCreate cron. What I did: a background Bash loop (run_in_background, 2 h limit) that runs handover/core-b/tools/board.sh (pull --rebase, regenerate STATUS-BOARD, push) every 240 s under flock; it restarts whenever a turn of mine starts a new one (the earlier loops hit their 2 h limit). Agent reports still wake me by notification. LOAD 2.82 2.67 2.19. P1 tip: 8c5569fad docs F-install: status, SECURITY.md spend-limits sentence follows the install | P5 tip: b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook).
+
+17:26Z LOAD 1.95 2.64 2.35. P1 DONE: wip/cloud-core-b/F-install tip 8c5569fad pushed (NOT on cloud/core-b): merge of cloud/core-b + core-c f065c628e; the gate owns the ONE reserve/settle, the live loop's own B2 reserve block removed, _RunMeter keeps the settle-failure rule, Limits.for_agent/Budget.for_agent (AgentMeter, F1), mapping required through the judge chain (NO_MAP only at evals.py and k1b/loop.py), core-c's T1 copy dropped (core-b's test_t1_reserve_cap.py has the cases). Builder run: 1617 passed, 4 skipped, 6 xfailed, 1 failed (core-c's F3 test, theirs to update after P7). Not run by P1: tests/b2_mutants.py (stale: mutates the removed loop lines: to re-pin), full suite. RUNNING: RP1 fresh reviewer (tickets/F-install-integration-review-1.md), EV12 = P6 batch run 3 on the F-install tip, whole suite, own DB (haiku, evidence/batch-12.md; 1 heavy run), P5 fixes. 3 agents.
