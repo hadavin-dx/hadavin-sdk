@@ -38,6 +38,7 @@ from psycopg import sql
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState
+from tests.money_caps_seed import seed_caps
 from tests.test_stop_state_roles import World
 
 D = Decimal
@@ -56,7 +57,13 @@ NAMES = {
     "add": "hadavin_add_spend",
 }
 TYPES = {
-    "reserve": ("text", "text", "date", "numeric", "numeric", "numeric", "text"),
+    "reserve": (
+        "text",
+        "text",
+        "date",
+        "numeric",
+        "text",
+    ),  # step 6: the caps are rows of hadavin_caps
     "settle": ("text", "numeric", "text"),
     "expire": ("integer",),
     "purge": ("timestamptz",),
@@ -109,7 +116,10 @@ def reset(w: World) -> None:
     with w.admin() as db:
         db.execute("TRUNCATE spend, spend_month, spend_reservations, runs CASCADE")
         db.execute("DELETE FROM hadavin_limits")
-        for name, value in mig.money_limits().items():
+        # this file reserves on fixed days and expires at age 0: the day window and the minimum age are opened here, as
+        # the owner (their own tests are in tests/test_money_h1_pg.py)
+        limits = {**mig.money_limits(), "max_day_skew": 100_000, "min_expiry_age": 0}
+        for name, value in limits.items():
             db.execute("INSERT INTO hadavin_limits VALUES (%s, %s)", (name, value))
 
 
@@ -134,10 +144,23 @@ def _call_sql(w: World, key: str) -> sql.Composed:
     )
 
 
+def _seed_caps_for(w: World, args):
+    rid, agent, day, usd, day_cap, month_cap, run_id = args
+    try:
+        seed_caps(w.scoped, w.schema, agent, day_cap, month_cap)
+    except Exception:  # noqa: BLE001, S110 - a cap the table refuses: the call below must be refused too
+        pass
+    return (rid, agent, day, usd, run_id)
+
+
 def call(w: World, key: str, *args, db=None):
     """Rows of one call (a void function gives one empty row). Raises the psycopg error."""
     own = db is None
     db = db or rt_conn(w)
+    if key == "reserve" and len(args) == 7:
+        # the old seven-argument form: the caps become the agent's row in hadavin_caps (written by the owner), the
+        # function takes five arguments (step 6)
+        args = _seed_caps_for(w, args)
     try:
         return db.execute(_call_sql(w, key), args).fetchall()
     finally:
@@ -212,7 +235,7 @@ def check_execute_map(w):
 
 def _ok_args(key):
     return {
-        "reserve": ("a1", "ag", DAY, D(1), BIG, BIG, None),
+        "reserve": ("a1", "ag", DAY, D(1), None),
         "settle": ("a1", D(1), "ag"),
         "expire": (0,),
         "purge": (datetime.now(UTC),),

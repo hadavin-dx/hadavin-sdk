@@ -1,21 +1,23 @@
 -- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions below
--- that WILL be the only writers of the three money tables (spend, spend_month, spend_reservations), plus the release
--- function of 0008. THE WALL IS NOT UP BY THIS FILE ALONE: until step 4 (the grants flip in `migrate`) the runtime login
--- still holds write rights on those tables and can lower a booked amount with plain SQL (the H1 bypass of the 0010
--- header). From step 4 on, `migrate` (when roles are named) takes every write right on those tables from the runtime login
--- and grants it EXECUTE on reserve, settle, expire and add_spend; the purge role gets EXECUTE on the purge only. The store
--- (Python) calls these functions by their schema-qualified name; the SQL of the bookings exists in this file only.
+-- that are the only writers of the three money tables (spend, spend_month, spend_reservations), plus the release
+-- function of 0008 (replaced below). THE WALL IS BUILT BY `migrate`, NOT BY THIS FILE ALONE: when roles are named,
+-- `migrate` takes every write right on those tables from the runtime login (it keeps SELECT on spend and spend_month)
+-- and grants it EXECUTE on reserve, settle, expire and add_spend; the purge role gets EXECUTE on the purge only. A
+-- deployment migrated without naming roles has no wall (the stop-state check refuses it). The store (Python) calls
+-- these functions by their schema-qualified name; the SQL of the bookings exists in this file only.
 --
--- THE PROMISE (from step 4 on): a runtime login cannot lower a booked amount, except by settling an open hold it can
+-- THE PROMISE (with the roles named): a runtime login cannot lower a booked amount, except by settling an open hold it can
 -- name, once, by at most that hold's reserved amount. It cannot lower a plain charge, a settled or expired amount, forge
 -- a settled row, edit usd, or touch a row by SQL (it has no right on the tables).
 -- HONEST RESIDUAL (do not over-claim): the runtime still chooses the other arguments. (1) The caps are NOT arguments:
 -- hadavin_reserve_spend takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads day_cap and month_cap from the
 -- table hadavin_caps, which the runtime login cannot write (HD005 when the agent has no row). So the runtime can neither
 -- lower a booked amount nor choose or raise a cap. (2) It can settle any open hold whose id it knows to 0: the counter
--- falls by at most that hold's reserved amount, once. (3) It can expire every open hold at any age
--- (hadavin_expire_spend_reservations has no lower bound on the age, because the contract suite and the memory store
--- accept 0): a self-inflicted outage, safe (holds stay booked at the reserved amount). (4) It can raise any counter by
+-- falls by at most that hold's reserved amount, once. (3) It can expire any open hold older than
+-- the limit min_expiry_age (default 3600 s; a younger age is refused, review M1), and the release function only lowers a
+-- hold that was expired for longer than that: a self-inflicted outage, safe (holds stay booked at the reserved amount,
+-- and a real late settle still finds its hold). (3b) It can name any booking day within max_day_skew days (default 1)
+-- of the database's UTC date, never a far day that would start a fresh counter (review B3). (4) It can raise any counter by
 -- add_spend.
 --
 -- Rules every function body follows:
@@ -36,7 +38,8 @@
 --     closed.
 --   * Error codes: HD001 cap reached (message 'day' or 'month'), HD002 reservation not found (unknown or another
 --     agent's id, the same error for both), HD003 counter row missing (the whole transaction rolls back), HD004 limit row
---     missing, 22023 invalid argument, 23505 duplicate reservation id (native).
+--     missing, HD005 no cap row for the agent (reserve only; fail closed), 22023 invalid argument, 23505 duplicate
+--     reservation id (native).
 --   * Lock order: the reservation row, the day counter, the month counter (the order of 0008 and of the store), so there is
 --     no lock cycle.
 -- Owner: whoever runs `migrate` (one owner for all hadavin_* functions and the money tables, checked by `migrate`). A
@@ -45,12 +48,23 @@
 -- function (the pin is re-applied by the next migrate run).
 
 -- The limits the functions read. Rows (names are the interface): max_amount (exclusive upper bound of one amount),
--- max_decimals (scale), max_id_chars, max_expiry_age. Written by `migrate` as the owner; no other role has any right.
+-- max_decimals (scale), max_id_chars, max_expiry_age, min_expiry_age (youngest age a hold may be expired at, and how long
+-- an expired hold is kept before the release function may lower it), max_day_skew (days a booking day may be from the
+-- database's UTC date). Written by `migrate` as the owner; no other role has any right.
 CREATE TABLE hadavin_limits (
     name TEXT PRIMARY KEY,
     value NUMERIC NOT NULL
 );
 REVOKE ALL ON hadavin_limits FROM PUBLIC;
+
+-- The counters refuse a negative or infinite amount by themselves (review N1), whoever writes them: NaN sorts above every
+-- number, so it fails the second test. Added NOT VALID (no long lock on a big table) and validated at once (this file is
+-- unreleased: a database that already holds a bad row stops here, which is the point). The reservation amounts have
+-- the same bounds since 0007.
+ALTER TABLE spend ADD CONSTRAINT spend_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
+ALTER TABLE spend VALIDATE CONSTRAINT spend_usd_range;
+ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
+ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;
 
 -- hadavin_reserve_spend: book the worst case of one model call on the day and month counters, in the transaction that
 -- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
@@ -69,6 +83,8 @@ DECLARE
     v_max_amount NUMERIC;
     v_max_decimals NUMERIC;
     v_max_id NUMERIC;
+    v_skew NUMERIC;
+    v_today DATE;
     v_month DATE;
     v_day_cap NUMERIC;
     v_month_cap NUMERIC;
@@ -79,6 +95,8 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
     SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_skew FROM hadavin_limits l WHERE l.name = 'max_day_skew';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_day_skew missing' USING ERRCODE = 'HD004'; END IF;
 
     IF p_id IS NULL OR pg_catalog.char_length(p_id) NOT BETWEEN 1 AND v_max_id OR p_id !~ '^[A-Za-z0-9._:-]+$' THEN
         RAISE EXCEPTION 'invalid argument: p_id' USING ERRCODE = '22023';
@@ -92,6 +110,13 @@ BEGIN
         RAISE EXCEPTION 'invalid argument: p_run_id' USING ERRCODE = '22023';
     END IF;
     IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) OR p_day < DATE '1970-01-01' OR p_day > DATE '9999-12-31' THEN
+        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    -- the booking day is the database's UTC date, give or take max_day_skew days (a clock a little off, a call across
+    -- midnight). Any other day would start a fresh day and month counter, so a runtime that names 2099-01-01, then
+    -- 2099-02-01 and so on would never meet a cap (review B3). The same 22023 as any other refused argument.
+    v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
+    IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
         RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
     END IF;
     -- written positively: NaN sorts above every number and Infinity is above the window, both fail this test
@@ -227,11 +252,16 @@ AS $fn$
 #variable_conflict use_column
 DECLARE
     v_max_age NUMERIC;
+    v_min_age NUMERIC;
     n BIGINT;
 BEGIN
     SELECT l.value INTO v_max_age FROM hadavin_limits l WHERE l.name = 'max_expiry_age';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
-    IF p_age_s IS NULL OR p_age_s < 0 OR p_age_s > v_max_age THEN
+    SELECT l.value INTO v_min_age FROM hadavin_limits l WHERE l.name = 'min_expiry_age';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit min_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
+    -- a hold younger than min_expiry_age cannot be expired (review M1): the runtime login runs this function, and a
+    -- live hold expired at age 0 can be released by the operator, after which the real cost of its late settle is lost
+    IF p_age_s IS NULL OR p_age_s < v_min_age OR p_age_s > v_max_age THEN
         RAISE EXCEPTION 'invalid argument: p_age_s' USING ERRCODE = '22023';
     END IF;
     UPDATE spend_reservations r
@@ -243,6 +273,67 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION hadavin_expire_spend_reservations(INTEGER) FROM PUBLIC;
+
+-- hadavin_release_expired_spend (replaces the 0008 body, same signature, owner and pin; `migrate` re-pins it): the one
+-- supported way the booked amount of an expired hold goes down. Review M1: only holds that were expired more than
+-- min_expiry_age seconds ago (closed_at is the moment of the expiry) are released, so a late settle of a hold that was
+-- just expired still finds it and books the real cost. Everything else is as in 0008.
+CREATE OR REPLACE FUNCTION hadavin_release_expired_spend(p_agent TEXT, p_day DATE)
+RETURNS TABLE (
+    reservations BIGINT, released_usd NUMERIC, day_usd NUMERIC, month_usd NUMERIC, applied_usd NUMERIC
+)
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    n BIGINT;
+    total NUMERIC;
+    old_day NUMERIC;
+    v_min_age NUMERIC;
+BEGIN
+    SELECT l.value INTO v_min_age FROM hadavin_limits l WHERE l.name = 'min_expiry_age';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit min_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
+    WITH claimed AS (
+        UPDATE spend_reservations
+           SET status = 'settled', settled_usd = 0
+         WHERE agent_id = p_agent AND day = p_day AND status = 'expired'
+           AND closed_at <= pg_catalog.clock_timestamp()
+                            - pg_catalog.make_interval(secs => v_min_age::double precision)
+        RETURNING reserved_usd
+    )
+    SELECT count(*), COALESCE(sum(reserved_usd), 0) INTO n, total FROM claimed;
+    reservations := n;
+    released_usd := total;
+    IF n = 0 THEN
+        SELECT s.usd INTO day_usd FROM spend s WHERE s.agent_id = p_agent AND s.day = p_day;
+        SELECT m.usd INTO month_usd FROM spend_month m
+         WHERE m.agent_id = p_agent AND m.month = pg_catalog.date_trunc('month', p_day)::date;
+        applied_usd := 0;
+        RETURN NEXT;
+        RETURN;
+    END IF;
+    SELECT s.usd INTO old_day FROM spend s WHERE s.agent_id = p_agent AND s.day = p_day FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'spend counter row missing';
+    END IF;
+    UPDATE spend s SET usd = GREATEST(s.usd - total, 0)
+     WHERE s.agent_id = p_agent AND s.day = p_day RETURNING s.usd INTO day_usd;
+    applied_usd := old_day - day_usd;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'spend counter row missing';
+    END IF;
+    UPDATE spend_month m SET usd = GREATEST(m.usd - total, 0)
+     WHERE m.agent_id = p_agent AND m.month = pg_catalog.date_trunc('month', p_day)::date RETURNING m.usd INTO month_usd;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'spend month counter row missing';
+    END IF;
+    RETURN NEXT;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_release_expired_spend(TEXT, DATE) FROM PUBLIC;
 
 -- hadavin_purge_spend_reservations: delete the SETTLED rows closed before p_before (a settled row, or one released by
 -- 0008: settled at 0). An expired hold nobody settled is KEPT: it is still booked and a late settle must find it.
@@ -313,7 +404,7 @@ $fn$;
 REVOKE ALL ON FUNCTION hadavin_add_spend(TEXT, DATE, NUMERIC) FROM PUBLIC;
 
 -- Step 6 (caps out of the runtime's hands), ADDITIONS ONLY: the table of caps and the two functions around it. The
--- reserve function below takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads its caps from this table.
+-- reserve function above takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads its caps from this table.
 -- hadavin_caps: one row per agent. Owner only: no role holds any right on it (`migrate` GRANTS row is all ""); the
 -- definer functions below touch it as owner. The CHECKs are the part of the cap rule that is a property of the value
 -- (>= 0 and finite; NaN sorts above every number, so it fails the second test); the scale limit comes from
