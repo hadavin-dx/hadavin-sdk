@@ -605,7 +605,10 @@ class ChainAudit:
                     "SELECT hadavin_audit_outbox_quarantine(?, ?)",
                     (row_id, defaults.AUDIT_QUARANTINE_PREFIX),
                 )
-                return 1 if renamed and renamed[0][0] else 0
+                # 1: renamed (a poison row now kept under the prefix). 2: removed as an exact duplicate of a row already
+                # quarantined: nothing new is kept, so it is NOT counted as marked (reconcile's "earlier" figure is the
+                # rows under the prefix minus the ones marked in this pass).
+                return 1 if renamed and renamed[0][0] == 1 else 0
             self._db.run(
                 "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) ON CONFLICT (event_id) DO NOTHING",
                 (defaults.AUDIT_QUARANTINE_PREFIX + row_id, event.model_dump_json()),

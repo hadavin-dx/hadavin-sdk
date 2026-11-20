@@ -265,13 +265,58 @@ def test_quarantine_renames_and_never_deletes(w):
 def test_quarantine_of_a_row_that_duplicates_a_quarantined_one_removes_only_the_new_row(w):
     _park(w, PREFIX + "dup-1", '{"d": 1}')
     _park(w, "dup-1", '{"d": 1}')
-    assert _as_runtime(w, f"SELECT {QUARANTINE}('dup-1', %s)", (PREFIX,)) == [(1,)]
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('dup-1', %s)", (PREFIX,)) == [(2,)]
     ids = _outbox(w)
     assert "dup-1" not in ids and PREFIX + "dup-1" in ids and PREFIX + "dup-1#1" not in ids
     assert (
         w.run("SELECT body FROM audit_outbox WHERE event_id = %s", (PREFIX + "dup-1",))[0][0]
         == '{"d": 1}'
     )
+
+
+def test_the_chain_counts_a_rename_as_marked_and_a_duplicate_removal_as_not_marked(w):
+    log = _chain(w)
+    fresh, dup = _event(40, event_id="cnt-1"), _event(41, event_id="cnt-2")
+    _park(w, "cnt-1", fresh.model_dump_json())
+    _park(w, PREFIX + "cnt-2", dup.model_dump_json())
+    _park(w, "cnt-2", dup.model_dump_json())
+    assert (log._quarantine(fresh, "cnt-1"), log._quarantine(dup, "cnt-2")) == (1, 0)
+    ids = _outbox(w)
+    assert PREFIX + "cnt-1" in ids and "cnt-2" not in ids and PREFIX + "cnt-2" in ids
+
+
+def test_quarantine_with_every_candidate_name_taken_returns_0_and_keeps_the_row(w):
+    _park(w, "full-1", '{"mine": true}')
+    with w.admin() as db:
+        for i in range(1001):
+            name = PREFIX + "full-1" + ("" if i == 0 else f"#{i}")
+            db.execute(
+                "INSERT INTO audit_outbox (event_id, body) VALUES (%s, %s)", (name, f'{{"n": {i}}}')
+            )
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('full-1', %s)", (PREFIX,)) == [(0,)]
+    assert "full-1" in _outbox(w)
+
+
+def test_an_id_containing_a_hash_never_collides_into_a_loss(w):
+    _park(w, "h#1", '{"a": 1}')
+    _park(w, "h", '{"b": 2}')
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('h#1', %s)", (PREFIX,)) == [(1,)]
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('h', %s)", (PREFIX,)) == [(1,)]  # prefix||h
+    _park(
+        w, "h", '{"c": 3}'
+    )  # parked again: prefix||h taken, prefix||h#1 taken (by the id 'h#1'): goes to #2
+    assert _as_runtime(w, f"SELECT {QUARANTINE}('h', %s)", (PREFIX,)) == [(1,)]
+    got = {
+        r[0]: r[1]
+        for r in w.run(
+            "SELECT event_id, body FROM audit_outbox WHERE event_id LIKE %s", (PREFIX + "h%",)
+        )
+    }
+    assert got == {
+        PREFIX + "h#1": '{"a": 1}',
+        PREFIX + "h": '{"b": 2}',
+        PREFIX + "h#2": '{"c": 3}',
+    }
 
 
 def test_a_planted_quarantine_name_cannot_be_used_to_delete_a_parked_event(w):

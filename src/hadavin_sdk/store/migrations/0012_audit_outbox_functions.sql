@@ -40,9 +40,9 @@ REVOKE ALL ON FUNCTION hadavin_audit_outbox_done(TEXT) FROM PUBLIC;
 -- it must not be empty. A row already under the prefix is not renamed again. When the target name is taken (the same
 -- event was parked and quarantined before) the row goes to the first free name p_prefix || p_event_id || '#' || n
 -- (n = 1 to 1000), so a repeat converges; but when a row at a candidate name holds an IDENTICAL body, the NEW row is
--- deleted (it is a duplicate: nothing is lost). The function never deletes a row it did not look at as the new row, and
+-- deleted (it is a duplicate: nothing is lost) and the function returns 2. The function never deletes a row it did not look at as the new row, and
 -- never replaces one: a runtime-inserted row named p_prefix || X cannot be used to delete X unless it holds X's own
--- body. Returns rows renamed or removed as duplicates (0 or 1; 0 also when 1000 names are taken).
+-- body. Returns 1 (renamed), 2 (removed as a duplicate), or 0 (no such row, or the 1001 names n = 0 to 1000 are all taken).
 CREATE OR REPLACE FUNCTION hadavin_audit_outbox_quarantine(p_event_id TEXT, p_prefix TEXT)
 RETURNS integer
 LANGUAGE plpgsql
@@ -71,13 +71,13 @@ BEGIN
     END IF;
     FOR v_i IN 0..1000 LOOP
         v_cand := p_prefix || p_event_id || CASE WHEN v_i = 0 THEN '' ELSE '#' || v_i::text END;
-        SELECT x.body INTO v_other FROM audit_outbox x WHERE x.event_id = v_cand;
+        SELECT x.body INTO v_other FROM audit_outbox x WHERE x.event_id = v_cand FOR UPDATE;
         IF NOT FOUND THEN
             UPDATE audit_outbox o SET event_id = v_cand WHERE o.event_id = p_event_id;
             RETURN 1;
         ELSIF v_other = v_body THEN
             DELETE FROM audit_outbox o WHERE o.event_id = p_event_id;  -- the NEW row, an exact duplicate
-            RETURN 1;
+            RETURN 2;
         END IF;
     END LOOP;
     RETURN 0;

@@ -65,6 +65,18 @@ def _refuse_shared_login(store, purge_store, checkpoint_store) -> None:
         )
 
 
+def _close_stores(*stores) -> None:
+    """Close the connection of each distinct store; a close that raises is logged (class only) and skipped."""
+    for opened in {id(x): x for x in stores if x is not None}.values():
+        conn = getattr(opened, "_db", None)
+        if conn is None:
+            continue
+        try:
+            conn.close()
+        except Exception as exc:  # noqa: BLE001 - never mask the error that got us here
+            _LOG.warning("app.build: closing a store connection failed (%s)", type(exc).__name__)
+
+
 def _runtime_lacks_checkpoint_insert(store) -> bool:
     """One query: True when the store's login cannot INSERT into audit_checkpoints. A store without a connection, or
     a query that fails, is not reported (False)."""
@@ -311,22 +323,23 @@ def build(
     signer = make("signer", b.signer, secrets)
     anchor = make("anchor", b.anchor, secrets)
     store = make("store", b.store, secrets)
-    if lacking := missing_methods(store):
-        raise ConfigError(
-            f"the store backend lacks {', '.join(lacking)}: added to the Store protocol in this version (see CHANGELOG, Upgrade steps)"
-        )
-    purge_store = store
-    if purge_name := getattr(b.store, "purge_dsn_secret_name", None):
-        # The purge step deletes evidence; the runtime identity cannot. A second connection, a second role.
-        purge_store = make(
-            "store",
-            b.store.model_copy(
-                update={"dsn_secret_name": purge_name, "purge_dsn_secret_name": None}
-            ),
-            secrets,
-        )
-    checkpoint_store = None
+    purge_store = checkpoint_store = None
     try:
+        if lacking := missing_methods(store):
+            raise ConfigError(
+                f"the store backend lacks {', '.join(lacking)}: added to the Store protocol in this version (see CHANGELOG, Upgrade steps)"
+            )
+        purge_store = store
+        if purge_name := getattr(b.store, "purge_dsn_secret_name", None):
+            # The purge step deletes evidence; the runtime identity cannot. A second connection, a second role.
+            purge_store = make(
+                "store",
+                b.store.model_copy(
+                    update={"dsn_secret_name": purge_name, "purge_dsn_secret_name": None}
+                ),
+                secrets,
+            )
+        checkpoint_store = None
         if ck_name:
             # Only the tick `checkpoint` step writes a checkpoint, on this connection (its own role: SELECT on the chain,
             # INSERT on audit_checkpoints). The runtime login holds no INSERT there.
@@ -363,105 +376,106 @@ def build(
             anchor=anchor,
             checkpoint_store=checkpoint_store,
         )
-    except BaseException:
-        # A refusal or a failure here (the login comparison, `make("audit")`) must not leave a logged-in connection
-        # behind in a test or an embedding process: close every store this function opened, then re-raise.
-        for opened in {id(x): x for x in (store, purge_store, checkpoint_store)}.values():
-            conn = getattr(opened, "_db", None)
-            if conn is not None:
-                conn.close()
-        raise
-    llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
-    summary_detector = detector
-    if detector is None:
-        members = [make("detector", d, secrets, llm=llm) for d in b.detector]
-        detector = combine(members)
-        # The approval summary screen has no agent to charge, so it runs the unmetered members only; the judge
-        # screens the document and tool output, where untrusted text enters (config refuses a judge alone).
-        summary_detector = combine([m for m in members if m.backend != "llm_judge"])
-    channel = channel or make("channel", b.channel, secrets, store=store)
-    limits = Limits(store, audit, reg)
-    executor = (
-        None if live else Executor(reg, secrets, timeout_s=timeout_s or cfg.executor_timeout_s)
-    )
-    holder: dict[str, Runtime] = {}
-    approvals = Approvals(
-        store,
-        audit,
-        reg,
-        channel,
-        lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
-        clock,
-        summary_detector,
-    )
-
-    def post_card(card: Card) -> Delivery:
-        if len(card.text) > channel.max_card_chars:
-            return Delivery(ok=False, reason="card_too_long")
-        try:
-            return channel.post_card(card)
-        except Exception as exc:  # noqa: BLE001 - a broken channel is an undelivered card, never a crash
-            return Delivery(ok=False, reason=type(exc).__name__)
-
-    def request_approval(plan, decision, requested_by) -> Delivery:
-        if len(summary(plan, summary_detector)) > channel.max_card_chars:
-            return Delivery(ok=False, reason="card_too_long")
-        # A failed send is NOT terminal: the request stays PENDING and tick resends it
-        # (tests/test_p7_tick.py::test_failed_send_is_resent_by_tick), so a saved request is delivered-or-retrying.
-        req = approvals.request(plan, decision, requested_by)
-        return Delivery(ok=True, ref=req.channel_ref)
-
-    restored_key: bytes | None = None
-    if key_name := cfg.evidence.restored_hash_key_secret_name:
-        restored_key = _restored_key(secrets, key_name)
-    elif live:
-        raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
-    hooks = Hooks(
-        request_approval=request_approval,
-        execute=executor.execute if executor else None,
-        verify=executor.verify if executor else None,
-        rollback=executor.rollback if executor else None,
-        post_card=post_card,
-        tools=dict(tools or {}),
-        toolbox=toolbox,
-        validate_proposal=evidence.make_validator(
+        llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+        summary_detector = detector
+        if detector is None:
+            members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+            detector = combine(members)
+            # The approval summary screen has no agent to charge, so it runs the unmetered members only; the judge
+            # screens the document and tool output, where untrusted text enters (config refuses a judge alone).
+            summary_detector = combine([m for m in members if m.backend != "llm_judge"])
+        channel = channel or make("channel", b.channel, secrets, store=store)
+        limits = Limits(store, audit, reg)
+        executor = (
+            None if live else Executor(reg, secrets, timeout_s=timeout_s or cfg.executor_timeout_s)
+        )
+        holder: dict[str, Runtime] = {}
+        approvals = Approvals(
             store,
-            suffixes={
-                t.name: t.generated_suffix
-                for per in reg.tools.values()
-                for t in per.values()
-                if t.generated_suffix
-            },
-            case_insensitive_targets=cfg.evidence.case_insensitive_targets,
-        ),
-        hold_run_ids=hold_run_ids,
-        restored_key=restored_key,
-    )
-    runtime = Runtime(
-        reg,
-        store,
-        audit,
-        llm,
-        detector,
-        limits,
-        agents,
-        hooks,
-    )
-    holder["rt"] = runtime
-    return App(
-        cfg,
-        reg,
-        store,
-        audit,
-        limits,
-        executor,
-        approvals,
-        runtime,
-        _sender_secrets(secrets, {n for names in sender_names.values() for n in names}),
-        sources={**built_sources, **(sources or {})},
-        disabled_sources=disabled_sources,
-        purge_store=purge_store,
-    )
+            audit,
+            reg,
+            channel,
+            lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
+            clock,
+            summary_detector,
+        )
+
+        def post_card(card: Card) -> Delivery:
+            if len(card.text) > channel.max_card_chars:
+                return Delivery(ok=False, reason="card_too_long")
+            try:
+                return channel.post_card(card)
+            except Exception as exc:  # noqa: BLE001 - a broken channel is an undelivered card, never a crash
+                return Delivery(ok=False, reason=type(exc).__name__)
+
+        def request_approval(plan, decision, requested_by) -> Delivery:
+            if len(summary(plan, summary_detector)) > channel.max_card_chars:
+                return Delivery(ok=False, reason="card_too_long")
+            # A failed send is NOT terminal: the request stays PENDING and tick resends it
+            # (tests/test_p7_tick.py::test_failed_send_is_resent_by_tick), so a saved request is delivered-or-retrying.
+            req = approvals.request(plan, decision, requested_by)
+            return Delivery(ok=True, ref=req.channel_ref)
+
+        restored_key: bytes | None = None
+        if key_name := cfg.evidence.restored_hash_key_secret_name:
+            restored_key = _restored_key(secrets, key_name)
+        elif live:
+            raise ConfigError(
+                "evidence.restored_hash_key_secret_name is required in pilot and prod"
+            )
+        hooks = Hooks(
+            request_approval=request_approval,
+            execute=executor.execute if executor else None,
+            verify=executor.verify if executor else None,
+            rollback=executor.rollback if executor else None,
+            post_card=post_card,
+            tools=dict(tools or {}),
+            toolbox=toolbox,
+            validate_proposal=evidence.make_validator(
+                store,
+                suffixes={
+                    t.name: t.generated_suffix
+                    for per in reg.tools.values()
+                    for t in per.values()
+                    if t.generated_suffix
+                },
+                case_insensitive_targets=cfg.evidence.case_insensitive_targets,
+            ),
+            hold_run_ids=hold_run_ids,
+            restored_key=restored_key,
+        )
+        runtime = Runtime(
+            reg,
+            store,
+            audit,
+            llm,
+            detector,
+            limits,
+            agents,
+            hooks,
+        )
+        holder["rt"] = runtime
+        return App(
+            cfg,
+            reg,
+            store,
+            audit,
+            limits,
+            executor,
+            approvals,
+            runtime,
+            _sender_secrets(secrets, {n for names in sender_names.values() for n in names}),
+            sources={**built_sources, **(sources or {})},
+            disabled_sources=disabled_sources,
+            purge_store=purge_store,
+        )
+
+    except BaseException:
+        # Any failure after the first connection opened (the login comparison, `make("audit")`, the llm, the channel,
+        # the Runtime) must not leave a logged-in connection behind in a test or an embedding process: close every
+        # store this function opened, each close guarded so a raising close never masks the original error.
+        _close_stores(store, purge_store, checkpoint_store)
+        raise
 
 
 _BUILD_PARAMS = inspect.signature(build).parameters

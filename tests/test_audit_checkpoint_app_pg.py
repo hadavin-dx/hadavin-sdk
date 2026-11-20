@@ -129,22 +129,73 @@ def test_the_same_login_under_two_names_is_refused_and_closes_the_checkpoint_con
         assert "same database login" in str(exc)
 
 
-def test_a_failing_audit_build_closes_every_store_it_opened(tmp_path, monkeypatch):
+class _RaisingClose:
+    """Delegates to the real connection, but `close` raises: a broken socket."""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+    def close(self):
+        self._conn.close()
+        raise OSError("close failed")
+
+
+def _failing_build(tmp_path, monkeypatch, dsn, failing, *, raising_close=False):
+    cfg = pilot_cfg(tmp_path)
+    made: list = []
+    real = app_mod.make
+
+    def make(capability, *a, real=real, made=made, **kw):
+        if capability == failing:
+            raise ConfigError(f"{capability}: made to fail")
+        out = real(capability, *a, **kw)
+        if capability == "store":
+            if raising_close:
+                out._db = _RaisingClose(out._db)
+            made.append(out)
+        return out
+
+    monkeypatch.setattr(app_mod, "make", make)
+    qualify(load_registry(load_config(cfg)), "ito-agent")
+    with pytest.raises(ConfigError, match="made to fail"):
+        app_mod.build(
+            cfg,
+            ["ito-agent"],
+            secrets=FakeSecretProvider(_values(dsn)),
+            channel=FakeChannel(),
+            llm=ScriptedLLM(),
+            allow_test_doubles=True,
+        )
+    return made
+
+
+@pytest.mark.parametrize("failing", ["audit", "detector"])
+def test_a_failing_later_step_closes_every_store_it_opened(tmp_path, monkeypatch, failing):
+    for dsn in pg_schema(runtime=True):
+        stores = _failing_build(tmp_path, monkeypatch, dsn, failing)
+        assert len(stores) == 3 and all(s._db.closed for s in stores)
+
+
+def test_a_failing_purge_store_open_closes_the_runtime_store(tmp_path, monkeypatch):
     for dsn in pg_schema(runtime=True):
         cfg = pilot_cfg(tmp_path)
         made: list = []
         real = app_mod.make
 
         def make(capability, *a, real=real, made=made, **kw):
-            if capability == "audit":
-                raise ConfigError("audit chain: the checkpoint login needs the postgres store")
+            if capability == "store" and len(made) == 1:
+                raise ConfigError("purge store: made to fail")
             out = real(capability, *a, **kw)
-            made.append((capability, out))
+            if capability == "store":
+                made.append(out)
             return out
 
         monkeypatch.setattr(app_mod, "make", make)
         qualify(load_registry(load_config(cfg)), "ito-agent")
-        with pytest.raises(ConfigError, match="needs the postgres store"):
+        with pytest.raises(ConfigError, match="made to fail"):
             app_mod.build(
                 cfg,
                 ["ito-agent"],
@@ -153,8 +204,22 @@ def test_a_failing_audit_build_closes_every_store_it_opened(tmp_path, monkeypatc
                 llm=ScriptedLLM(),
                 allow_test_doubles=True,
             )
-        stores = [s for c, s in made if c == "store"]
-        assert len(stores) == 3 and all(s._db.closed for s in stores)
+        assert len(made) == 1 and made[0]._db.closed
+
+
+def test_a_raising_close_never_masks_the_original_error(tmp_path, monkeypatch, caplog):
+    for dsn in pg_schema(runtime=True):
+        with caplog.at_level(logging.WARNING, logger="hadavin_sdk.app"):
+            stores = _failing_build(tmp_path, monkeypatch, dsn, "audit", raising_close=True)
+        # the ConfigError of the failing step came out (asserted in the helper), every close was tried and logged
+        assert len(stores) == 3
+        assert (
+            len(
+                [r for r in caplog.records if "closing a store connection failed" in r.getMessage()]
+            )
+            == 3
+        )
+        assert "close failed" not in caplog.text  # the class only
 
 
 def test_a_demo_start_with_a_signer_and_no_checkpoint_login_warns_once_and_starts(tmp_path, caplog):
