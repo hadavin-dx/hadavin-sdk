@@ -242,6 +242,11 @@ Move the class to S/limits.py (evals needs it too); loop.py imports it so `loop.
 5. One install commit: Runtime, injection/judge bind, evals, cli `--max-usd`, k1b loop and replay, deletion of the five lines and both `charge` methods, test edits of section 4.
 6. Docs: the "capped spend" sentence of plan B3, CHANGELOG.
 
+## Stated limits (hostile review 1, items 6 and 7)
+- Interrupts (BaseException: KeyboardInterrupt, CancelledError, SystemExit) during `llm.chat` keep the worst case booked (the gate notes `call_interrupted`) and leave the run WORKING on purpose: tick's stuck-run rule, fed by the `store.touch` heartbeat, ends it. An interrupt during `meter.settle` loses the audit row and the paid reply, never double-books. An interrupt during `meter.reserve` after the store committed the hold leaves an orphan hold with no id and no row; only the sweep (3600 s) closes it. The gate cannot fix this.
+- A billed reply after a client fault (unparseable reply, timeout) keeps the worst case booked and does not raise the run's `cost_usd` (the store adds cost in settle only). The per-run cap `max_run_usd` is blind to that spend until the sweep; chained retries can hold several worst cases up to the daily budget.
+- A caller-supplied `ModelGate` (not built by `Runtime._gate`) is used as it is: its reserve and pricing faults are not mapped to `limits_unavailable`.
+
 ## 13. Out
 - The gate body.
 - Store reserve/settle and migration 0007.
