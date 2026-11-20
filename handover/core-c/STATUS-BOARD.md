@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:54:57Z
+UPDATED_UTC: 2026-11-20T08:58:46Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,16 +7,16 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 5
-CAPACITY: load 7.3 of 4 cores, mem 2/15 GB, disk 58G free, 17% used, light agents 5, heavy agents 0
-DISK: / 58G free, 17% used; git worktrees 15; 879M	/tmp/claude-0;255M	/root/.cache/uv;
+CAPACITY: load 10.5 of 4 cores, mem 2/15 GB, disk 58G free, 17% used, light agents 5, heavy agents 0
+DISK: / 58G free, 17% used; git worktrees 16; 889M	/tmp/claude-0;256M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none in the two merged-tree batches (15 files). Not run: whole suite, Python 3.12, PostgreSQL 17, mutants. Known flaky under -n 4 load: tests/test_runmap_enforce_map.py::test_m_new_1_enforce_map_has_the_redactors_time_budget (CPU deadline, passes serially).
 NEXT: LIVE only. Tested commit to land by 09:05 UTC: G7 round 5 (wip-g7r5) cherry-picked after one focused batch; merged-tree batch 3 after it. Batches at most 2 at once (load 1.8 of 4 cores at 08:49).
-PUSHED_UTC: 2026-11-20T08:50:15+00:00
+PUSHED_UTC: 2026-11-20T08:54:57+00:00
 
-(14:24 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:28 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
