@@ -1,63 +1,86 @@
-# G7: context patterns run again after the sweep (ORDER 012, escalation E3)
+# G7: one more pattern pass after the sweep (ORDERS 012 and 013, escalations E3 and E5)
 
-Status: BUILT, not committed (builder, 2026-11-20). Evidence: evidence/G7-1.md.
+Status: BUILT as ordered in ORDER 013 (builder, 2026-11-20). Evidence: evidence/G7-1.md (three parts, in order of work).
+This text replaces the first design (context patterns only, bounded rounds): that design is GONE from the code.
 
-## Problem
-Line 1 `BSB: <bank code>`, line 2 `paid <same bank code>/<account>`. One `redact()` / `runmap.redact_text` pass gave
-`paid <BANKCODE_1>/12345678`: the account stayed readable; a second pass masked it. Cause: the account pattern needs a
-literal `<BANKCODE_n>` before the digits; on line 2 only the sweep writes it, after the pattern pass. `redact_many` had
-the same gap (code in one string, account in another; measured).
+## Problem (one root cause)
+A pattern's result can change once placeholders stand in the text, and the sweep writes placeholders after every pattern ran.
+- E3: `BSB: <code>` then `paid <same code>/<account>`: one pass gave `paid <BANKCODE_1>/12345678`; a second pass masked it.
+- E5: `password=V` then `Bearer V+xy` (token under 12 chars): one pass gave `Bearer <SECRET_1>xy`; a second gave `<BEARER_1>`.
+  The same for `Basic V+ab` (under 8) and `authorization: V+ab` (under 8).
+- `redact_many` had the same gap across strings.
 
-## Patterns in the table that name a placeholder (step 1)
-| Pattern | How it depends on a placeholder | After G7 |
-|---|---|---|
-| BANKACCT, account straight after its code (`<BANKCODE_\d+>` literal in the regex) | cannot match without it | FIXED: run again after the sweep |
-| BANKACCT, account after an account keyword (regex names none; `_mask` asks `_bank_context`, whose `_BANK_CONTEXT` names `<BANKCODE_\d+>` within 100 chars) | counts only with context; a swept code is one form of it (measured: same gap) | FIXED: run again after the sweep |
-| SECRET, cookie header (`(?!<[A-Z][A-Z0-9]*_\d+>(?:\s|$))`) | negative guard only: a swept placeholder can only stop a match, and the value would be the placeholder itself | NOT re-run, nothing to fix (measured: second pass changes nothing) |
+## Patterns that name a placeholder (step 1 of ORDER 012, kept as a record)
+BANKACCT "account straight after its code" (literal `<BANKCODE_\d+>`); BANKACCT "account after a keyword" (through
+`_bank_context`); SECRET cookie header (negative guard only). Beyond those, every value class that admits `<` `>` with a
+minimum length (BEARER, BASIC, authorization, cookie forms, flags) can change after the sweep. Telling them apart is not
+cheap AND certain, so the whole table runs again (ORDER 013 item 1).
 
-No other entry of `PATTERNS` names a placeholder shape (pinned by `test_the_table_has_no_other_pattern_that_names_a_placeholder`).
-
-RELATED, NOT FIXED, for the lead (found while listing; outside "names a placeholder"): patterns whose VALUE class admits
-`<` `>` and has a minimum length gain a match once the sweep writes a placeholder inside a short token. Measured on
-this code: `password=V` then `Bearer V+xy` (token under 12 chars) gives `Bearer <SECRET_1>xy` after one pass and
-`Bearer <BEARER_1>` after two; same for `Basic V+ab` (under 8) and `authorization: V+ab` (under 8). What stays readable
-after one pass is the short tail beside a masked value. A full fix is to run the whole table to a fixed point (about
-twice the pattern cost), or to add BEARER, BASIC and the authorization pattern to `_CONTEXT_PATTERNS` with a mark of
-`<` (three more pattern passes on almost every text). Not done: the order said the context patterns only.
-
-## Design
-`guard/redact.py` only; no regex changed; no public signature changed.
-- `_CONTEXT_PATTERNS`: the two BANKACCT entries of `PATTERNS` (the same compiled objects). `_CONTEXT_MARK = "<BANKCODE_"`.
-- `_Redactor.settle(texts)`: after the sweep, while some text holds the mark: run the context patterns over the swept
-  texts; nothing changed -> done; the map grew -> sweep every text again (the new account's other copies); repeat.
-- Called by `redact()` (when it sweeps) and by `redact_many()` (all strings as one batch).
-- Bound: `_CONTEXT_ROUNDS = 4` rounds plus one check. One round does the work: a found account is swept as a BANKACCT
-  placeholder, which no context pattern reads. A further round has work only if a sweep writes a NEW bank-code
-  placeholder (the sweep does not revisit a value after a shorter neighbour is replaced: a planted adjacency per
-  round). At the bound, if the check still finds a value: `ContextNotSettled` (a RuntimeError, message is its own name);
-  `runmap._scan` turns it into `RedactionError("ContextNotSettled")`: nothing is sent, the run map is not written.
-- Cost: a text with no `<BANKCODE_` pays one substring test. Otherwise each round is two linear pattern passes and at
-  most one sweep (the existing linear sweep; a map rebuild only when the map grew). At most 5 rounds, so linear and
-  inside the existing caps; runmap's size caps and time budget are untouched.
+## Design as built (`guard/redact.py` only; no regex changed; no public signature changed)
+`_Redactor.settle(originals, swept)`, called by `redact()` (when it sweeps) and `redact_many()`:
+1. pattern pass 1 (`find`), 2. sweep 1, 3. pattern pass 2: the WHOLE table once more over each swept string, 4. sweep 2,
+only if pass 2 added a value to the map (every string of the call is swept, so the new value's other copies go too).
+Exactly what runs how many times: pattern pass at most 2, sweep at most 2, per call. No loop, no round counter, no
+second design stacked on it (`_CONTEXT_PATTERNS`, `_CONTEXT_ROUNDS`, `ContextNotSettled` were removed).
+Skip, cheap and certain: a string that pass 1 and sweep 1 left unchanged is not scanned again (the same patterns over the
+same text with the same state give the same result). A text with nothing to mask costs what it did.
+Caps and budget: untouched (they live in runmap); both extra steps are the existing linear ones.
 
 ## Invariants
-- One pass now gives exactly what two passes of the old path gave, for the context patterns (tested per shape).
-- A second `redact()` / `redact_text` pass over the output changes neither text nor map for these shapes; `is_masked` is True.
-- Text without a bank-code placeholder: byte-identical result and map to the old path.
-- Never returns a text when the context patterns can still find a value (raise at the bound).
-- `_sweep_copies=False` (find only) is unchanged.
+- At most 2 pattern passes and 2 sweeps per `redact()` / `redact_many()` call (tested by counting calls).
+- For the E3 and E5 shapes one pass equals two passes of the old path; a second `redact_text` changes neither text nor map.
+- A text with no match: one pattern pass, one sweep, byte-identical result.
+- `_sweep_copies=False` (find only) unchanged.
+
+## Property test (ORDER 013 item 2): tests/test_redact_idempotent_property.py
+Through `runmap.redact_text` with one run map, per input: (a) a second pass changes neither text nor map; (b) no original of
+the map stands raw in the output, by the redactor's own copy rule (`redact._sweep`: secret kinds of 4+ chars nowhere
+outside a placeholder; other kinds nowhere as their own token; values the rule never sweeps are not checked).
+Inputs: 1,835, none dropped (counts pinned by a test):
+| Corpus | Source | Inputs |
+|---|---|---|
+| privacy | tests/warden_port/privacy_corpus.py MASKED + KEPT | 48 + 14 |
+| bank | tests/warden_port/test_redaction_bank.py POSITIVE, NEGATIVE, PINNED | 61 + 16 + 18 |
+| review2 | tests/warden_port/test_redaction_review2.py LEAKS, FALSE_POSITIVES | 19 + 5 |
+| cookies | tests/warden_port/test_redaction_review9.py COOKIES | 16 |
+| own-shapes | tests/warden_port/test_redaction.py OWN_SHAPES | 8 |
+| spellings | tests/test_k5_round8.py SPELLINGS (the layered spellings rounds 8 and 9 drive) | 3 |
+| round12-fuzz | tests/test_k5_round12_fuzz.py `_case`, its seed | 1,200 |
+| round-trip | tests/test_runmap_is_masked.py `_random_text` (its seed) + LOOKALIKES | 300 + 6 |
+| p1c | handover/core-c/evidence/p1c_probe.py gap1_values, gap2_cases, gap3_cases | 16 + 44 + 43 |
+| g7 | tests/test_redact_context_after_sweep.py SHAPES, MUST_KEEP, E5 | 6 + 8 + 3 |
+| constructed | built for this file to find what one extra pass misses | 1 |
+Not used (not redactor inputs): tests/demo_askdata/fuzzgen.py (SQL), tests/test_peel_run_id.py HOSTILE (run ids),
+tests/fixtures/textnorm_corpus.json (name pairs for the fold).
+Result: 1,834 pass, 0 refused, 1 strict expected failure. With the extra pass switched off: 8 more fail (5 g7 shapes,
+3 g7 E5). HONEST NOTE: no input of the OLDER corpora fails with or without the extra pass; they did not hold this class.
+
+## Strict expected failures = stated limits
+1. `constructed:0`, a chain of three: `password=V`, `BSB: <code>V` (code glued to the secret), `paid <code>/<account>`.
+   Pass 1 finds V; sweep 1 frees the code; pass 2 finds the code; sweep 2 writes its placeholder before the account; only a
+   THIRD pattern pass reads the account. One pass leaves the account readable. Needs planted text.
+2. `test_limit_the_tail_of_a_compound_value_found_late_is_not_swept_from_its_other_copies`: `password=V`, `Bearer V+tail`,
+   `note V+tail+more`. Pass 2 stores V+tail whole; in the third line sweep 1 already replaced V, so no whole copy is left
+   to sweep and `tail` stays readable there (5 characters in the test). Property (a)/(b) cannot see it.
+
+## Cost of the extra pass (measured, CPU seconds, best of 3)
+| Text | before G7 (one pass) | narrow design (context patterns) | as built (whole table again) |
+|---|---|---|---|
+| 100,000 chars, 40 bank codes, ~2,900 accounts | 0.206 | 0.263 | 0.484 |
+| 60,000 -> 240,000 chars of the same | - | 0.158 -> 0.640 | 0.283 -> 1.128 (4.0x for 4x: linear) |
+| 320,013 chars of code placeholders, no account | 0.699 | 0.716 | 1.434 |
+A text with matches costs about 2.0x to 2.4x the old pass; a text with no match costs 1.0x (skip). All 25 perf-marked
+redactor tests pass on try 1 of 3 (22 existing + 3 new; serial, 70 s; slowest: the per-pattern super-linear sweep 33 s).
 
 ## Tests
-NEW tests/test_redact_context_after_sweep.py: 42 non-perf, 3 perf. One-pass (direct, keyword mirror, redact_many, run map
-that already holds the code, redact_untrusted), idempotence, map kinds, 8 must-keep shapes, table guard, bound and
-fail-closed, signatures, timing. Fail-before: 28 of 42 failed on the old code (evidence).
-tests/test_runmap_is_masked.py: NOT edited by this builder. During the build its owner replaced both shape-B tests
-(the strict xfail `test_shape_b_round_trip_holds_for_a_bank_code_beside_an_account` and the recording test
-`test_shape_b_recorded_one_pass_leaves_the_account_number_and_a_second_pass_masks_it`) by one passing test,
-`test_shape_b_one_pass_masks_the_account_beside_a_bank_code_and_is_a_fixed_point`. Before that replacement, with this
-change in place, the first was XPASS(strict) and the second FAILED (old `once`: `paid <BANKCODE_1>/12345678`, new:
-`paid <BANKCODE_1>/<BANKACCT_1>`); raw output in evidence. Final state of that file with this change: 29 passed, 1 xfailed
-(the redact_untrusted round trip, kept).
+- tests/test_redact_context_after_sweep.py (49 non-perf, 3 perf): E3 shapes, redact_many, E5 for BEARER/BASIC/authorization
+  (each asserts the old path's result too: `...<SECRET_1>xy`), must-keep, call counts, timing.
+- tests/test_redact_idempotent_property.py (1,835 params + 3 tests).
+- tests/test_redact_own_output.py (23).
+- Fail-before: E3 28 of 42 on the old code; E5 recorded on the old code as `Bearer <SECRET_1>xy` / `Basic <SECRET_1>ab` /
+  `authorization: <SECRET_1>ab` (evidence), and the property run with the extra pass off (8 fail).
+- No existing test changed outcome in this step (batch: 1 failed, unrelated; 9,663 passed).
+- tests/test_runmap_is_masked.py: only my one marker edit (follow-up); its owner rewrote the two recording tests.
 
 ## Second finding: `redact_untrusted` over its own output (caller table)
 | Call site | Input | Can the input be output of redact_untrusted? |
@@ -95,14 +118,23 @@ follow-up (coordinator order after ORDER 012 item 2), in `guard/redact.py` `_Red
 - Still open, tools.py (not mine): `error_reason` redacting before `prepare_output` is a double pattern pass; harmless now.
 
 ## Stays out
-No pattern regex, no pattern order, no change to `runmap.py`, `tools.py`, the sweep rule or the caps. BEARER / BASIC /
-authorization length case (above): goes to the lead.
+No pattern regex, no pattern order, no change to `runmap.py`, `tools.py`, the sweep rule or the caps.
 
 ## NOT CHECKED
-- A text that really needs more than one round (the planted adjacency) was not constructed; the bound is tested by
-  setting it to 0 and to 1.
-- The whole test suite: only the files that mention `redact` (41 files + warden_port + the held runmap/gate files read-only).
-- Timing on Windows or under load; timing through `runmap.redact_text` with views (only `redact()` measured).
-- Whether any producer outside src/ and demos/ (a customer's tool wrapper) calls `redact_untrusted` twice.
-- The two unrelated failures in the batch (test_k5_producers: `guard/model_gate.py` not registered; test_stage_names: a
-  literal in tests/test_runmap_enforce_map.py) come from files other agents hold; not investigated further.
+- The whole test suite: only files that mention `redact` (plus warden_port and the held runmap/gate files, read-only).
+- Timing on Windows or under load; the 6 s `REDACT_BUDGET_S` against a worst-case text WITH matches at the cap through
+  `redact_text` with views (each view is now up to two pattern passes); the existing end-to-end perf tests pass.
+- A search for further chain shapes beyond the two limits above was by hand (5 shapes tried), not exhaustive.
+- The unrelated red test (test_k5_producers: `guard/model_gate.py` not registered) belongs to another agent.
+
+## For SECURITY wording
+- Redaction is two pattern passes and two sweeps at most, not a fixed point: a value that needs a THIRD pass stays
+  readable after one call. Known shape: a chain where a value found only by the second pass is the context of another
+  (a bank code glued to a secret, then the account after that code elsewhere). Text must be planted to hit it.
+- When a longer credential is found only because a shorter known secret inside it was masked first, its other copies
+  elsewhere keep the part after the shorter secret readable (`<SECRET_1>tail`).
+- A value made only of escaped placeholder look-alikes (`‹KIND_n›`) is never treated as a credential.
+- Copies the sweep leaves by rule, unchanged by G7: values under 3 characters; all-digit values under 6; common words
+  (`prod`, `admin`, ...); a non-secret identifier where a letter or digit touches it.
+- A tool error text is redacted twice (throwaway map, then run map): its placeholders reach the model escaped, not numbered
+  in the run's map.

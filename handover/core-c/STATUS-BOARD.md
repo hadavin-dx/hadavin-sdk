@@ -1,30 +1,31 @@
-UPDATED_UTC: 2026-11-20T06:21:29Z
+UPDATED_UTC: 2026-11-20T06:23:19Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 25
-ITEMS_OPEN: 13
-PERCENT: 70
+ITEMS_OPEN: 12
+PERCENT: 74
 AGENTS_RUNNING: 5
-CAPACITY: load 2.5 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 6; 60M	/tmp/claude-0;397M	/root/.cache/uv;
+CAPACITY: load 2.0 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 5; 60M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: cloud/core-c: producers registry test only (SPINE patch). P1d-a mutant A43 survives (being closed in the integration)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T06:20:34+00:00
+PUSHED_UTC: 2026-11-20T06:21:30+00:00
 
-(11:51 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:53 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) rvD | reviewer | fable | EGM RESULT review of the gate code at f16d48e (egm:egm-design): hostile design read of model_gate.py and the runmap functions against the ticket and the evidence file | 06:22 | 06:35 | 5 | running | 1 of 3 | 0 | EGM-GATE step e: independent review of the result; reviewers get code, spec and evidence, not my verdict |
-| (new) rvC | reviewer | fable | EGM RESULT review of the gate code and its tests (egm:egm-codebase-details): stated limits against the real sweep rule, call sites, tests that cannot fail | 06:22 | 06:40 | 5 | running | 1 of 3 | 0 | EGM-GATE step e |
+| (new) grants | builder (tests only) | fable | reworks tests/test_grants_negative_roles.py so it is correct on main AND on core-b's step B grant map (reset identity), turns the 12 to-enable cases into real tests, runs on a worktree of core-b's code with local PostgreSQL 16 | 06:24 | 06:50 | 5 | running | n/a | 0 | cross-lane finding 2: the file breaks when core-b step B merges (8 failed on its code today) |
+| ab3dcc71 | reviewer | fable | EGM RESULT review of the gate code at f16d48e (egm:egm-design): hostile design read of model_gate.py and the runmap functions against the ticket and the evidence file | 06:22 | 06:35 | 5 | running | 1 of 3 | 0 | EGM-GATE step e: independent review of the result; reviewers get code, spec and evidence, not my verdict |
+| a6b83b14 | reviewer | fable | EGM RESULT review of the gate code and its tests (egm:egm-codebase-details): stated limits against the real sweep rule, call sites, tests that cannot fail | 06:22 | 06:40 | 5 | running | 1 of 3 | 0 | EGM-GATE step e |
 | ad457b53 | builder | fable | integration: cherry-picks P1d-a (5 commits) and the P2d-1 port (6 commits) onto the cloud/core-c tip f16d48e in its own worktree /tmp/core-c-int, resolves runmap.py / redact.py conflicts, re-pins, adds combination tests, one batch with 2 workers | 06:20 | 07:05 | 2 | running | n/a | 0 | backlog 1-5 are coded; this puts G2 and G3 on the same tree as G0, F, G1, G7; HEAVY at its end |
-| a76951b5 | builder (tests only) | fable | backlog 7: fetches origin cloud/core-a and cloud/core-b, extends core-a's first version into tests/contracts/test_t1_reserve_cap.py (50 separate connections), grants negative tests for migration 0007 if core-b pushed it; own worktree; may start local PostgreSQL 16 | 06:16 | 06:45 | 5 | running | n/a | 0 | STANDING ORDER 016 backlog item 7 |
+| a76951b5 | builder (tests only) | fable | backlog 7: fetches origin cloud/core-a and cloud/core-b, extends core-a's first version into tests/contracts/test_t1_reserve_cap.py (50 separate connections), grants negative tests for migration 0007 if core-b pushed it; own worktree; may start local PostgreSQL 16 | 06:16 | 06:45 | 100 | done | n/a | 0 | finished: core-b store IS pushed (576f292). tests/contracts/test_t1_reserve_cap.py (core-a 8 tests kept + 16 cases) and tests/test_grants_negative_0007.py (25 cases): 49 passed on core-b code with PostgreSQL 16, first try; 2 hand mutants killed. Committed. Not run: PostgreSQL 17, Python 3.12 |
 | a0f26f40 | lookup | fable | reads core-a and core-b pushed code through git objects and writes CROSS-LANE.md: gate contract mismatches, files two sessions edit, duplicated tests | 06:16 | 06:35 | 100 | done | n/a | 0 | finished: CROSS-LANE.md (85 lines, read only). core-b has NOT built the gate install yet. Top: nothing sets the refused-before-response mark (every failed call keeps its worst case booked about an hour); my step B grants test pins the old grant map and will break when core-b step B merges; certain merge conflicts in defaults.py and CHANGELOG.md |
 | ad708163 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:45 | 70 | running | n/a | 0 | G7 main fix and the own-output follow-up are DONE and committed (tool error path no longer adds a junk map entry; 23 new tests). Now on ORDER 013: the whole class with one extra pattern pass after the sweep + the idempotence property test over the hostile and fuzz corpora. If it did not pick the order up, I resend it |
 | aa4ceadd | builder | fable | applies the lead's code review round 1 of the gate (ORDER 011): new settle rule, map write without clear(), ast-based guard test, mutants, stated limits; main checkout | 05:56 | 06:20 | 100 | done | 1 of 3 (lead review) | 0 | finished: ORDER 011 applied and committed (f16d48e). 6688 passed, 1 failed (producers registry, expected). Mutants 27 of 27. A real bug found and fixed on the way: a value that is a piece of a placeholder was swept into it (<<SECRET_1>_2>). Not run: full suite, type check, Python 3.12 |
@@ -68,6 +69,7 @@ PUSHED_UTC: 2026-11-20T06:20:34+00:00
 | redact, textnorm and runmap users (G3 batch) + 3 perf | wip/cloud-core-c/g3-p2d-port ef09bf5 | 2 | 8237 passed / 1 failed, 19 skipped, 4 xfailed | tests/test_textnorm_round1.py::test_m16 (known from the fold, fixed on cloud/core-c) | done | first batch had 6 new failures, all closed in the builder's commit 6 |
 | gate, runmap users (ORDER 011 final batch) | cloud/core-c f16d48e | 3 | 6688 passed / 1 failed, 1 skipped | tests/test_k5_producers.py (module not registered: SPINE patch) | done | tests/gate_mutants.py: 27 of 27 good |
 | 56 files approvals/redact users (P1d-a after fix) | wip/cloud-core-c/g2-p1d-a a3bae9b | 2 | 7879 passed / 0 failed, 20 skipped | none | done | mutants 48 of 51 good; 3 survived (2 inherited, A43 from the fix) |
+| tests/contracts/test_t1_reserve_cap.py + tests/test_grants_negative_0007.py | core-b code 576f292 (worktree), PostgreSQL 16.15, Python 3.13 | 1 | 49 passed / 0 failed / 0 skipped | none | done | without a DSN: 9 passed, 40 skipped; PostgreSQL 17 NOT RUN |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -90,13 +92,13 @@ PUSHED_UTC: 2026-11-20T06:20:34+00:00
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
 | Gate: lead code review round 1 fixes (ORDER 011) | DONE | 100 | evidence/F-G0-1.md | 1 | committed f16d48e; all ORDER 011 points applied except m9 (arrives with core-b install); lead review round 2 can start |
 | BUILD G7 context patterns after the sweep (E3) | RUNNING | 70 | evidence/G7-1.md, tickets/G7-context-after-sweep.md | 1 | E3 fix and own-output fix committed. ORDER 013 (whole class + idempotence property test) running. One recorded test in tests/test_runmap_is_masked.py is red until its owner (gate agent) rewrites it to the fixed behaviour: sent |
-| Backlog 7: T1 reserve cap test + grants 0007 tests for core-b | RUNNING | 5 | evidence/T1-reserve-cap.md | 1 | one agent |
+| Backlog 7: T1 reserve cap test + grants 0007 tests for core-b | DONE | 100 | evidence/T1-reserve-cap.md | 1 | committed as "code F: T1 ..."; 49 passed on core-b code + PostgreSQL 16; skips in this tree until core-b code is merged; PostgreSQL 17 not run |
 | Backlog 4c: cross-lane read | DONE | 100 | CROSS-LANE.md | 1 | CROSS-LANE.md written; 5 mismatches listed for the lead |
 | Backlog 9: SECURITY and README wording | RUNNING (session) | 50 | SECURITY-WORDING-draft.md | 1 | draft pushed; final list after the gate and G7 agents report their stated limits |
 | Backlog 10: ONE whole-suite batch | WAIT items 1-6 | 0 | none | 0 | runs once when F, G0-G7 are coded and on one tree |
 | Integration of G2 + G3 onto cloud/core-c | RUNNING | 2 | evidence/INT-g2-g3.md | 1 | one builder in a worktree |
 | EGM result review of the gate code (round 1) | RUNNING | 5 | tickets/F-result-review-1.md | 1 | two reviewers on a stable snapshot of f16d48e |
-| Rework tests/test_grants_negative_roles.py against core-b's step B grant map | WAIT core-b step B push | 0 | CROSS-LANE.md | 0 | the file pins main's grant map on purpose; it must change in the same merge as step B (cross-lane finding 2) |
+| Rework tests/test_grants_negative_roles.py against core-b's step B grant map | RUNNING | 5 | evidence/B-grants-rework.md | 1 | core-b step B is pushed, so the rework starts now |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
