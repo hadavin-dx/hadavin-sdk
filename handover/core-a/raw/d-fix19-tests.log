@@ -14,4 +14,47 @@ bringing up nodes...
 sss.............................................ssssssssssssssssssssssss [ 50%]
 sssssssssssssssssss.sssssssssssssssssssss............................... [ 55%]
 ........................s.s..s.......................................... [ 60%]
-.......................................................s....s
+.......................................................s....s........... [ 64%]
+s.s.ssssssssssssssssssssssssssssssss.sssssssssssssssssssssssssssssssssss [ 69%]
+ssssssssssssss..................s.............s.ssssssssssssssssssssssss [ 74%]
+........................................................................ [ 78%]
+.....s.................................................................. [ 83%]
+........................................................................ [ 87%]
+..................................................x..................... [ 92%]
+........................................................................ [ 97%]
+............................................                             [100%]
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/1 seed=2026112041: sent=1494 valid=1008 (67%) rows=50 overlapping_keys=42 samples=59 model_calls=50 statuses[200:307, 202:13, 400:271, 401:135, 404:33, 405:29, 409:196, 413:18, 503:492] retried_503=492
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/2 seed=2026112042: sent=1483 valid=1013 (68%) rows=53 overlapping_keys=40 samples=64 model_calls=53 statuses[200:288, 202:20, 400:251, 401:148, 404:32, 405:21, 409:225, 413:18, 503:480] retried_503=480
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/4 seed=2026112043: sent=1010 valid=544 (54%) rows=57 overlapping_keys=42 samples=89 model_calls=57 statuses[200:202, 202:99, 400:245, 401:156, 404:26, 405:23, 409:238, 413:16, 503:5] retried_503=5
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:933: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C2 seed=2026112044: sent=1362 valid=729 (54%) rows=60 overlapping_keys=42 samples=126 model_calls=60 statuses[200:302, 202:50, 400:346, 401:194, 404:37, 405:34, 409:318, 413:22, 503:59] retried_503=59 get_run_calls=1097 raised=57 slowed=301
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C3 seed=2026112045: sent=1508 valid=195 (13%) rows=51 overlapping_keys=24 samples=102 model_calls=51 statuses[200:103, 202:46, 400:152, 401:1059, 404:36, 405:35, 409:41, 413:31, 503:5] retried_503=5 clock_calls=1333 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:1121: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=98 no_answer=14 retried_503=0 statuses[0:14, 200:79, 202:153, 400:110, 401:45, 404:7, 405:13, 409:22, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=37 overlapping_keys=14 samples=176 model_calls=37 statuses[200:266, 202:30, 400:625, 401:382, 404:60, 405:68, 409:126, 413:44, 503:903] close_took=0.00s requests_after_close=1146 new_keys_after_close=894
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1244 passed, 312 skipped, 1 xfailed, 8 warnings in 57.21s

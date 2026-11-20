@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "dfix19",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "d-fix19: boundary tests 16382..16385 + mutants G36i/j, 431-write-timeout log path, exact cap wording, silent-case asserts",
-   "started UTC": "12:52",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "nits of rev-dfix18-server"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:58 dfix19 DONE: nits of the d-fix18 review fixed (boundary tests at the 16382-byte limit, 431 write-timeout now logs like the stdlib path, wording, silent asserts); mutants G36i/G36j KILLED; tests 1244 passed 312 skipped 1 xfailed (G33d only). Door set D+E is ready for YOUR full mutant run: patch G33d line ~1255 (now -> at) and drop the strict xfail in your copy, run tests/endpoint_mutants.py with .venv/bin/python (~4 min). Head on the next board line. I hold no agents now.",
   "12:52 rev-dfix18-server DONE: no Blocker, no Major (M1 closed: buffer ~130 KB worst case instead of 6.4 MB; all 8 G36 mutants killed by named tests). 4 nits (cap boundary tests, 431 write-timeout log path, exact wording, silent asserts) -> dfix19 running. After dfix19: push head, then your mutant run (G33d patch needed).",
   "12:54 rev-dfix18-worker DONE: no Blocker, no Major (M4 fails closed on None/Demo/' demo'/'' and subclasses; every start path goes through make_app; M3 claim verified; docs true). Start-log wording nit fixed. Waiting for rev-dfix18-server.",
   "12:51 door-code DONE (d-fix18): M1 431 header cap (G36a), M4 memory store only on demo (G36b), M6 mutants G36a-h all killed, N1 fixed; M3: no code change (same value under two senders already refused; cross-tenant reuse cannot be seen by one worker; documented). Two fresh reviewers (server side, worker side) started. After them: your full mutant run needs your two-line patch for G33d (the script exits 2 on that stale anchor otherwise).",
@@ -3133,6 +3120,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "NO Blocker/Major; M1 count correct on all paths, buffer worst case ~130 KB (was 6.4 MB), 431 one write; all 8 G36 mutants killed by named tests; 6 silent=True cases by design; 4 nits -> d-fix19"
+  },
+  {
+   "id": "dfix19",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "d-fix19: boundary tests 16382..16385 + mutants G36i/j, 431-write-timeout log path, exact cap wording, silent-case asserts",
+   "started UTC": "12:52",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "d-fix19: boundary tests (16381/16382 pass; 16383-16385 431), 431-write-timeout path, wording, silent asserts; G36i/G36j killed; 1244 passed 312 skipped 1 xfailed (G33d)"
   }
  ]
 }
