@@ -110,7 +110,7 @@ _MENTION = re.compile(r"(?<![\w@])@(here|channel|everyone)\b", re.IGNORECASE)
 # and Slack links a bare domain under any real TLD.
 _TLDS = r"[a-z]{2,24}|xn--[a-z0-9-]+|[^\x00-\x7f\W\d_]{2,}"
 # Not an email's local part (`priya.nair@`): only what follows the `@` is a host.
-_DOMAIN = re.compile(rf"(?<![\w.\[/-])((?:[\w-]+\.)+)({_TLDS})(?![\w@-])", re.IGNORECASE)
+_DOMAIN = re.compile(rf"(?<![\w./-])((?:[\w-]+\.)+)({_TLDS})(?![\w@-])", re.IGNORECASE)
 # Labels holding a non-ASCII character. Bounded as DNS bounds a name (labels of 63, at most 127 of them; Sonar
 # python:S8786, 2026-10-16): unbounded, a long run of such letters was split every way it could be. A longer one is
 # no host, and what passes the bounds is defanged in pieces.
@@ -244,7 +244,7 @@ def _defang_plain(part: str) -> str:
 # renderer that reads `_` as emphasis, a link. Two rules close it, whatever is glued on:
 # 1. `_` ends a top-level domain (`evil.com_x`, where `_DOMAIN` finds nothing at all);
 # 2. a dotted token that holds one `[.]` gets every dot between two name characters written `[.]`.
-_DOMAIN_LAST = re.compile(rf"(?<![\w.\[/-])((?:[\w-]+\.)+)({_TLDS})(?![^\W_]|[@-])", re.IGNORECASE)
+_DOMAIN_LAST = re.compile(rf"(?<![\w./-])((?:[\w-]+\.)+)({_TLDS})(?![^\W_]|[@-])", re.IGNORECASE)
 _DOTTED_TOKEN = re.compile(r"(?:\[\.\]|[\w.-])+")
 _NAME_DOT = re.compile(r"(?<=[\w-])\.(?=[\w-])")
 
@@ -314,7 +314,7 @@ def undefang_text(text: str) -> str:
     """Undo the `[.]` a gate wrote in prose: between two name characters (requests stored before P1d-a) and behind
     a placeholder (`defang_text`), so the redactor reads a stored card as it read the text before the defang: with
     `<EMAIL_1>[.]08::` left as it was, `08::` no longer followed a dot and was masked as an address the second time."""
-    return _outside_code(text, _undefang_prose)
+    return _outside_code(text, _undefang_prose, certain=True)
 
 
 def _clean_line(line: str, defang: bool) -> str:
