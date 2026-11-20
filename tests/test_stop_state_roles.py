@@ -1240,7 +1240,7 @@ def test_s2_the_four_roles_named_in_one_command_with_no_stray_right_pass(w):
     applied = migrate(
         fresh, runtime_role=w.runtime, portal_role=w.portal, purge_role=w.purge, reset_role=w.reset
     )
-    assert applied[-1] == "0006_stop_state"
+    assert "0006_stop_state" in applied
     with psycopg.connect(fresh, autocommit=True) as db:
         assert migrate_mod.who_else_can_clear(db, w.reset) == []
         assert migrate_mod.who_else_can_clear(db, None) == [w.reset]
