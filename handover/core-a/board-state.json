@@ -712,8 +712,8 @@
   {
    "item": "FIX-signed_post",
    "what": "crash_launcher.signed_post: incomplete 2xx response = no complete ack (test client); + 3 cosmetic E1 nits",
-   "state": "QUEUED after batch9's mutant item ends (tree)",
-   "percent": 0,
+   "state": "RUNNING in final-fix",
+   "percent": 5,
    "evidence file": "FINDINGS-flake-pg-kill.md",
    "tries": 0,
    "reason": "batch9 mutant run in progress"
@@ -734,19 +734,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "batch9",
-   "role": "evidence runner (never judges)",
-   "model": "sonnet",
-   "what exactly it is doing": "FINAL independent batch on the final tree: lint/bandit, WHOLE suite REQUIRE_PG=1 -n 3, combined tree with n8n/, mutant script",
-   "started UTC": "10:41",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "after e1-fix4"
-  },
-  {
    "id": "n8n-fix6",
    "role": "builder",
    "model": "sonnet",
@@ -758,6 +745,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "lead: evidence-n8n-4"
+  },
+  {
+   "id": "final-fix",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "signed_post: a truncated 2xx = no complete ack (test client) + unit tests; 3 cosmetic nits; one test run; complete mutant run 19",
+   "started UTC": "10:55",
+   "expected end": "25 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "flake verdict + batch9"
   }
  ],
  "tests": [
@@ -2720,6 +2720,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "TEST RACE (verified with a raw-socket server, not reproduced in 171+1 runs): worker killed by os._exit at audit.write_outcome:after while the request thread had sent the status line but not the headers/body; signed_post returned (2xx, b'') and json.loads failed; no code bug, no guarantee break (the row existed; the sender would retry with the same key); fix in the TEST client: crash_launcher.signed_post returns (None, 'IncompleteResponse') for a 2xx without Content-Length or a short body; line 822 stays and still asserts that a COMPLETE 2xx implies the row; FINDINGS-flake-pg-kill.md"
+  },
+  {
+   "id": "batch9",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "FINAL independent batch on the final tree: lint/bandit, WHOLE suite REQUIRE_PG=1 -n 3, combined tree with n8n/, mutant script",
+   "started UTC": "10:41",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "BATCH9 (head 32eae7c17, final tree, independent): lint clean (452 files), bandit 0 medium/high; whole suite 13 failed (10 strict-mode by design, dblink env, brand string in the lead's BRIEF-PREAMBLE.md, the pg-kill flake = test race) / 12305 passed / 458 skipped / 75 xfailed in 346 s; combined tree core-b d2920f552: 1377 passed 4 skipped 0 failed; mutants: 98 result lines all ok, but the log has NO summary line (cut): builder run 18 gave 109 of 109 on the same tree; a complete run 19 follows"
   }
  ]
 }
