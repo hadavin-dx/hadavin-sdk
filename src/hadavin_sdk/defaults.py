@@ -159,3 +159,14 @@ WORST_CASE_OVERHEAD_BYTES = 4096
 # connection sets none). A call that waits longer fails loudly instead of holding the process-wide store lock for ever;
 # the runtime maps it to limits_unavailable. It does not limit how long a statement itself runs.
 STORE_LOCK_TIMEOUT_MS = 10000
+
+# --- audit outbox drain (audit/chain.py reconcile) ----------------------------------------------------------------------
+# Rows of audit_outbox read and drained per reconcile (one tick): a big backlog is drained over several ticks, so a
+# tick stays short and holds a bounded number of bodies in memory.
+AUDIT_DRAIN_BATCH = 500
+# SQLSTATE prefixes the audit chain counts as a PERMANENT refusal (waiting never helps): class 22 data, class 23
+# integrity, 42501 missing grant, 54000 limit exceeded. Every other database error is transient and is retried.
+AUDIT_PERMANENT_SQLSTATES = ("22", "23", "42501", "54000")
+# Prefix of the event_id an outbox row gets when the chain refuses it for ever (a poison row): the runtime role may
+# INSERT and DELETE but not UPDATE, so "marking" is insert-under-the-new-id then delete-the-old.
+AUDIT_QUARANTINE_PREFIX = "poison:"

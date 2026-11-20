@@ -318,7 +318,7 @@
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
 ### Added (audit drain)
-- **Parked audit events are now written.** A new tick step `audit_drain` (the last step) writes the events that wait in
+- **Parked audit events are now written.** A new tick step `audit_drain` (before `expire_reservations`) writes the events that wait in
   the `audit_outbox` table into the audit chain; before, nothing in the package did this. A running process also
   writes its own memory-parked events at its next successful audit write. An outbox row that cannot be read is kept,
   the rows after it are still written, and the step fails with a count (no row text). A missing grant or table on the
