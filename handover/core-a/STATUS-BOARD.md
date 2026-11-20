@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:43:29Z
+UPDATED_UTC: 2026-11-20T08:44:07Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 72
 ITEMS_OPEN: 20
 PERCENT: 82
-AGENTS_RUNNING: 3
-CAPACITY: load 0.56 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 2
+CAPACITY: load 0.69 of 4 cores (1-minute average), mem 1.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 557M /home/user/hadavin-sdk; 475M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T08:43:23Z (the push before this board)
+PUSHED_UTC: 2026-11-20T08:43:32Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -98,20 +98,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | d-fix4 | builder | sonnet | round-3 fixes (config error text, log time+level, --host '', start/stop lines, stale text), strict-mode failure at test time not collection, G13b expect, ticket sizes and cites | 08:27 | about 30 min | 5 | running | 3 of 3 (fix) | 0 | after batch5 and round 3 |
-| open-items | lookup | haiku | OPEN-ITEMS.md: one line per open escalation/decision with the exact missing input | 08:42 | 5 min | 5 | running | n/a | 0 | lead command 08:43 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 9282 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 109s ago | running | matched by name in ps |
-| 9283 | uv run python tests/endpoint_mutants.py | core-a session or its agent | 109s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 8939s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 8939s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 8939s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 8939s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 8939s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 8939s ago | running | matched by name in ps |
-| 13767 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 9282 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 147s ago | running | matched by name in ps |
+| 9283 | uv run python tests/endpoint_mutants.py | core-a session or its agent | 147s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 8977s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 8977s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 8977s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 8977s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 8977s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 8977s ago | running | matched by name in ps |
+| 13875 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 6s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -173,6 +172,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- OPEN-ITEMS.md (handover/core-a/): 7 open items. Waiting for core-b: REQ-001..REQ-004 (oldest 05:41 UTC). Waiting for you: E5 (one more fresh pass on step E?), E6 (three n8n behaviours need a real n8n run), E7 (stdlib server size / cap and deadline). Nothing else is open.
 - Answer to your 08:43 list (agent count now 2: d-fix4 = last step D code fixes + mutant run 14, open-items = haiku lookup). Per item: (1) n8n template retry fix + contract tests: DONE, 3 review rounds, 88 tests, evidence-n8n-2 used (ORDER 019). (2) step E crash.py: review at cap 3/3, fixes and 16 mutants done, E5 (one more pass?) waits for you. (3) T4 store contract tests against core-b interfaces: DONE, updated to core-b dba4463a5/a11ab5132 heads: tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py, test_meter.py (696 passed on core-b head); findings fixed by core-b are un-marked. (4) fresh step D review on the committed head: after d-fix4 ends (it still edits) as the final read-only pass. (5) running now. (6) evidence agent (tests/triggers + tests/testing, 2 batches, -n 3, handover/core-a/evidence/): starts when d-fix4 ends; max 2 heavy runs at once. Not idle by choice: d-fix4 holds the source files.
 - DEADLINE 08:50: tested step D commit pushed 08:41 UTC: 70feef2c5 (message and handover/core-a/TESTED-D.md: tests/triggers 1182 passed, 5 skipped, 0 failed, file hashes). The code itself was already in earlier board WIP snapshots (the board script commits code files); this commit marks the tested state. Mutant run 14 and the independent batch6 (whole suite) follow.
 - ORDER 022 (read 08:38): the lead's list is stale on 3 points: (a) the 14 failing trigger tests are fixed since 07:30 (tests/triggers: 1175 passed, 5 skipped in my run; FAILED list now: none in my trigger files; the only FAILED in my last evidence batch were 74 n8n tests my runner broke by not copying n8n/); (b) n8n template retry fix is DONE (ORDER 019, 3 review rounds, 88 tests); (c) step E review is at its cap (E5 waits for you). Live now: d-fix4 (last step D code fixes, writes the tested commit) + ruff-haiku. The tested step D code commit (not WIP) follows when d-fix4 ends and its tests pass: target before 08:50 UTC. Then batch6: whole suite, -n 3 if pytest-xdist is installed, one shell.
