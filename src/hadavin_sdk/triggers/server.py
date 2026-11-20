@@ -21,6 +21,9 @@ the connection is closed. The application sees only what the request and the ser
 of the process environment can stand in for a header that was not sent. These refusals are logged at
 DEBUG: their number is chosen by whoever can reach the port.
 
+A reverse proxy with per-peer connection limits is required; this server has 256 global slots and no per-peer limit.
+One secret per tenant and per stage; the tenant is not part of the signed string.
+
 Two bounds on what a client can hold: at most `max_connections` connection threads at one time (a connection over
 the cap is closed at once, nothing is read or answered; logged at WARNING at most once a minute), and an absolute deadline, `read_deadline_s`, on the
 TOTAL time from the accept until the request line, the headers and the body have been read (a client that
@@ -193,6 +196,7 @@ class QuietWSGIHandler(ServerHandler):
         try:
             super().finish_response()
         finally:
+            # 3.11 vs 3.12: the stdlib finish_response differs in when the connection is closed; this finally keeps the slot release identical on both.
             if self._answer:
                 data, self._answer = bytes(self._answer), bytearray()
                 try:
