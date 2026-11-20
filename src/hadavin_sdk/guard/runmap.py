@@ -1091,7 +1091,8 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       `abcdef`): since G9 the sweep reads the text back with the map's placeholders put back and replaces the
       readable rest by the EXISTING placeholder of a value that covers it, a secret's where one does, else the
       identifier's (`<SECRET_1><SECRET_2>`); the map is not written. A held-back value is not in this sweep's
-      map: its rest stays here and the net (`held_value_left`) refuses the call.
+      map: its rest stays here. The net (`held_value_left`) checks values of SECRET kinds only: the rest of a held-back
+      secret refuses the call, the rest of a held-back identifier passes the net silently (a stated limit).
       Where one value is held under both an identifier and a secret kind, since G4 the secret's placeholder is the one used.
     - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
       on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the

@@ -2221,17 +2221,20 @@ def test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep()
     and a space (20,000 here); read back whole, the finder tried the long value at every position of a periodic E (quadratic). A run is read back at
     most `defaults.SPELLED_READBACK_REACH` (1,024) characters deep on each side that touches readable text; deeper, the anchored check
     searches its anchor in the long rule ONCE per distinct anchor (units: E = a separator, 1,024 `x`, the space; one per edge and long
-    rule; 20,000 for the search; a second copy of the same edge adds its E and one unit, no second search; mutant G9-20)."""
+    rule; 20,000 for the search; a second copy of the same edge adds its E and one unit, no second search; mutant G9-20).
+    Since the E17 review the scan of the feasibility window is counted too (`hi - lo`, once per distinct window; the figures below were
+    21,027 and 43,079 before): 1,025 for the first text (window [18,975, 20,000)); the second text has three edges, windows of 1,025,
+    20,000 and 20,000 characters (the left edge of the second token can read the whole rule: 20,000), 41,025 in all."""
     r = R._Redactor({"<HIGHENTROPY_1>": "x" * 20_000})
     r.sweep("")
     reach = defaults.SPELLED_READBACK_REACH
     work = [0]
     assert r._overlaps("<HIGHENTROPY_1> ", None, work) == []
-    assert work == [(1 + reach + 1) + 1 + 20_000], work
+    assert work == [(1 + reach + 1) + 1 + 20_000 + 1_025], work
     work = [0]
     assert r._overlaps("<HIGHENTROPY_1> <HIGHENTROPY_1> ", None, work) == []
     # 2 distinct anchors (` ` after a token, ` ` before one): 2 searches, 3 edges
-    assert work == [(1 + reach + 1 + reach + 1 + reach + 1) + 3 + 2 * 20_000], work
+    assert work == [(1 + reach + 1 + reach + 1 + reach + 1) + 3 + 2 * 20_000 + 41_025], work
 
 
 def test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check():
@@ -2264,6 +2267,46 @@ def test_g9_a_long_periodic_value_beside_its_own_period_is_refused_by_the_count(
     with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
         # `<SECRET_9>` is not a key: the run of `<SECRET_1>` touches readable text on its right only, so it is cut at the reach there
         r.sweep(("<SECRET_9><SECRET_1>" + "x" * 200 + " end\n") * 30)
+
+
+def test_g9_constants_hold_sane_values():
+    """The G9 constants (defaults.py) are plain numbers with no validation at load; this pins the values a change must keep sane: at least
+    two passes (a body and one read-back), a positive reach below the rule length the anchored check is for, positive limits, and the
+    union limit at most the sweep's work limit times the characters a unit stands for (a plain bound check, not the effective limit:
+    `MAX_MAP_CHARS` is, see defaults.py)."""
+    assert defaults.SPELLED_MAX_PASSES >= 2
+    assert 1 <= defaults.SPELLED_READBACK_REACH <= 65_536
+    assert defaults.SPELLED_MAX_UNION_CHARS > 0 and defaults.SPELLED_MAX_WORK > 0
+    assert defaults.SPELLED_MAX_UNION_CHARS >= defaults.MAX_REDACT_CHARS
+
+
+def test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it():
+    """E17 + G9 result review (design M1, M2): `_deep_hits` searches the anchor of an edge only in the window `[lo, hi)` of the long rule
+    whose comparison could succeed (the text that can be read back on each side of the edge bounds it), and counts the scan of that window
+    (`hi - lo` units, once per distinct window). Exact units (not a timing), `_overlaps` on a swept text, no clock:
+    (a) `x<SECRET_2>`, SECRET_2 = `x` x 1,030 (the rule, 1,030 long, anchor = the free `x` + 1,024 of the run = 1,025 characters): the
+    window is [0, 1,025) (hi = 1 - 1 + 1,025), one place, one comparison. Units: E 1,026 (the text read back) + 1 (edge, rule) + 1,030 (the
+    anchor searched in the rule) + 1,025 (the window scan) + 1,025 (a place found) + 2,062 (2 x 1,030 + 2, the comparison) = 6,169; the
+    hit is found. (b) a second long rule, `x` x 1,100, cannot fit beside `x` + a 1,030-character run (1 + 1,030 < 1,100): its window
+    [69, 1,025) is shorter than the anchor: skipped, no scan, no place, no comparison: it adds exactly 1 + 1,100 = 1,101 units (7,270) and
+    no hit. (c) `<SECRET_1>x` (the 1,100 rule, window [75, 1,100): lo = 1,100 - 1 - 1,024): 1,026 + 1 + 1,100 + 1,025 + 1,025 + 2,202 = 6,379.
+    Mutants G9-25 .. G9-30 (the skip, lo and hi each moved by one, the scan not counted)."""
+    word = "x" * 1_030
+    r = R._Redactor({"<SECRET_2>": word})
+    r.sweep("")
+    work = [0]
+    assert r._overlaps("x<SECRET_2>", None, work) == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")]
+    assert work == [6_169], f"(a) {work}"
+    r = R._Redactor({"<SECRET_1>": "x" * 1_100, "<SECRET_2>": word})
+    r.sweep("")
+    work = [0]
+    assert r._overlaps("x<SECRET_2>", None, work) == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")]
+    assert work == [7_270], f"(b) {work}"
+    r = R._Redactor({"<SECRET_1>": "x" * 1_100})
+    r.sweep("")
+    work = [0]
+    assert r._overlaps("<SECRET_1>x", None, work) == [(0, 11, "SECRET", "<SECRET_1>")]
+    assert work == [6_379], f"(c) {work}"
 
 
 def test_g9_the_read_back_judges_a_phone_copy_by_the_sweeps_joins():

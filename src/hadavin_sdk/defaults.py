@@ -144,6 +144,8 @@ SPELLED_READBACK_REACH = 1024
 # G9: the characters of the unions of overlaps (`_Redactor._place_union(..., derived=False)`) one call may register; past it the call is
 # refused (`InputTooLarge("SpelledUnionTooMuch")`, nothing shown). Each union's value is also counted in the sweep's work before it is
 # built. A planted 130,000-character secret beside many short overlaps made ~130,000 characters of map per overlap before this limit.
+# 1,000,000 is above `MAX_MAP_CHARS` (524,288): it is NOT the effective bound on the run's map (that is `MAX_MAP_CHARS`, checked by the run); it
+# limits what ONE call may register transiently, so a call can hold up to about 1 MB of unions before it is refused.
 SPELLED_MAX_UNION_CHARS = 1_000_000
 # shortest base64 run (padding not counted) the redactor decodes; 12 characters are 9 bytes
 B64_MIN_CHARS = 12

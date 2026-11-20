@@ -1208,7 +1208,8 @@ class _Redactor:
         # the deadline is read in it. A rolled-back registration deletes its form (`_unspell`). MEMORY: the tries hold one dict (about 185
         # bytes, measured: evidence G7-1.md "G7 fix round 7") per character of every registered written form (prefix and suffix) that is
         # not already a node; the characters held are COUNTED per call (`_spelled_chars`, charged in `_spell`, which every registration
-        # passes: `find` through `_place`, the union of an overlap through `_place_union` -> `_place`) and the call is REFUSED
+        # passes: `find` through `_place`, and a G7 union of an overlap through `_place_union` -> `_place`; a G9 union (`derived=False`) never
+        # reaches `_spell`: it is limited by `_union_chars` / `defaults.SPELLED_MAX_UNION_CHARS` instead) and the call is REFUSED
         # (`InputTooLarge("SpelledMemoryTooMuch")`, nothing stored by the refused registration) past `defaults.SPELLED_MAX_CHARS`;
         # a registration is never skipped (that would fail open). The registry lives as long as the `_Redactor` (one call). `_spelled_at`
         # holds, per placeholder, the written form's token, its prefix (a reversed COPY) and suffix (a slice COPY; the full value is the
@@ -1791,7 +1792,8 @@ class _Redactor:
         MEMORY (round 7): the characters this registration adds to the tries (a node per character not already there, prefix and suffix) are
         counted per call (`self._spelled_chars`; a rolled-back registration gives its nodes back) and refused, BEFORE anything is stored,
         past `defaults.SPELLED_MAX_CHARS` (`InputTooLarge("SpelledMemoryTooMuch")`): the registration is never skipped (that would fail
-        open), the call is refused. Every registration passes here: `find` (`_place`) and the union of an overlap (`_place_union` -> `_place`)."""
+        open), the call is refused. Every registration of a written form passes here: `find` (`_place`) and a G7 union of an overlap (`_place_union`
+        -> `_place`); a G9 union (`derived=False`) has no written form and does not pass here (`_union_chars` limits it)."""
         token = first.group(1)
         prefix = original[: first.start()][::-1]  # read backwards from the token
         suffix = original[first.end() :]
@@ -2237,9 +2239,13 @@ class _Redactor:
     ) -> list[tuple[int, int, str]]:
         """G9: the occurrences of the rules longer than the reach + 1 (`self._long`) that reach DEEPER than the reach into a cut run.
         Such an occurrence holds the anchor of its edge (the reach's characters of the run there and the free character beside them),
-        so the anchor is searched in the rule (once per distinct anchor and rule: `len(w)` units, `len(anchor)` more per place found); at each
-        place the rule is compared whole with the text read back on both sides of the edge (`_expand`; `2 * len(w) + 2` units per
-        comparison). One unit per (edge, long rule). Returns hits as `_overlaps` makes them: (out start, out end, placeholder)."""
+        so the anchor is searched in the rule, but only in its FEASIBILITY WINDOW `[lo, hi)`: the places whose comparison could succeed,
+        given an upper bound of the characters that can be read back on each side of the edge (`can_left`, `can_right`: the characters of
+        `out` plus what each key token adds when put back whole). A place outside the window needs more text than can be read back, so it
+        is not searched, not compared and not counted. Units: one per (edge, long rule); `len(w)` once per distinct anchor and rule (the
+        search of the anchor in the rule); `hi - lo` once per distinct window (the scan of the window, E17 review: the scan runs per
+        window, not per anchor); `len(anchor)` more per place found; `2 * len(w) + 2` per comparison (the rule compared whole with the text
+        read back on both sides of the edge, `_expand`). Returns hits as `_overlaps` makes them: (out start, out end, placeholder)."""
         reach = defaults.SPELLED_READBACK_REACH
         rules = self._rules
         starts = [t[0] for t in toks]
@@ -2276,6 +2282,8 @@ class _Redactor:
                 at = found.get((anchor, w, lo, hi))
                 if at is None:
                     at = []
+                    # the scan of the window [lo, hi) is counted, once per distinct window (the same window is not scanned again)
+                    self._spend(work, hi - lo, deadline)
                     j = w.find(anchor, lo, hi)
                     while j >= 0:
                         self._spend(work, len(anchor), deadline)  # a further search starts there

@@ -577,7 +577,9 @@ def test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals()
         outcome = _enforce("x ab-cd-ef y", mapping)
     except runmap.RedactionError as exc:  # the outcome string keeps the id on the failure line
         outcome = f"{type(exc).__name__}({exc})"
-    assert outcome == "x <SECRET_1><TENANT_1> y", "TB-2.11 E5b the secret entries were not put first"
+    assert outcome == "x <SECRET_1><TENANT_1> y", (
+        "TB-2.11 E5b the secret entries were not put first"
+    )
 
 
 # --- lead review round 1, M4: redact_text never empties the live map ----------------------------------------------
