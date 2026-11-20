@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:12:36Z
+UPDATED_UTC: 2026-11-20T15:13:54Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.63 of 4 cores, mem 1/15 GB, disk 41G free, 42% used, agents light 4 heavy 2
-DISK: / 41G free, 42% used; worktrees /tmp/core-b-wt 4.2G
+CAPACITY: load 2.65 of 4 cores, mem 1/15 GB, disk 40G free, 42% used, agents light 4 heavy 2
+DISK: / 40G free, 42% used; worktrees /tmp/core-b-wt 4.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T15:11:23Z (previous push; this board is pushed right after writing)
-IST: 20:42 IST
+PUSHED_UTC: 2026-11-20T15:12:41Z (previous push; this board is pushed right after writing)
+IST: 20:43 IST
 
 MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
