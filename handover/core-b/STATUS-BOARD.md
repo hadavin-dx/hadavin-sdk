@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:40:13Z
+UPDATED_UTC: 2026-11-20T11:41:38Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -14,8 +14,8 @@ CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T11:38:55Z (previous push; this board is pushed right after writing)
-IST: 17:10 IST
+PUSHED_UTC: 2026-11-20T11:40:20Z (previous push; this board is pushed right after writing)
+IST: 17:11 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
