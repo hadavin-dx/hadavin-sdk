@@ -184,7 +184,7 @@ def test_a_missing_reset_ref_is_refused_before_any_connection_in_every_environme
         "reset value",
     ],
 )
-def test_a_reset_ref_that_collides_with_a_runtime_secret_or_login_is_refused(
+def test_a_caps_ref_that_collides_with_another_secret_or_login_is_refused(
     w, tmp_path, spy, capsys, command, case
 ):
     store = {}
@@ -210,6 +210,11 @@ def test_a_reset_ref_that_collides_with_a_runtime_secret_or_login_is_refused(
     assert _run(cfg, *ARGS[command]) == 2
     err = capsys.readouterr().err
     assert "caps_credential_ref" in err and "Traceback" not in err
+    # a name clash is refused by NAME, before any secret is read; two names with one DSN by VALUE
+    want = {"path form": "path-shaped"}.get(
+        case, "same login" if case.endswith("value") else "same secret"
+    )
+    assert want in err
     assert "postgresql://" not in err and w.runtime not in err  # no value in a message
     assert "store" not in spy.made and _table(w) == {}
 
