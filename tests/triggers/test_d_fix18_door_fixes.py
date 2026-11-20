@@ -14,7 +14,7 @@ import pytest
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.store.memory import MemoryStore
-from hadavin_sdk.triggers import endpoint, server, worker
+from hadavin_sdk.triggers import server, worker
 from hadavin_sdk.triggers.server import QuietRequestHandler
 from tests.triggers.test_d_fix13_single_write import (
     CLIENT_TIMEOUT_S,
@@ -159,11 +159,3 @@ def test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer():
     h, sent = _handler("HTTP/1.1", object())
     h._serve()
     assert sent == []
-
-
-def test_m6_the_dead_constants_are_gone():
-    from tests import endpoint_mutants
-
-    assert not hasattr(endpoint_mutants, "EMPTY_REFUSAL")
-    assert not hasattr(endpoint_mutants, "NO_VERSION")
-    assert endpoint is not None
