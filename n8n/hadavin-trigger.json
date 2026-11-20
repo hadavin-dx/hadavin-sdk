@@ -1,5 +1,5 @@
 {
-  "name": "hadavin-trigger (outline, not run in n8n)",
+  "name": "hadavin-trigger (outline; earlier version run in n8n 2.47.7; this version not re-imported)",
   "active": false,
   "nodes": [
     {
@@ -10,12 +10,13 @@
         0,
         0
       ],
+      "webhookId": "00000000-0000-4000-8000-000000000000",
       "parameters": {
         "httpMethod": "POST",
         "path": "replace-with-your-path",
-        "responseMode": "onReceived"
+        "responseMode": "responseNode"
       },
-      "notes": "UNVERIFIED: typeVersion and the parameter names httpMethod, path, responseMode (the atlas names the respond mode 'Immediately' but gives no JSON field names). Replace this node with the client's own trigger (webhook, mailbox, schedule). A webhook call can start two executions; the key rule (a stable business id, hashed) is what keeps that to one run."
+      "notes": "UNVERIFIED: the responseMode value 'responseNode' (the run used 'onReceived', which answered the caller 200 at once), and the form of the webhookId value. SEEN IN n8n 2.47.7: typeVersion, httpMethod and path; a webhook node WITHOUT a webhookId was registered under <workflow id>/<node name>/<path> and /webhook/<path> answered 404; workflows whose webhook node had a webhookId answered on /webhook/<path>. The webhookId in this file is a made-up placeholder: put a fresh UUID here for every installation, before the import (see the README). Replace this node with the client's own trigger (webhook, mailbox, schedule); if the new trigger is not a webhook, delete the two 'Answer caller' nodes. A webhook call can start two executions; the key rule (a stable business id, hashed) is what keeps that to one run."
     },
     {
       "name": "Id and text present?",
@@ -41,7 +42,23 @@
           ]
         }
       },
-      "notes": "UNVERIFIED: typeVersion, the whole 'conditions' shape, the boolean operator fields, that output 0 is the true branch and output 1 the false branch, and that typeof and trim work in an expression. Atlas: the IF node takes AND/OR conditions by data type. This is the guard: the business id must be a non-empty text or a number, and the document must be a non-empty text. A missing, null or empty field goes to the false branch, which stops the execution. Without this guard a missing id would be turned into the text 'undefined' by String() and every such event would share one key. $json.body.record_id and $json.body.text are placeholders for the client's fields: change them here AND in 'Hash business id' and 'Build request'."
+      "notes": "SEEN IN n8n 2.47.7: this node as written. A missing id, a missing text, null values, an empty id and a text of spaces only all went to output 1 (false) and nothing was sent; a text id and a number id went to output 0 (true). This is the guard and it is REQUIRED: the business id must be a non-empty text or a number, and the document must be a non-empty text. With the guard taken out of the chain, the run sent a missing id as the hash of the text 'undefined' and a null id as the hash of the text 'null': every such event would share one key. $json.body.record_id and $json.body.text are placeholders for the client's fields: change them here AND in 'Hash business id' and 'Build request'."
+    },
+    {
+      "name": "Answer caller: refused",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        220,
+        200
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode, and that it passes the item on to the next node). It was NOT part of the run in n8n 2.47.7 and was written from memory of the n8n documentation. Purpose: in the run, the caller of the webhook got HTTP 200 although the guard had stopped the event. This node answers the caller with 422 and an empty body instead, and then the execution fails at 'Stop: id or text missing' as before. Never put the document or the id into the answer."
     },
     {
       "name": "Stop: id or text missing",
@@ -49,13 +66,29 @@
       "typeVersion": 1,
       "position": [
         220,
-        200
+        400
       ],
       "parameters": {
         "errorType": "errorMessage",
         "errorMessage": "Hadavin trigger: the business id or the document text is empty or missing. Nothing was sent."
       },
-      "notes": "UNVERIFIED: the node type name, typeVersion and the parameter names errorType and errorMessage. Atlas: the Stop and Error node forces a failure, and a failed execution starts the error workflow. The message must never hold the document or the id."
+      "notes": "UNVERIFIED: that this node still runs when it comes after 'Answer caller: refused' (in the run it came straight after the guard). SEEN IN n8n 2.47.7: the node as written failed the execution with this message, and the error workflow then ran. The message must never hold the document or the id."
+    },
+    {
+      "name": "Answer caller: taken",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -200
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode), and that n8n runs this branch BEFORE the long branch that starts at 'Hash business id' (it is placed above that branch for this reason). It was NOT part of the run in n8n 2.47.7. Purpose: with the webhook node's response mode 'responseNode' the caller waits for an answer node; without this node the caller would wait until the whole workflow ends, which can be many minutes when Hadavin is busy. The 202 answered here means only: n8n took the event and will try to send it. It does NOT mean that Hadavin accepted it. Nothing is connected after this node."
     },
     {
       "name": "Hash business id",
@@ -72,12 +105,12 @@
         "dataPropertyName": "key",
         "encoding": "hex"
       },
-      "notes": "UNVERIFIED: every parameter of this node (the atlas does not cover the Crypto node) and whether it keeps the other fields of the item. key = SHA-256 hex of a STABLE business id (a mail Message-ID, or record id plus event name), never the execution id. The hash is sent, not the raw id, for two reasons: a raw id such as a Message-ID holds characters the key rule refuses (allowed: A-Z a-z 0-9 . _ : - and 1 to 128 long), and the key is stored where portal users can read it, so it must not be personal data. $json.body.record_id is a placeholder for the client's field. The guard node before this one is what makes String() safe here."
+      "notes": "SEEN IN n8n 2.47.7: this node as written. It added the field key (64 hex characters) and kept the other fields of the item. key = SHA-256 hex of a STABLE business id (a mail Message-ID, or record id plus event name), never the execution id. The hash is sent, not the raw id, for two reasons: a raw id such as a Message-ID holds characters the key rule refuses (allowed: A-Z a-z 0-9 . _ : - and 1 to 128 long), and the key is stored where portal users can read it, so it must not be personal data. $json.body.record_id is a placeholder for the client's field. The guard node before this one is what makes String() safe here: never connect the trigger straight to this node."
     },
     {
       "name": "Build request",
       "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
+      "typeVersion": 3.4,
       "position": [
         660,
         0
@@ -99,12 +132,12 @@
         },
         "includeOtherFields": false
       },
-      "notes": "UNVERIFIED: typeVersion and the whole 'assignments' shape (the atlas does not describe the Set node), and that $json.key and $json.body.text are both still on the item here. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends that were answered 503 so far."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends that were answered 503 so far."
     },
     {
       "name": "Stamp time",
       "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
+      "typeVersion": 3.4,
       "position": [
         880,
         0
@@ -121,12 +154,12 @@
         },
         "includeOtherFields": true
       },
-      "notes": "UNVERIFIED: typeVersion, the 'assignments' shape, and that includeOtherFields true keeps body and round on the item. ts = the time NOW in whole Unix seconds, as text. This node is the entry of the loop: the first send and every later round pass through it, so each send gets a new ts and, in the next node, a new signature over the SAME body."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held body, round and a new ts in every round. Keep typeVersion 3.4 (with 3 no ts is added). ts = the time NOW in whole Unix seconds, as text. This node is the entry of the loop: the first send and every later round pass through it, so each send gets a new ts and, in the next node, a new signature over the SAME body."
     },
     {
-      "name": "Sign (option A, Crypto node)",
+      "name": "Sign",
       "type": "n8n-nodes-base.crypto",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [
         1100,
         0
@@ -136,26 +169,15 @@
         "type": "SHA256",
         "value": "={{ 'v0:' + $json.ts + ':' + $json.body }}",
         "dataPropertyName": "hmac",
-        "secret": "={{ $env.HADAVIN_TRIGGER_SECRET }}",
         "encoding": "hex"
       },
-      "notes": "UNVERIFIED: every parameter of this node (the atlas does not cover the Crypto node), whether it keeps ts, body and round on the item, and whether $env is readable in an expression on your n8n (it may be blocked by default). The secret is NOT in this file: HADAVIN_TRIGGER_SECRET is a placeholder reference to an environment variable of the n8n server. If you type the secret into this field instead, it is stored as plain text in the workflow JSON: do not export or commit such a file. Signed text is exactly: v0:<ts>:<body>."
-    },
-    {
-      "name": "Sign (option B, Code node)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1100,
-        200
-      ],
-      "disabled": true,
-      "parameters": {
-        "mode": "runOnceForEachItem",
-        "language": "javaScript",
-        "jsCode": "const crypto = require('crypto');\nconst secret = $env.HADAVIN_TRIGGER_SECRET; // placeholder reference, never a literal\nconst base = 'v0:' + $json.ts + ':' + $json.body;\n$json.hmac = crypto.createHmac('sha256', secret).update(base, 'utf8').digest('hex');\nreturn $json;"
+      "credentials": {
+        "crypto": {
+          "id": "REPLACE-WITH-YOUR-CREDENTIAL-ID",
+          "name": "hadavin-trigger-signing"
+        }
       },
-      "notes": "UNVERIFIED: typeVersion, the parameter names mode, language, jsCode, the return shape (a per-item Code node may have to return an object with a json field instead of $json itself), and whether a Code node can read $env or a credential (the atlas says credential access is not mentioned). Atlas: n8n Cloud provides the crypto module; on self-hosted it may have to be allowed. Disabled and not connected: use it INSTEAD of option A, not together with it. If you use it, connect it exactly where option A is: after 'Stamp time' and before 'Send to Hadavin'."
+      "notes": "UNVERIFIED: this node INSIDE this chain, and that typeVersion 2 keeps ts, body and round on the item (the typeVersion 1 node did); and what the import does with the placeholder credential id below. SEEN IN n8n 2.47.7, in a small test workflow on default settings: a Crypto node of typeVersion 2 with these five parameters and a credential of type 'crypto' gave the same HMAC hex as Python for plain, non-ASCII and JSON-escaped bodies, and the workflow export held only the credential's id and name. The signing value is NOT in this file and this node has no field for it: it lives in an n8n credential of type 'crypto' (see the README for how to create it). The id and name under 'credentials' are placeholders: choose your credential in this node after the import, or write its id and name here before the import. Signed text is exactly: v0:<ts>:<body>."
     },
     {
       "name": "Send to Hadavin",
@@ -191,7 +213,7 @@
           "timeout": 30000
         }
       },
-      "notes": "UNVERIFIED: typeVersion; the names retryOnFail and onError and the value continueErrorOutput; that the second output carries the failed item; the raw-body fields contentType, rawContentType, body; the header list shape; the unit and default of options.timeout; that the body leaves n8n byte-identical to the signed string; and that n8n sends a Content-Length header (a chunked request without one is answered 400). Atlas: the node succeeds only on a 2xx answer unless Never Error is on, so keep Never Error OFF; a node's On Error setting can be stop, continue, or continue with error output. Retry On Fail is OFF on purpose: its retries would reuse the same ts and signature, which stop being valid 300 seconds after ts. A failed send leaves through the second output to 'Busy and rounds left?'. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. UNVERIFIED: the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); no answer at all (refused connection, timeout); the real Hadavin endpoint. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. Keep Never Error off. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
     },
     {
       "name": "Busy and rounds left?",
@@ -206,7 +228,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ String($json.error?.httpCode ?? $json.error?.status ?? '') === '503' && $('Stamp time').last().json.round < 30 }}",
+              "leftValue": "={{ String($json.error?.status ?? '') === '503' && $('Stamp time').last().json.round < 30 }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -217,12 +239,12 @@
           ]
         }
       },
-      "notes": "UNVERIFIED: typeVersion, the 'conditions' shape, where the failed item holds the HTTP status (error.httpCode and error.status are guesses), and that $('Stamp time').last() gives the item of the latest round inside a loop. True only for an answer 503 (busy, nothing accepted) while fewer than 30 rounds were used. Everything else (401, 409, 400, 413, no answer at all, or 30 rounds used up) goes to the false branch and stops the execution, so the error workflow tells a person. If a guessed field name is wrong, the condition is false and the execution stops: the mistake shows up as an error, never as a silent loop. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README)."
+      "notes": "UNVERIFIED: this exact expression (the run used a longer one that looked in two places for the status and found it in error.status; the other place does not exist and was taken out), and the number 30 (the run used 3 rounds). SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. True only for an answer 503 (busy, nothing accepted) while fewer than 30 rounds were used. Everything else goes to the false branch and stops the execution, so the error workflow tells a person. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README)."
     },
     {
       "name": "Next round",
       "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
+      "typeVersion": 3.4,
       "position": [
         1540,
         200
@@ -244,7 +266,7 @@
         },
         "includeOtherFields": false
       },
-      "notes": "UNVERIFIED: typeVersion, the 'assignments' shape, and the two references to earlier nodes ($('Build request').first() and $('Stamp time').last()) inside a loop. Takes the SAME body as the first send (never a rebuilt one, so the key and the document cannot change between rounds) and adds one to round. The old ts and signature are dropped here; 'Stamp time' and the sign node make new ones."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: in every round the receiver got the same body with a new timestamp and a new signature, and the loop ended after the set number of rounds. Keep typeVersion 3.4. Takes the SAME body as the first send (never a rebuilt one, so the key and the document cannot change between rounds) and adds one to round. The old ts and signature are dropped here; 'Stamp time' and the sign node make new ones."
     },
     {
       "name": "Wait before next round",
@@ -259,7 +281,7 @@
         "amount": 60,
         "unit": "seconds"
       },
-      "notes": "UNVERIFIED: typeVersion, the parameter names resume, amount, unit, and that the item passes through unchanged. Atlas: the Wait node can resume after an interval; waits under 65 seconds stay in process, longer ones are saved to the database. 60 seconds is a placeholder. After the wait the flow goes back to 'Stamp time', so the request is signed again with a new timestamp."
+      "notes": "UNVERIFIED: a wait of 60 seconds (the run used 2 seconds, and the requests came about 2.0 to 2.1 seconds apart), and any wait above 65 seconds, which n8n is said to handle in another way (saved to its database). SEEN IN n8n 2.47.7: typeVersion, the parameter names resume, amount and unit; the item passed through after the wait; the connection back to 'Stamp time' ran as a loop. 60 seconds is a placeholder. After the wait the flow goes back to 'Stamp time', so the request is signed again with a new timestamp."
     },
     {
       "name": "Stop: refused or gave up",
@@ -273,7 +295,7 @@
         "errorType": "errorMessage",
         "errorMessage": "Hadavin trigger: the request was refused, got no answer, or was answered busy (503) in every round. The event was NOT accepted. Send it again by hand with the SAME key."
       },
-      "notes": "UNVERIFIED: the node type name, typeVersion and the parameter names errorType and errorMessage. Atlas: the Stop and Error node forces a failure, and a failed execution starts the error workflow. The message must never hold the body, a header value or the secret."
+      "notes": "SEEN IN n8n 2.47.7: this node as written failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. The message must never hold the body, a header value or the signing value."
     },
     {
       "name": "Check state (optional)",
@@ -298,7 +320,7 @@
           ]
         }
       },
-      "notes": "UNVERIFIED: typeVersion and the whole 'conditions' shape. Optional. The answer of a 202 or 200 holds only run_id and state, never a reason. NEEDS_PERSON means the run stopped and waits for a person; see the README for what to do then. A 202 state is still in progress, so this branch is useful mainly on a repeat (200)."
+      "notes": "UNVERIFIED: the true branch (an answer whose state is NEEDS_PERSON was never sent by the stub). SEEN IN n8n 2.47.7: after an answer 202 the item held run_id and state, and this node put it on output 1 (false). Optional. The answer of a 202 or 200 holds only run_id and state, never a reason. NEEDS_PERSON means the run stopped and waits for a person; see the README for what to do then. A 202 state is still in progress, so this branch is useful mainly on a repeat (200)."
     }
   ],
   "connections": {
@@ -320,8 +342,24 @@
             "node": "Hash business id",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Answer caller: taken",
+            "type": "main",
+            "index": 0
           }
         ],
+        [
+          {
+            "node": "Answer caller: refused",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer caller: refused": {
+      "main": [
         [
           {
             "node": "Stop: id or text missing",
@@ -357,14 +395,14 @@
       "main": [
         [
           {
-            "node": "Sign (option A, Crypto node)",
+            "node": "Sign",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Sign (option A, Crypto node)": {
+    "Sign": {
       "main": [
         [
           {
@@ -438,5 +476,5 @@
     "executionOrder": "v1",
     "errorWorkflow": "REPLACE-WITH-THE-ID-OF-hadavin-trigger-error"
   },
-  "notes": "UNVERIFIED: the top-level export shape (name, active, nodes, connections, settings), the settings keys, and that a connection may lead back to an earlier node (the loop from 'Wait before next round' to 'Stamp time'); the atlas does not document the workflow JSON format. Outline, not run in n8n."
+  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run and has not been imported into any n8n since. SEEN IN n8n 2.47.7, on the version before the changes: the import by command line accepted the top-level shape (name, active, nodes, connections, settings) and the settings keys, changed no node, parameter or connection, added an id to every node, and dropped this top-level notes key; a connection back to an earlier node ran as a loop; settings.errorWorkflow set to the id of the imported error workflow started that workflow. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
 }
