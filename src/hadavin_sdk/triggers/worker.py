@@ -227,8 +227,12 @@ class Runner:
         self._closed = False
         self._ping_lock = threading.Lock()  # guards _ping
         self._ping: _Ping | None = None  # the one ping thread that may be pending
-        self.owned_app: Any = None  # set by `_recover`: the App whose connection a late close must also close
-        self._ping_error: BaseException | None = None  # why the last answered ping failed (for _recover)
+        self.owned_app: Any = (
+            None  # set by `_recover`: the App whose connection a late close must also close
+        )
+        self._ping_error: BaseException | None = (
+            None  # why the last answered ping failed (for _recover)
+        )
 
     @property
     def ack_wait_s(self) -> float:

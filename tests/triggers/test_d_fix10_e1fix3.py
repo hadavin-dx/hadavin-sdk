@@ -28,7 +28,7 @@ from tests.triggers.test_d_fix6_e1 import (  # noqa: F401 - the autouse fixture 
     rt,
 )
 from tests.triggers.test_d_fix8_e1fix import _http
-from tests.triggers.test_d_fix9_e1fix2 import ARGS, Closing
+from tests.triggers.test_d_fix9_e1fix2 import Closing
 
 
 class Refused(RuntimeError):
@@ -95,18 +95,19 @@ def test_fix3_a_refusing_store_at_every_ping_stops_the_worker_with_exit_3(
     assert codes == [worker.EXIT_FAILED] and len(builds) == worker.DEGRADED_FATAL_AFTER == 5
     assert store.closes == 5  # every failed try closed the connection it opened
     assert "private text" not in caplog.text
-    once = [r.getMessage() for r in caplog.records if "re-check failed (Refused)" in r.getMessage()]
-    assert len(once) == 1  # the class is named once per class, at WARNING
-    assert [r for r in caplog.records if "re-check failed (Refused)" in r.getMessage()][0].levelno == (
-        logging.WARNING
-    )
+    once = [r for r in caplog.records if "re-check failed (Refused)" in r.getMessage()]
+    assert (
+        len(once) == 1 and once[0].levelno == logging.WARNING
+    )  # the class is named once, at WARNING
     assert len([r for r in caplog.records if "not a store outage" in r.getMessage()]) == 1
 
 
 def test_fix3_a_store_refusing_the_connection_never_stops_the_worker_and_health_stays_503(
     monkeypatch, tmp_path
 ):
-    codes, builds, made, thread, _store = _degraded_main(monkeypatch, tmp_path, ConnectionRefusedError)
+    codes, builds, made, thread, _store = _degraded_main(
+        monkeypatch, tmp_path, ConnectionRefusedError
+    )
     try:
         deadline = time.monotonic() + 15
         while len(builds) < 20 and time.monotonic() < deadline:
@@ -137,7 +138,11 @@ def test_fix3_health_keeps_its_shape_for_a_refusal_and_keeps_the_error_class(tmp
 # --- E1b-2: an event that cannot be built leaves no stuck flag ----------------------------------------
 
 
-def test_fix3_a_conflict_event_that_cannot_be_built_does_not_stick_the_flag(rt, monkeypatch, caplog):  # noqa: F811
+def test_fix3_a_conflict_event_that_cannot_be_built_does_not_stick_the_flag(
+    rt,  # noqa: F811
+    monkeypatch,
+    caplog,
+):
     first, other = _req(DOCUMENT), _req(OTHER_DOCUMENT)
     real = worker._conflict_event
     calls: list[int] = []
@@ -149,8 +154,9 @@ def test_fix3_a_conflict_event_that_cannot_be_built_does_not_stick_the_flag(rt, 
         return real(found, req)
 
     monkeypatch.setattr(worker, "_conflict_event", flaky)
-    with Runner(rt, rt.store, audit=rt.audit) as runner, caplog.at_level(
-        "WARNING", logger="hadavin_sdk.triggers"
+    with (
+        Runner(rt, rt.store, audit=rt.audit) as runner,
+        caplog.at_level("WARNING", logger="hadavin_sdk.triggers"),
     ):
         assert runner.start(first)[0] in (200, 202)
         _settle(rt.store, first.run_id)

@@ -711,13 +711,15 @@ def _pg_tick(dsn: str, tmp_path: Path, path: Path_) -> int:
         conn.close()
 
 
-def _settled_to(dsn: str, run_id: str, state: str) -> tuple:
+def _settled_to(dsn: str, run_id: str, state: str, request: str | None) -> tuple:
+    """Waits for the row state AND the path's final approval request: the loop moves the row to WAITING before
+    it saves the request, and a tick in that gap (the test clock is an hour ahead) reads an orphan wait."""
     deadline = time.monotonic() + FIRE_WAIT_S
     while True:
         mine = [row for row in _rows(dsn) if row[0] == run_id]
-        if mine and mine[0][4] == state:
+        if mine and mine[0][4] == state and req_state(_pg_requests(dsn)) == request:
             return mine[0]
-        assert time.monotonic() < deadline, f"run did not reach {state}: {mine}"
+        assert time.monotonic() < deadline, f"run did not reach {state}/{request}: {mine}"
         time.sleep(0.02)
 
 
@@ -826,7 +828,7 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
         if row is None:  # no row: accepted as new, runs the whole path once
             assert status_a in OK, (status_a, data_a)
             assert json.loads(data_a)["run_id"] == run_id
-            _settled_to(dsn, run_id, path.final)
+            _settled_to(dsn, run_id, path.final, path.rows[-1][5])
         else:  # a row: answered from it, nothing runs
             assert status_a == (202 if row in IN_PROGRESS else 200), (status_a, data_a)
             assert json.loads(data_a) == {"run_id": run_id, "state": row}
@@ -877,13 +879,15 @@ def _memory_requests(store):
     return store.list_approvals(ALL_STATUSES)
 
 
-def _memory_wait(store, run_id: str, state: str) -> None:
+def _memory_wait(store, run_id: str, state: str, request: str | None) -> None:
+    """Waits for the row state AND the path's final approval request: the loop moves the row to WAITING before
+    it saves the request, and a tick in that gap (the test clock is an hour ahead) reads an orphan wait."""
     deadline = time.monotonic() + FIRE_WAIT_S
     while True:
         found = [r for r in _memory_rows(store) if r[0] == run_id]
-        if found and found[0][4] == state:
+        if found and found[0][4] == state and req_state(_memory_requests(store)) == request:
             return
-        assert time.monotonic() < deadline, f"run did not reach {state}: {found}"
+        assert time.monotonic() < deadline, f"run did not reach {state}/{request}: {found}"
         time.sleep(0.01)
 
 
@@ -946,7 +950,7 @@ def test_memory_raise_at_point(point: Point, tmp_path):
         status_a, data_a = _wsgi_post(wsgi, body)  # (a) before any tick
         if row is None:
             assert status_a in OK, (status_a, data_a)
-            _memory_wait(store, run_id, path.final)
+            _memory_wait(store, run_id, path.final, path.rows[-1][5])
         else:
             assert status_a == (202 if row in IN_PROGRESS else 200), (status_a, data_a)
             assert json.loads(data_a) == {"run_id": run_id, "state": row}
