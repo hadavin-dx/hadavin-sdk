@@ -76,7 +76,9 @@ class OpenAICompatLLM(NetworkLLM):
     label = "openai_compat"
     # A router or proxy behind base_url can answer 400, 413 or 422 after the upstream consumed tokens.
     refused_statuses = frozenset({401, 403, 404})
-    throttled_unbilled = False  # a router's 429 can follow upstream work
+    throttled_unbilled = (
+        False  # explicit (also the default): a router's 429 can follow upstream work
+    )
 
     def __init__(
         self,

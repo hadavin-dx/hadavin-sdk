@@ -123,6 +123,7 @@ def retryable(exc: BaseException) -> bool | None:
 
 class BedrockLLM(NetworkLLM):
     label = "bedrock"
+    throttled_unbilled = True  # Bedrock throttles before any model work (stated, not verified)
     retryable = staticmethod(retryable)
     detail = staticmethod(detail)
     http_status = staticmethod(http_status)
