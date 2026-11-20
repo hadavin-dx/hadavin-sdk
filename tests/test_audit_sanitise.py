@@ -80,3 +80,17 @@ def test_mutant_raw_helper_is_killed(tmp_path, monkeypatch):
     monkeypatch.setattr(agent_loop, "audit_code", lambda text: text)
     with pytest.raises(AssertionError):
         test_executor_ref_and_code_with_spaces_and_newlines_are_audited(tmp_path)
+
+
+@pytest.mark.parametrize("text", ["a²b", "½", "①", "é ü", "x\n", "٣"])
+def test_audit_code_output_is_always_accepted_by_audit_event(text):
+    out = audit_code(text)
+    AuditEvent(run_id="r", domain="d", operation="o", principal=out, source="s", result=out)
+    assert out.isascii()
+
+
+def test_audit_ref_refuses_a_trailing_newline_as_a_token():
+    from hadavin_sdk.models import audit_ref
+
+    assert audit_ref("abc\n").startswith("sha256:")
+    assert audit_ref("abc") == "abc"
