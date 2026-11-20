@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:36:38Z
+UPDATED_UTC: 2026-11-20T07:36:41Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,21 +6,22 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 40
 ITEMS_OPEN: 24
 PERCENT: 73
-AGENTS_RUNNING: 5
-CAPACITY: load 5.9 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
+AGENTS_RUNNING: 6
+CAPACITY: load 5.9 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 6, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 71M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
-FAILED: tests/test_gate_mutants_picked_up.py fails on purpose (24 mutants out of sync, re-sync by the gate fix agent); producers registry (core-b patch)
+FAILED: tests/test_gate_mutants_picked_up.py fails on purpose until the gate fix agent re-syncs 24 mutants
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:36:14+00:00
+PUSHED_UTC: 2026-11-20T07:36:38+00:00
 
 (13:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| aa4b815a | drafter | claude-opus-5-5 | rewrites the owner-facing security wording as v3 (the last review round) from both round 2 reviews and the newest facts (merge d95a727) | 07:44 | 08:20 | 2 | running | 3 of 3 after this | 0 | EGM: draft/resolve on opus |
 | a7f772ca | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-comprehension): fresh naive reader | 07:42 | 07:55 | 100 | done | 2 of 3 | 0 | finished: naive reader on v2: 4 Blockers, many Majors; real contradictions found (K2 example, decision 5 cites the wrong gaps, banner vs item 3, "never" vs K26) |
 | a7208aaf | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-style): count mismatches, status words, overclaims | 07:42 | 07:55 | 100 | done | 2 of 3 | 0 | finished: style on v2: 4 Blockers, 18 Majors, 10 Nits; the status totals (62) recount correctly |
 | (new) g7f2 | builder | claude-sonnet-5-5 | G7 fix round 2 (lead ORDER 020 MJ-B): capped fixed-point loop in the redactor with RedactionError past the cap, tail leak, deadline inside pass 2, a property generator with a reference fixed point, duplicate TEXTNORM_PINNED_PYTHON | 07:33 | 08:15 | 2 | running | 2 of 3 (G7 result review) | 0 | starts the minute the pick landed; lane: redact.py + defaults.py comments + G7 tests |
@@ -107,6 +108,7 @@ PUSHED_UTC: 2026-11-20T07:36:14+00:00
 | tests/test_grants_negative_roles.py + 0007 file | core-b 576f292 (worktree) and main, PostgreSQL 16.15 | 3 | 106 passed (core-b, DSN); 54 passed 52 skipped (core-b, no DSN); main: 37 passed 2 xfailed (DSN) | none | done | PostgreSQL 17 NOT RUN |
 | undo/injection/app + textnorm + tools users (G1 fix batch) | cloud/core-c working tree (committed after) | 1 | 7707 passed / 0 failed | none | done | perf 19 passed; Python 3.12 NOT RUN |
 | 135 files (pick worktree, before merge) | wip-pick cfda4d0 | 1 | 12392 passed / 2 failed, 108 skipped, 7 xfailed | tests/test_redact_fold_budget.py::test_dm_2_257 (fixed by the last commit); producers registry | done | perf 64 passed; gate mutants 66 of 66; ruff format --check fails on 2 files already unformatted on the base (runmap.py:123 nfkc, tests/test_undo_composes.py:21) |
+| tests/test_k5_producers.py | cloud/core-c working tree after the producers commit | 1 | 25 passed / 0 failed | none | done | the lead's F-R3-C red is closed: guard/model_gate.py registered in guard/producers.py |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -182,4 +184,4 @@ PUSHED_UTC: 2026-11-20T07:36:14+00:00
 | (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-SESSION MODEL PROOF (REPORT.md top and here): configured and last served model are claude-sonnet-5-5. ORDER 020 read: MJ-A/D/minors with the gate fix agent; MJ-B (capped fixed-point loop in the redactor) queued behind the pick; MJ-C/m-4/mutants pickup with a test-writer. CONTESTED in DECISIONS.md: m-2 (refuse an empty map): an empty live map is legitimate at a run start; we mark `map_enforced_empty` instead. 8 agents running; load measured 0.2-1 of 4 cores, memory 0 of 15 GB (idle).
+Producers registry red (F-R3-C) CLOSED by one small commit in guard/producers.py (core-b file; a revert is one commit; DECISIONS 07:40). Wording v2 review round 2 done, v3 (last round) running on opus. Integration merged d95a727. G7 round 2 (capped loop) and gate round 2 fixes running. P1c plan v2 drafting on opus.
