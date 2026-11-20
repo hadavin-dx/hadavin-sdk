@@ -992,7 +992,8 @@ def error_reason(
     MAX_REDACT_CHARS (so the scrub's work is bounded), scrubbed of the handed-out secrets, pattern-redacted, and only
     then cut to 160/200 characters. The first bound can split a secret that straddles it, leaving its front just before
     the TRUNCATED note; that front lies hundreds of KB beyond the final 160/200-character cut, so it reaches the model
-    only if redaction shrinks the text by that much first."""
+    only if redaction shrinks the text by that much first. That bound (`_cut`) applies only when handed-out secrets are
+    present; without secrets the bound happens inside `redact_bounded`."""
     if isinstance(exc, OSError | urllib.error.URLError) and not isinstance(exc, ToolRefused):
         return f"{type(exc).__name__} (network error)"
     refused = isinstance(exc, ToolRefused)
