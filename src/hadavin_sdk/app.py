@@ -34,6 +34,7 @@ from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
+from hadavin_sdk.secret_name import canonical_secret_name
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
 from hadavin_sdk.stages import is_live
@@ -189,6 +190,17 @@ def build(
             {getattr(b.store, "release_credential_ref", None)} - {None},
         ),
     )
+    # The release login is read only by the release-expired command, never by this process: no tool, source,
+    # executor or restored-hash secret may carry its name (or a name that folds to it).
+    for ref_field in ("release_credential_ref", "reset_credential_ref"):
+        ref = getattr(b.store, ref_field, None)
+        if ref and canonical_secret_name(ref) in {
+            canonical_secret_name(n) for n in extra_secret_names | executor_names
+        }:
+            raise ConfigError(
+                f"backends.store.{ref_field} names a secret that a tool, source, executor or the restored-hash "
+                "key also reads: the runtime must never hold that login"
+            )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
     # configured sources (Config.sources) are probed here, so a deployed cluster is never read unprobed.

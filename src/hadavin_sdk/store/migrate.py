@@ -362,6 +362,14 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
     if db.execute("SELECT to_regprocedure(%s)", (RELEASE_FUNCTION,)).fetchone()[0] is None:
         return
     fn = sql.SQL(RELEASE_FUNCTION)
+    # SECURITY DEFINER: the search path is pinned with the catalog first and the temp schema last, so neither a
+    # temp table of the caller nor a writable schema can stand in for a money table or a catalog function.
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    db.execute(
+        sql.SQL("ALTER FUNCTION {} SET search_path = pg_catalog, {}, pg_temp").format(
+            fn, sql.Identifier(schema)
+        )
+    )
     for role in others:
         db.execute(sql.SQL("REVOKE ALL ON FUNCTION {} FROM {}").format(fn, sql.Identifier(role)))
     if release_role:

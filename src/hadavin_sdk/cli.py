@@ -55,6 +55,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
+from hadavin_sdk.secret_name import canonical_secret_name
 from hadavin_sdk.stages import is_live
 from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
@@ -235,7 +236,11 @@ def _main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        if reset_ref and reset_ref == b.store.dsn_secret_name:
+        if (
+            reset_ref
+            and b.store.dsn_secret_name
+            and canonical_secret_name(reset_ref) == canonical_secret_name(b.store.dsn_secret_name)
+        ):
             # Before any connection: the reset must not run on the runtime's own login.
             print(
                 "refused: backends.store.reset_credential_ref names the same secret as "
@@ -495,11 +500,15 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
         )
         return 2
     others = {
-        getattr(b.store, "dsn_secret_name", None),
-        getattr(b.store, "reset_credential_ref", None),
-        getattr(b.store, "purge_dsn_secret_name", None),
-    } - {None}
-    if ref in others:
+        canonical_secret_name(n)
+        for n in (
+            getattr(b.store, "dsn_secret_name", None),
+            getattr(b.store, "reset_credential_ref", None),
+            getattr(b.store, "purge_dsn_secret_name", None),
+        )
+        if n
+    }
+    if canonical_secret_name(ref) in others:
         print(
             "refused: backends.store.release_credential_ref names the same secret as the runtime, reset or purge "
             "login. Point it at the secret that holds the release role's own DSN. Nothing was changed.",
@@ -543,8 +552,16 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
         return 2
     print(
         f"released {done.reservations} expired hold(s) of {done.agent_id} on {done.day}: {done.released_usd} USD "
+        f"requested, {done.applied_usd} USD applied to the day counter "
         f"(day counter now {done.day_usd}, month counter now {done.month_usd}) (by {by})"
     )
+    if not done.outcome_audited:
+        print(
+            "released, but the outcome could NOT be audited: the money counters changed and the audit holds only "
+            f"the intent row {done.intent_id}, which has no outcome. Record it by hand (see the runbook).",
+            file=sys.stderr,
+        )
+        return 5
     return 0
 
 

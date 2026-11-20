@@ -10,6 +10,7 @@ import argparse
 import math
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -197,3 +198,70 @@ def test_the_agreed_settle_signature_is_unchanged():
             "reservation_id",
             "actual_usd",
         ]
+
+
+# --- review 3 minors -------------------------------------------------------------------------------------------
+
+
+def test_the_release_ref_is_compared_in_canonical_form(monkeypatch, capsys):
+    monkeypatch.setattr(
+        cli, "make", lambda *a, **k: (_ for _ in ()).throw(AssertionError("connected"))
+    )
+    assert cli.release_expired_cmd(_cfg(release_credential_ref="PG.DSN"), "a", DAY, "u") == 2
+    assert "same secret" in capsys.readouterr().err
+    folded = _cfg(release_credential_ref="R-X", reset_credential_ref="r_x")
+    assert cli.release_expired_cmd(folded, "a", DAY, "u") == 2
+
+
+def test_a_tool_secret_that_folds_to_the_release_ref_stops_the_start():
+    from hadavin_sdk import app as app_mod
+
+    src = Path(app_mod.__file__).read_text()
+    assert "release_credential_ref" in src and "canonical_secret_name" in src
+
+
+def test_the_outcome_failing_after_commit_exits_5_and_names_the_intent(monkeypatch, capsys):
+    from hadavin_sdk.store.protocol import SpendRelease
+
+    done = SpendRelease(
+        agent_id="a",
+        day=DAY,
+        reservations=1,
+        released_usd=Decimal(1),
+        day_usd=Decimal(0),
+        month_usd=Decimal(0),
+        applied_usd=Decimal(1),
+        intent_id="evt-dangling-1",
+        outcome_audited=False,
+    )
+    store = SimpleNamespace(release_expired_spend=lambda *a: done)
+    monkeypatch.setattr(cli.platform_secrets, "check", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "make", lambda kind, *a, **k: store if kind == "store" else object())
+    assert cli.release_expired_cmd(_cfg(release_credential_ref="rel"), "a", DAY, "u") == 5
+    assert "evt-dangling-1" in capsys.readouterr().err
+
+
+def test_limits_settle_works_with_a_store_that_has_the_old_signature():
+    calls = []
+
+    class Old:
+        def settle_spend(self, reservation_id, actual_usd):
+            calls.append((reservation_id, actual_usd))
+            return (
+                SimpleNamespace(
+                    settled_usd=actual_usd, reserved_usd=actual_usd, run_id=None, agent_id="a"
+                ),
+                True,
+            )
+
+    limits = Limits.__new__(Limits)
+    limits.store = Old()
+    assert limits.settle("r1", Decimal(1)) == 0
+    assert calls == [("r1", Decimal(1))]
+
+
+def test_a_nan_stuck_age_after_the_first_agent_is_clamped(monkeypatch):
+    ages = iter([5.0, float("nan")])
+    app = SimpleNamespace(registry=SimpleNamespace(agents={"a": 1, "b": 2}))
+    monkeypatch.setattr(tick, "stuck_after_s", lambda _app, _a: next(ages))
+    assert tick.reservation_expire_s(app) == MAX_EXPIRY_AGE_S

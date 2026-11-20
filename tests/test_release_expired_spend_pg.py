@@ -220,7 +220,7 @@ def test_the_intent_row_is_written_before_the_change_and_the_outcome_after(w):
     rows = _release_rows(w)
     assert [r["principal"] for _, r in rows] == ["user:op", "user:op"]
     assert rows[0][1]["object_ref"] == f"{AGENT}:{DAY.isoformat()}"
-    assert rows[1][1]["result"] == "released rows=2 usd=3.00"
+    assert rows[1][1]["result"] == "released rows=2 requested_usd=3.00 applied_usd=3.00"
     assert w.count("audit_checkpoints") == 0  # the release login signs nothing
 
 
@@ -277,11 +277,14 @@ def test_the_release_login_holds_the_audit_append_and_nothing_on_any_other_table
     assert w.run("SELECT has_function_privilege(%s, %s, 'EXECUTE')", (w.release, FN)) == [(True,)]
 
 
-@pytest.mark.parametrize("table", sorted(
+@pytest.mark.parametrize(
+    "table",
+    sorted(
         n
         for n, g in GRANTS.items()
         if g.kind != "sequence" and n not in ("audit_entries", "audit_checkpoints")
-    ))
+    ),
+)
 def test_the_release_login_is_denied_on_every_other_relation(w, table):
     assert w.exists(table), f"{table} does not exist: a refusal would prove nothing"
     rel = sql.Identifier(table)
