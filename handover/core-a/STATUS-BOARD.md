@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:29:06Z
+UPDATED_UTC: 2026-11-20T09:29:41Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 75
 ITEMS_OPEN: 20
 PERCENT: 83
-AGENTS_RUNNING: 2
-CAPACITY: load 0.37 of 4 cores (1-minute average), mem 1.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 4
+CAPACITY: load 0.30 of 4 cores (1-minute average), mem 1.0/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 569M /home/user/hadavin-sdk; 510M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T09:28:12Z (the push before this board)
+PUSHED_UTC: 2026-11-20T09:29:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -101,19 +101,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | mut-e5e11 | builder (mutants) | sonnet | mutants G30a/G30b/G31 for the E5 and E11 guards, one full mutant run (run 16) | 09:24 | 15 min | 5 | running | n/a | 0 | never idle |
+| e1 | builder | sonnet | E1a: trigger.conflict audit event on a signed 409 (sender, key, both hashes, never payload) + per-sender rate cap; E1b: GET /health 200/503 + store-failure counter, start with the store down instead of exit 4; tests, ticket invariants 7/10, request 005 for core-b | 09:29 | 30 min | 5 | running | n/a | 0 | lead verdicts E1a/E1b 09:29 |
+| E-rev5 | fresh reviewer (design) | sonnet | step E fresh result review round 5 (lead: no cap for shipped test helper code, repeat until a fresh pass finds no Blocker/Major) | 09:29 | 15 min | 5 | running | 5, no cap (lead ruling) | 0 | lead verdict E5 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 553 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 30s ago | running | matched by name in ps |
-| 4580 | uv run python tests/endpoint_mutants.py G31 | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 4585 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 11677s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 11677s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 11677s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 11677s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 11677s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 11677s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 11711s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 11711s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 11711s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 11711s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 11711s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 11711s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -175,6 +174,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- Verdicts 09:29 received: E1(a) trigger.conflict audit + per-sender rate cap, E1(b) /health 503 + counter instead of exit 4: agent e1 builds both (tests, ticket invariants 7/10, request 005 for the config field and, if needed, the audit kind: core-b's files); E5: round 4 (extra pass, done earlier) found 0 Blocker/Major and 7 nits (fixed in d-fix5); E-rev5 is the next fresh round now, repeated until a fresh pass finds none, evidence run after each. Your template for the E4 real-n8n run: PUSHED already (n8n/ at head of cloud/core-a, 91 template tests pass; waits 70 s; see n8n/README-trigger.md 'Before you start'). Deadline 09:55: D and E tested commits with the full batch result: planned.
 - 09:24 tested commits pushed for the three items and the drift work (TESTED-n8n-E-T4.md, commit message with counts). Failing test ids on my files now: none. Whole-suite FAILED ids (BATCH7): 10 strict-mode by design + test_no_vendor_brand_string_is_tracked (your BRIEF-PREAMBLE.md) + the dblink test (environment). Next: mutants for E5/E11, a last evidence run, final REPORT.md block.
 - BATCH7 (independent whole suite, after d-fix5, REQUIRE_PG=1, -n 3, PGHOST set): 12 failed, 12256 passed, 458 skipped, 75 xfailed in 291 s (evidence/BATCH7-suite.log). FAILED ids: (a) strict-mode by design, tree lacks core-b trigger config (pass on the combined tree): test_t5_main_start.py::test_1, test_2a, test_2b, test_2c, test_2d, test_2e, test_3; test_worker.py::test_main_without_a_triggers_block_exits_2; test_worker.py::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block. (b) tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked: still lists YOUR handover/BRIEF-PREAMBLE.md (and two of my files, fixed now): remove the vendor brand string from BRIEF-PREAMBLE.md. (c) tests/demo_askdata/test_validate_harm.py::...[dblink-connect]: environment: the dblink extension connects from INSIDE the server to the default socket /var/run/postgresql/.s.PGSQL.5432; my PostgreSQL listens on port 55433, client env vars cannot change that; it passes where PG is the default instance (your PG 17 box). The earlier failures C (k5 slice) and E (fuzz C1) are gone.
 - REQ-001..004 are ANSWERED by core-b (answer files 001-004 on origin/cloud/core-b f8af6fc02), my OPEN-ITEMS was stale on them; ticket D's last section lists what D builds on. Differences: senders is a dict (matches my code), reader App.trigger_secret (matches), host/port/allow_non_loopback are CLI options (matches), config default max_running 4 vs my worker default 1: YOUR decision (core-b recommends 1 and left 4). REQ-004: core-b's shared helper is agent_loop.py:171 on their branch; its answer file contradicts itself (the code propagates non-Unqualified errors); my worker.qualified_agents copy stays until their code merges here, then I delete it. REQ-003 C1: core-b chose the opposite of my recommendation (purge deletes expired rows): only my store contract tests are affected: I will re-check them on the next core-b head.
