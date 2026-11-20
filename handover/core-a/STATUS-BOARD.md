@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:36:34Z
+UPDATED_UTC: 2026-11-20T06:38:47Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
@@ -6,16 +6,16 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 46
 ITEMS_OPEN: 13
 PERCENT: 78
-AGENTS_RUNNING: 0
-CAPACITY: load 0.47 of 4 cores (1-minute average), mem 0.8/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 529M /home/user/hadavin-sdk; 342M /tmp/claude-0; 131M /root/.cache
+AGENTS_RUNNING: 6
+CAPACITY: load 1.11 of 4 cores (1-minute average), mem 1.4/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 530M /home/user/hadavin-sdk; 347M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block
-PUSHED_UTC: 2026-11-20T06:33:11Z (the push before this board)
-NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder
+PUSHED_UTC: 2026-11-20T06:36:38Z (the push before this board)
+NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/endpoint fixes, worker fixes + main start test, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for meter and G7. No new agent until the lead answers about the plugin files. PostgreSQL port 55433 runs (mine)
 
 ## QUEUE ITEMS
 | item | what | state | percent | evidence file | tries | reason |
@@ -107,16 +107,33 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | b4b-fuzz2 | builder (tests) | fable | writes tests/triggers/test_t5_fuzz_concurrent.py and runs it (at most 3 runs) | 06:29 | about 35 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
 | fix-srv | builder | fable | server.py, endpoint.py, crash.py: 4 fuzz findings (505, no-version request, underscore headers, two Content-Length) and review items N9 to N12, N15, N16 | 06:31 | about 35 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
 | fix-wrk | builder | fable | worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree | 06:31 | about 45 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
+| sn-srv | builder | sonnet | finish and verify server.py, endpoint.py, crash.py fixes (RESUME-NOTE 1) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-wrk | builder | sonnet | finish worker.py fixes, switch to core-b's reader, main start test (RESUME-NOTE 2) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-n8n | builder | sonnet | run and fix the n8n template tests and README numbers (RESUME-NOTE 3) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-matrix | builder and evidence runner | sonnet | crash matrix part 2 (RESUME-NOTE 4) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-fuzz | builder (tests) | sonnet | concurrent fuzz (RESUME-NOTE 5) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-findings | evidence runner | sonnet | findings files for the meter and G7 tests (RESUME-NOTE 6, 7) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1324s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 1324s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 1324s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 1324s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1324s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1324s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1458s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 1458s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 1458s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 1458s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1458s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1458s ago | running | matched by name in ps |
+| 17002 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 33s ago | running | matched by name in ps |
+| 17003 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 33s ago | running | matched by name in ps |
+| 17009 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 33s ago | running | matched by name in ps |
+| 17412 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 29s ago | running | matched by name in ps |
+| 17413 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no:cacheprovid | core-a session or its agent | 29s ago | running | matched by name in ps |
+| 18847 | postgres: rt_21c4e098a925 postgres 127.0.0.1(33978) idle | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 18848 | postgres: pu_935e7eeef959 postgres 127.0.0.1(33986) idle | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 18924 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 18928 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 18935 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 19332 | postgres: postgres postgres 127.0.0.1(35938) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -170,6 +187,7 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- MODEL SWITCH: I did NOT sed the egm plugin model lines (the instruction is in a session message only; ORDER 018 in ORDERS.md does not contain it; it changes my own configuration): the owner can say yes or do it. The grep still shows fable (REPORT.md top block). Instead every Agent call sets the model explicitly (sonnet, haiku, opus). 6 Sonnet agents were started at 06:38Z before your 'no new agents' message reached me; none is an EGM agent; I started nothing after it
 - DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop
 - TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since
 - FINDINGS-core-b-F-store.md: 2 findings (memory store leaks budget on a refused reserve; unbounded cap) and the note that core-b's own spend tests are not on its branch

@@ -1,5 +1,16 @@
 # REPORT from core-a (newest on top, UTC and IST)
 
+## MODEL SWITCH after the Fable limit, status at 06:38 UTC / 12:08 IST (ORDER 018 and the lead's later message)
+
+**What I did NOT do, and why (first):** I did NOT edit the egm plugin files in my container (the sed on the 'model:' lines). The instruction came only in a session message from the lead; ORDER 018 in ORDERS.md (the file I was told to follow) asks for the restart on normal models and says nothing about editing plugin files. Changing what my own plugin definitions run on is a change to my own configuration, so I do not do it on a peer's message alone: the owner can say yes here, or run the sed himself. The plugin files therefore STILL say fable:
+```
+$ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
+     72 model: claude-fable-5-2
+```
+**What protects against fable instead:** every Agent call I make sets the model explicitly (the tool documents that this wins over the agent definition's own model line): builders and EGM reviewers 'sonnet', lookups 'haiku', brainstorm/draft/resolve work 'opus'. Not proven by me: that an egm:* agent type really obeys the explicit model on this harness (I have not started one since the switch). The EGM skills run inside my own session, which is now claude-sonnet-5-5; I cannot move my session to opus.
+**Timing, said plainly:** at 06:38 UTC, before the lead's message 'no new agents until the setup is reverted and proven' reached me, I had already started 6 agents, all general-purpose with model 'sonnet' (finish server fixes, finish worker fixes, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for the meter and redaction tests). None is an EGM agent. I started nothing after that message. If the owner wants them stopped, say so.
+**State of the work:** RESUME-NOTE-2026-11-20.md has the stop point and next step per open item. The tree is half edited (section 0 of the note): the last tested state is about the 06:05 board commit.
+
 ## ORDER 013 report. 2026-11-20 06:09 UTC / 11:39 IST. Head at writing: 05b1b7a. STATE: WAITING-LEAD, 0 agents running
 
 **What failed, what is weak, what was not run (first):**

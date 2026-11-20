@@ -3,7 +3,7 @@
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
  "next": "the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block",
- "note": "PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder",
+ "note": "RESTART on normal models: 6 agents (all model sonnet, explicit): server/endpoint fixes, worker fixes + main start test, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for meter and G7. No new agent until the lead answers about the plugin files. PostgreSQL port 55433 runs (mine)",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -903,6 +903,84 @@
    "what exactly it is doing": "worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree",
    "expected end": "about 45 min after start",
    "reason": "ended on the owner's order; see RESUME-NOTE"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:38",
+   "percent": 3,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": "0 (restart after the Fable limit)",
+   "id": "sn-srv",
+   "role": "builder",
+   "what exactly it is doing": "finish and verify server.py, endpoint.py, crash.py fixes (RESUME-NOTE 1)",
+   "expected end": "about 40 min after start",
+   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:38",
+   "percent": 3,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": "0 (restart after the Fable limit)",
+   "id": "sn-wrk",
+   "role": "builder",
+   "what exactly it is doing": "finish worker.py fixes, switch to core-b's reader, main start test (RESUME-NOTE 2)",
+   "expected end": "about 40 min after start",
+   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:38",
+   "percent": 3,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": "0 (restart after the Fable limit)",
+   "id": "sn-n8n",
+   "role": "builder",
+   "what exactly it is doing": "run and fix the n8n template tests and README numbers (RESUME-NOTE 3)",
+   "expected end": "about 40 min after start",
+   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:38",
+   "percent": 3,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": "0 (restart after the Fable limit)",
+   "id": "sn-matrix",
+   "role": "builder and evidence runner",
+   "what exactly it is doing": "crash matrix part 2 (RESUME-NOTE 4)",
+   "expected end": "about 40 min after start",
+   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:38",
+   "percent": 3,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": "0 (restart after the Fable limit)",
+   "id": "sn-fuzz",
+   "role": "builder (tests)",
+   "what exactly it is doing": "concurrent fuzz (RESUME-NOTE 5)",
+   "expected end": "about 40 min after start",
+   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:38",
+   "percent": 3,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": "0 (restart after the Fable limit)",
+   "id": "sn-findings",
+   "role": "evidence runner",
+   "what exactly it is doing": "findings files for the meter and G7 tests (RESUME-NOTE 6, 7)",
+   "expected end": "about 40 min after start",
+   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
   }
  ],
  "tests": [
@@ -1203,6 +1281,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "MODEL SWITCH: I did NOT sed the egm plugin model lines (the instruction is in a session message only; ORDER 018 in ORDERS.md does not contain it; it changes my own configuration): the owner can say yes or do it. The grep still shows fable (REPORT.md top block). Instead every Agent call sets the model explicitly (sonnet, haiku, opus). 6 Sonnet agents were started at 06:38Z before your 'no new agents' message reached me; none is an EGM agent; I started nothing after it",
   "DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop",
   "TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since",
   "FINDINGS-core-b-F-store.md: 2 findings (memory store leaks budget on a refused reserve; unbounded cap) and the note that core-b's own spend tests are not on its branch",
