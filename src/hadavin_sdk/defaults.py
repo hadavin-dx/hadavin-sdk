@@ -28,6 +28,9 @@ MAX_CONCURRENT_TOOL_CALLS = (
     4  # read-tool calls running at once in one process (client-side load cap, R372)
 )
 MAX_TOOL_CALLS_PER_MINUTE = 120  # read-tool calls started per minute in one process
+# Message results one bound gate keeps between calls (G14): one entry per distinct (message content, role kind, tool names) at one map
+# content; the cache is emptied when it is full and whenever the map changes.
+GATE_CACHE_MAX_ENTRIES = 1024
 MAX_DOCUMENT_BYTES = (
     262_144  # the largest incident document a run takes (redaction and grounding scan it)
 )

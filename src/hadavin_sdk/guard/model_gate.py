@@ -202,17 +202,41 @@ the enforce step, `worst_case`, `reserve` or the instant after it writes a row (
 `.reason` is one of the six published reasons) and an error of the client pass as the same object with whatever
 chain it already had: the gate adds nothing to it and removes nothing. The caller's messages, dicts and
 documents are never changed in place.
+
+The per-message cache (G14, design review P8 item 4). The whole history is sent on every call, so enforcing every
+message every time cost O(n^2) message passes over a run of n calls. A bound gate now keeps the result of each
+message content it has enforced (key: SHA-256 of the content, `role == "assistant"`, the call's tool names), valid for ONE
+map content: at the start of each call the live map's copy is compared, entry by entry, with the one the cache was made
+against, and ANY difference (growth, a changed value) bumps `BoundGate.map_version` and empties the cache. So a value registered
+later is looked for again in every earlier message on the next call; an unchanged message at an unchanged map is not
+re-swept or re-checked by the safety net (same function, same input, same map: the same result). What it changes: only
+the repeated work of unchanged messages at an unchanged map (`message_passes` counts real passes, `cache_hits` the saved ones);
+a stable-map run of 50 growing messages drops from 1275 to 50 message passes. What it does NOT change: the refusal rules and
+codes (a refusal or a budget failure is never cached, so it is run again), the framing check (`framing_free`, still over the
+whole history every call: one regex scan per message), documents (not cached), the snapshot copy and its pattern build (once per call,
+patterns kept per map change as before), a map that grows on every call (every message is then a miss: no saving, no loss), and the
+forced permanent refusal by a planted value (P8 item 4, second half: no quarantine path here). Budget: the 6 s CPU budget and the
+character and step budgets stay ONE per call, shared as before by the snapshot build, the messages and the documents of that call;
+the cache only means a cached message spends none of it, so the budget left for the messages that ARE enforced in a call is larger,
+never smaller, and no call spends more than before. Memory: at most `defaults.GATE_CACHE_MAX_ENTRIES` entries (the enforced text of each message, a str).
+
+Audit rows lost (G14, design review P8 item 7). A sink that raises never changes the outcome of the call, but the row is
+lost; `BoundGate.audit_dropped` (and the sum over the gates bound from one `ModelGate`, `ModelGate.audit_dropped`) counts those
+rows. A gate built with `audit=None` writes no row by design and counts none; a KeyboardInterrupt in the sink is not counted
+(it is not swallowed). `reserve_interrupted` and `reservation_invalid` rows still carry no `object_ref`: there is no usable
+reservation id to carry (the meter raised, or returned a value that is no id).
 """
 
 from __future__ import annotations
 
-import contextlib
+import hashlib
 import itertools
 import re
 from collections.abc import Callable, Mapping
 from decimal import Decimal
 from typing import Any, Protocol, Self
 
+from hadavin_sdk import defaults
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
@@ -596,6 +620,9 @@ class ModelGate:
             raise TypeError("the client is already a model gate")
         self._llm, self._meter, self._audit = llm, meter, audit
         self._worst_case, self._enforce = worst_case, enforce
+        self.audit_dropped = (
+            0  # audit rows lost by every gate bound from this one (see `BoundGate.audit_dropped`)
+        )
 
     def bind(
         self,
@@ -647,6 +674,22 @@ class BoundGate:
         self._built: dict[
             str, Any
         ] = {}  # built patterns kept between calls (`runmap.snapshot(cache=...)`)
+        self._gate = gate
+        # G14 (design review P8 item 4): the per-message result cache. Valid for ONE map content: `_cache_map` is the
+        # exact entries the cached results were made against; any difference (growth or a changed value) bumps
+        # `map_version` and empties the cache, so a value registered later is looked for again in every earlier message.
+        self._cache: dict[tuple[bool, frozenset[str], str], str] = {}
+        self._cache_map: dict[str, str] = {}
+        self.map_version = (
+            0  # grows by one each time the map's content differs from the last call's
+        )
+        self.message_passes = (
+            0  # message contents enforced for real (cache misses): the cost the cache saves
+        )
+        self.cache_hits = 0  # message contents served from the cache
+        self.audit_dropped = (
+            0  # audit rows whose write raised (the row is lost; the call's outcome is unchanged)
+        )
 
     def chat(
         self,
@@ -784,13 +827,17 @@ class BoundGate:
             if mapping is not None and not framing_free(messages, tools, mapping):
                 return CODE_FRAMING_REFUSED
             listed = tool_names(tools)
+            if mapping is not None:
+                self._sync_cache(mapping)
             sent: list[dict[str, Any]] = []
             for message in messages:
                 content = message["content"] if isinstance(message, dict) else None
                 if not isinstance(content, str):
                     return CODE_MASK_REFUSED
                 if mapping is not None:
-                    fixed, code = self._enforce_text(content, mapping, message.get("role"), listed)
+                    fixed, code = self._enforce_cached(
+                        content, mapping, message.get("role"), listed
+                    )
                     if code is not None:
                         return code
                     if fixed != content:
@@ -821,6 +868,39 @@ class BoundGate:
         else:
             mode = MODE_ENFORCED if len(mapping) else MODE_EMPTY
         return sent, docs, mode
+
+    def _sync_cache(self, mapping: Mapping[str, str]) -> None:
+        """Empty the message cache and bump `map_version` when the map's entries differ from the ones the cache
+        was made against (exact comparison of the whole map: no digest, no collision). Cost: one pass over the map."""
+        entries = dict(mapping)
+        if entries != self._cache_map:
+            self._cache_map = entries
+            self._cache.clear()
+            self.map_version += 1
+
+    def _enforce_cached(
+        self, text: str, mapping: Mapping[str, str], role: Any, listed: frozenset[str]
+    ) -> tuple[str, str | None]:
+        """`_enforce_text` with the per-message cache. Key: SHA-256 of the content, whether the role is
+        `assistant` (the only role the framing reads), and the call's tool names (they stay exact); valid only for
+        the map content of `_sync_cache`. Only a success is kept (a refusal or a budget failure is run again), and
+        at most `defaults.GATE_CACHE_MAX_ENTRIES` entries (past it the cache is emptied)."""
+        key = (
+            role == "assistant",
+            listed,
+            hashlib.sha256(text.encode("utf-8", "surrogatepass")).hexdigest(),
+        )
+        hit = self._cache.get(key)
+        if hit is not None:
+            self.cache_hits += 1
+            return hit, None
+        self.message_passes += 1
+        fixed, code = self._enforce_text(text, mapping, role, listed)
+        if code is None:
+            if len(self._cache) >= defaults.GATE_CACHE_MAX_ENTRIES:
+                self._cache.clear()
+            self._cache[key] = fixed
+        return fixed, code
 
     def _chunk(self, text: str, mapping: Mapping[str, str]) -> tuple[str, str | None]:
         """(the enforced text, None) or ("", a failure code): one stretch enforced and then checked by the safety net
@@ -909,7 +989,7 @@ class BoundGate:
             isinstance(error_code, str) and error_code in AUDIT_CODES
         ):
             error_code = CODE_GATE_REFUSED  # AUDIT_CODES is enforced here, not only listed
-        with contextlib.suppress(Exception):
+        try:
             self._audit.write_outcome(
                 AuditEvent(
                     run_id=self._run_id,
@@ -923,3 +1003,6 @@ class BoundGate:
                     error_code=error_code,
                 )
             )
+        except Exception:  # noqa: BLE001 - never changes the outcome, but the loss is counted
+            self.audit_dropped += 1
+            self._gate.audit_dropped += 1

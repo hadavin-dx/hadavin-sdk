@@ -2613,7 +2613,9 @@ def test_r2_m3_one_budget_per_chat_call_and_a_cap_on_held_back_values(monkeypatc
     monkeypatch.setattr(runmap, "ENFORCE_MAX_TOTAL_CHARS", 2_000)
     mapping = runmap.RunMap({"<IPV4_1>": IP})
     bound, client, _, sink = build(mapping=mapping)
-    texts = [{"role": "user", "content": "x" * 900} for _ in range(3)]
+    texts = [
+        {"role": "user", "content": f"{i}" + "x" * 900} for i in range(3)
+    ]  # distinct (G14: a repeat is cached)
     with pytest.raises(model_gate.MaskBudgetExceeded):
         bound.chat(
             texts, system="s", route="main"
@@ -3149,3 +3151,122 @@ def test_g13c_3_a_dense_head_beside_a_key_is_refused_as_mask_budget_exceeded():
     assert client.sent == [] and sink.codes() == [("refused", "mask_budget_exceeded")]
     bound.chat([{"role": "user", "content": "x aaab<HOST_1>"}], system="s", route="main")
     assert client.sent, "G13c-3 a short run was refused"
+
+
+# --- G14: the per-message cache and the dropped-audit counter (design review P8 items 4 and 7) -------------------------
+
+
+def _history(n):
+    return [{"role": "user", "content": f"message {i} about the alert"} for i in range(n)]
+
+
+def test_g14_a_stable_map_run_of_50_growing_messages_is_linear_not_quadratic():
+    bound, client, _, _ = build(mapping=runmap.RunMap({"<SECRET_1>": TOKEN}))
+    messages = _history(50)
+    for n in range(1, 51):
+        bound.chat(messages[:n], system="s", route="main")
+    assert bound.message_passes == 50  # was 1 + 2 + ... + 50 = 1275 with no cache
+    assert bound.cache_hits == 1275 - 50
+    assert bound.map_version == 1 and len(client.sent) == 50
+
+
+def test_g14_a_value_registered_later_is_still_caught_in_an_earlier_cached_message():
+    """Hostile: the value is already in message 0 (clean at the old map, so cached); the run registers it afterwards."""
+    run_map = runmap.RunMap({"<SECRET_1>": TOKEN})
+    bound, client, _, _ = build(mapping=run_map)
+    history = [
+        {"role": "user", "content": f"the first note holds {KEY} in the open"},
+        {"role": "user", "content": "second"},
+    ]
+    bound.chat(history, system="s", route="main")
+    assert KEY in client.text_sent()  # not in the map yet: sent as it was
+    before = bound.map_version
+    run_map["<SECRET_2>"] = KEY  # the run learns it later
+    bound.chat(history, system="s", route="main")
+    assert bound.map_version == before + 1
+    assert (
+        KEY not in json.dumps(client.sent[-1], default=str) and "<SECRET_2>" in client.text_sent()
+    )
+    bound.chat(
+        history, system="s", route="main"
+    )  # stable again: served from the cache, still masked
+    assert KEY not in json.dumps(client.sent[-1], default=str)
+    assert bound.cache_hits >= 2
+
+
+def test_g14_a_changed_value_of_the_same_key_also_empties_the_cache():
+    run_map = runmap.RunMap({"<SECRET_1>": TOKEN})
+    bound, client, _, _ = build(mapping=run_map)
+    msg = [{"role": "user", "content": f"x {KEY} y"}]
+    bound.chat(msg, system="s", route="main")
+    run_map["<SECRET_1>"] = KEY  # same size, different content
+    bound.chat(msg, system="s", route="main")
+    assert KEY not in json.dumps(client.sent[-1], default=str)
+
+
+def test_g14_a_refusal_is_not_cached_and_the_message_is_enforced_again():
+    run_map = runmap.RunMap({"<SECRET_1>": TOKEN})
+    outcomes = iter([None, "fixed"])  # the enforce step fails once, then works
+
+    def flaky(text, mapping):
+        return next(outcomes)
+
+    client, sink = Client(), Sink()
+    gate = ModelGate(client, meter=Meter(), audit=sink, worst_case=worst, enforce=flaky)
+    bound = gate.bind("agent-1", "run-1", mapping=run_map)
+    with pytest.raises(UnmaskedInput):
+        bound.chat(CLEAN, system="s", route="main")
+    assert client.sent == []
+    bound.chat(CLEAN, system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == "fixed"
+    assert bound.message_passes == 2 and bound.cache_hits == 0
+
+
+def test_g14_the_cache_is_keyed_by_the_tool_names_of_the_call():
+    run_map = runmap.RunMap({"<SECRET_1>": TOKEN})
+    bound, _, _, _ = build(mapping=run_map)
+    text = "<<TOOL RESULT call_id=c1 tool=search>>\nok\n<<END TOOL RESULT>>"
+    msg = [{"role": "user", "content": text}]
+    bound.chat(msg, system="s", route="main", tools=[{"name": "search"}])
+    bound.chat(msg, system="s", route="main", tools=[{"name": "other"}])
+    assert bound.message_passes == 2  # a different tool list is a different key
+
+
+def test_g14_the_cache_is_bounded():
+    run_map = runmap.RunMap({"<SECRET_1>": TOKEN})
+    bound, _, _, _ = build(mapping=run_map)
+    from hadavin_sdk import defaults
+
+    for i in range(defaults.GATE_CACHE_MAX_ENTRIES + 5):
+        bound.chat([{"role": "user", "content": f"m{i}"}], system="s", route="main")
+    assert len(bound._cache) <= defaults.GATE_CACHE_MAX_ENTRIES
+
+
+def test_g14_audit_rows_that_could_not_be_written_are_counted():
+    sink = Sink(raises=RuntimeError("audit down"))
+    gate = ModelGate(Client(), meter=Meter(), audit=sink, worst_case=worst)
+    one = gate.bind("agent-1", "run-1", mapping=NO_MAP)
+    two = gate.bind("agent-2", "run-2", mapping=NO_MAP)
+    assert one.audit_dropped == 0 and gate.audit_dropped == 0
+    one.chat(CLEAN, system="s", route="main")
+    two.chat(CLEAN, system="s", route="main")
+    two.chat(CLEAN, system="s", route="main")
+    assert (one.audit_dropped, two.audit_dropped, gate.audit_dropped) == (1, 2, 3)
+    ok, _, _, good = build()
+    ok.chat(CLEAN, system="s", route="main")
+    assert ok.audit_dropped == 0 and len(good.rows) == 1
+    none_gate = ModelGate(Client(), meter=Meter(), audit=None, worst_case=worst).bind(
+        "a", "r", mapping=NO_MAP
+    )
+    none_gate.chat(CLEAN, system="s", route="main")
+    assert none_gate.audit_dropped == 0  # no sink by design: nothing was dropped
+
+
+def test_g14_a_repeated_message_in_one_call_spends_the_call_budget_once(monkeypatch):
+    """The budget change of the cache, pinned: three IDENTICAL 900-character messages are one enforced pass (2,000
+    characters of budget); distinct ones are still refused (test_r2_m3_...). No call spends more than before."""
+    monkeypatch.setattr(runmap, "ENFORCE_MAX_TOTAL_CHARS", 2_000)
+    bound, client, _, _ = build(mapping=runmap.RunMap({"<IPV4_1>": IP}))
+    same = [{"role": "user", "content": "x" * 900} for _ in range(3)]
+    bound.chat(same, system="s", route="main")
+    assert bound.message_passes == 1 and bound.cache_hits == 2 and len(client.sent) == 1
