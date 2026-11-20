@@ -216,3 +216,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 11:12Z RUNNING AGENTS (all sonnet): D = definer step 3, store/postgres.py calls the {schema}.hadavin_* functions (started 11:04Z, due 11:50Z, worktree /tmp/core-b-wt/MD, uncommitted work); C = definer test writer, a different agent (started 11:04Z, due 11:55Z, worktree MC). NO OTHER AGENT RUNNING. Just merged: batch-9 test fixes, request 005. The shared PostgreSQL server is slow while D and C run their suites.
 
 11:13Z MORE AGENTS STARTED (sonnet): fresh HOSTILE REVIEW of the merged 0011 functions + migrate.py checks (11:14Z; writes tickets/F-money-definer-review-0011.md); E1 = step 6 first half (hadavin_caps, hadavin_set_cap reset-only, hadavin_cap_matches; reserve untouched until D is merged; 11:14Z, due 12:00Z). RUNNING NOW: D (11:04Z), C (11:04Z), 0011 reviewer (11:14Z), E1 (11:14Z).
+
+11:17Z BOARD AUTOMATION: a background loop now runs board.sh every ~75 s (flock-protected) so the last push never passes ~2 min even while I wait on long runs. Same four agents running (D, C, 0011 reviewer, E1).
