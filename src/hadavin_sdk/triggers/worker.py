@@ -662,6 +662,22 @@ def check_durable(store: Any) -> bool:
     return False
 
 
+def check_store_stage(store: Any, config: Any) -> None:
+    """A ConfigError when the store keeps its rows in this process only (`MemoryStore`) and the stage is not
+    demo (`config.environment`, read with `stages.is_live`): a pilot or prod worker would answer 202 for rows
+    that vanish on a restart (door review M4). Only a memory store reads the stage; any other kind passes."""
+    from hadavin_sdk.stages import is_live
+    from hadavin_sdk.store.memory import MemoryStore
+
+    if isinstance(store, MemoryStore) and is_live(
+        _field(config, "environment", "config.environment")
+    ):
+        raise ConfigError(
+            "trigger worker: the memory store is for the demo stage only: acknowledged requests would not"
+            " survive a restart (use the PostgreSQL store)"
+        )
+
+
 def check_spend(runtime: Any, max_running: int) -> bool:
     """False, with one warning, when more than one loop may run at a time and the runtime's limits object has
     no `reserve` method: the cost is then added after the model call, so parallel runs can pass a budget.
@@ -711,6 +727,7 @@ def make_app(
         )
     except ValueError as exc:  # these messages name senders and bounds, never a value
         raise ConfigError(str(exc)) from None
+    check_store_stage(app.store, app.config)
     check_durable(app.store)
     check_spend(app.runtime, max_running)
     try:
