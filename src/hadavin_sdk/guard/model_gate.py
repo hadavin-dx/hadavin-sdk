@@ -1,6 +1,6 @@
 """The model gate: one wrapper around the model client (step F).
 
-Guarantee: values the run has identified as sensitive are replaced by their placeholders in everything sent to a model; detection of new values is done by the producers' pattern redactor.
+Guarantee: values the run has identified as sensitive are replaced by their placeholders in the `content` of every message and in every document sent to a model; detection of new values is done by the producers' pattern redactor. NOT enforced: `system`, `tools` and `output_schema` are operator text and are forwarded untouched (the install-time check that `system` comes only from the prompt registry belongs to core-b), and a message's `role` and other keys.
 
 Stated limits of that sentence (lead review rounds 1 and 2, design review D7). Each line names the test that
 pins it: T = tests/test_model_gate.py, E = tests/test_runmap_enforce_map.py. The replace is the redactor's own
@@ -43,19 +43,29 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   only match a pattern once composed (`"user_id": "abc123"`).
   T::test_stated_limit_a_clean_key_and_value_that_match_a_pattern_once_composed_are_not_touched
 - The trusted framing of a tool result (`<<TOOL RESULT call_id=ID tool=NAME>>` ... `<<END TOOL RESULT>>`, written by
-  runtime/agent_loop.py) is never rewritten: the tokens are set aside and only the text between them is
-  enforced. A call that carries framing (or an assistant line `tool NAME {...}`) is REFUSED, code
-  `framing_refused`, when a known value EQUALS a marker word (TOOL, RESULT, END, call_id, tool), a tool name or a
-  call id: a document can plant such a value (`password=RESULT`) and a run is then stopped by it (a stated cost
-  of the order: a planted word stops a run that uses tools; it cannot stop one that uses none).
+  runtime/agent_loop.py) keeps its FIXED words exactly (`<<TOOL RESULT call_id=`, ` tool=`, `>>`, the end marker,
+  and the `tool ` of an assistant line `tool NAME {...}`); the call id, the tool name and everything between the
+  tokens ARE enforced (review round 2, dz2-B1: a forged token `call_id=x_<secret>_y` is not a hiding place). A
+  tool name is enforced the same way in the assistant line and in the token, so both read alike. A call is
+  REFUSED, code `framing_refused`, only when a value of a SECRET kind (4 or more characters, swept in every copy)
+  EQUALS a tool name (the `tools` list, an assistant line, a token) or a call id: the `tools` list is forwarded
+  untouched and would show it. A host or tenant named `tool` or `search` does not stop a run. A document
+  is enforced whole: a framing token inside a document is data.
   T::test_o17_6_reproduction_a_planted_value_that_equals_a_framing_word_rewrites_the_trusted_marker
   T::test_o17_6_a_value_that_only_lies_inside_a_framing_token_leaves_the_token_alone
+  T::test_r2_b1_a_known_value_inside_a_token_slot_never_reaches_the_client
   T::test_o17_6_a_tool_name_from_the_tools_list_or_an_assistant_line_counts_too
 - With no map (`bind(..., mapping=NO_MAP)`: the eval and replay command lines only) there is no enforce step;
-  every audit row of such a gate says so (`AuditEvent.decision` is `no_map`, else `map_enforced`). `mapping` is a
-  required keyword; None is a TypeError.
+  every audit row of such a gate says so (`AuditEvent.decision` is `no_map`). `map_enforced` is written only when
+  the enforce function is the module default (`runmap.enforce_map`) AND the call's map held an entry
+  (`map_enforced_empty` otherwise); an injected `enforce=` is `enforce_custom`; a refusal of the enforce step is
+  `map_failed`. The row says what was configured; it is not a proof that every value was replaced.
+  `mapping` is a required keyword; None is a TypeError.
+  T::test_r2_m5_the_audit_decision_says_what_was_really_enforced
   T::test_d1_every_audit_row_says_whether_the_map_was_enforced
   T::test_o17_1_bind_without_mapping_is_a_type_error_and_so_is_none_or_a_non_mapping
+- A document is read as the adapters read it (UTF-8, bad bytes replaced): a binary document is decoded lossily
+  and what the gate sends is that text. Not pinned beyond the existing bytes tests.
 - Only the `content` of each message and the documents are enforced. `system`, `tools` and `output_schema` are
   operator text and are forwarded untouched, as are a message's `role` and its other keys.
   T::test_t20_system_and_tools_are_not_touched
@@ -81,11 +91,13 @@ money rules of its own: an amount is usable only when it is a finite Decimal of 
 the ORDER of the steps, and WHEN a reservation is settled (the one settle rule).
 
 Exceptions and text. No logger, no module-level state, and no message text and no exception text in any audit
-row (a source guard in tests/test_model_gate.py reads the whole module's syntax tree for this). EVERY failure
-before the provider call that is not a `SpendRefused` (the enforce step, `worst_case` raising or returning a bad
+row (a source guard in tests/test_model_gate.py reads the whole module's syntax tree for this). Every failure
+before the provider call that is an Exception and not a `SpendRefused` (the enforce step, `worst_case` raising or returning a bad
 amount, `reserve` failing with a KeyError or a store error, a bad reservation id, a framing conflict) is raised
 as `GateRefused` or a subclass: a fixed `code` and neither a cause nor a context (raised outside any `except`
-block), so for the caller `GateRefused` means 'no provider call was made'. A `SpendRefused` (a meter error whose
+block), so for the caller `GateRefused` means 'no provider call was made'. A BaseException (KeyboardInterrupt) in
+`worst_case` or `reserve` writes a row (`call_interrupted`, `reserve_interrupted`) and passes on as it is: for
+`reserve` the meter may already have booked the amount (the sweep closes it). A `SpendRefused` (a meter error whose
 `.reason` is one of the six published reasons) and an error of the client pass as the same object with whatever
 chain it already had: the gate adds nothing to it and removes nothing. The caller's messages, dicts and
 documents are never changed in place.
@@ -97,7 +109,7 @@ import contextlib
 import re
 from collections.abc import Callable, Mapping
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any, Protocol, Self
 
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.guard import runmap
@@ -139,6 +151,7 @@ class Meter(Protocol):
     def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal: ...
 
 
+_DEFAULT_ENFORCE = runmap.enforce_map  # the audit says `map_enforced` only for this function
 WorstCase = Callable[
     [
         str,  # route
@@ -177,24 +190,31 @@ CODE_PROVIDER_ERROR = "provider_error"  # rule (c): an unmarked ProviderError, N
 CODE_PROVIDER_EXHAUSTED = "provider_exhausted"  # rule (c): retries used up, NOT settled
 CODE_CALL_FAILED = "call_failed"  # rule (c): any other Exception from the client, NOT settled
 CODE_CALL_INTERRUPTED = "call_interrupted"  # rule (c): KeyboardInterrupt, SystemExit, NOT settled
+CODE_RESERVE_INTERRUPTED = "reserve_interrupted"  # a BaseException in `reserve`: it may have booked
+CODE_HELD_LEFT = "held_value_left"  # a held-back secret value still raw after the sweeps: no call
 CODE_COST_UNKNOWN = "cost_unknown"  # rule (c): a reply with no usable cost; returned, NOT settled
 CODE_SETTLE_FAILED = "settle_failed"  # the meter raised in settle: the worst case stays booked
 CODE_OVERSHOOT = "overshoot"  # a paid call (result ok) whose real cost was above its reservation
 # The `decision` field of every row: whether this bound gate enforces a run map (design review D1).
-MODE_ENFORCED = "map_enforced"
+MODE_ENFORCED = "map_enforced"  # the default enforce function ran against a map with entries
+MODE_EMPTY = "map_enforced_empty"  # the default function, but the run's map held no entry
+MODE_CUSTOM = "enforce_custom"  # an injected `enforce=` (tests): not the module's function
+MODE_FAILED = "map_failed"  # the enforce step refused: nothing was sent
 MODE_NO_MAP = "no_map"
 # The trusted framing of a tool result (runtime/agent_loop.py builds `<<TOOL RESULT call_id=ID tool=NAME>>`, the
 # text, then `<<END TOOL RESULT>>`; the markers are `tools.START_MARKER` and `tools.END_MARKER`). The gate never
-# replaces inside these tokens, and refuses a call when a known value EQUALS one of their words, a tool name or a
-# call id (ORDER 017 item 6; reproduced with the real producers in tests/test_model_gate.py).
-FRAMING_WORDS = frozenset(
-    {*START_MARKER.strip("<>").split(), *END_MARKER.strip("<>").split(), "call_id", "tool"}
+# replaces inside the FIXED words of these tokens; the call id, the tool name and the text between are enforced.
+FRAMING = re.compile(
+    "(?P<head>"
+    + re.escape(START_MARKER)
+    + r" call_id=)(?P<id>[^\s>]+)(?P<mid> tool=)(?P<name>[^\s>]+)(?P<tail>>>)"
+    + "|(?P<end>"
+    + re.escape(END_MARKER)
+    + ")"
 )
-_FRAMING_START = re.escape(START_MARKER) + r" call_id=([^\s>]+) tool=([^\s>]+)>>"
-FRAMING = re.compile(_FRAMING_START + "|" + re.escape(END_MARKER))
 _ASSISTANT_CALL = re.compile(
     r"tool ([^\s{]+) "
-)  # the assistant line `tool NAME {inputs}` of the same loop
+)  # the assistant line `tool NAME {inputs}` of the same loop (one per message: agent_loop.py builds one)
 # The reasons ii_meter.py publishes for `SpendRefused.reason` (README contract 1). Only these are copied from
 # a meter's exception into an audit row: a `.reason` on any other exception that is not one of them (urllib's
 # URLError has one) is never copied.
@@ -210,23 +230,28 @@ SPEND_REASONS = frozenset(
     }
 )
 # Every error code a row of this module can carry: the published reasons plus the gate's own.
-AUDIT_CODES = SPEND_REASONS | {
-    CODE_GATE_REFUSED,  # what `_note` writes in place of a code that is not in this set
-    CODE_MASK_REFUSED,
-    CODE_WORST_CASE_FAILED,
-    CODE_WORST_CASE_INVALID,
-    CODE_RESERVE_REFUSED,
-    CODE_RESERVATION_INVALID,
-    CODE_FRAMING_REFUSED,
-    CODE_PROVIDER_REFUSED,
-    CODE_PROVIDER_ERROR,
-    CODE_PROVIDER_EXHAUSTED,
-    CODE_CALL_FAILED,
-    CODE_CALL_INTERRUPTED,
-    CODE_COST_UNKNOWN,
-    CODE_SETTLE_FAILED,
-    CODE_OVERSHOOT,
-}
+AUDIT_CODES = (
+    SPEND_REASONS
+    | {
+        CODE_GATE_REFUSED,  # what `_note` writes in place of a code that is not in this set (a bug guard)
+        CODE_MASK_REFUSED,
+        CODE_WORST_CASE_FAILED,
+        CODE_WORST_CASE_INVALID,
+        CODE_RESERVE_REFUSED,
+        CODE_RESERVATION_INVALID,
+        CODE_FRAMING_REFUSED,
+        CODE_PROVIDER_REFUSED,
+        CODE_PROVIDER_ERROR,
+        CODE_PROVIDER_EXHAUSTED,
+        CODE_CALL_FAILED,
+        CODE_CALL_INTERRUPTED,
+        CODE_RESERVE_INTERRUPTED,
+        CODE_HELD_LEFT,
+        CODE_COST_UNKNOWN,
+        CODE_SETTLE_FAILED,
+        CODE_OVERSHOOT,
+    }
+)
 
 
 def refused_before_response(exc: BaseException) -> bool:
@@ -236,6 +261,21 @@ def refused_before_response(exc: BaseException) -> bool:
     and every failed call keeps its worst case booked."""
     marked = getattr(exc, "refused_before_response", False) is True
     return marked and isinstance(exc, ProviderError) and not isinstance(exc, ProviderExhausted)
+
+
+def spend_refused_shape(exc: BaseException) -> bool:
+    """True for what the gate passes on unchanged from `reserve`: an exception whose `.reason` is one of the
+    published reasons, whose class (or a base) is named `SpendRefused` and that chains no cause. Duck typing until
+    `limits.SpendRefused` exists (then: isinstance). The attribute read is guarded: a property that raises is
+    simply not a SpendRefused."""
+    try:
+        reason = getattr(exc, "reason", None)
+        named = any(cls.__name__ == "SpendRefused" for cls in type(exc).__mro__)
+        return (
+            named and isinstance(reason, str) and reason in SPEND_REASONS and exc.__cause__ is None
+        )
+    except Exception:  # noqa: BLE001 - a hostile property
+        return False
 
 
 def usable_amount(value: Any) -> bool:
@@ -254,33 +294,25 @@ def usable_cost(reply: Any) -> Decimal | None:
 
 
 def framing_free(
-    messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None, mapping: Mapping[str, str]
+    messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None, snap: runmap.MapSnapshot
 ) -> bool:
-    """False when a value the map holds EQUALS a word of the trusted framing, a tool name or a call id: a
-    hostile document can plant such a value (`password=RESULT`) and every later copy of the framing word would be
-    rewritten. It matters only in a call that carries tool-result framing (a start or end marker, or an assistant
-    line `tool NAME {...}`); a call with none is not looked at, so a planted word cannot stop a run that uses no
-    tools. Tool names come from the `tools` list and the assistant lines, call ids and names from the markers.
-    Equality only: a value that merely lies inside a marker is protected by `BoundGate._enforce_text`. Returns a
-    bool; the value is never returned or logged."""
+    """False when a value of a SECRET kind (swept in every copy: `snap.secret_values`) EQUALS a tool name (the
+    `tools` list, an assistant line `tool NAME {...}`, a framing token) or a call id. The `tools` list is
+    forwarded untouched, so such a name would show the secret. Values that the sweep never replaces, and values of
+    an identifier kind (a host or tenant named `search`), never refuse a call: the slots are enforced instead.
+    Returns a bool; the value is never returned or logged."""
     names: set[str] = set()
-    framed = False
     for message in messages:
         content = message["content"]
         for token in FRAMING.finditer(content):
-            framed = True
-            names.update(group for group in token.groups() if group)
+            names.update(group for group in token.group("id", "name") if group)
         call = _ASSISTANT_CALL.match(content) if message.get("role") == "assistant" else None
         if call:
-            framed = True
             names.add(call.group(1))
-    if not framed:
-        return True
-    names |= FRAMING_WORDS
     for tool in tools or ():
         if isinstance(tool, dict) and isinstance(tool.get("name"), str):
             names.add(tool["name"])
-    return names.isdisjoint(mapping.values())
+    return names.isdisjoint(snap.secret_values)
 
 
 class GateRefused(RuntimeError):
@@ -321,15 +353,21 @@ class ReservationInvalid(GateRefused):
 
 
 class FramingRefused(GateRefused):
-    """A value of the run's map equals a word of the trusted tool-result framing, a tool name or a call id."""
+    """A value of a secret kind equals a tool name or a call id."""
 
     code = CODE_FRAMING_REFUSED
 
 
 class _NoMap:
-    """The type of `NO_MAP`. One instance; it is not a mapping and holds nothing."""
+    """The type of `NO_MAP`. One instance (`type(NO_MAP)()` returns it); it is not a mapping and holds nothing."""
 
     __slots__ = ()
+    _one: Any = None
+
+    def __new__(cls) -> Self:
+        if cls._one is None:
+            cls._one = super().__new__(cls)
+        return cls._one
 
     def __repr__(self) -> str:
         return "NO_MAP"
@@ -353,7 +391,7 @@ class ModelGate:
         meter: Meter,
         audit: AuditSink | None,
         worst_case: WorstCase,
-        enforce: Enforce = runmap.enforce_map,
+        enforce: Enforce = _DEFAULT_ENFORCE,
     ) -> None:
         if isinstance(llm, ModelGate | BoundGate):
             raise TypeError("the client is already a model gate")
@@ -403,7 +441,8 @@ class BoundGate:
         self._worst_case, self._enforce = gate._worst_case, gate._enforce
         self._agent_id, self._run_id, self._mapping = agent_id, run_id, mapping
         self._principal, self._source = principal, source
-        self._mode = MODE_NO_MAP if isinstance(mapping, _NoMap) else MODE_ENFORCED
+        self._mode = MODE_NO_MAP if isinstance(mapping, _NoMap) else None
+        self._custom = gate._enforce is not _DEFAULT_ENFORCE
 
     def chat(
         self,
@@ -417,32 +456,41 @@ class BoundGate:
     ) -> Reply:
         enforced = self._enforced(messages, documents, tools)
         if isinstance(enforced, str):  # a failure code: nothing was sent, nothing is reserved
-            self._note(RESULT_REFUSED, enforced)
+            self._note(RESULT_REFUSED, enforced, decision=MODE_FAILED)
             if enforced == CODE_FRAMING_REFUSED:
                 raise FramingRefused  # raised outside any `except`: no cause and no context to leak
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
-        messages, documents = enforced  # from here on only the enforced copies are used
+        messages, documents, mode = enforced  # from here on only the enforced copies are used
         failure: str | None = None
         reserved, reservation = Decimal(0), ""
         try:
             reserved = self._worst_case(route, system, messages, tools, documents, output_schema)
         except Exception:  # noqa: BLE001 - its error is NOT passed on (it may carry text): a code instead
             failure = CODE_WORST_CASE_FAILED
+        except (
+            BaseException
+        ):  # KeyboardInterrupt: a row, then on as it is (nothing is reserved yet)
+            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, decision=mode)
+            raise
         if failure is None and not usable_amount(reserved):
             failure = CODE_WORST_CASE_INVALID
         if failure is None:
             try:
                 reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
             except Exception as exc:
-                reason = getattr(exc, "reason", None)
-                if isinstance(reason, str) and reason in SPEND_REASONS:
-                    self._note(RESULT_REFUSED, reason)
+                if spend_refused_shape(exc):
+                    self._note(RESULT_REFUSED, exc.reason, decision=mode)  # type: ignore[attr-defined]
                     raise  # a SpendRefused passes unchanged
                 failure = CODE_RESERVE_REFUSED  # a KeyError, a down store: a code, not the error
+            except (
+                BaseException
+            ):  # the meter may have booked the amount already: the sweep closes it
+                self._note(RESULT_FAILED, CODE_RESERVE_INTERRUPTED, decision=mode)
+                raise
         if failure is None and not (isinstance(reservation, str) and reservation):
             failure = CODE_RESERVATION_INVALID
         if failure is not None:  # no call; raised outside the handlers, so with no chain
-            self._note(RESULT_REFUSED, failure)
+            self._note(RESULT_REFUSED, failure, decision=mode)
             if failure == CODE_WORST_CASE_INVALID:
                 raise WorstCaseInvalid
             if failure == CODE_RESERVATION_INVALID:
@@ -459,28 +507,30 @@ class BoundGate:
             )
         except ProviderError as exc:
             if refused_before_response(exc):  # rule (b): it cost nothing
-                self._settle(reservation, Decimal(0), RESULT_FAILED, CODE_PROVIDER_REFUSED)
+                self._settle(reservation, Decimal(0), RESULT_FAILED, CODE_PROVIDER_REFUSED, mode)
             else:  # rule (c): the cost is unknown, the worst case stays booked
                 exhausted = isinstance(exc, ProviderExhausted)
                 code = CODE_PROVIDER_EXHAUSTED if exhausted else CODE_PROVIDER_ERROR
-                self._note(RESULT_FAILED, code, reservation)
+                self._note(RESULT_FAILED, code, reservation, mode)
             raise
         except Exception:  # rule (c): may have been billed (a reply that fails to parse, a timeout)
-            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)
+            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation, mode)
             raise
         except BaseException:  # rule (c): going down, cost unknown
-            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation)
+            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation, mode)
             raise
         cost = usable_cost(reply)
         if (
             cost is None
         ):  # rule (c): the call is paid and its reply is returned; nothing to settle with
-            self._note(RESULT_OK, CODE_COST_UNKNOWN, reservation)
+            self._note(RESULT_OK, CODE_COST_UNKNOWN, reservation, mode)
         else:  # rule (a)
-            self._settle(reservation, cost, RESULT_OK, None)
+            self._settle(reservation, cost, RESULT_OK, None, mode)
         return reply
 
-    def _settle(self, reservation: str, usd: Decimal, result: str, code: str | None) -> None:
+    def _settle(
+        self, reservation: str, usd: Decimal, result: str, code: str | None, decision: str | None
+    ) -> None:
         """Settle once and write the row. A raising meter never loses a paid reply and never hides the
         client's error: the row then says `settle_failed` (with the call's own result, so a paid call is
         still counted as `ok`) and the worst case stays booked. A paid call that cost more than was
@@ -491,77 +541,113 @@ class BoundGate:
                 code = CODE_OVERSHOOT
         except Exception:  # noqa: BLE001 - see the docstring
             code = CODE_SETTLE_FAILED
-        self._note(result, code, reservation)
+        self._note(result, code, reservation, decision)
 
     def _enforced(
         self,
         messages: list[dict[str, Any]],
         documents: list[bytes] | None,
         tools: list[dict[str, Any]] | None,
-    ) -> tuple[list[dict[str, Any]], list[bytes] | None] | str:
-        """New lists holding what will be sent, or a failure code (`mask_refused`, `framing_refused`) when the step
-        failed (then nothing is sent). A message or document in which nothing is replaced is passed on as the
-        same object, so the bytes are the caller's; one with a replaced value is a new dict or new bytes. A
-        content that is not `str` is refused with or without a map. Documents are read as the adapters read them
-        (`llm/common.py` `turns`: UTF-8, bad bytes replaced). The live map is copied ONCE here (`runmap.snapshot`):
-        every text of this call is enforced against the same entries, and the patterns are built at most once
-        per call. The framing tokens of a tool result are never replaced inside (`_enforce_text`)."""
+    ) -> tuple[list[dict[str, Any]], list[bytes] | None, str | None] | str:
+        """(new messages, new documents, the audit `decision`) or a failure code (`mask_refused`,
+        `framing_refused`, `held_value_left`) when the step failed (then nothing is sent). A message or document in
+        which nothing is replaced is passed on as the same object, so the bytes are the caller's; one with a replaced
+        value is a new dict or new bytes. A content that is not `str` is refused with or without a map. Documents
+        are read as the adapters read them (`llm/common.py` `turns`: UTF-8, bad bytes replaced, so a binary one is
+        decoded lossily). The live map is copied ONCE here (`runmap.snapshot`): every text of this call is enforced
+        against the same entries and shares one budget, and the patterns are built at most once per call. The
+        fixed words of a tool-result token are never replaced (`_enforce_text`)."""
         mapping = self._mapping
         try:
             if isinstance(mapping, _NoMap):
                 mapping = None
             else:
                 mapping = runmap.snapshot(mapping)
+            if mapping is not None and not framing_free(messages, tools, mapping):
+                return CODE_FRAMING_REFUSED
             sent: list[dict[str, Any]] = []
             for message in messages:
                 content = message["content"] if isinstance(message, dict) else None
                 if not isinstance(content, str):
                     return CODE_MASK_REFUSED
                 if mapping is not None:
-                    fixed = self._enforce_text(content, mapping)
+                    fixed = self._enforce_text(content, mapping, message.get("role"))
                     if not isinstance(fixed, str):
                         return CODE_MASK_REFUSED
+                    if runmap.held_value_left(fixed, mapping):
+                        return CODE_HELD_LEFT
                     if fixed != content:
                         message = {**message, "content": fixed}
                 sent.append(message)
-            if mapping is not None and not framing_free(messages, tools, mapping):
-                return CODE_FRAMING_REFUSED
-            if documents is None:
-                return sent, None
-            docs: list[bytes] = []
-            for document in documents:
-                if not isinstance(document, bytes):
-                    return CODE_MASK_REFUSED
-                if mapping is not None:
-                    text = document.decode("utf-8", "replace")
-                    fixed = self._enforce(text, mapping)
-                    if not isinstance(fixed, str):
+            docs: list[bytes] | None = None
+            if documents is not None:
+                docs = []
+                for document in documents:
+                    if not isinstance(document, bytes):
                         return CODE_MASK_REFUSED
-                    if fixed != text:
-                        document = fixed.encode("utf-8")
-                docs.append(document)
+                    if mapping is not None:
+                        text = document.decode("utf-8", "replace")
+                        fixed = self._enforce(text, mapping)
+                        if not isinstance(fixed, str):
+                            return CODE_MASK_REFUSED
+                        if runmap.held_value_left(fixed, mapping):
+                            return CODE_HELD_LEFT
+                        if fixed != text:
+                            document = fixed.encode("utf-8")
+                    docs.append(document)
         except Exception:  # noqa: BLE001 - fail closed: a step that cannot finish means no call
             return CODE_MASK_REFUSED
-        return sent, docs
+        if mapping is None:
+            mode = MODE_NO_MAP
+        elif self._custom:
+            mode = MODE_CUSTOM
+        else:
+            mode = MODE_ENFORCED if len(mapping) else MODE_EMPTY
+        return sent, docs, mode
 
-    def _enforce_text(self, text: str, mapping: Mapping[str, str]) -> str:
-        """Enforce the map on one message content, leaving every framing token of a tool result exactly as the
-        agent loop wrote it (`<<TOOL RESULT call_id=ID tool=NAME>>`, `<<END TOOL RESULT>>`): only the stretches
-        between them are enforced. A text with no framing token is enforced whole."""
+    def _enforce_text(self, text: str, mapping: Mapping[str, str], role: Any = None) -> str:
+        """Enforce the map on one message content. The FIXED words of the agent loop's framing
+        (`<<TOOL RESULT call_id=`, ` tool=`, `>>`, `<<END TOOL RESULT>>`, and the `tool ` of an assistant line
+        `tool NAME {...}`) are kept exactly; the call id, the tool name (the same function, so the assistant
+        line and the token read alike) and every stretch between them are enforced. A text with no framing is
+        enforced whole."""
+        call = _ASSISTANT_CALL.match(text) if role == "assistant" else None
+        tokens = list(FRAMING.finditer(text))
+        if not tokens and call is None:
+            return self._enforce(text, mapping)
         parts: list[str] = []
         end = 0
-        for token in FRAMING.finditer(text):
-            if token.start() > end:
-                parts.append(self._enforce(text[end : token.start()], mapping))
-            parts.append(token.group(0))
+
+        def stretch(chunk: str) -> None:
+            if chunk:
+                parts.append(self._enforce(chunk, mapping))
+
+        if call is not None:
+            parts += ["tool ", self._enforce(call.group(1), mapping)]
+            end = call.end(1)
+        for token in tokens:
+            stretch(text[end : token.start()])
+            if token.group("end"):
+                parts.append(token.group("end"))
+            else:
+                parts += [
+                    token.group("head"),
+                    self._enforce(token.group("id"), mapping),
+                    token.group("mid"),
+                    self._enforce(token.group("name"), mapping),
+                    token.group("tail"),
+                ]
             end = token.end()
-        if end == 0:
-            return self._enforce(text, mapping)
-        if end < len(text):
-            parts.append(self._enforce(text[end:], mapping))
+        stretch(text[end:])
         return "".join(parts)
 
-    def _note(self, result: str, error_code: str | None, reservation: str | None = None) -> None:
+    def _note(
+        self,
+        result: str,
+        error_code: str | None,
+        reservation: str | None = None,
+        decision: str | None = None,
+    ) -> None:
         """One audit row: codes only, and the reservation id (when one was made) as the object reference, so
         a row can be matched to the spend row. A missing, parking (None) or raising sink never changes the
         outcome."""
@@ -580,7 +666,7 @@ class BoundGate:
                     principal=self._principal,
                     source=self._source,
                     object_ref=reservation if isinstance(reservation, str) else None,
-                    decision=self._mode,
+                    decision=self._mode or decision,
                     result=result,
                     error_code=error_code,
                 )

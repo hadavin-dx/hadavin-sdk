@@ -119,7 +119,9 @@ def nfkc(text: str) -> str:
     # main's `canonical`. `canonical` itself is per character now (index fidelity for replacement) and composes nothing,
     # which is wrong for decoding: a secret stored precomposed and shown decomposed must be found
     return "".join(
-        c for c in unicodedata.normalize("NFKC", fits_after_nfkc(text)) if unicodedata.category(c) != "Cf"
+        c
+        for c in unicodedata.normalize("NFKC", fits_after_nfkc(text))
+        if unicodedata.category(c) != "Cf"
     )
 
 
@@ -587,13 +589,58 @@ ENFORCE_MAX_SWEEPS = 4
 # made of short values is longer than the cap once masked and was refused on every call. The factor is safe because
 # one sweep cannot grow a text by more than `max placeholder length / 3` (a value under 3 characters is never
 # replaced); `test_e1_the_growth_factor_covers_the_longest_placeholder` derives that bound from the redactor's own
-# labels. HARD BOUND: input and every sweep's output stay under ENFORCE_MAX_CHARS and ENFORCE_MAX_OUT_CHARS.
+# labels. WHAT IS BOUNDED (review round 2, dz2-M3): each input text stays under ENFORCE_MAX_CHARS and each sweep's
+# output under ENFORCE_MAX_OUT_CHARS (checked after the sweep that made it); one `EnforceBudget` (one per `snapshot`,
+# so one per chat call of the gate) bounds the characters of ALL texts of the call, the number of values processed one
+# at a time and the wall time (checked between values and after every sweep). NOT bounded: the time of ONE call of the
+# redactor's own `sweep` (guard/redact.py `_Redactor.sweep`, a per-value `str.replace` over a segment, has no
+# deadline of its own); it is checked as soon as it returns.
 ENFORCE_GROWTH_FACTOR = 8
 ENFORCE_MAX_CHARS = ENFORCE_GROWTH_FACTOR * defaults.MAX_REDACT_CHARS
 ENFORCE_MAX_OUT_CHARS = ENFORCE_GROWTH_FACTOR * ENFORCE_MAX_CHARS
+ENFORCE_MAX_TOTAL_CHARS = (
+    4 * ENFORCE_MAX_CHARS
+)  # all texts of one chat call together (input; plus growth)
+ENFORCE_MAX_HELD = (
+    256  # held-back and edge values one snapshot accepts; more is refused (planted token pieces)
+)
+ENFORCE_MAX_STEPS = 20_000  # values processed one at a time in all rounds of all texts of one call
+
+
+class EnforceBudget:
+    """One deadline, one character budget and one step budget for every `enforce_map` call that shares a snapshot
+    (the gate takes one snapshot per chat call). Raises `InputTooLarge` when one runs out. Not shared between threads."""
+
+    __slots__ = ("chars", "deadline", "steps")
+
+    def __init__(self) -> None:
+        self.deadline = time.monotonic() + defaults.REDACT_BUDGET_S
+        self.chars, self.steps = ENFORCE_MAX_TOTAL_CHARS, ENFORCE_MAX_STEPS
+
+    def check(self) -> None:
+        if time.monotonic() > self.deadline:
+            raise InputTooLarge("InputTooLarge")
+
+    def spend_chars(self, n: int) -> None:
+        self.chars -= n
+        if self.chars < 0:
+            raise InputTooLarge("InputTooLarge")
+
+    def step(self) -> None:
+        self.steps -= 1
+        if self.steps < 0:
+            raise InputTooLarge("InputTooLarge")
+        if self.steps % 16 == 0:
+            self.check()
+
+
+_NOT_RAW = re.compile(r"<[A-Z][A-Z0-9]*_\d+>")
 # A known value that begins with the tail of a placeholder (`>abc`, `ECRET_1>abc`) or ends with the head of one
 # (`xyz<`, `xyz<SEC`) can be matched ACROSS the edge of a placeholder the same sweep has just written, and would
-# damage it (`<SECRET_1<SECRET_2>`). Such a value is held back like a piece of a placeholder (design review E2).
+# damage it (`<SECRET_1<SECRET_2>`). Such a value is held back (design review E2) and, since review round 2 (dz2-M2),
+# swept FIRST on the raw text of every round (`MapSnapshot.edge`), each sweep setting the placeholders aside: swept
+# after the others, a neighbour's placeholder had already consumed its leading `>` (`S3cr3t>abcdef` became
+# `<SECRET_1>abcdef`) and the tail of a secret stayed in clear.
 _EDGE_HEAD = re.compile(r"[A-Z0-9_]*>")
 _EDGE_TAIL = re.compile(r"<[A-Z0-9_]*\Z")
 
@@ -647,34 +694,45 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       `abcdef`): one is replaced and the rest of the other stays (`<A_1>ef`). Which one: among values that
       are not held back, the longer (the earlier in the map when equal); a held-back value always loses to
       one that is not, even when it is longer. When neither is a secret kind, neither is replaced there.
-    - A known value that spans the end of a placeholder written in this call plus the characters after it
-      (`1>abc`), and also occurs raw in the same stretch, is replaced across that placeholder: the
-      placeholder is damaged (`<SECRET_<SECRET_2>`), no raw value is shown.
+    - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
+      on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the
+      text it is not replaced (the `>` belongs to that placeholder) and its tail stays readable.
     - A map key that is not a genuine placeholder (`<host_1>`: lower case) is not set aside by any sweep,
       so a known value that is a piece of it (`host`) is replaced inside it, held back or not: a damaged
       placeholder, no raw value. The redactor only writes genuine keys.
     - A chain of glued identifiers that needs more than `ENFORCE_MAX_SWEEPS` sweeps is refused, not sent.
 
-    Same input cap as `redact_text` and the same time budget (`defaults.REDACT_BUDGET_S`, checked after
-    every sweep): past either, `InputTooLarge`. Any other failure (a map that is not text to text) is a
-    RedactionError that names the error's type and never the text."""
-    started = time.monotonic()
+    Bounds: the input cap of `redact_text` and the time budget `defaults.REDACT_BUDGET_S`, but one budget for ALL
+    texts that share a snapshot (`EnforceBudget`: time, characters, values processed; see ENFORCE_MAX_CHARS for
+    what is and is not bounded). Past any of them, `InputTooLarge`. Any other failure (a map that is not text to
+    text) is a RedactionError that names the error's type and never the text."""
     try:
         if len(text) > ENFORCE_MAX_CHARS:
             raise InputTooLarge("InputTooLarge")
-        first, held_back = snapshot(mapping).sweeps
+        snap = snapshot(mapping)
+        budget = snap.budget
+        budget.spend_chars(len(text))
+        first, held_back = snap.sweeps
         out = text
         for _ in range(ENFORCE_MAX_SWEEPS):
             before = out
+            for (
+                original,
+                alone,
+            ) in snap.edge:  # raw text first: no neighbour's placeholder has eaten the edge yet
+                budget.step()
+                if original in out:
+                    out = alone.sweep(out)
             out = first.sweep(out)
             for original, alone in held_back:
+                budget.step()
                 if original in out:
                     out = alone.sweep(out)
             if len(out) > ENFORCE_MAX_OUT_CHARS:
                 raise InputTooLarge("InputTooLarge")
-            if time.monotonic() - started > defaults.REDACT_BUDGET_S:
-                raise InputTooLarge("InputTooLarge")  # a hostile text or map: fail closed
+            budget.check()  # a hostile text or map: fail closed
             if out == before:
+                budget.spend_chars(max(0, len(out) - len(text)))
                 return out
     except RedactionError:
         raise
@@ -691,6 +749,10 @@ class MapSnapshot(dict):
     not kept after the call (a value the run learns later is in the next snapshot)."""
 
     sweeps: tuple[Any, list[tuple[str, Any]]]
+    edge: list[tuple[str, Any]]  # edge values, longest first, swept before everything else
+    budget: EnforceBudget
+    secret_values: frozenset[str]  # originals swept in every copy (a secret kind of 4+ characters)
+    secret_held: list[str]  # of the held-back and edge values, the secret ones
 
 
 def _rules_conflict(known: Mapping[str, str]) -> bool:
@@ -714,11 +776,18 @@ def snapshot(mapping: Mapping[str, str]) -> MapSnapshot:
     try:
         known = MapSnapshot(mapping)
         tokens = "\n".join(known)
+        edge_values = {
+            ph: original
+            for ph, original in known.items()
+            if _is_edge_value(original) and _sweep(ph, original) is not None
+        }
         late = {
             ph: original
             for ph, original in known.items()
-            if (original in tokens or _is_edge_value(original)) and _sweep(ph, original) is not None
+            if (original in tokens or ph in edge_values) and _sweep(ph, original) is not None
         }
+        if len(late) > ENFORCE_MAX_HELD:
+            raise InputTooLarge("InputTooLarge")
         if _rules_conflict(known):
             # One original under two placeholders (E5): the redactor keeps the FIRST placeholder's rule, so
             # the stronger rule (every copy, a secret kind) goes first. Built fresh: the run's cache holds
@@ -730,14 +799,35 @@ def snapshot(mapping: Mapping[str, str]) -> MapSnapshot:
         else:
             # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
             first = _Redactor(known, dict(getattr(mapping, "redact_cache", None) or {}))
+        by_length = sorted(late.items(), key=lambda kv: -len(kv[1]))
         held_back = [
             (original, _Redactor({ph: original}, None))
-            for ph, original in sorted(late.items(), key=lambda kv: -len(kv[1]))
+            for ph, original in by_length
+            if ph not in edge_values
+        ]
+        known.edge = [
+            (original, _Redactor({ph: original}, None))
+            for ph, original in by_length
+            if ph in edge_values
         ]
         known.sweeps = (first, held_back)
+        known.budget = EnforceBudget()
+        known.secret_values = frozenset(
+            o for ph, o in known.items() if _sweep(ph, o) is _EVERY_COPY
+        )
+        known.secret_held = [o for ph, o in late.items() if _sweep(ph, o) is _EVERY_COPY]
     except Exception as exc:  # noqa: BLE001 - fail closed
         raise RedactionError(type(exc).__name__) from None
     return known
+
+
+def held_value_left(text: str, snap: MapSnapshot) -> bool:
+    """Safety net for the gate (dz2-M2): True when a held-back or edge value of a secret kind still occurs raw in
+    `text` outside every placeholder-shaped token. Never returns or logs the value."""
+    if not snap.secret_held:
+        return False
+    bare = _NOT_RAW.sub("\0", text)
+    return any(value in bare for value in snap.secret_held)
 
 
 SAFE_HEAD_NOTE = "(details withheld)"
