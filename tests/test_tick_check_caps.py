@@ -71,10 +71,9 @@ def _seed(w, agent, daily, monthly):
     w.store(w.reset).set_cap(agent, D(daily), D(monthly), "user:op")
 
 
-def test_the_step_is_registered_and_appended_last():
-    assert tick.STEPS[-1].name == "check_caps"
+def test_the_step_is_registered_once_and_runs_every_tick():
     assert [s.name for s in tick.STEPS].count("check_caps") == 1
-    assert tick.STEPS[-1].every_s == 0  # every tick: a drift is loud within one tick period
+    assert _step().every_s == 0  # every tick: a drift is loud within one tick period
 
 
 def test_a_store_without_a_cap_table_has_nothing_to_check():

@@ -52,6 +52,7 @@ from hadavin_sdk.models import (
 )
 from hadavin_sdk.store.protocol import (
     BookingDayRefused,
+    ExpiredHolds,
     NotFound,
     SpendCapExceeded,
     SpendRelease,
@@ -1077,6 +1078,20 @@ class PostgresStore:
         except psycopg.errors.DatabaseError as exc:
             raise _money_error(exc) from None
         return int(row["hadavin_expire_spend_reservations"])
+
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]:
+        """Read-only (the runtime login may call it): the expired, unreleased holds closed more than
+        `older_than_s` seconds ago on the database clock, grouped by agent and day, at most 1000 groups."""
+        check_expiry_age(older_than_s)
+        try:
+            with self._lock, self._db.transaction():
+                rows = self._exec(
+                    self._money_call("hadavin_expired_holds", "%s::integer"),
+                    (older_than_s,),
+                ).fetchall()
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc) from None
+        return [ExpiredHolds(r["agent_id"], r["day"], int(r["holds"]), r["usd"]) for r in rows]
 
     def purge_spend_reservations(self, before: datetime) -> int:
         """SETTLED rows only (a settled row, or one released by 0008: settled at 0). An expired hold nobody
