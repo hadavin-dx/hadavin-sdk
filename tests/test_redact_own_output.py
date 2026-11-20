@@ -221,3 +221,22 @@ def test_a_cookie_run_with_a_lookalike_of_another_kind_is_masked_whole():
 def test_a_value_of_genuine_placeholders_alone_is_left_alone_as_before():
     result = R.redact("password=<SECRET_4>")
     assert result.text == "password=<SECRET_4>" and result.mapping == {}
+
+
+def test_e9_redact_untrusted_twice_with_an_address_value_makes_one_junk_entry():
+    """Pins an ACCEPTED trade-off (option (a)); the lead's option (b) would exempt the escaped token of another kind.
+
+    A key followed by an address: the first pass writes `password=<EMAIL_1>` (EMAIL runs before the SECRET key=value pattern),
+    the second pass escapes it to `‹EMAIL_1›`, a SECRET value that is masked: one entry `<SECRET_1>` = `‹EMAIL_1›`.
+    """
+    first_map: dict[str, str] = {}
+    once = runmap.redact_untrusted("login failed password=a@b.co host", first_map)
+    assert once == "login failed password=<EMAIL_1> host"
+    assert first_map == {"<EMAIL_1>": "a@b.co"}
+    rmap = runmap.RunMap()
+    twice = runmap.redact_untrusted(once, rmap)
+    assert twice == "login failed password=<SECRET_1> host"
+    assert dict(rmap) == {"<SECRET_1>": f"{L}EMAIL_1{G}"}
+    held = dict(rmap)
+    third = runmap.redact_untrusted(twice, rmap)
+    assert third == f"login failed password={ESC_SECRET} host" and dict(rmap) == held

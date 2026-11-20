@@ -3,12 +3,12 @@
 Change (src/hadavin_sdk/guard/redact.py, `_OWN_TOKEN`/`_OWN_OUTPUT` + comment; `_decide` unchanged, it still uses `_OWN_OUTPUT.fullmatch`):
 the exemption names `<SECRET_n>` and the escaped look-alike `U+2039 SECRET_n U+203A` only; a trailing cut-off opening is only of a SECRET token
 (`<SECRET_n`, `<SECRET_`, `<SECRET`, `<SECR`..`<S`). The older rule (a value of genuine placeholders of any kind) is untouched.
-Purpose kept: a tool error redacted twice makes no junk map entry for the escaped `password=U+2039SECRET_1U+203a`.
+Purpose, as far as it holds: a tool error redacted twice makes no junk map entry for the escaped `password=U+2039SECRET_1U+203a` (a SECRET token the first pass wrote). It does NOT hold for the tokens of other kinds the first pass writes after a key (`token=<JWT_1>`, `api_key=<APIKEY_1>`, `password=<EMAIL_1>`): their escaped spelling is masked, one junk entry per distinct token. Accepted trade-off, option (a) (E9 result review round 1, Major 1); the lead's option (b) is the alternative. Pinned by tests (E9(2) fix round).
 
 ## Shapes (SECRET value after `password=` unless noted)
 | shape | before | after |
 |---|---|---|
-| `‹EMAIL_1› host`, `‹IPV4_1›`, `‹EMAIL_1›` | unmasked | masked whole |
+| `‹EMAIL_1›` (the value in `password=‹EMAIL_1› host`: the pattern stops at the space), `‹IPV4_1›` | unmasked | masked whole |
 | `<EMA`, `<EMAIL_`, `<EMAIL_1`, `<I`, `<IPV4_12` | unmasked | masked whole |
 | `‹SECRET_1›<EMA` | unmasked | masked whole |
 | `‹SECRET_1›<UUID_3>‹SECRET_1›`, `‹SECRET_1›<UUID_3>‹IPV4_1›` | unmasked | masked whole |
@@ -43,3 +43,12 @@ Verdict: the regex is sound and leaks nothing new; no Blocker; 2 Majors, 4 Nits.
 - Regex attack results: `_OWN_OUTPUT` anchored with `fullmatch`, case-sensitive (`‹secret_1›`, `<Secret_1>`, `‹SECRET_١›` masked: hardening.py:56-68); no ReDoS (separators and tokens have disjoint first characters); the `.strip(" \t;,")` guard fine; remaining leaks all stated (a real credential spelled `<SECRET_1>`/`‹SECRET_1›`, a run of them, or a cut-off start; the older genuine-placeholders rule for a typed `password=<EMAIL_1> <IPV4_1>`); idempotence and settle: `password=‹EMAIL_1› host` -> `password=<SECRET_1> host` with map `{<SECRET_1>: ‹EMAIL_1›}`; a second redact sees a placeholders-only value (`_decide` returns None at line 1664 before `_OWN_OUTPUT`); restore gives the original back; settle at a fixed point; `_place` registers no `_spell` form.
 - Claims: 17 fail-before ids VERIFIED as a count (3 + 7 + 1 + 1 + 1 + 4), the run UNVERIFIABLE (no raw output in S); mutants E9-1..3: block and wiring VERIFIED (last block in `M`; search texts unique at redact.py:883 and :885; killers by reading), result UNVERIFIABLE; "4039 passed" UNVERIFIABLE (not in S); "140 passed" DIFFERS (the only hit in S is F-G0-1.md:24, an older file); `# noqa: S105` justified (ruff selects S; precedent backends/table.py:257, 259; optional rename `_OWN_TOKEN` -> `_OWN_PLACEHOLDER`).
 - Not read: redact.py beyond 1-987 and 1620-1740, most of runmap.py, agent_loop.py and k1b (grep only), tools.py beyond 930-1015, the rest of the suite, the CHANGELOG body; one ripgrep look-around failed so other tests using look-alikes of other kinds after a key were not confirmed.
+
+## E9(2) fix round (review round 1: Major 1, Major 2, Nits 1, 3, 4)
+- Major 1: option (a), core-c's default. Comment above `_OWN_TOKEN`/`_OWN_OUTPUT` rewritten (comments only, no code change): the false sentence "The redactor only writes a SECRET token after a secret key" is gone; the trade-off and the limit (now naming the cut-off SECRET openings `<S` .. `<SECRET_12`) are stated.
+- Measured through `tools.error_reason` then `tools.prepare_output` (run map empty before): `token=<JWT_1>` -> `token=<SECRET_1>`, map `{<SECRET_1>: ‹JWT_1›}`; `api_key=<APIKEY_1>` -> map `{<SECRET_1>: ‹APIKEY_1›}`; `password=<EMAIL_1>` -> map `{<SECRET_1>: ‹EMAIL_1›}`; a 160-character cut `password=<EMA` -> map `{<SECRET_1>: <EMA}`. A third pass adds no entry (it only escapes `<SECRET_1>` to `‹SECRET_1›`). Restore gives nothing back for a SECRET kind.
+- New tests (5, pin the accepted trade-off; each docstring names option (b)): tests/test_redact_own_output_hardening.py::test_e9_error_path_token_of_another_kind_after_a_key_makes_one_junk_entry[jwt|apikey|email], ::test_e9_error_path_cut_off_opening_of_another_kind_makes_one_junk_entry; tests/test_redact_own_output.py::test_e9_redact_untrusted_twice_with_an_address_value_makes_one_junk_entry.
+- Major 2: ESCALATIONS.md E9 and tickets/G7-context-after-sweep.md lines corrected (SECRET only, new limit). G4 ticket and SECURITY-README-v5.md K43 not touched here (other owners): G4 :64, :377-378, :704, :1131 and K43 (add cut-off SECRET openings and the `;` `,` separators) still to be fixed by their owners.
+- Nit 3: evidence row fixed. Nit 4: CHANGELOG.md entry added. Nit 1: in the comment and G7 ticket; K43 pending (owner: drafter).
+- Run now (09:49Z, worktree, `pytest -n 3`, files tests/test_redact_own_output.py, tests/test_redact_own_output_hardening.py, tests/test_redact_context_after_sweep.py): `145 passed in 19.51s` (140 before the 5 new tests; the earlier "140 passed" was not from a run recorded in this file).
+- Batch (those three plus tests/test_k5_tools.py, test_k5_layers.py, test_k1b_redaction.py, test_k1b_redaction_layers.py, test_runmap*.py): `422 passed in 79.96s (0:01:19)`.

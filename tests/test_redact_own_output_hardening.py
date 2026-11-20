@@ -166,3 +166,77 @@ def test_e9_a_lookalike_of_another_kind_alone_is_masked():
     assert result.text == "password=<SECRET_1>" and result.mapping == {
         "<SECRET_1>": f"{L}EMAIL_1{G}"
     }
+
+
+# --- E9(2) fix round: the tools error path with a token of ANOTHER kind after a key (accepted trade-off) -----------
+#
+# The first pass (`tools.error_reason`, a throwaway map) writes the tokens of every kind after a key (the EMAIL, IPV4, APIKEY,
+# JWT, URLCRED, HIGHENTROPY and PHONE patterns run before the SECRET key=value pattern). The second pass (`prepare_output`,
+# the run's map) escapes them, and the escaped spelling is a SECRET value that is masked: one junk map entry per distinct
+# escaped token. Option (a) of the E9 review, core-c's default (security first: a real credential spelled like another
+# kind's token must not stay in clear). Option (b), the lead's alternative, would exempt those escaped tokens on the tools
+# path only (a flag from `neutralise_untrusted`); if the lead orders it, these tests change with it.
+
+JWT = "eyJ" + "hbGciOiJIUzI1NiJ9" + "." + "eyJzdWIiOiJ4eXoifQ" + "." + "c2ln" + "nYXR1cmVfeHl6AAAA"
+APIKEY = "sk-" + "proj" + "-" + "Ab12Cd34Ef56Gh78Ij90" + "Kl12Mn34"
+
+
+def _error_path(message: str):
+    """The error text as the model sees it (first pass, then the run's pass), with the run map and its copy."""
+    rmap = runmap.RunMap()
+    reason = tools.error_reason(ValueError(message))
+    out = tools.prepare_output(tools.ERROR_PREFIX + reason, rmap, 4096)
+    return reason, out, rmap
+
+
+_KIND_CASES = [
+    ("jwt", f"call failed token={JWT} now", "token", "JWT_1"),
+    ("apikey", f"call failed api_key={APIKEY} now", "api_key", "APIKEY_1"),
+    ("email", "login failed password=a@b.co host", "password", "EMAIL_1"),
+]
+
+
+@pytest.mark.parametrize(
+    ("name", "message", "key", "kind"), _KIND_CASES, ids=[c[0] for c in _KIND_CASES]
+)
+def test_e9_error_path_token_of_another_kind_after_a_key_makes_one_junk_entry(
+    name, message, key, kind
+):
+    """Pins an ACCEPTED trade-off (option (a)); the lead's option (b) would exempt these escaped tokens instead.
+
+    The first pass writes `key=<KIND_1>`; the second escapes it to `key=‹KIND_1›`, a SECRET value that is masked: ONE
+    `<SECRET_n>` entry holding the escaped token. Not a leak (no real value is in the text or the map). The model loses the
+    kind of the masked value; restore gives back nothing for a SECRET kind; a third pass makes no new entry.
+    """
+    reason, out, rmap = _error_path(message)
+    assert f"{key}=<{kind}>" in reason
+    assert out == "ERROR: ValueError: " + reason[len("ValueError: ") :].replace(
+        f"<{kind}>", "<SECRET_1>"
+    )
+    assert dict(rmap) == {"<SECRET_1>": f"{L}{kind}{G}"}
+    assert f"{key}=<SECRET_1>" in out
+    assert JWT not in out and APIKEY not in out and "a@b.co" not in out
+    # restore: a SECRET kind is never restored, the model-visible text stays as it is
+    assert runmap.restore_text(out, dict(rmap)) == out
+    # a third pass: the map does not grow; the text only gets its (now genuine-looking) token escaped, nothing masked again
+    held = dict(rmap)
+    third = tools.prepare_output(out, rmap, 4096)
+    assert dict(rmap) == held
+    assert third == out.replace("<SECRET_1>", f"{L}SECRET_1{G}")
+    assert tools.prepare_output(third, rmap, 4096) == third and dict(rmap) == held
+
+
+def test_e9_error_path_cut_off_opening_of_another_kind_makes_one_junk_entry():
+    """Pins an ACCEPTED trade-off (option (a)); the lead's option (b) would exempt such a cut-off opening instead.
+
+    The 160-character cut of `error_reason` lands inside `password=<EMAIL_1>`: the text ends `password=<EMA`. The second pass
+    masks that value (a cut-off opening of another kind is not exempt): one junk entry `<SECRET_1>` = `<EMA`.
+    """
+    message = "ab " * 49 + "password=a@b.co tail"
+    reason, out, rmap = _error_path(message)
+    assert reason == "ValueError: " + "ab " * 49 + "password=<EMA"
+    assert out == "ERROR: " + reason.replace("password=<EMA", "password=<SECRET_1>")
+    assert dict(rmap) == {"<SECRET_1>": "<EMA"}
+    held = dict(rmap)
+    assert tools.prepare_output(out, rmap, 4096) == out.replace("<SECRET_1>", f"{L}SECRET_1{G}")
+    assert dict(rmap) == held

@@ -875,11 +875,17 @@ _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # cut (`<SECRET_1`, `<SECRET_`, `<SECRET`, `<SEC`, `<S`). The whole value must match: any other character, a mixed form, a token of
 # another kind (`<EMAIL_1>`, `‹IPV4_1›`, `<EMA`) or a glued secret is masked whole.
 # Why SECRET only: the purpose is that a tool's error text, redacted twice (a throwaway map, then the run's), makes no junk map
-# entry for the escaped `password=‹SECRET_1›` the first pass wrote. The redactor only writes a SECRET token after a secret key, so
-# only that shape needs the exemption; `password=‹EMAIL_1› host` or `password=<EMA` is a real credential spelled like another
-# kind's token and is masked (README K43, decision 7: only `‹SECRET_n›` is exempt).
-# STATED LIMIT (fail open, by design): a SECRET value made ONLY of SECRET tokens (or of genuine placeholders of any kind, which the
-# older rule in `_decide` covers: `password=<EMAIL_1> <IPV4_1>`) gets no map entry and stays as typed, whoever wrote it.
+# entry for the escaped `password=‹SECRET_1›` the first pass wrote. A real credential spelled like another kind's token
+# (`password=‹EMAIL_1› host`, `password=<EMA`) is masked (README K43, decision 7: only `‹SECRET_n›` is exempt).
+# TRADE-OFF, accepted (core-c's default, option (a) of the E9 result review; the lead may order (b), an exemption on the tools
+# path only): the first pass writes the tokens of OTHER kinds after a key too (EMAIL, IPV4, APIKEY, JWT, URLCRED, HIGHENTROPY
+# and PHONE run before the SECRET key=value pattern, so `token=<JWT_1>`, `api_key=<APIKEY_1>`, `password=<EMAIL_1>`). After
+# `escape_placeholders` their escaped spelling is a SECRET value and is masked: ONE junk map entry per distinct escaped token
+# (`<SECRET_n>` = `‹JWT_1›`), also for a cut-off opening of another kind (`password=<EMA`). That is accepted, to close the hole
+# where a real credential spelled like another kind's token stayed in clear. Tests: tests/test_redact_own_output*.py.
+# STATED LIMIT (fail open, by design): a SECRET value made ONLY of SECRET tokens, or of a cut-off start of one (`<S`, `<SE` ...
+# `<SECRET_12`: a real 2-character password `<S` or a 4-character `<SEC`), or of genuine placeholders of any kind (the older rule
+# in `_decide`: `password=<EMAIL_1> <IPV4_1>`), gets no map entry and stays as typed, whoever wrote it.
 _OWN_TOKEN = r"(?:<SECRET_[0-9]+>|\u2039SECRET_[0-9]+\u203a)"  # noqa: S105  (a regex, not a credential)
 _OWN_OUTPUT = re.compile(
     rf"[ \t;,]*(?:{_OWN_TOKEN}[ \t;,]*)*(?:<SECRET_[0-9]*|<(?:SECRET|SECRE|SECR|SEC|SE|S))?"

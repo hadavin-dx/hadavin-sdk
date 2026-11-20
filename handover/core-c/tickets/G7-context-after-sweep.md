@@ -81,7 +81,7 @@ Evidence: evidence/G7-1.md (parts in order of work; "G7 fix round 6" is the last
 - `redact_many` (and `settle`) read every string again when `bank_near` flips while a string is read (the fold scan sets it from a FOLDED view): an account in an earlier
   string was left readable (`acct 12345678 paid` then a full-width `BSB 062-000`); the same two strings in the other order masked it.
 - `_decide`'s rule for a value of own tokens is `_OWN_OUTPUT` (not `_ESCAPED_LOOKALIKE`, a name that is gone). STATED LIMIT, pinned by a test: a SECRET value made ONLY of own-label tokens
-  (`password=<EMAIL_1> host`-shaped: token runs separated by space, tab, `;` or `,`, or a cut-off opening `<SEC`, `<SECRET_`) is left unmasked and gets no map entry.
+  (SECRET tokens only, `<SECRET_n>` or `‹SECRET_n›`, runs separated by space, tab, `;` or `,`, or a cut-off start of one: `<S`, `<SE` ... `<SECRET_12`; a real 2-character password `<S` or 4-character `<SEC` stays in clear) is left unmasked and gets no map entry. Tokens of other kinds (`‹EMAIL_1›`, `<EMA`) are masked (E9(2)); genuine placeholders of any kind alone stay under the older rule.
 - redact.py module docstring: there is NO second independent pass on what leaves; the model gate replaces the values the run's map holds (`runmap.enforce_map`) and runs no pattern.
 - The three builders of the p1c inputs moved to tests/p1c_builders.py (the property test no longer executes an evidence file; the parity test was deleted in round 5: SUPERSEDED).
 The first design (context patterns only, bounded rounds) is GONE from the code.
@@ -146,7 +146,7 @@ authorization / `"auth":` about 3, `sig=` up to 11).
 - A secret that no pattern matches and no known value contains is not found (the patterns are the control).
 - The time bound is stated once, in defaults.py and "ROUND 4 changes": CPU time of one thread; a slow machine refuses the hostile text, it never shows it.
 - A hostile text past the WORK limit (`SPELLED_MAX_WORK`, 4,000,000 units; no cap by offsets or forms since round 5) is REFUSED (`InputTooLarge("SpelledWorkTooMuch")`), not masked: availability, never a leak. (Limits that remain after round 3: the caps of 32 offsets and 256 forms are GONE.)
-- A SECRET value of own-label tokens only is left unmasked (stated limit, `_OWN_OUTPUT`).
+- A SECRET value of SECRET tokens only, or a cut-off start of one (`<S` .. `<SECRET_12`), is left unmasked (stated limit, `_OWN_OUTPUT`; tokens of other kinds are masked since E9(2), at the price of one junk map entry on the tools error path).
 - The test generator and the reference loop cover the shapes listed in the evidence, not every chain. The reference shares `find` and `sweep` with the code.
 
 ## Guards that replaced the deleted test (round 3 M7, N2)
@@ -259,8 +259,8 @@ redactor tests pass on try 1 of 3 (22 existing + 3 new; serial, 70 s; slowest: t
 
 Verdict: ONE caller can and does: the tool-error path (both loops); an echoing tool does the same. FIXED in the
 follow-up (coordinator order after ORDER 012 item 2), in `guard/redact.py` `_Redactor._mask` only:
-- Rule: a value that is nothing but ESCAPED look-alikes (`_OWN_OUTPUT`, matched in `_decide`: U+2039, letters/digits, `_`, ASCII digits,
-  U+203A, exactly what `runmap.escape_placeholders` writes) and genuine placeholders, with nothing else but spaces, `;`
+- Rule (as built in the follow-up; narrowed by E9(2) to SECRET only): a value that is nothing but ESCAPED SECRET look-alikes (`_OWN_OUTPUT`, matched in `_decide`: U+2039, `SECRET_`, ASCII digits,
+  U+203A, exactly what `runmap.escape_placeholders` writes for a SECRET token) and genuine placeholders, with nothing else but spaces, `;`
   and `,`, is left alone, as a value of genuine placeholders alone already was. No map entry is made.
 - Result (through `tools.error_reason` then `tools.prepare_output`): `password=‹SECRET_1› host ‹IPV4_1›`, run map
   unchanged; `is_masked(out, map, neutralise_untrusted)` True; `redact_untrusted` of that output returns it unchanged.
