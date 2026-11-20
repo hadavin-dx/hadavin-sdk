@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:14:57Z
+UPDATED_UTC: 2026-11-20T08:15:37Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 9
-CAPACITY: load 7.5 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, light agents 9, heavy agents 0
-DISK: / 59G free, 16% used; git worktrees 12; 143M	/tmp/claude-0;476M	/root/.cache/uv;
+AGENTS_RUNNING: 10
+CAPACITY: load 6.8 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 10, heavy agents 0
+DISK: / 59G free, 15% used; git worktrees 12; 152M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:11:43+00:00
+PUSHED_UTC: 2026-11-20T08:15:04+00:00
 
-(13:44 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:45 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -89,7 +89,7 @@ PUSHED_UTC: 2026-11-20T08:11:43+00:00
 | (new) gfix4 | builder | claude-sonnet-5-5 | gate fix round 4 on review round 3 findings (model_gate.py, enforce functions, gate tests, ticket, request 3) | 07:52 | 08:40 | 1 | running | 4 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
 | (new) secC | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: comprehension | 08:00 | 08:12 | 100 | done | 3 | 0 | reported: wording v3 NOT READY (SEC-wording-review-3.md) |
 | (new) secS | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: style | 08:00 | 08:12 | 100 | done | 3 | 0 | reported: wording v3 NOT READY (SEC-wording-review-3.md) |
-| (new) g7fix3 | builder | claude-sonnet-5-5 | G7 fix round 3 (real fixed point, rollback ghost, spelled loop, deadline, stale text, tests) | 07:55 | 08:45 | 1 | running | 3 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
+| (new) g7fix3 | builder | claude-sonnet-5-5 | G7 fix round 3 (real fixed point, rollback ghost, spelled loop, deadline, stale text, tests) | 07:55 | 08:45 | 100 | done | 3 | 0 | finished: G7 round 3 cherry-picked as da0f71f; builder batch non-perf 2321 passed 4 xfailed 0 failed, perf 10 passed; fixed point, cap 4 kept (max 3 seen), ghost rollback, linear spelled scan, deadline into settle; pushed wip/cloud-core-c/g7-r3 |
 | (new) sec4 | drafter | claude-opus-5-5 | wording v4 rewrite taking review round 3 (comprehension + style) | 07:58 | 08:30 | 100 | done | 4 | 0 | finished: SECURITY-README-v4.md (69 gaps), committed 132bb64 |
 | (new) p1dr2 | builder | claude-sonnet-5-5 | P1d-a review items M6 (independent link oracle) and N1 | 08:00 | 08:40 | 100 | done | 1 | 0 | finished: M6 FIXED (independent link oracle, real leak [evil.com] found and fixed), N1 FIXED; cherry-picked as a2dea63; builder batch 1772 passed, 4 skipped, 4 xfailed; pushed wip/cloud-core-c/p1d-r2 |
 | (new) g8 | drafter | claude-opus-5-5 | ticket G8 glued-rest gap (IPv4, phone, IBAN, UUID, host) | 08:00 | 08:35 | 1 | running | 1 | 0 | backlog 10: glued-rest ticket |
@@ -101,6 +101,8 @@ PUSHED_UTC: 2026-11-20T08:11:43+00:00
 | (new) docfix | builder | claude-sonnet-5-5 | docstring and ticket corrections from the drift report (approvals/gate.py, G-text-deltas.md) | 08:14 | 08:30 | 1 | running | 1 | 0 | E8; redact.py docstrings wait for the G7 round 3 builder |
 | (new) p1dR | reviewer | claude-sonnet-5-5 | EGM RESULT review of P1d-a round 2 (egm:egm-codebase-details): oracle independence, over-defang, fail-before | 08:14 | 08:28 | 100 | done | 2 | 0 | reported: 0 Blocker, 3 Major, 3 Nit (G2-result-review-2.md) |
 | (new) p1dfix3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix (oracle boundaries, four exclusions, linkifier dependency) | - | - | 0 | queued | 3 | 0 | waits for docfix (both touch approvals/gate.py) |
+| (new) g7D3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-design) | 08:17 | 08:30 | 2 | running | 3 | 0 | fresh reviewer after fixes |
+| (new) g7C3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-codebase-details) | 08:17 | 08:30 | 2 | running | 3 | 0 | fresh reviewer after fixes |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
