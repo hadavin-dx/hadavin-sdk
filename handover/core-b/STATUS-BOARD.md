@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:59:24Z
+UPDATED_UTC: 2026-11-20T09:03:49Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.71 of 4 cores, mem 2/15 GB, disk 53G free, 25% used, agents light 4 heavy 2
-DISK: / 53G free, 25% used; worktrees /tmp/core-b-wt 2.6G
+CAPACITY: load 2.35 of 4 cores, mem 2/15 GB, disk 52G free, 25% used, agents light 4 heavy 2
+DISK: / 52G free, 25% used; worktrees /tmp/core-b-wt 2.6G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T08:59:22Z (previous push; this board is pushed right after writing)
-IST: 14:29 IST
+PUSHED_UTC: 2026-11-20T09:03:47Z (previous push; this board is pushed right after writing)
+IST: 14:33 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -181,3 +181,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 08:50Z CORE-A ANSWERS PUSHED: 001 FINAL, 002 FINAL (R-9 HOLD, S-6 DROP, rest accept/reword; open for lead: max_running default 4 vs 1), 003 FINAL (C1: purge DOES delete an expired unsettled row: expiry sets closed_at, the 0007 CHECK forbids a non-open row without it; core-a's recommended rule cannot be built), 004 BUILT (qualified_agents in runtime/agent_loop.py, cli tick uses it; core-a can replace worker.qualified_agents by an import; only Unqualified is skipped, other errors propagate). Open point for lead: the purge role holds table-level DELETE; 'closed rows only' is the WHERE of purge_spend_reservations, not database-enforced.
 
 08:55Z STATUS FOR THE LEAD. CORE-A ANSWER FILES: 001 DONE, 002 DONE, 003 DONE, 004 DONE (all pushed 08:50Z). ORDER 022: (1) E5 FIXES: B5b DONE+reviewed CLEAN, B5a (search_path decoy, PG17 MAINTAIN, plain migrate refused unless --no-roles) MERGED on cloud/core-b, review next, PG17 real-server test skipped here (server is 16); step A Majors DONE; (2) who_else cherry-pick 7caa8c15c DONE, stop-state suite twice green; (3) F-install: release/outbox order/transient retry DONE; core-c blockers unchanged; (4) evidence batch 7: after reviewer of B5a. LIVE AGENTS (sonnet): step C round 5 builder (memory.py sums, overflow mapping; since 08:51) | D-config round 4 merged just now | none else: starting hostile reviewer for B5a and evidence batch 7 next.
+
+09:03Z DEADLINE 09:05Z: TWO TESTED COMMITS ON cloud/core-b, both pushed: (1) E5 FIXES: B5b reset-ref/wording (reviewed CLEAN), B5a search_path/MAINTAIN/--no-roles (merged, tested: step B suite green on the merged tree, review 6 found 2 Majors about docs and role-reset scope, fix round 2 B5c running); (2) RELEASE COMMAND (ORDER 020): built, 3 review rounds, CLEAN (review 5), merged. F-install gate install: built on wip/cloud-core-b/Y-integration + F-install-4, BLOCKED by core-c (NO_MAP request 3, usd_cap, mark on ProviderExhausted, K5). LIVE AGENTS (sonnet/haiku): B5c step B fix round 2 (since 08:59Z) | evidence batch 7 whole suite on head fb9a4fb42 (haiku, since 08:57Z). Nothing else running; nothing blocked on the lead.
