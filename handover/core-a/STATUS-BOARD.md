@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:12:52Z
+UPDATED_UTC: 2026-11-20T06:13:06Z
 SESSION: core-a
 ORDER: 014 (002 to 013 standing)
 STATE: WORKING
@@ -14,7 +14,7 @@ FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's 
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: trial lands: record findings; at every board: look for core-b's requests/001.answer.md
-PUSHED_UTC: 2026-11-20T06:12:40Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:12:54Z (the push before this board)
 NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scratch copies left on disk as before
 
 ## QUEUE ITEMS
