@@ -46,7 +46,7 @@ def test_g12_the_copy_in_another_string_of_the_call_is_swept():
         PW[:2] + "ｎ" + PW[3:],  # full-width n
         PW[:6] + "２" + PW[7:],  # full-width 2
         PW[:2] + "ⓝ" + PW[3:],  # circled n
-        PW[:2] + "​" + PW[2:],  # zero-width space inside
+        PW[:2] + "\u200b" + PW[2:],  # zero-width space inside
         PW[:3] + "́" + PW[3:],  # combining acute
     ],
     ids=["fullwidth-letter", "fullwidth-digit", "circled", "zero-width", "combining"],
