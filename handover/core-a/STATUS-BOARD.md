@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:22:51Z
+UPDATED_UTC: 2026-11-20T16:23:19Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 4
-CAPACITY: load 4.69 of 4 cores (1-minute average), mem 1.8/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 3
+CAPACITY: load 4.85 of 4 cores (1-minute average), mem 2.1/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 56G 20%; 655M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 16:55 cfix (my stale contract tests) + doorm (144 door failures on the merged tree) + docfix24 + rev-t1 running; then fresh reviews of cfix/doorm diffs; N1 repeat the dry-run + N2 review when core-b pushes the 3-Major fixes
-PUSHED_UTC: 2026-11-20T16:22:24Z (the push before this board)
+PUSHED_UTC: 2026-11-20T16:22:57Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -109,30 +109,35 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | cfix | builder (own worktree, nothing pushed by it) | sonnet | fix MY stale contract tests (test_meter.py, test_store_spend_reservations.py) to core-b's current API (settle agent_id, caps from hadavin_caps, no right on spend_reservations) on the merged tree | 16:55 | 35 min | 5 | running | - | 0 | integ-pg findings: my tests break on the combined tree |
 | doorm | builder (own worktree, nothing pushed by it) | sonnet | root cause of the 144 trigger-door failures on the merged tree (crash-matrix children never end: suspected missing hadavin_caps seed in the child schema) + fix in test support only | 16:55 | 35 min | 5 | running | - | 0 | integ-pg findings: my tests break on the combined tree |
 | t1-fix | builder in /home/user/wt/t1 | sonnet | rev-t1 findings: restore the positive read as portal/reset login, all 5 statement kinds per login, purge keep cases, strengthen the 3 weaker duplicates, add the missing exact-reserve case | 17:00 | 20 min | 5 | running | - | 0 | rev-t1 findings |
-| rev-dfix24 | fresh independent reviewer (codebase-details), read-only | sonnet | review of d-fix24 (conflict_events_per_minute wiring) + the post-merge README patch text | 17:05 | 12 min | 5 | running | 1 | 0 | fresh review of each diff |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 1934 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 73s ago | running | matched by name in ps |
-| 1944 | uv run --all-extras --group test pytest -q -n 2 -rfE --no-header -p no | core-a session or its agent | 73s ago | running | matched by name in ps |
-| 1949 | /home/user/wt/cfix/.venv/bin/python /home/user/wt/cfix/.venv/bin/pytes | core-a session or its agent | 73s ago | running | matched by name in ps |
-| 8032 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 8033 | timeout 1500 uv run --all-extras --group test pytest -q -n 3 -p no:cac | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 8035 | uv run --all-extras --group test pytest -q -n 3 -p no:cacheprovider -- | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 8038 | /home/user/wt/doorm/.venv/bin/python /home/user/wt/doorm/.venv/bin/pyt | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 9648 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 9658 | postgres: postgres postgres 127.0.0.1(52758) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 9659 | postgres: postgres postgres 127.0.0.1(52766) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 9660 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 9668 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 9675 | postgres: postgres postgres 127.0.0.1(52884) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36504s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 36504s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 36504s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 36504s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36504s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36504s ago | running | matched by name in ps |
+| 1934 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 101s ago | running | matched by name in ps |
+| 1944 | uv run --all-extras --group test pytest -q -n 2 -rfE --no-header -p no | core-a session or its agent | 101s ago | running | matched by name in ps |
+| 1949 | /home/user/wt/cfix/.venv/bin/python /home/user/wt/cfix/.venv/bin/pytes | core-a session or its agent | 101s ago | running | matched by name in ps |
+| 8032 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 50s ago | running | matched by name in ps |
+| 8033 | timeout 1500 uv run --all-extras --group test pytest -q -n 3 -p no:cac | core-a session or its agent | 50s ago | running | matched by name in ps |
+| 8035 | uv run --all-extras --group test pytest -q -n 3 -p no:cacheprovider -- | core-a session or its agent | 50s ago | running | matched by name in ps |
+| 8038 | /home/user/wt/doorm/.venv/bin/python /home/user/wt/doorm/.venv/bin/pyt | core-a session or its agent | 50s ago | running | matched by name in ps |
+| 11633 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 11640 | .venv/bin/python -m pytest tests/contracts/test_t1_reserve_cap.py -n 2 | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36532s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 36532s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 36532s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 36532s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36532s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36532s ago | running | matched by name in ps |
+| 12227 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12231 | postgres: postgres postgres 127.0.0.1(56104) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12232 | postgres: postgres postgres 127.0.0.1(56106) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12242 | postgres: postgres postgres 127.0.0.1(56188) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12245 | postgres: postgres postgres 127.0.0.1(56220) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12251 | postgres: postgres postgres 127.0.0.1(56276) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12252 | postgres: postgres postgres 127.0.0.1(56290) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12254 | postgres: postgres postgres 127.0.0.1(56296) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12255 | postgres: postgres postgres 127.0.0.1(56306) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12365 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -194,6 +199,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 16:31 d-fix24 reviewed fresh: NO Blocker/Major (the conflict setting is read only from the settings on the production path; the cap test uses the real limiter and an injected clock, drops are counted, per sender). Nits: the Runner default 10 can drift from core-b's TRIGGER_CONFLICT_EVENTS_DEFAULT: add post-merge `worker.CONFLICT_EVENTS_PER_MINUTE == defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT` (cannot be written on core-a alone); README post-merge patch: one overclaim and one wrong cite fixed in the notes of handover/core-a/pr/README-trigger-postmerge.md. Running: t1-fix, cfix, doorm.
 - 17:05 d-fix24 BUILT (cloud/core-a): the dead setting triggers.conflict_events_per_minute is now read by the worker from core-b's TriggerSettings (ConfigError if missing; no make_app parameter any more), 5 tests (3 -> 3 written + 27 dropped of 30; 3 vs 7 -> (3,27) vs (7,23); red proof 3 of 5), worker spend docstring corrected, post-merge README patch text in handover/core-a/pr/README-trigger-postmerge.md; tests/triggers + anchors + runner 1259 passed 312 skipped 0 failed. Note the Runner keeps a default 10 for ~50 direct callers (a second source; reviewer checks the drift). Fresh review rev-dfix24 running. AGENTS 4 (t1-fix, cfix, doorm, rev-dfix24).
 - 17:00 rev-t1 DONE: the merged T1 file (wip/core-a-t1-merge 276365373): NO Blocker; all 18 ported cases are at least as strict as the originals; ONE Major: the portal/reset refusal case lost core-a's positive read as the login (a missing schema USAGE would make every statement fail with 42501 and the test would pass without testing the table grant) -> being restored; nits (being fixed by t1-fix): statement kinds incomplete for purge/portal/reset, purge 'keeps expired/newer-settled' untested, three of CORE-B's 'duplicate' cases are WEAKER than the originals (month cap over two days drops the per-day counter and row count; settles-below-reserve drops the 5-row/open-id/settled_usd checks; control drops the month counter) and 'settle at exactly the reserved amount then the cap stays shut' was in no case, races accept a serial order (cannot prove interleaving). Everything in the file is PG-only (no proof without a DSN). Do NOT copy 276365373 yet: wait for the t1-fix push.
 - 16:55 INTEGRATION FINDING (integ-pg on the merged tree 6c89f0495, PG16.15, HADAVIN_REQUIRE_PG=1): MY tests break on the combined tree, so the dry-run is NOT clean: (1) tests/triggers 144 failed / 1218 passed: crash matrix 22 + 120 and t5_postgres 2, first error 'the child did not end within 20 s' (83) / 30 s (8) and `assert () == ('store.add_spend:before',)`: the crash-point children never reach their points; suspected cause: since core-b's live loop reserves before the call, the child's schema has no hadavin_caps rows (core-b seeds them through a conftest wrapper a child process does not get): agent doorm diagnoses with evidence and fixes the TEST SUPPORT (patch for the lead: handover/core-a/pr/door-merged-support.patch); (2) test_meter.py 152 and test_store_spend_reservations.py 156 failures = MY contract tests still use the old `settle` without agent_id (TypeError) and direct rights on spend_reservations (InsufficientPrivilege): agent cfix re-expresses them on core-b's API; (3) test_t1_reserve_cap_core_c 19 + _core_a 6 failures: same causes, SUPERSEDED by the merged T1 (wip/core-a-t1-merge): delete the two copies; (4) test_grants_negative_roles.py 17: core-c's file: take mine (wip/core-a-for-grant-tests, 88 passed on core-b). Also: the lead's literal command `pytest tests/test_t5*.py` matches no file (the t5 tests live in tests/triggers/). Details: handover/core-a/evidence/integ-pg-run.md. AGENTS 4 (cfix, doorm, docfix24, rev-t1).
