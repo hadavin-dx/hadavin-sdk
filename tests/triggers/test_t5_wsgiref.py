@@ -221,8 +221,10 @@ def needles() -> list[str]:
     return [DOC_MARK, KEY, LINE_MARK, BOOM_MARK, SECRET, body.decode(), "Traceback", 'File "']
 
 
-def check_quiet(seen: Seen, capsys, caplog) -> None:
-    """Call after the server is closed, so every connection thread has written what it writes."""
+def check_quiet(seen: Seen, capsys, caplog, *, silent: bool = False) -> None:
+    """Call after the server is closed, so every connection thread has written what it writes. An empty
+    answer fails unless the case is one where nothing is written on purpose (`silent=True`)."""
+    assert seen.raw or silent, f"the client got no answer at all ({seen.end})"
     if seen.raw:
         assert seen.raw.startswith(b"HTTP/1."), seen.raw[:80]
         assert seen.status is not None
@@ -412,7 +414,7 @@ def test_a_timeout_after_the_read_phase_is_not_answered_as_a_stall(monkeypatch, 
     assert start.calls == []
     assert "connection ended: TimeoutError" in caplog.text
     assert "refused before the endpoint" not in caplog.text
-    check_quiet(seen, capsys, caplog)
+    check_quiet(seen, capsys, caplog, silent=True)
 
 
 # --- design review 1 and the fuzz findings F1 to F4 --------------------------------------------------------
@@ -480,7 +482,7 @@ def test_f2_a_request_line_without_a_version_is_closed_on_purpose(capsys, caplog
     assert trigger_records(caplog) == [
         ("DEBUG", "trigger server: request line without an HTTP version, closed with no answer")
     ]
-    check_quiet(seen, capsys, caplog)
+    check_quiet(seen, capsys, caplog, silent=True)
 
 
 @pytest.mark.parametrize("case", ["signed names", "one more header"])
@@ -571,7 +573,7 @@ def test_n9_a_timeout_while_a_refusal_is_written_gives_no_second_status_line(
         trigger_records(caplog)
     )
     assert start.calls == []
-    check_quiet(seen, capsys, caplog)
+    check_quiet(seen, capsys, caplog, silent=True)
 
 
 LARGE_ANSWER = 8 * 1024 * 1024
@@ -623,7 +625,12 @@ def test_n9_a_client_that_never_reads_gets_one_status_line_and_the_server_goes_o
     else:
         assert after.status == 202 and len(start.calls) == 2
     assert "refused before the endpoint" not in caplog.text
-    check_quiet(seen if answer == "endpoint" else Seen(b"", "closed", 0.0), capsys, caplog)
+    check_quiet(
+        seen if answer == "endpoint" else Seen(b"", "closed", 0.0),
+        capsys,
+        caplog,
+        silent=answer != "endpoint",
+    )
 
 
 def test_n10_refusals_before_the_signature_are_debug_and_a_verified_request_is_info(capsys, caplog):
@@ -749,7 +756,7 @@ def test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line(
     assert after.status == 202  # the server goes on
     lines = _server_lines(caplog)
     assert lines == [(level, f"trigger server: connection error: {error.__name__}")], lines
-    check_quiet(seen, capsys, caplog)
+    check_quiet(seen, capsys, caplog, silent=True)
 
 
 @pytest.mark.parametrize(
@@ -768,7 +775,7 @@ def test_a_fault_inside_a_request_is_debug_for_a_connection_and_warning_otherwis
         assert _handlers_done()
     lines = _server_lines(caplog)
     assert lines == [(level, f"trigger server: connection ended: {error.__name__}")], lines
-    check_quiet(seen, capsys, caplog)
+    check_quiet(seen, capsys, caplog, silent=True)
 
 
 # --- code review 1, DC1-1: the port is exclusive ------------------------------------------------------------

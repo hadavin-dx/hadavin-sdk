@@ -404,8 +404,8 @@ def test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken():
             began = time.monotonic()
             assert runner.start(_req(1)) == (503, {})
             assert 0.3 <= time.monotonic() - began < 5.0
-            assert not runner._slots.acquire(
-                blocking=False
+            assert not runner._slots.acquire(blocking=False), (
+                "the slot was given back before the loop ended"
             )  # handle has not ended: slot not given back
             assert runner.start(_req(2)) == (503, {})
         finally:
@@ -484,8 +484,9 @@ def test_closed_runner_takes_no_new_work(rt):
 
 def test_bad_arguments_are_refused(rt):
     for kw in ({"max_running": 0}, {"ack_wait_s": 0}, {"poll_s": 0}):
-        with pytest.raises(ValueError, match="above zero"):
+        with pytest.raises(ValueError) as refused:
             Runner(rt, rt.store, **kw)
+        assert "above zero" in str(refused.value), f"bound {kw} refused with another text"
     with Runner(rt, rt.store) as runner:
         assert (
             runner._slots._value == 1
@@ -818,7 +819,8 @@ def test_serve_gives_the_previous_sigterm_handler_back():
         kill.join(30)
         server.server_close()
         signal.signal(signal.SIGTERM, before)
-    assert runner.closed and signal.getsignal(signal.SIGTERM) is before
+    assert runner.closed, "serve returned without closing the runner"
+    assert signal.getsignal(signal.SIGTERM) is before
     assert server.socket.fileno() == -1
 
 
