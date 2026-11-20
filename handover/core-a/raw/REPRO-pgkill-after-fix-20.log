@@ -1,0 +1,21 @@
+run 1: PASS (rc=0) 1 passed in 1.58s
+run 2: PASS (rc=0) 1 passed in 1.63s
+run 3: PASS (rc=0) 1 passed in 1.94s
+run 4: PASS (rc=0) 1 passed in 1.67s
+run 5: PASS (rc=0) 1 passed in 1.62s
+run 6: PASS (rc=0) 1 passed in 1.82s
+run 7: PASS (rc=0) 1 passed in 1.74s
+run 8: PASS (rc=0) 1 passed in 1.66s
+run 9: PASS (rc=0) 1 passed in 1.58s
+run 10: PASS (rc=0) 1 passed in 1.94s
+run 11: PASS (rc=0) 1 passed in 1.69s
+run 12: PASS (rc=0) 1 passed in 1.58s
+run 13: PASS (rc=0) 1 passed in 1.79s
+run 14: PASS (rc=0) 1 passed in 1.60s
+run 15: PASS (rc=0) 1 passed in 1.61s
+run 16: PASS (rc=0) 1 passed in 1.74s
+run 17: PASS (rc=0) 1 passed in 1.56s
+run 18: PASS (rc=0) 1 passed in 1.76s
+run 19: PASS (rc=0) 1 passed in 1.67s
+run 20: PASS (rc=0) 1 passed in 1.63s
+TOTAL: 20 passed, 0 failed of 20
