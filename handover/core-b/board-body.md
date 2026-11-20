@@ -1,17 +1,17 @@
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a5a79255 | builder | fable | step B source (migration 0006, grants, store, limits, CLI) in worktree /tmp/core-b-wt/B | 05:32 | +25 min | UNVERIFIED | running | review runs alongside | 0 | lead GO BUILD B |
-| a862ea5f | builder | fable | step C source (config.py price rule, prices_as_of) in worktree /tmp/core-b-wt/C | 05:32 | +15 min | UNVERIFIED | running | review runs alongside | 0 | lead GO BUILD C |
-| a86102dd | builder (tests) | fable | tests/test_audit_drain.py and mutants M1 to M9 for step A, worktree /tmp/core-b-wt/A-tests | 05:32 | +25 min | UNVERIFIED | running | none | 0 | tests by a different agent than the builder |
-| a5de8cd7 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:35 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | ORDER 004 item 3; started through the Skill tool |
-| adaa7521 | reviewer (egm-codebase-details) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:35 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | same stage, runs beside the other reviewer |
-| af8c3d3b | lookup | fable | checks lead draft B against the code, writes tickets/B-stop-state.md | 05:27 | +5 min | UNVERIFIED | running | 0 of 1 | 0 | ORDER 004 item 3 |
-| a2c397e1 | lookup | fable | tickets/C-price-constraint.md (188 lines) | 05:27 | done | 100 | done | 0 of 1 | 0 | ORDER 004 item 3 |
-| a64fad56 | builder | fable | step A source: commit 5eb1e7e on cloud/core-b (63 lines added, 14 removed) | 05:27 | done | 100 | done | none | 0 | 127 passed, 5 skipped on 4 existing test files; full suite NOT run |
-| ae122278 | lookup | fable | notes/heads-money.md | 05:22 | done | 100 | done | n/a | 0 | reserve/settle already exists on P4d-a2 (store) and P4b1 (caller) |
-| a367057d | lookup | fable | notes/heads-stop-audit-price.md | 05:22 | done | 100 | done | n/a | 0 | |
-| a468ce14 | lookup | fable | LANE-MAP.md | 05:19 | done | 100 | done | n/a | 0 | |
+| B-tests | builder (tests) | fable | tests/test_stop_state_roles.py with real database logins, and mutants; worktree /tmp/core-b-wt/B-tests | 05:38 | +30 min | UNVERIFIED | running | none | 0 | the B builder proved nothing under a real non-owner login |
+| a87e21e9 | builder (tests) | fable | tests/test_price_constraint.py, fail-before proof, mutants; worktree C-tests | 05:36 | +15 min | UNVERIFIED | running | none | 0 | tests by a different agent |
+| a27419bd | builder | fable | D-config: trigger settings in config.py, registry cross-check, App.secrets; worktree D | 05:36 | +15 min | UNVERIFIED | running | none | 0 | request 001 from core-a, accepted |
+| a86102dd | builder (tests) | fable | tests/test_audit_drain.py and mutants M1 to M9; worktree A-tests | 05:32 | +15 min | UNVERIFIED | running | none | 0 | tests by a different agent |
+| a5de8cd7 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:33 | +5 min | UNVERIFIED | running | 1 of 1 | 0 | ORDER 004 item 3, through the Skill tool |
+| adaa7521 | reviewer (egm-codebase-details) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:33 | +7 min | UNVERIFIED | running | 1 of 1 | 0 | same stage |
+| af8c3d3b | lookup | fable | checks lead draft B against the code, writes tickets/B-stop-state.md | 05:27 | overdue | UNVERIFIED | running | 0 of 1 | 0 | slower than the build: the B builder worked from the lead draft; I compare when it lands |
+| a5a79255 | builder | fable | step B source: commit 80a07ce (11 files, 225 added, 41 removed) | 05:32 | done | 100 | done | review alongside | 0 | 304 passed on 6 test files with the owner login; reset path under a real reset login NOT proven |
+| a862ea5f | builder | fable | step C source: commit eb775a8 (59 lines added) | 05:32 | done | 100 | done | review alongside | 0 | 725 passed, 4 skipped on 14 test files; full suite NOT run |
+| a64fad56 | builder | fable | step A source: commit 5eb1e7e; docs commit e5a64ee by me | 05:27 | done | 100 | done | none | 0 | 127 passed, 5 skipped |
+| a2c397e1, ae122278, a367057d, a468ce14 | lookups | fable | ticket C, notes, lane map | 05:19 | done | 100 | done | n/a | 0 | |
 | a65b1e8c, ab7f938c | reviewers (egm) | fable | ORDER 001 dry run | 04:10 | done | 100 | done | 1 of 1 | 0 | proof only |
 
 ## SHELLS AND PROCESSES
@@ -23,6 +23,8 @@
 | suite | branch and SHA | run | passed / failed / errors | first failing line | state | reason |
 |---|---|---|---|---|---|---|
 | 4 existing files (test_p7_tick, warden_port/test_audit_chain, test_s2_audit, contracts/test_capabilities) | local/code-A 5b92c43 (now 5eb1e7e on cloud/core-b) | 1 | 127 passed / 0 failed / 5 skipped | none | done | step A builder's per-file check; Postgres cases skipped in that run |
+| 6 files (k2_migrations, p2_postgres, p7_store, k5_round10_postgres, migration_numbers_guards, migration_numbers) | local/code-B 79f0d7f (80a07ce on cloud/core-b) | 1 | 304 passed / 0 / 0 | none | done | step B builder, PostgreSQL 16, owner login only |
+| 14 files around config and pilot fixtures | local/code-C cbb9c2f (eb775a8) | 2 | 725 passed / 0 failed / 4 skipped | run 1: 24 failed, pilot fixture lacked prices_as_of | done | step C builder; one fixture line added |
 | full suite | none | 0 | | | NOT RUN | one batch run when A, B and C are coded (lead order) |
 
 ## QUEUE ITEMS
@@ -34,10 +36,10 @@
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
 | INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
-| REQUEST 001 from core-a (config for step D) | READY | 10 | requests/001.answer.md (accepted) | 0 | built as 'code D-config:' after C lands: both edit config.py |
-| BUILD A audit drain | RUNNING | 60 | commit 5eb1e7e (source); tests being written | 1 | source done; new test file and mutants not done yet |
-| BUILD B stop state | RUNNING | 5 | none yet | 1 | |
-| BUILD C price constraint | RUNNING | 5 | none yet | 1 | |
+| REQUEST 001 from core-a (config for step D) | RUNNING | 30 | requests/001.answer.md (accepted) | 0 | built as 'code D-config:' after C lands: both edit config.py |
+| BUILD A audit drain | RUNNING | 70 | commits 5eb1e7e (source), e5a64ee (docs) | 1 | new test file and mutants not done yet |
+| BUILD B stop state | RUNNING | 55 | commit 80a07ce (source) | 1 | role tests, mutants, docs and the review round not done |
+| BUILD C price constraint | RUNNING | 60 | commit eb775a8 (source) | 1 | new test file, mutants, CHANGELOG line and the review round not done |
 | T3 one EGM review round per ticket | RUNNING | 10 | tickets/F-store-review-1.md (not yet) | 1 | F-store first (two reviewers now); then B, C, F-install one after the other: EGM stages never overlap |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 
