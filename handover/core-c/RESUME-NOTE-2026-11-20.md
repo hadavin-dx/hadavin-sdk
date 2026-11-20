@@ -1,35 +1,42 @@
-# RESUME NOTE of core-c, 2026-11-20 06:40 UTC (12:10 IST). The Fable limit ended all agents at about 06:36 UTC.
+# RESUME NOTE of core-c, written 1735Z (owner STOP order ~23:03 IST). Supersedes the 06:40Z note (kept in git history).
+Everything below was read from git at the moment of the stop. Repo /home/user/hadavin-sdk, remote hadavin-dx/hadavin-sdk. Session model: claude-sonnet-5-5 (proof at the top of handover/core-c/REPORT.md).
 
-Everything below was read from git and the files at the moment of the stop, not from memory. Models from now on (owner order): egm-brainstorm/draft/resolve = claude-opus-5-5; every other EGM reviewer, builders and agents = claude-sonnet-5-5; lookups = claude-haiku-5-5. This session itself now runs on Sonnet 5.5.
+## The one head
+cloud/core-c = 0b4db37c8. It holds everything verified: gate (NO_MAP, usd_cap, mark on ProviderExhausted, G13/G13b/G13c/G13d net, G14 per-message cache + audit_dropped, Q1 reply masking + guard/putback.py, P7 LimitsMeter), redactor (G4c/G4d host names, G7, G8, G9/G9b/G9c, G10, G12/G12b/G12c/G12d/G12e, E9, E14), docs DOCS2-DOCS6 in root SECURITY.md/CHANGELOG.md/README.md (docs review cap reached: open style items in tickets/DOCS-style-review-5.md and evidence/DOCS6-notes.md). The g2 and g3 branches are superseded (evidence/REC-notes.md).
+Suites at idle on 2552bcc95 (before the later merges): non-perf 16071 passed, 2 failed (vendor string in the lead's handover/BRIEF-PREAMBLE.md; k5 recording, fixed); perf 96 passed. Whole-tree mutants on the merged head: g12 50/50, gate 158/159 (R8 equivalent); redact_mutants whole was still running at the stop (log /tmp/core-c-mut-final.log, lost if the container restarts): RE-RUN IT.
 
-## Branches and tips (all pushed; fetch them with `git fetch origin <branch>`)
-| branch | tip | state |
-|---|---|---|
-| cloud/core-c | 47ea69e (+ later board commits) | VERIFIED code: "code B" grants tests, "code G: G0", "code F" gate f16d48e (ORDER 011 fixes), "code G: G1" fold + ORDER 010, "code G: G7" 4864984 (whole class), "code F" T1/0007 tests 12cdacc. Known red: tests/test_k5_producers.py (SPINE patch requests/1-producers.patch) |
-| wip/cloud-core-c/g1-fold | 8e4d234 | the fold alone on main (superseded by the commits on cloud/core-c) |
-| wip/cloud-core-c/g2-p1d-a | a3bae9b | P1d-a on main, both inherited failures fixed; 7879 passed; mutants 48 of 51 (A11, A15 inherited, A43 caused by the fix) |
-| wip/cloud-core-c/g3-p2d-port | ef09bf5 | P2d-1 port on the fold alone; 8237 passed, 1 failed (since fixed on cloud/core-c) |
-| wip/cloud-core-c/int-g2g3-interrupted | 5316e14 | INTERRUPTED integration of G2 + G3 onto cloud/core-c f16d48e + G7; NOT verified; do not build on it |
-| wip/cloud-core-c/gate-r2-interrupted | 9b5f458 | INTERRUPTED working tree of the gate round 2 and the grants rework; NOT verified, may not import |
+## Branches NOT merged (pushed; tips)
+| branch | tip |
+|---|---|
+| wip/cloud-core-c/q1-reply-mask | d4add25f9 |
+| wip/cloud-core-c/q2-spend | 7173d30cc |
+| wip/cloud-core-c/q3-g15-net | e67ab15c4 |
+| wip/cloud-core-c/p7b | 5a1be73c8 |
+| wip/cloud-core-c/grants | b55d21865 |
+| wip/cloud-core-c/p3-scratch | c4c554dc4 |
+| wip/cloud-core-c/f-findings | 9622a6840 |
+| wip/cloud-core-c/g12e | 4731c671b |
+| wip/cloud-core-c/g14 | 671801bc3 |
+| wip/cloud-core-c/g9c | 00c192d65 |
+| wip/cloud-core-c/g13d | 64516aae8 |
+| wip/cloud-core-c/g4d | 23c5ea3b6 |
+| wip/cloud-core-c/docs6 | 4c061cd72 |
+- q2-spend: fail-closed spend (gate side) incl. Reply.cost_verified (models.py, one line) + request for core-b; whole gate_mutants NOT RUN; needs core-b (cost_verified in adapters, usd_cap at install, attempt_costs from llm/retry.py). Merge after a fresh review and a whole gate_mutants run.
+- p7b: LimitsMeter review fixes; gate_mutants whole NOT RUN (3 new mutants unchecked).
+- q3-g15-net: G15 independent final net (guard/finalnet.py); status as of the stop in evidence/Q3-build-notes.md if present; otherwise unfinished.
+- grants: re-pinned grant tests for core-b's head (b55d21865): base is core-b's branch, not mergeable onto cloud/core-c; core-b/core-a take it.
+- p3-scratch: gate end-to-end with core-b's real store (18 pass, 2 strict xfail): scratch merge of core-b + core-c; findings in requests/for-core-b-p3-findings.md.
+Merging order when resumed: q1 is already merged; then p7b, q2 (both edit model_gate.py: expect small conflicts), q3. After each: ruff, tests/test_model_gate.py + test_runmap_enforce_map.py + test_gate_mutants_picked_up.py + test_gate_install_callers.py, whole gate_mutants (only R8), fresh review of the diff.
 
-## Open items: exact stop point and next step
-1. GATE ROUND 2 (lead review ORDER 015 + design reviews D1-D9, E1-E5 + ORDER 017). Stop: agent ae03e30a stopped mid-edit. The files are in wip/cloud-core-c/gate-r2-interrupted (src/hadavin_sdk/guard/model_gate.py, runmap.py, tests/test_model_gate.py, test_runmap_enforce_map.py, new tests/test_runmap_map_write.py, test_runmap_is_masked.py deleted, three redact test files edited). Unknown: whether it imports or passes; nothing of round 2 was verified. Next: start from cloud/core-c f16d48e (verified), take what is useful from the interrupted snapshot by `git diff f16d48e 9b5f458 -- <file>`, finish: MJ2 enforce_map to a fixed point with a cap; E1 own larger cap (false refusal near the size cap); E2 placeholder-edge corruption; m-new-1..7; delete is_masked (lead m7; three test files repointed); D1-D9; six refusal reasons incl. usd_cap; stage-name sample word; run tests/gate_mutants.py once on the final code. Then ORDER 017: `mapping` REQUIRED keyword with `NO_MAP` constant and a no-map marker in the audit row; write requests/3-bind-mapping-required.md (include the gate exception type name for pre-call failures); cost-absent reply = no settle; one gate exception type with a code for every pre-call failure that is not SpendRefused; protect marker tokens from the sweep and refuse when a known value equals a marker word, a tool name or a call id (reproduce first with the real producer functions).
-2. INTEGRATION G2 + G3 onto the cloud/core-c tip. Stop: agent ad457b53 had cherry-picked all 5 P1d-a and 6 P2d-1 commits plus G7 into /tmp/core-c-int (branch wip-int-g2g3, snapshot 5316e14 on the remote); uncommitted work was in guard/redact.py, tests/test_redact_context_after_sweep.py, tests/test_redact_fold.py (small, 3 files, 11 insertions). It never ran its batch. Not done: the follow-ups of ORDER 014/016c (typography tests; the clean() cap test and timings; the glued e-mail tail fix `anna.m@example.org9` with a look at the other value kinds), the P1d-a mutant A43 row test, tests/test_text_parts_together.py. Next: continue in /tmp/core-c-int (or recreate it from wip/cloud-core-c/int-g2g3-interrupted), settle the redact.py three-way merge (G7 second pass + P1d-a `_sub_glued` + G3 fold scan; `actions` must count both passes), re-pin, ONE batch, then pick onto cloud/core-c as "code G:" commits. Note the lead deleted is_masked: G3's cb-1-1 test adapts (use `RedactionResult.actions`).
-3. GRANTS TEST REWORK (tests/test_grants_negative_roles.py for core-b's map). Stop: agent a4bfb7dd stopped; a 33-line change is in the interrupted snapshot; nothing verified. A leftover PostgreSQL 16 server on port 41803 was stopped by me (data /tmp/core-c-grants-pg, still on disk; worktree /tmp/core-c-grants at core-b 576f292 still exists). Next: finish as briefed (two reviewed write lists WRITES_BEFORE_STEP_B / WRITES_AFTER_STEP_B chosen by one feature test; the 12 to-enable cases as real tests; mutants killed); evidence/B-grants-rework.md; then remove the worktree and /tmp/core-c-grants-pg.
-4. EGM RESULT REVIEW OF THE G7 REDACTOR CHANGE (round 1). Stop: both reviewers (adf174d4, a432e8b1) died before reporting; NOTHING of this review exists. Snapshot for them is under /tmp/claude-0/-home-user/1ecfcb92-30a8-505b-a8c3-27491ed2aff6/scratchpad/refs/g7 (4864984). Next: rerun egm:egm-review-loop (Skill tool; reviewers egm:egm-design, egm:egm-codebase-details, model sonnet) and write tickets/G7-result-review-1.md. Questions to put to them are in the previous agents' prompts: unmask/corrupt by the second pass, chains beyond the two known, own-output rule as a smuggling path, cost, can the property test fail.
-5. P1c GAPS (G4). Not started. Probe evidence done (evidence/P1c-probe.md). Ticket tickets/G4-P1c-redactor-gaps.md written; the lead has not answered its 3 questions (kind name ENCODED, host key list, non-private names stay unmasked). Next: build base64 view + whole host names after the integration, on the integrated tree.
-6. OPEN DECISIONS for the lead (also in QUESTIONS.md/ESCALATIONS.md): E6 answered by ORDER 017 (to build, item 1). G7 is a single extra pass, not the capped loop (lead may prefer the loop). G6 wording (G5 docstrings) text revision 2 in tickets/G-review-1.md awaits OK. SECURITY-WORDING-draft.md revision 2 for the lead.
-7. NOT RUN anywhere: full test suite, Python 3.12, PostgreSQL 17, the textnorm mutant list, P1d-a mutants A11/A15/A43.
-8. One-minute board cron: refused by the session permission layer (E1). Boards are pushed per tool batch.
+## Open packages (next steps)
+1. Q1b (Q1 review: tickets/Q1-result-review-1-codebase.md): ReplyMaskFailed is a GateRefused but the call was paid (sibling class or fix docstrings); non-str values pass raw (fix() and reply.text); BaseException in _mask_reply writes no row/settle; put_back exposure (document, apply only to approved plan fields); mask tool-call name; per-tool budget.
+2. Q2/P7b/Q3 merges as above, each with a fresh egm reviewer.
+3. P8 ledger (tickets/P8-flow-review-1-design.md): item 4 quarantine/drop path for a planted-value refusal (G14 did only the cache); item 5 reproduce the 256 KB scan cost at idle and pick one number; item 6 = Q3 G15; item 7 masked flag, K16 and object_ref on reserve_interrupted/reservation_invalid; fold F1-F3, E25=(a) and a promised/not-promised table into SECURITY.md (docs change).
+4. P10 perf run at idle (load under 2) on the final head; also re-run the whole non-perf suite.
+5. G11 opaque-token post-pass: waits for the lead decision E16. K5 closed (core-a's items).
+6. Lead-owned: handover/BRIEF-PREAMBLE.md contains a vendor string that fails test_no_vendor_brand_string_is_tracked.
+7. core-b actions: LimitsMeter at install, set the refusal mark in its retry layer, cost_verified, usd_cap, worst-case function (requests/for-core-b-f-install.md, for-core-b-p3-findings.md, for-core-b-spend-failclosed.md on the q2 branch).
+8. Decisions kept: extract.py KEEP (DECISION-extract.md), textnorm DENY API KEEP (DECISION-textnorm-deny.md), R8 known equivalent mutant, G10/G9/G12/G13 default numbers (list in docs 1b).
 
-## Files to read first
-ORDERS.md (015, 016, 017), QUEUE/backlog in ORDER 016, ESCALATIONS.md, QUESTIONS.md, DECISIONS.md, CROSS-LANE.md, tickets/F-result-review-1.md, tickets/F-gate-wrapper-body.md (Amendment 1, As Built, Stated Limits), tickets/G7-context-after-sweep.md, evidence/*.md.
-
-## ADDENDUM 2026-11-20T06:38Z: the container was restarted (BOOT_ID 1e29cf8a) after the first restart
-All agents of the first restart (r-gate a5cffb69, r-int a4b11572, r-grants aebf0900, the two G7 reviewers ada32fe5 and aca5bee2) were stopped before they could report; their progress, if any, is only in the working files:
-- /home/user/hadavin-sdk working tree (cloud/core-c): uncommitted edits of the gate round 2 (src/hadavin_sdk/guard/model_gate.py, runmap.py, tests/test_model_gate.py, tests/test_runmap_enforce_map.py, tests/test_grants_negative_roles.py, three redact test files; tests/test_runmap_is_masked.py deleted): origin unknown (first agent or restart agent), NOT verified; snapshot of the first agent's state: branch wip/cloud-core-c/gate-r2-interrupted 9b5f458.
-- /tmp worktrees survived: /tmp/core-c-int (wip-int-g2g3 at 5316e14), /tmp/core-c-g2, /tmp/core-c-g3, /tmp/core-c-grants (core-b code), data folder /tmp/core-c-grants-pg (server stopped).
-- No G7 review output exists. The EGM plugin model lines were reverted in this container (see REPORT.md): reviewers now run on sonnet.
-
-## Restart 09:35Z (boot id 8493e966): all agents stopped; files in /tmp and the repo survived
-State at restart: cloud/core-c tip 9d8bc580a (G7 round 6 cherry-picked and pushed; wip/cloud-core-c/g7-r6 pushed). Uncommitted work survived in worktrees /tmp/core-c-q9 (Q9 mutants and tests) and /tmp/core-c-own (E9 _OWN_OUTPUT restriction): agents re-started on them at 09:36Z. Drafters G4 v5, G8 v3, G9 (E10 fixed point), G10 (text fold deadline) and the Latin-split evidence runner had written nothing: re-started from scratch at 09:37Z. The merged-tree batch 5 (15 files after G7 round 6) was killed: re-run. Board: handover/core-c/STATUS-BOARD.md via the board script (scratchpad/board/board.py, state.json).
+## Tooling notes
+Run python as PYTHONPATH=src uv run --all-extras --group test ... from any worktree under /tmp. Mutant runners copy the worktree src. Heavy runs: at most 2, load under 4; timings only at load under 2. Board script (manual push): scratchpad board/board.py + state.json under /tmp/claude-0/.../scratchpad (lost on container restart; the board file handover/core-c/STATUS-BOARD.md is in git).
