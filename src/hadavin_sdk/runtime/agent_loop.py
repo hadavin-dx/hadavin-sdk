@@ -75,6 +75,48 @@ class _GateError(GateRefused):
     code = "gate_error"
 
 
+class _GateUnavailable(GateRefused):
+    """The meter or the worst-case pricing failed before any client call (not a SpendRefused): no model was
+    contacted, so the run ends NEEDS_PERSON ``limits_unavailable``, never as a provider problem."""
+
+    code = "limits_unavailable"
+
+
+class _GuardedMeter:
+    """The meter as the gate sees it: a reserve fault that is not a published refusal becomes `_GateUnavailable`
+    (raised outside the `except`, so it carries neither the meter's text nor its exception chain)."""
+
+    def __init__(self, meter: Any) -> None:
+        self._meter = meter
+
+    def reserve(self, agent_id: str, worst_usd: Any, *, run_id: str | None = None) -> str:
+        try:
+            return self._meter.reserve(agent_id, worst_usd, run_id=run_id)
+        except SpendRefused:
+            raise
+        except Exception:  # noqa: BLE001 - re-raised below as a fixed-code refusal
+            failed = True
+        if failed:
+            raise _GateUnavailable
+        raise AssertionError  # pragma: no cover
+
+    def settle(self, reservation_id: str, actual_usd: Any) -> Any:
+        return self._meter.settle(reservation_id, actual_usd)
+
+
+def _guarded_worst_case(fn: Callable[..., Any]) -> Callable[..., Any]:
+    def priced(*args: Any, **kw: Any) -> Any:
+        try:
+            return fn(*args, **kw)
+        except Exception:  # noqa: BLE001 - re-raised below as a fixed-code refusal
+            failed = True
+        if failed:
+            raise _GateUnavailable
+        raise AssertionError  # pragma: no cover
+
+    return priced
+
+
 class RunEndFailed(RuntimeError):
     """The store failed twice while the run was being moved to its final state. The message names the run, the
     state and the reason code only: no store text, no model text."""
@@ -276,16 +318,28 @@ class Runtime:
             _LOG.warning("run %s: audit write for card %s failed", run.run_id, operation)
 
     def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None:
+        blocked: list[str] | None
         try:  # limits unreadable: stop means stop, so the run goes to a person
-            blocked = self.limits.blocked(run.agent_id)
+            blocked = list(self.limits.blocked(run.agent_id))
         except Exception:  # noqa: BLE001
-            return self._to(run, S.NEEDS_PERSON, "limits_unavailable")
+            blocked = None
+        if blocked is None:
+            return self._end(run, S.NEEDS_PERSON, "limits_unavailable")
         if "kill_switch" in blocked:
-            return self._to(run, S.STOPPED, "kill_switch")
+            return self._end(run, S.STOPPED, "kill_switch")
         if blocked:
-            return self._to(run, S.NEEDS_PERSON, f"limits.{blocked[0]}")
+            return self._end(run, S.NEEDS_PERSON, f"limits.{blocked[0]}")
         cap = self.registry.agents[run.agent_id].max_run_usd
-        if cap is not None and self.store.get_run(run.run_id).cost_usd >= cap:
+        if cap is None:
+            return None
+        spent = None
+        try:
+            spent = self.store.get_run(run.run_id).cost_usd
+        except Exception:  # noqa: BLE001 - the cap cannot be checked: stop means stop
+            spent = None
+        if spent is None:
+            return self._end(run, S.NEEDS_PERSON, "limits_unavailable")
+        if spent >= cap:
             # A run is bounded by its own cost, not only by the daily and monthly budgets (K5, A8).
             self._note(run, "guard", "run_budget", result="stopped", error_code="run_budget")
             return self._abstain(run, S.NEEDS_PERSON, "run_budget", cited or [])
@@ -360,9 +414,9 @@ class Runtime:
             raise TypeError("a bound model gate client cannot be wrapped again")
         return ModelGate(
             llm,
-            meter=self.limits,
+            meter=_GuardedMeter(self.limits),
             audit=self.audit,
-            worst_case=worst_case_for(self.registry.config.routes, llm),
+            worst_case=_guarded_worst_case(worst_case_for(self.registry.config.routes, llm)),
         )
 
     def _bound_llm(self, run: Run, mapping: dict[str, str]) -> BoundGate:
@@ -398,15 +452,24 @@ class Runtime:
         return self._end(run, S.NEEDS_PERSON, exc.code)
 
     def _end(self, run: Run, new: RunState, reason: str | None) -> Run:
-        """Write the final state of a run. A store fault is retried once; if both writes fail the run would be
-        left WORKING, so the failure is raised as the named `RunEndFailed` (never the store's own error text)."""
-        failure: Exception | None = None
-        for _attempt in range(2):
+        """Write the final state of a run. A store fault is retried once, and a repeat is safe: before the second
+        attempt the run is read again, and one already in `new` (the first write committed, a later write or the
+        reply failed) is done. If the run still cannot be ended it would stay WORKING, so `RunEndFailed` is raised
+        (never the store's own error text), outside any `except`: its context and cause stay empty."""
+        for attempt in range(2):
             try:
+                if attempt:
+                    stored = self.store.get_run(run.run_id)
+                    if stored.state == new:
+                        try:  # the audit row of the end may be the part that failed: best effort
+                            self._note(stored, "run", "state", result=new.value, error_code=reason)
+                        except Exception:  # noqa: BLE001 - the run is ended; the row is not worth a raise
+                            _LOG.warning("run %s: audit write for the end failed", run.run_id)
+                        return stored
                 return self._to(run, new, reason)
-            except Exception as exc:  # noqa: BLE001 - retried once, then named
-                failure = exc
-        raise RunEndFailed(run.run_id, new.value, reason) from failure
+            except Exception:  # noqa: BLE001, S110 - retried once, then named below
+                pass
+        raise RunEndFailed(run.run_id, new.value, reason)
 
     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
         cur = self.store.get_run(run.run_id)
@@ -474,8 +537,14 @@ class Runtime:
                 raise
             return self._same_message_run(run, exists)
         self._note(run, "run", "received", inputs_hash=sha256_hex(document.hex()))
-        run = self._to(run, S.WORKING)
+        try:
+            run = self._to(run, S.WORKING)
+            started = True
+        except Exception:  # noqa: BLE001 - the transition may have committed before the audit row failed
+            started = False
         cited: list[str] = []  # call ids of the read-tool calls made so far
+        if not started:
+            return self._abstain(run, S.NEEDS_PERSON, "store_unavailable", cited)
         rmap: dict[str, str] = runmap.RunMap(mapping or {})
         calls = errors = sent_bytes = 0
         if len(document) > self._evidence.max_document_bytes:  # redaction and grounding scan it all
@@ -511,10 +580,14 @@ class Runtime:
                 run, "guard", "document", result="stopped", error_code="document_too_complex"
             )
             return self._abstain(run, S.NEEDS_PERSON, "document_too_complex", cited)
+        refusal: SpendRefused | GateRefused | None = None
+        verdict = None
         try:
             verdict = self._screen(run, safe_text, "document")
         except (SpendRefused, GateRefused) as exc:
-            return self._refused(run, exc, cited)
+            refusal = exc
+        if refusal is not None:  # outside the `except`: a failed end carries no exception chain
+            return self._refused(run, refusal, cited)
         if verdict.flagged:
             self._note(run, "guard", "injection", result="flagged", error_code=verdict.reason_code)
             return self._abstain(run, S.NEEDS_PERSON, verdict.reason_code, cited)
@@ -550,7 +623,14 @@ class Runtime:
         for _step in range(agent.max_steps):
             if (stopped := self._limits_stop(run, cited)) is not None:
                 return stopped
-            self.store.touch(run.run_id)  # heartbeat for tick's stuck-run rule
+            try:
+                self.store.touch(run.run_id)  # heartbeat for tick's stuck-run rule
+                alive = True
+            except Exception:  # noqa: BLE001 - a store that cannot be written cannot carry the run
+                alive = False
+            if not alive:
+                return self._abstain(run, S.NEEDS_PERSON, "store_unavailable", cited)
+            fault: tuple[str, Any] | None = None
             try:
                 # The gate reserves the worst case, sends, settles the real cost (the store adds it to the run's
                 # cost) and writes the audit row of the call, also of a failed one.
@@ -562,18 +642,32 @@ class Runtime:
                     documents=[safe_doc],
                 )
             except (SpendRefused, GateRefused) as exc:  # no call was made
-                return self._refused(run, exc, cited)
+                fault = ("refused", exc)
             except (
                 ProviderError
             ) as exc:  # a refused key or request must not strand the run in WORKING
-                code = (
-                    "provider_exhausted" if isinstance(exc, ProviderExhausted) else "provider_error"
+                fault = (
+                    "provider_exhausted"
+                    if isinstance(exc, ProviderExhausted)
+                    else "provider_error",
+                    None,
                 )
-                return self._abstain(run, S.NEEDS_PERSON, code, cited)
             except Exception:  # noqa: BLE001 - any other client fault: a final state, never WORKING
-                # The reason is a fixed code: the exception text may hold the prompt or a document value.
-                self._note(run, "llm", "chat", result="failed", error_code="model_error")
-                return self._abstain(run, S.NEEDS_PERSON, "model_error", cited)
+                fault = ("model_error", None)
+            if fault is not None:
+                # Handled outside the `except`: a failed end then carries neither the client's exception (its text
+                # may hold the prompt or a document value) nor the store's. The reason is a fixed code.
+                kind, refusal = fault
+                if refusal is not None:
+                    return self._refused(run, refusal, cited)
+                if (
+                    kind == "model_error"
+                ):  # the gate wrote the call's own row; this one is best effort
+                    try:
+                        self._note(run, "llm", "chat", result="failed", error_code="model_error")
+                    except Exception:  # noqa: BLE001 - the run must still end
+                        _LOG.warning("run %s: audit write for model_error failed", run.run_id)
+                return self._abstain(run, S.NEEDS_PERSON, kind, cited)
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",
@@ -652,10 +746,13 @@ class Runtime:
                     result="error" if out.error else "ok",
                     error_code="tool_error" if out.error else None,
                 )
+                refusal = None
                 try:
                     verdict = self._screen(run, out.text, f"tool:{call.name}")
                 except (SpendRefused, GateRefused) as exc:
-                    return self._refused(run, exc, cited)
+                    refusal = exc
+                if refusal is not None:
+                    return self._refused(run, refusal, cited)
                 if verdict.flagged:  # tool output is untrusted text too
                     self._note(
                         run, "guard", "injection", result="flagged", error_code=verdict.reason_code
@@ -739,18 +836,23 @@ class Runtime:
         self, run: Run, plan: Plan, decision: GateDecision, diagnosis: str, cited: list[str]
     ) -> Run:
         """Shadow: the would-be outcome is shown and never acted on."""
+        refusal: SpendRefused | GateRefused | None = None
+        card: Card | None
         try:
             # The judge's screen of the diagnosis is a model call of this run: bound, so it is booked.
-            card: Card | None = cards.render_shadow(
+            card = cards.render_shadow(
                 plan, decision, cited, diagnosis=diagnosis, detector=self._bound_detector(run)
             )
         except (
             SpendRefused,
             GateRefused,
         ) as exc:  # no card: the refusal is not a verdict on the text
-            return self._refused(run, exc, cited)
+            refusal = exc
+            card = None
         except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
             card = None
+        if refusal is not None:
+            return self._refused(run, refusal, cited)
         d = self._deliver(card)
         # A fix that would only need sign-off is not a caught mistake; a would-be refusal is.
         # An input that could not be resolved is a gap in the evidence trail, not a caught mistake.
