@@ -434,3 +434,12 @@ made by whoever owns agent_loop.py: wrap the two lines
 (`return self._abstain(run, S.NEEDS_PERSON, "bad_amount", cited)` at :513; at :353 treat the screen as failed
 closed). k1b/loop.py:174 (`budget.charge(reply.cost_usd)`) has the same shape and is reached only with a cost
 from `reply()`/FakeLLM, which are now valid by construction.
+
+### Update (F8): model-layer validators
+`Reply.cost_usd` (None allowed = unknown cost) and `Verdict.cost_usd` now carry a `field_validator` (mode "before") that applies
+`check_spend_amount` (moved into models.py with MAX_SPEND_*; store/protocol.py re-exports it, no import cycle). With the
+validators the call sites can no longer see an invalid cost from a Reply/Verdict built by a custom LLM or Detector: it is a
+ValueError at construction (inside the provider boundary / `injection_check`'s fail-closed except). The try/except ValueError
+above remains a safety net and should still be part of the install commit. Caveat: a Reply with `cost_usd=None` now exists;
+agent_loop.py:513 must treat None as 0 (or abstain) before `Limits.charge`, and guard/judge.py:86,96 copies `reply.cost_usd`
+into a Verdict (None would be refused there: fail-closed, owner core-c should use `or Decimal(0)`).
