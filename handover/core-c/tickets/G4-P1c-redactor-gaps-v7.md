@@ -1,4 +1,17 @@
-# Ticket G4 v6: P1c redactor gaps (base64 view, whole host names, bare numbers written down)
+# Ticket G4 v7: P1c redactor gaps (base64 view, whole host names, bare numbers written down)
+
+CHANGED in v7: version 7 is v6 with ONLY the findings of plan review round 6 (tickets/G4-review-6-readiness.md: M1, N2-N6;
+tickets/G4-review-6-design.md: M1-M3, N1-N5) and the reconciliation, by name, with G9 v2 (tickets/G9-spelled-fixed-point-v2.md,
+DRAFT, sections 7-15 still "[filled below]") and G8 v4 (tickets/G8-glued-rest-gap-v4.md, may still change) applied. A table of
+every round 6 finding is section H at the end. Every paragraph changed for v7 is marked "CHANGED in v7"; the rest is v6's text
+(its "CHANGED in v6" marks kept). Base of the v7 cites: `cloud/core-c` HEAD 75c3480bb, whose last src/tests commit is 944d143db
+(header). What the v7 drafter MEASURED (read-only, `uv run python -B` on the repo's src with in-process patches, or stdlib only;
+scripts in the drafter's scratch folder `g4v7_r8/`: `r8.py`, `g4c.py`, `wrap.py`, `count.py`, `g9cost.py`, `g9edge.py`,
+`g9tie.py`): the fifth TB-2.8 map and an R8 killer map with G4's tie-break patched into `_Redactor._build` and R8 patched into
+`snapshot` (4 point 5, 9.3); N1 and N3 with v6's 5.2/5.3 patterns put into `redact.PATTERNS` (5.2, 5.3); the wrap widths of M3
+against a stdlib copy of 3.2's decode rules (3.1); the mutant counts by import (13.3); and, on the G9 v2 drafter's PROTOTYPE
+(imported read-only from that drafter's scratch `g9v2/proto/src`, ENCODED added to `SECRET_KINDS` in-process), the read-back cost
+of a long ENCODED value and the tie-break interplay (0.3b). Nothing was run as a test; the repository was not edited except this file.
 
 CHANGED in v6: version 6 is v5 with ONLY the findings of plan review round 5 (codebase details, tickets/G4-review-5-codebase.md:
 M1, M2, M3, N1, N2 and the L8 kind list) and the reconciliation with G8 v3 (tickets/G8-glued-rest-gap-v3.md; G8-review-3
@@ -34,10 +47,18 @@ e8ff6de2b..bff88a7a1 -- src tests`):
   (the spelled-form registry's memory limit), and drops `redact()`'s second read after a `bank_near` flip. Against e8ff6de2b,
   redact.py lines are +6 from `_OWN_TOKEN` to `redact()` (Q9) and +3 to +42 from `_Redactor` on (Q9 and G7 r7). Every redact.py and defaults.py line of 0.1 is re-derived at bff88a7a1 BY READING; a line is
   a hint, the name is the cite.
+CHANGED in v7 (review round 6 readiness N2): after bff88a7a1 the tree holds two more src/tests commits, 1bf4f11ba (Q9 review fixes
+F1-F7) and 944d143db (their lint fixes). runmap.py, defaults.py and approvals/ are unchanged (`git diff --quiet bff88a7a1 HEAD`
+on them). redact.py loses 3 lines in `_char_class` (around 1000-1030), so every redact.py line from there on is 3 LOWER than v6
+said; tests/redact_mutants.py deletes N1 and N14 (`len(M)` = 94: 63 + 3 E9 + 30 Q9 - 2); a new meta test,
+tests/test_redact_mutants_meta.py, pins `EXPECTED_COUNT = 94`, checks that every `only_test` exists and that every `old` occurs
+exactly once in its file (mutant 21 twice, `OCCURS_TWICE`). Every redact.py line of this file was re-derived by `grep -n` at
+944d143db; a line is a hint, the NAME is the cite.
 The numbers MEASURED by v5 on its prototype of e8ff6de2b (sections 2-4, 8-10, C) are NOT re-measured on bff88a7a1: Phase 0 (b),
 (f), (g) and (h) re-measure them on the builder's base (0.2).
-Not in the tree, and handled by the rule of 0.2: G8 (ticket G8-glued-rest-gap-v3; order in 0.3), G9 (spelled sweep fixed point,
-G9-spelled-fixed-point.md, DRAFT v1 after plan review round 1, v2 being drafted; order in 0.3b), G10 (text-fold deadline).
+Not in the tree, and handled by the rule of 0.2: CHANGED in v7: G8 (ticket G8-glued-rest-gap-v4, the current draft; order in
+0.3), G9 (spelled sweep fixed point, G9-spelled-fixed-point-v2.md, DRAFT v2, with a prototype in its drafter's scratch; order in
+0.3b), G10 (text-fold deadline).
 
 guard/runmap.py, approvals/*, tools.py, k1b and agent_loop.py are byte-identical to v4's base cd8d375 (CHANGED in v6: and to
 bff88a7a1, `git diff --quiet e8ff6de2b bff88a7a1` on them): every runmap.py and channel.py line of v4 still holds. redact.py and
