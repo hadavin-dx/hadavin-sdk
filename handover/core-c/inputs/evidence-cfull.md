@@ -20,7 +20,7 @@ Suite has no postgres marker; markers are only `live` and `perf`. The perf tests
 
 ## Failures (run a, python 3.13; first error line)
 1. tests/test_ci_gitleaks_scope.py::test_the_gitleaks_config_has_only_narrow_path_allowlists : CalledProcessError `git ls-files` exit 128 (copy has no .git).
-2. tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked : AssertionError: `handover/BRIEF-PREAMBLE.md: 'Port.io'`.
+2. tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked : AssertionError: `handover/BRIEF-PREAMBLE.md: 'a vendor brand string'`.
 3. tests/test_redact_fold_budget.py::test_hostile_1_hostile_shapes_return_a_clean_text_or_refuse : `hadavin_sdk.guard.runmap.InputTooLarge`, then `AssertionError: fdfa; assert 'fdfa' in {'devanagari lines', 'e-acute lines'}`.
 4. tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact_text] : 3.61 s, assert < 3.0.
 5. tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact] : 3.41 s, assert < 3.0.
@@ -34,7 +34,7 @@ Same ids as a for 1, 2, 3, 5 ("hex and dashes-redact" 3.57 s), 7 ((738.747569 - 
 
 ## Extra isolation reruns (same copy, `-n 1`; raw e-rerun-isolated-perf.log, f-rerun-git-tests.log)
 - e: test_redact_fold_budget (the one id) + test_redact_glued_rest.py + test_redact_settle_loop.py + test_textnorm_mixed_script_micro.py, py3.13: 1 failed, 584 passed, 43 xfailed, 213 s. The failing id is test_redact_fold_budget::test_hostile_1 again (reproduces without load); the glued-linear and settle-loop ids passed.
-- f: after `git init && git add -A` in the throwaway copy, py3.13: test_ci_gitleaks_scope.py, test_no_reference_material.py, test_repo_rules.py::test_licences_are_proprietary: 1 failed, 91 passed. Failing: test_no_vendor_brand_string_is_tracked (`handover/BRIEF-PREAMBLE.md: 'Port.io'`, reproduces with git). The two git ls-files failures pass with a git repo.
+- f: after `git init && git add -A` in the throwaway copy, py3.13: test_ci_gitleaks_scope.py, test_no_reference_material.py, test_repo_rules.py::test_licences_are_proprietary: 1 failed, 91 passed. Failing: test_no_vendor_brand_string_is_tracked (`handover/BRIEF-PREAMBLE.md: 'a vendor brand string'`, reproduces with git). The two git ls-files failures pass with a git repo.
 
 ## gitleaks (d4)
 Run `gitleaks dir . --redact -c .gitleaks.toml` on the git-less copy (includes untracked `tests/__pycache__`, so not the CI scan mode): 46 findings, gitleaks exit 1 (d4b, d4c logs). By path/rule: tests/__pycache__ private-key 10 + aws-access-token 2; handover/core-c generic-api-key 6; tests/fixtures generic-api-key 6 + private-key 3; tests/test_textnorm_differential.py generic-api-key 4; tests/warden_port curl-auth-user 4, generic-api-key 4, slack-app-token 4, slack-webhook-url 2; tests/test_text_parts_together.py generic-api-key 1. Values not printed. The CI-equivalent scan (git history/tracked files only) was NOT run.
