@@ -451,11 +451,20 @@
   {
    "item": "E-evidence-2",
    "what": "EVIDENCE RUNNER for step E: identity (hashes, database version), tests with ids, guards and users, 14 formal hand mutants in a scratch copy, hostile inputs; no verdicts",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/E-evidence-2-identity.log, -tests.log, -guards.log, -mutants.log, -hostile.log",
+   "tries": 1,
+   "reason": "by a separate evidence runner, recorded without verdicts: crash.py 298 lines, test file 1065 lines, python 3.13.18, PostgreSQL 16.15; tests 96 passed (with the database); guard files 292 passed; the crash matrix and worker tests 149 passed (74 s); 14 formal hand mutants in a scratch copy: ALL KILLED (the baseline there ran without the database: 94 passed, 2 skipped); hostile inputs: refused as designed, 20 of 20 flag races gave exactly one crash. Not deterministic: the first failing test per mutant (run with -x -n 3)"
+  },
+  {
+   "item": "E-round-2",
+   "what": "step E result review ROUND 2 of 3: fresh egm:egm-codebase-details (the fixes F2 to F9 and what they introduced) and egm:egm-zoom-out (the helper grew 212 to 298 lines and tests 738 to 1065: is each new capability needed by a named caller)",
    "state": "RUNNING",
    "percent": 5,
-   "evidence file": "raw/E-evidence-2-*.log (not yet)",
+   "evidence file": "reviews/E-result-review-2.md (not yet)",
    "tries": 1,
-   "reason": "EGM sequence: evidence after the fix, before round 2"
+   "reason": "EGM sequence: repeat until a fresh pass finds no Blocker or Major; cap 3 then ESCALATIONS"
   }
  ],
  "agents": [
@@ -1073,14 +1082,40 @@
   {
    "model": "sonnet",
    "started UTC": "06:52",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 1 of 3, evidence",
    "retries so far": 0,
    "id": "e-evidence2",
    "role": "evidence runner (records, never judges)",
    "what exactly it is doing": "runs tests, guards, 14 mutants in a scratch copy and hostile inputs on the fixed crash helper",
-   "expected end": "about 25 min",
+   "expected end": "ended",
+   "reason": "finished, 84k tokens"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:55",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 2 of 3",
+   "retries so far": 0,
+   "id": "egm-E2-codebase",
+   "role": "reviewer (egm:egm-codebase-details, fresh)",
+   "what exactly it is doing": "round 2: checks the fixes and what they introduced, the evidence against the current file hashes",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:55",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 2 of 3",
+   "retries so far": 0,
+   "id": "egm-E2-zoomout",
+   "role": "reviewer (egm:egm-zoom-out, fresh)",
+   "what exactly it is doing": "round 2: is every new capability needed by a named caller, what can be deleted",
+   "expected end": "about 15 min",
    "reason": "EGM sequence"
   }
  ],
