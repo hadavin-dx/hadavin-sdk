@@ -28,7 +28,9 @@ def test_audit_code_shapes():
     AuditEvent(run_id="r", domain="d", operation="o", principal=audit_code("a\nb"), source="s")
 
 
-@pytest.mark.parametrize("stop", ["weird reason\n<x>", "z" * 5000])
+@pytest.mark.parametrize(
+    "stop", ["weird reason\n<x>", "z" * 5000, "two words", "q" * 500, "line\nbreak", ""]
+)
 def test_hostile_stop_reason_is_audited_and_the_run_ends(tmp_path, stop):
     store = MemoryStore()
     rt, _ = build_runtime(k5_cfg(tmp_path), StopLLM(stop), store=store)
