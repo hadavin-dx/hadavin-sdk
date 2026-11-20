@@ -2124,16 +2124,45 @@ def test_b4_a_reset_ref_equal_to_the_runtime_secret_name_is_refused_before_any_c
 # ---- S12: the ts of a stop -------------------------------------------------------------------------------------------
 
 
+def _schema_through_0006(w, monkeypatch):
+    """A fresh schema with the migrations up to 0006 only (the release before 0009 added the ts range CHECK), made as
+    the owner. Migration 0009's range CHECK refuses an infinite ts as well, so on the full schema it masks the 0006
+    `isfinite` CHECK: only this schema shows that one."""
+    schema = w.new_schema("t6")
+    files = migrate_mod._migration_files()
+    upto = [f for f in files if f.stem <= "0006_stop_state"]
+    assert upto[-1].stem == "0006_stop_state"
+    with monkeypatch.context() as m:
+        m.setattr(migrate_mod, "_migration_files", lambda: upto)
+        created, _ = migrate_mod._scan(upto)
+        for name in [k for k in GRANTS if k not in created]:
+            m.delitem(GRANTS, name)
+        made = migrate_mod._functions_created(upto)
+        for sig in [
+            f for f in migrate_mod.FUNCTION_GRANTS if migrate_mod._signature_key(f) not in made
+        ]:
+            m.delitem(migrate_mod.FUNCTION_GRANTS, sig)
+        assert migrate(schema, no_roles=True)[-1] == "0006_stop_state"
+    return schema
+
+
 @pytest.mark.parametrize("ts", ["infinity", "-infinity"])
-def test_s12_a_stop_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
+def test_s12_a_stop_row_cannot_carry_an_infinite_ts_even_by_hand(w, monkeypatch, ts):
     assert w.exists("kill_switch_stops")
     with w.as_(w.runtime) as db, pytest.raises(errors.CheckViolation):
         db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("agent:x", ts))
     assert w.count("kill_switch_stops") == 0
+    # the 0006 isfinite CHECK on its own (0009's range CHECK would refuse it on the full schema too)
+    old = _schema_through_0006(w, monkeypatch)
+    with psycopg.connect(old, autocommit=True) as db:
+        with pytest.raises(errors.CheckViolation) as e:
+            db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("agent:x", ts))
+        assert e.value.diag.constraint_name == "kill_switch_stops_ts_check"
+        assert db.execute("SELECT count(*) FROM kill_switch_stops").fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("ts", ["infinity", "-infinity"])
-def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
+def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, monkeypatch, ts):
     _stop(w)
     with w.as_(w.reset) as db, pytest.raises(errors.CheckViolation):
         db.execute(
@@ -2141,6 +2170,16 @@ def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
             ("admin:x", ts),
         )
     assert w.count("kill_switch_clears") == 0 and w.read().on is True
+    old = _schema_through_0006(w, monkeypatch)
+    with psycopg.connect(old, autocommit=True) as db:
+        db.execute('INSERT INTO kill_switch_stops ("by") VALUES (%s)', ("agent:x",))
+        with pytest.raises(errors.CheckViolation) as e:
+            db.execute(
+                'INSERT INTO kill_switch_clears (stop_id, "by", ts) SELECT id, %s, %s FROM kill_switch_stops',
+                ("admin:x", ts),
+            )
+        assert e.value.diag.constraint_name == "kill_switch_clears_ts_check"
+        assert db.execute("SELECT count(*) FROM kill_switch_clears").fetchone()[0] == 0
 
 
 # 0009 refuses a planted year outside 2000..2100 (the ts CHECK): the in-range edges are the dates a runtime can still plant
