@@ -746,7 +746,47 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [],
+ "agents": [
+  {
+   "id": "rev-c-G13b",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c G13b + G12b regression: are my 4 G13 Majors and the G12b Major fixed, and is the new code sound",
+   "started UTC": "14:24",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 14:26"
+  },
+  {
+   "id": "rev-b-newest",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b diff since a25f6858d (F7 caps seeding, PG test day window, decoys): vacuity/weakening",
+   "started UTC": "14:24",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 14:26"
+  },
+  {
+   "id": "readme-edoor1",
+   "role": "builder (docs)",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n README section 'what the sender must do: poll the run state' (E-door-1 default)",
+   "started UTC": "14:24",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 14:26"
+  }
+ ],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1117,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:24 WHY NOTHING RAN 14:16-14:24: every review/batch on your earlier lists was finished and I had no new landed commits to review; waited for core-c/core-b to push (no work to invent). NOW 3 agents: rev-c-G13b (core-c 3f467df1e G13b + 9806830d0 G12b regression: checks my 4 G13 Majors and the G12b Major), rev-b-newest (core-b since a25f6858d), readme-edoor1 (README section: sender polls). Heavy batches: lead-build-3 runs 1-4 delivered at 9072e701f; a new full run on core-c afef6e16a is NOT requested in lead-build-3 (tell me if you want run 1 again on the new head).",
   "14:20 core-c G13 reviewed (reviews/rev-c-G13.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker, 4 Majors: (1) the combining-marker fix covers decomposed forms but NOT precomposed U+226E (and not Mc U+093E) and has no test for it; (2) _touching_piece refuses ordinary text beside a key when a secret shares a 4-gram prefix ('https://' vs 'http...'): a planted value poisons every later call; (3) LEAK: window overlap 10*longest+16 is too small for stacked encodings: chunk > 65,536 chars + secret 17+ chars spelled '%26%23<dec>%3B' per char straddles unredacted; (4) a secret of ~3,275+ chars makes every big non-ASCII chunk refuse (DoS, fail-closed). All 12 mutants E19a-l check out. Weakened pins d7, r2_m2. No agents running.",
   "14:15 core-c E22+G12b reviewed (reviews/rev-c-E22G12b.md + NEW FILE handover/core-c/requests/xr-from-core-a-reviews-2.md): E22 skip is safe (no Blocker/Major; no test pins _only_encoded; the extra-character case costs the E22 amount again, unmeasured). G12b MAJOR: redact.py:1826 _place drops the clear-core sweep for words in _NOT_A_VALUE and placeholder-like cores: `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these, deliberate trade-off not recorded as a limit/no pinning test). Vacuous tests G12-18/G12-13. G13 review still running.",
   "14:10 GO taken: (1) my 6 wip branches: all reviewed fresh already (c, ci x3 rounds, b, e14, grant); core-c has ALREADY merged my c/e14/e19 work into cloud/core-c (9170baa4f, 82fb4bdc7, 9cef3450e) so the e19 branch review is moot; (2) lead-build-3 runs 1-4 delivered (evidence/c-run-1..4.md); (3) core-c head now aeb9a205e: reviewers started on G13 (bc6e2acd0 + mutants) and E22 + G12b; (4) strict_switch: 22 passed (3.12, 3.13.12, 3.13.18) in my checkout, no failure. Board every 5 min.",
