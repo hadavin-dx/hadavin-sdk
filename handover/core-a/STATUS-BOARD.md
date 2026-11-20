@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:31:01Z
+UPDATED_UTC: 2026-11-20T06:31:15Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 46
 ITEMS_OPEN: 13
 PERCENT: 78
 AGENTS_RUNNING: 8
-CAPACITY: load 0.44 of 4 cores (1-minute average), mem 0.9/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.56 of 4 cores (1-minute average), mem 0.9/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 15%; 528M /home/user/hadavin-sdk; 336M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: open findings in my own code: fuzz (505 for an HTTP version 2.0 request line), design review Majors M2 (no cap on waiting threads) and M3; fixes queued behind the agent that edits those files. Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block
-PUSHED_UTC: 2026-11-20T06:29:32Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:31:04Z (the push before this board)
 NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder
 
 ## QUEUE ITEMS
@@ -111,14 +111,13 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 11198 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 11200 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 991s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 991s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 991s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 991s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 991s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 991s ago | running | matched by name in ps |
+| 11198 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 29s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1006s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 1006s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 1006s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 1006s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1006s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1006s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
