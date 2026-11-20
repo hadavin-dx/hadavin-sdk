@@ -187,7 +187,10 @@ def test_e4_a_flush_stops_at_the_first_failure_and_keeps_the_rest_in_order(monke
     assert log.write_intent(trigger) == trigger.event_id  # a flush failure is never raised
     assert log._pending == [b, c]
     assert _ids(log) == [trigger.event_id, a.event_id]
-    assert tried == [trigger.event_id, a.event_id, b.event_id]  # c was not tried after b failed
+    attempts = (
+        defaults.AUDIT_FLUSH_ATTEMPTS
+    )  # A10: b is retried with backoff, c is still never tried
+    assert tried == [trigger.event_id, a.event_id] + [b.event_id] * attempts
     monkeypatch.setattr(log, "_append", real)
     assert log.reconcile() == 2 and log._pending == []
     assert _ids(log) == [e.event_id for e in (trigger, a, b, c)] and log.verify().ok
@@ -953,7 +956,9 @@ def test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order(kind, monkeyp
     with monkeypatch.context() as mp:
         tried = _append_fails_for(mp, log, _outage(kind), b)
         assert log._flush_pending() == 1
-        assert tried == [a.event_id, b.event_id]  # c was not tried after the outage at b
+        assert (
+            tried == [a.event_id] + [b.event_id] * defaults.AUDIT_FLUSH_ATTEMPTS
+        )  # A10: retried with backoff; c not tried
     assert _ids(log) == [a.event_id]
     assert log._pending == [b, c] and log._unwritable == []
     assert "not_writable" not in caplog.text
@@ -1199,3 +1204,9 @@ def test_f9_a_sqlite_error_is_not_an_outage():
     import sqlite3
 
     assert audit._is_outage(sqlite3.IntegrityError("trigger refused")) is False
+
+
+@pytest.fixture(autouse=True)
+def _quarantine_at_once(monkeypatch):
+    """The cases of this file pin the quarantine mechanics at N = 1 tick; the N-tick rule is tests/test_audit_drain_a10.py."""
+    monkeypatch.setattr(defaults, "AUDIT_QUARANTINE_AFTER_TICKS", 1)

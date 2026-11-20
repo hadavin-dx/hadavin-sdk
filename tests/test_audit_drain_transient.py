@@ -287,3 +287,9 @@ def test_pg_a_real_statement_timeout_reading_the_outbox_fails_the_step(monkeypat
             log.reconcile()
         conn.execute("SET statement_timeout = 0")
         conn.close()
+
+
+@pytest.fixture(autouse=True)
+def _quarantine_at_once(monkeypatch):
+    """The cases of this file pin the quarantine mechanics at N = 1 tick; the N-tick rule is tests/test_audit_drain_a10.py."""
+    monkeypatch.setattr(defaults, "AUDIT_QUARANTINE_AFTER_TICKS", 1)
