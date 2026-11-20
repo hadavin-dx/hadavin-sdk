@@ -1234,7 +1234,7 @@ M = [
         "                fresh = _Ping(self._store, self._count_store_failure)\n                self._ping = fresh\n",
         T9,
         "test_fix2_a_ping_thread_that_does_not_start_is_a_counted_503_and_the_next_call_works",
-        "assert (True, 1)",
+        "assert (False, 2) == (True, 1)",
     ),
     mutant(
         "G33c the conflict audit write is waited for 30 s, not 2 s",
@@ -1252,7 +1252,9 @@ M = [
         "                    if False:\n",
         T9,
         "test_fix2_five_non_store_failures_in_a_row_stop_the_worker_with_exit_3",
-        "the worker did not stop on its own",
+        "the worker did not stop on its own",  # pytest.fail: the leading class is `Failed`, not an assertion
+        allow_crash=True,
+        crash_type="Failed",
     ),
     mutant(
         "G33e the 409 event cap uses one shared key for all senders",
@@ -1269,7 +1271,7 @@ M = [
         "            self._conflict_windows['-'] = (start, seen)\n",
         T9,
         "test_fix2_the_cap_is_per_sender_and_the_window_dict_is_bounded_by_the_senders",
-        "assert 0 == 1",
+        "assert (0 == 1)",
     ),
     mutant(
         "G33f an unsigned request is taken as the first configured sender",
