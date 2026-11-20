@@ -1323,6 +1323,7 @@ class _Redactor:
         ] = {}  # placeholder -> (token, prefix reversed, suffix, prefix id)
         self._next_prefix_id = 0
         self._may_register = False  # G9: `redact`/`redact_many` set it; any other redactor (the gate's) masks an overlap with existing placeholders
+        self._union_upgraded = False  # G9b M2: the last `_place_union` registered a SECRET entry for a value held under a non-secret kind
         self._union_chars = 0  # G9: characters of the unions this redactor registered; refused past `defaults.SPELLED_MAX_UNION_CHARS`
         self._longest = 0  # G9: the longest rule original (alias keys included)
         self._long: list[str] = []  # G9: the rule originals longer than the read-back's reach + 1
@@ -2276,7 +2277,7 @@ class _Redactor:
         at least one free character AND part of at least one token and no separator, merged when they overlap in `out`; tokens are taken
         whole, free text as far as the occurrences reach. `kind`: SECRET when any token of the run or any occurrence is of a secret kind,
         else the first token's kind. `masked`: only for a redactor that may not register (`_masked`), else None. Units: one per
-        character of E (as it is built), one per occurrence; the finder groups and slow values read the deadline, uncounted."""
+        character of E (as it is built), one per occurrence (charged every `_OCC_CHARGE_EVERY` found, G9b); the finder groups and slow values read the deadline, uncounted."""
         if "<" not in out:
             return []
         # a union of written forms in this pass's `_spelled_sweep` grew the map
@@ -2301,6 +2302,10 @@ class _Redactor:
             ):
                 return
             occ.append((at, end, word))
+            if len(occ) % _OCC_CHARGE_EVERY == 0:
+                # G9b M1: charged AS THEY ARE FOUND, so a text with ~4e8 occurrences (a nested chain of 200 secrets) is refused after
+                # about `SPELLED_MAX_WORK` tuples, not after the list exists; the remainder is charged after the scans
+                self._spend(work, _OCC_CHARGE_EVERY, deadline)
 
         for finder, prefixes in self._finders:
             if deadline is not None:
@@ -2318,7 +2323,7 @@ class _Redactor:
             while j >= 0:
                 add(w, j)
                 j = E.find(w, j + 1)
-        self._spend(work, len(occ), deadline)
+        self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)
         starts = [s[0] for s in segs]
         hits: list[tuple[int, int, str]] = []  # (out start, out end, the occurrence's placeholder)
         for a, b, w in occ:
@@ -2417,13 +2422,22 @@ class _Redactor:
                         at.append(j)
                         j = w.find(anchor, j + 1, hi)
                     found[(anchor, w, lo, hi)] = at
+                read = None  # G9b M3: the text read back at this edge, once per (edge, rule), shared by every place of the anchor
                 for j in at:
                     k = j + reach if right else j + 1  # the characters of `w` before the edge
                     if k > can_left or len(w) - k > can_right:
                         continue  # the text read back is shorter than the rule on one side: not an occurrence, no comparison
-                    self._spend(work, 2 * len(w) + 2, deadline)
-                    lt, lch = self._expand(out, toks, starts, b, k + 1, True)
-                    rt, rch = self._expand(out, toks, starts, b, len(w) - k + 1, False)
+                    if read is None:
+                        # the first comparison of the edge pays for the read-back of the rule's length on both sides (what it cost per place
+                        # before G9b); each further place only compares slices of it: `len(w) // _COMPARE_SHARE + 1` units
+                        self._spend(work, 2 * len(w) + 2, deadline)
+                        read = (
+                            self._expand(out, toks, starts, b, len(w) + 1, True),
+                            self._expand(out, toks, starts, b, len(w) + 1, False),
+                        )
+                    else:
+                        self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)
+                    (lt, lch), (rt, rch) = read
                     if len(lt) < k or len(rt) < len(w) - k:
                         continue  # the text read back ends (or a token that is not a key stands) before the rule would
                     if lt[len(lt) - k :] != w[:k] or rt[: len(w) - k] != w[k:]:
@@ -2556,8 +2570,11 @@ class _Redactor:
                 )
                 self._spend(work, size, deadline)  # the union's value, before it is built
                 current = self._built_for == len(self.mapping)
+                self._union_upgraded = False
                 placeholder = self._place_union(out[start:end], kind, derived=False)
-                if current:  # a G9 union needs no rule of its own: no rebuild of the finders for it (design M6)
+                # a G9 union needs no rule of its own: no rebuild of the finders for it (design M6); one that upgraded a held value to SECRET does
+                keep_rules = current and not self._union_upgraded
+                if keep_rules:
                     self._built_for = len(self.mapping)
             else:
                 placeholder = masked
@@ -2576,13 +2593,18 @@ class _Redactor:
 
     def _place_union(self, union: str, kind: str, derived: bool = True) -> str:
         """The placeholder of an overlap: `union` is the text of the whole run (`xyz<SECRET_1>ab`), registered under `kind` as a value of
-        its own (its restored text) unless that value has a placeholder already: then that placeholder, whatever its kind (as before G9).
+        its own (its restored text) unless that value has a placeholder already: then that placeholder, whatever its kind (as before G9), EXCEPT that a SECRET
+        union never takes a non-secret placeholder (G9b M2: `ab-<SECRET_1>` must not become `<TENANT_1>`, which a gate restores): it is
+        registered as a SECRET entry of its own, which `_build` prefers for the value's rule (`_union_upgraded` makes `_close` rebuild).
         `derived=False` (G9's unions): the value only, no written form and no pieces; its characters are counted per call
         (`self._union_chars`) and the call is refused past `defaults.SPELLED_MAX_UNION_CHARS` (`InputTooLarge("SpelledUnionTooMuch")`,
         nothing stored by the refused registration)."""
         full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), union)
-        if full in self.reverse:
-            return self.reverse[full]
+        held = self.reverse.get(full)
+        if held is not None and not (kind in SECRET_KINDS and _kind(held) not in SECRET_KINDS):
+            return held
+        if held is not None:
+            self._union_upgraded = True
         if not derived:
             if self._union_chars + len(full) > defaults.SPELLED_MAX_UNION_CHARS:
                 from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
@@ -2701,6 +2723,8 @@ class _Redactor:
                 out = self._close(out, spans, deadline, work)
         from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
 
+        # N2 (G9b, stated): refused even when the LAST pass closed a run and nothing else would have changed: a sweep that is still closing
+        # runs after `SPELLED_MAX_PASSES` is not shown to be settled (fail closed; pinned by G9-1/G9-3)
         raise InputTooLarge("SpelledNotSettled")
 
     def _sweep_once(self, out: str, deadline: float | None, work: list[int]) -> str:
@@ -2768,6 +2792,10 @@ def _out_at(chunks: list[tuple[int, int, int, bool]], x: int, end: bool) -> int:
 _SETTLE_ROUNDS = 4
 # The scan of the written forms (`_spelled_sweep`) checks its deadline every this many units of work (a placeholder token of the text, or one step of a trie walk).
 _SPELL_CHECK_EVERY = 1024
+_COMPARE_SHARE = 32  # G9b M3: a further place of an anchor at one edge costs `len(rule) // this + 1` units (`_deep_hits`)
+_OCC_CHARGE_EVERY = (
+    256  # G9b M1: occurrences of a read-back found between two charges (`_overlaps`)
+)
 
 
 def _new_nodes(root: dict[str, Any], chars: str) -> int:

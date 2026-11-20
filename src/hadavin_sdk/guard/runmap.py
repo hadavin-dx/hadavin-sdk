@@ -1100,6 +1100,10 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     (`redact._sweep`): a value of a secret kind of 4 characters or more, every copy; any other value, only
     where no ASCII letter or digit touches it (a PHONE value: where no digit does; `redact._joins`, ticket G8).
 
+    Stated (G9b N1): the gate's form of an overlap (`redact._Redactor._masked`) is one placeholder per free stretch of a run and the run's
+    own tokens, so a free character of a run that the covering occurrences do not name can be dropped from the masked form; the text
+    shown never holds it readable.
+
     Two things are added to the sweep.
     1. Held-back values. Inside one stretch of text the sweep replaces value after value and does not look
        again at the placeholders it has just written, so a shorter known value that is itself a piece of a
