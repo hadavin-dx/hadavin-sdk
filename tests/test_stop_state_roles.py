@@ -1213,11 +1213,153 @@ def test_s2_migrate_refuses_the_runtime_role_as_a_noinherit_member_of_a_group_th
     assert group in names
 
 
-def test_s2_migrate_refuses_a_member_of_pg_write_all_data(w):
-    """A predefined role that may INSERT and UPDATE everywhere: its member can clear without any grant here."""
-    writer = w.new_role("wa", "LOGIN")
+def _who(scoped, reset):
+    with psycopg.connect(scoped, autocommit=True) as db:
+        return migrate_mod.who_else_can_clear(db, reset)
+
+
+def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(w):
+    """The check reads this schema's grants only. A role with nothing here, a member of the (superuser) owner and
+    a member of a predefined role that can write every table are outside the guarantee and never refuse a migrate.
+    (Before 2026-11-20 the member of pg_write_all_data and the member of the owner were refused.)"""
+    owner = w.run("SELECT current_user")[0][0]
+    w.new_role("st")
+    of_owner, writer = w.new_role("mw", "LOGIN NOINHERIT"), w.new_role("wa")
+    w.grant("GRANT {} TO {}", owner, of_owner)
     w.grant("GRANT pg_write_all_data TO {}", writer)
-    _refused_naming(w, writer)
+    try:
+        assert _who(w.scoped, w.reset) == []
+        assert w.migrate() == []
+    finally:
+        w.grant("REVOKE {} FROM {}", owner, of_owner)
+
+
+def _second_schema(w):
+    """A second application on the same server: its own schema, owned by a login that is NOT a superuser, with its
+    own stop-state tables, runtime role and reset role."""
+    owner, rt2, rs2 = w.new_role("ow"), w.new_role("r2"), w.new_role("s2")
+    name = f"sb_two_{w.sfx}"
+    with psycopg.connect(w.dsn, autocommit=True) as db:
+        db.execute(
+            sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(
+                sql.Identifier(name), sql.Identifier(owner)
+            )
+        )
+    w.schemas.append(name)
+    scoped = w.dsn_of(owner, w.scope(name))
+    assert "0006_stop_state" in migrate(scoped, runtime_role=rt2, reset_role=rs2)
+    return scoped, owner, rt2, rs2
+
+
+def test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer(
+    w,
+):
+    two, _owner, rt2, rs2 = _second_schema(w)
+    stray, member = w.new_role("x5", "NOLOGIN"), w.new_role("y5")
+    with psycopg.connect(two, autocommit=True) as db:
+        db.execute(sql.SQL("GRANT UPDATE ON kill_switch TO {}").format(sql.Identifier(stray)))
+    w.grant("GRANT {} TO {}", rs2, member)
+    assert _who(two, rs2) == sorted([stray, member])
+    assert _who(w.scoped, w.reset) == []  # the other schema's roles are not this schema's business
+    assert w.migrate() == []
+    with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop"):
+        migrate(two, runtime_role=rt2, reset_role=rs2)
+    here = w.new_role("x6", "NOLOGIN")
+    w.grant("GRANT INSERT ON kill_switch_clears TO {}", here)
+    assert _who(w.scoped, w.reset) == [here]
+    assert _who(two, rs2) == sorted([stray, member])  # and the reverse
+
+
+def test_s2_a_member_of_an_owner_that_is_not_a_superuser_is_not_listed(w):
+    two, owner, rt2, rs2 = _second_schema(w)
+    of_owner = w.new_role("mo2", "LOGIN NOINHERIT")
+    w.grant("GRANT {} TO {}", owner, of_owner)
+    assert _who(two, rs2) == []
+    assert _who(two, None) == [rs2]  # the owner is never listed, the unnamed reset role is
+    assert migrate(two, runtime_role=rt2, reset_role=rs2) == []
+
+
+def test_s2_a_grant_to_public_is_listed_as_public(w):
+    w.do("GRANT INSERT ON kill_switch_clears TO PUBLIC")
+    assert _who(w.scoped, w.reset) == ["PUBLIC"]
+    names = _refused_naming(w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset))
+    assert w.runtime not in names  # one name, not every role of the server
+    w.do("REVOKE INSERT ON kill_switch_clears FROM PUBLIC")
+    w.do('GRANT UPDATE ("on") ON kill_switch TO PUBLIC')
+    assert _who(w.scoped, w.reset) == ["PUBLIC"]
+
+
+def test_s2_a_member_of_a_role_that_holds_the_right_is_listed_with_it(w):
+    group, member, far = w.new_role("g7", "NOLOGIN"), w.new_role("m7"), w.new_role("f7")
+    w.grant("GRANT INSERT ON kill_switch_clears TO {}", group)
+    w.grant("GRANT {} TO {}", group, member)
+    w.grant("GRANT {} TO {}", member, far)
+    assert _who(w.scoped, w.reset) == sorted([group, member, far])
+
+
+def _membership(w, role, member):
+    return w.run(
+        "SELECT admin_option, inherit_option, set_option FROM pg_auth_members "
+        "WHERE roleid = %s::regrole AND member = %s::regrole",
+        (role, member),
+    )
+
+
+def test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_not_listed(w):
+    """PostgreSQL 16 and later: a CREATEROLE login that is not a superuser is made a member, WITH ADMIN OPTION
+    only, of every role it creates. It cannot use the role's rights until it grants itself SET or INHERIT; once it
+    does, it is listed."""
+    if w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]:
+        pytest.skip("pg_auth_members has no inherit_option and set_option before PostgreSQL 16")
+    creator = w.new_role("cr", "LOGIN CREATEROLE")
+    made = f"sb_s8_{w.sfx}"
+    with psycopg.connect(w.dsn_of(creator, w.dsn), autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(made)))
+    w.roles.insert(4, made)  # dropped before its creator
+    assert _membership(w, made, creator) == [(True, False, False)]
+    with (
+        psycopg.connect(w.dsn_of(creator, w.dsn), autocommit=True) as db,
+        pytest.raises(DENIED),
+    ):
+        db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(made)))
+    fresh = w.new_schema("cr")
+    assert "0006_stop_state" in migrate(fresh, runtime_role=w.runtime, reset_role=made)
+    assert _who(fresh, made) == []
+    with psycopg.connect(w.dsn_of(creator, w.dsn), autocommit=True) as db:
+        db.execute(
+            sql.SQL("GRANT {} TO {} WITH SET TRUE").format(
+                sql.Identifier(made), sql.Identifier(creator)
+            )
+        )
+    assert _who(fresh, made) == [creator]
+    with pytest.raises(
+        ConfigError, match="roles other than the reset role could clear a stop"
+    ) as e:
+        migrate(fresh, runtime_role=w.runtime, reset_role=made)
+    assert creator in str(e.value)
+
+
+def test_s2_a_noinherit_member_of_the_reset_role_that_can_set_role_is_listed(w):
+    member = w.new_role("n9", "LOGIN NOINHERIT")
+    w.grant("GRANT {} TO {}", w.reset, member)
+    _stop(w)
+    with w.as_(member) as db:  # no right of its own, and the path is real
+        with pytest.raises(DENIED):
+            db.execute('UPDATE kill_switch SET "on" = FALSE')
+        db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(w.reset)))
+        db.execute("INSERT INTO kill_switch_clears (stop_id) SELECT id FROM kill_switch_stops")
+    assert _who(w.scoped, w.reset) == [member]
+    _refused_naming(w, member)
+
+
+def test_s2_a_reset_role_that_is_not_named_in_the_run_is_listed_with_its_members(w):
+    member = w.new_role("n0")
+    w.grant("GRANT {} TO {}", w.reset, member)
+    assert _who(w.scoped, None) == sorted([member, w.reset])
+    assert _who(w.scoped, w.reset) == [member]
+    w.grant("REVOKE {} FROM {}", w.reset, member)
+    assert _who(w.scoped, None) == [w.reset]
+    assert _who(w.scoped, w.reset) == []  # the reset role alone: nobody else
 
 
 def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):

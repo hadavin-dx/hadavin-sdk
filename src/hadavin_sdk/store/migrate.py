@@ -277,30 +277,58 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
 
 
 _CAN_CLEAR = """
-WITH rel AS (
-    SELECT c.oid, c.relname, c.relowner FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = current_schema() AND c.relname IN ('kill_switch', 'kill_switch_clears')
-), holder AS (
-    SELECT r.oid FROM pg_roles r WHERE EXISTS (
-        SELECT 1 FROM rel WHERE has_any_column_privilege(
-            r.oid, rel.oid, CASE rel.relname WHEN 'kill_switch' THEN 'UPDATE' ELSE 'INSERT' END))
+WITH RECURSIVE rel AS (
+    SELECT c.oid, c.relacl, c.relowner,
+           CASE c.relname WHEN 'kill_switch' THEN 'UPDATE' ELSE 'INSERT' END AS priv
+    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = pg_catalog.current_schema() AND c.relname IN ('kill_switch', 'kill_switch_clears')
+), acl AS (
+    SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv
+    UNION
+    SELECT a.grantee FROM rel JOIN pg_catalog.pg_attribute att ON att.attrelid = rel.oid,
+           pg_catalog.aclexplode(att.attacl) a
+    WHERE att.attnum > 0 AND NOT att.attisdropped AND a.privilege_type = rel.priv
+), outside AS (
+    SELECT relowner AS oid FROM rel UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolsuper
+), can AS (
+    SELECT s.oid FROM (SELECT grantee AS oid FROM acl WHERE grantee <> 0
+                       UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = %(reset)s) s
+    WHERE s.oid NOT IN (SELECT oid FROM outside)
+    UNION
+    SELECT m.member FROM pg_catalog.pg_auth_members m JOIN can ON m.roleid = can.oid
+    WHERE m.member NOT IN (SELECT oid FROM outside) AND {usable}
 )
-SELECT r.rolname FROM pg_roles r
-WHERE NOT r.rolsuper AND r.rolname !~ '^pg_' AND r.rolname <> ALL(%s)
-  AND r.oid NOT IN (SELECT relowner FROM rel)
-  AND (r.oid IN (SELECT oid FROM holder)
-       OR EXISTS (SELECT 1 FROM holder h WHERE h.oid <> r.oid AND pg_has_role(r.oid, h.oid, 'MEMBER')))
-ORDER BY r.rolname
+SELECT name FROM (
+    SELECT 'PUBLIC' AS name, 0 AS pos WHERE EXISTS (SELECT 1 FROM acl WHERE grantee = 0)
+    UNION ALL
+    SELECT r.rolname, 1 FROM pg_catalog.pg_roles r
+    WHERE r.oid IN (SELECT oid FROM can) AND r.rolname IS DISTINCT FROM %(reset)s
+) found ORDER BY pos, name
 """
 
 
 def who_else_can_clear(db, reset_role: str | None) -> list[str]:
-    """Every role of the database, other than superusers, the owner of the stop relations and the reset role, that
-    could clear a stop: it can INSERT into kill_switch_clears or UPDATE kill_switch (a column grant counts), or it
-    is a member, with or without inheritance, of a role that can (the reset role, the owner and superusers too:
-    a member can SET ROLE). PostgreSQL's own `pg_*` roles are not listed themselves; a member of one is."""
-    rows = db.execute(_CAN_CLEAR, ([reset_role] if reset_role else [],)).fetchall()
-    return [r[0] for r in rows]
+    """Who, besides the reset role, could clear a stop IN THIS SCHEMA, read from the grants on this schema's
+    `kill_switch` (UPDATE) and `kill_switch_clears` (INSERT) only, so roles of other schemas or applications on
+    the same server never change the answer. Listed: every role those two relations grant the right to (table or
+    column grant; `PUBLIC` is listed as PUBLIC), and every role that is a member, directly or through other
+    roles, with or without inheritance (a NOINHERIT member can SET ROLE), of such a role or of the reset role.
+    From PostgreSQL 16 a membership counts only when its SET or INHERIT option is true: a membership with the
+    ADMIN option alone (what a CREATEROLE login gets on every role it creates) cannot use the role's rights
+    until its holder grants itself more, and the next migrate then lists it.
+
+    Outside the guarantee, never listed and never followed: the reset role itself, the owner of the two
+    relations, superusers, and a role whose only path is membership in the owner, in a superuser, or in a
+    PostgreSQL predefined role that holds no grant here (`pg_write_all_data` and the like can write every table
+    of the server). Whoever hands out those memberships owns that risk; `effective_problems` still refuses the
+    NAMED roles for them."""
+    # pg_auth_members has the two option columns from PostgreSQL 16; before that every membership can SET ROLE.
+    new = db.execute("SELECT pg_catalog.current_setting('server_version_num')::int >= 160000").fetchone()[0]
+    usable = "(m.inherit_option OR m.set_option)" if new else "TRUE"
+    return [
+        r[0]
+        for r in db.execute(_CAN_CLEAR.format(usable=usable), {"reset": reset_role}).fetchall()
+    ]
 
 
 def _excess_privileges(db, role: str) -> list[str]:

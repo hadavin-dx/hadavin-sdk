@@ -9,10 +9,12 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
    The four roles must be different and not members of each other. Without `--reset-role`, migrate warns that nobody
    but the database owner can reset. Name all the roles in ONE command: a plain `migrate` with no `--runtime-role`
    applies no grants, so an old runtime login keeps UPDATE on `kill_switch` and gets nothing on the new tables (its
-   stop then fails with exit 2). Whenever a role is named, migrate refuses if any other role, apart from superusers,
-   the owner and the named reset role, could clear a stop (a right on `kill_switch` or `kill_switch_clears`, or
-   membership in a role that holds one); the message names the role. Running it later without `--reset-role`
-   therefore refuses the reset role itself.
+   stop then fails with exit 2). Whenever a role is named, migrate reads the grants on THIS schema's `kill_switch`
+   (UPDATE) and `kill_switch_clears` (INSERT) and refuses if anyone but the named reset role could clear a stop:
+   a role those tables grant the right to (a column grant counts; a grant to everyone is named `PUBLIC`), or a
+   member, directly or through other roles, of such a role or of the reset role. The message names each one.
+   Running it later without `--reset-role` therefore refuses the reset role itself. Roles of other schemas or
+   applications on the same server are not looked at. See "Limits" for who is not checked.
 3. Store the reset login's connection string as a secret on the operator's machine only. Put the NAME of that secret
    in `backends.store.reset_credential_ref`. Do not give this secret to the runtime process.
 
@@ -42,6 +44,14 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
 
 ## Limits
 - The database owner and a superuser can still change these tables' triggers; they are outside the guarantee.
+- Not checked by migrate, and so also outside the guarantee: a role whose only way to these tables is membership in
+  the owner role, in a superuser, or in a PostgreSQL predefined role such as `pg_write_all_data` (it can write every
+  table of the server). Do not hand out those memberships on a server that holds a stop switch. The roles NAMED in
+  the migrate command are still refused when they are members of the owner.
+- PostgreSQL 16 and later: a membership counts only when its SET or INHERIT option is true. A login with CREATEROLE
+  that created the reset role is a member WITH ADMIN OPTION only; it cannot use the reset role's rights, so it is
+  not refused. If it grants itself SET or INHERIT on the reset role, the next migrate that names a role refuses it.
+  A NOINHERIT member that can `SET ROLE` is always refused.
 - The guarantee is about the state stored in the database. A runtime process that is itself taken over can ignore any
   switch: stop the process too.
 - "Audited first" is done by the `limits reset` command. The database does not force it: a person with the reset
