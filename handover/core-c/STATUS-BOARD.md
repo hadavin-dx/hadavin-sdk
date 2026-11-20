@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:21:49Z
+UPDATED_UTC: 2026-11-20T08:24:17Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 8
-CAPACITY: load 5.5 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, light agents 8, heavy agents 0
+AGENTS_RUNNING: 7
+CAPACITY: load 8.6 of 4 cores, mem 2/15 GB, disk 59G free, 16% used, light agents 7, heavy agents 0
 DISK: / 59G free, 16% used; git worktrees 13; 179M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:21:42+00:00
+PUSHED_UTC: 2026-11-20T08:24:14+00:00
 
-(13:51 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:54 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -97,7 +97,7 @@ PUSHED_UTC: 2026-11-20T08:21:42+00:00
 | (new) g4v3 | drafter | claude-opus-5-5 | ticket G4 v3 taking plan review round 2 | 08:03 | 08:35 | 1 | running | 3 | 0 | EGM draft step; then plan review round 3 |
 | (new) secC4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: comprehension | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 9 Major (SEC-wording-review-4.md) |
 | (new) secS4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: style | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 12 Major, nits |
-| (new) sec5 | drafter | claude-opus-5-5 | wording v5 rewrite taking review round 4 (comprehension + style) | 08:12 | 08:40 | 1 | running | 5 | 0 | EGM draft step (opus drafter) |
+| (new) sec5 | drafter | claude-opus-5-5 | wording v5 rewrite taking review round 4 (comprehension + style) | 08:12 | 08:40 | 100 | done | 5 | 0 | finished: SECURITY-README-v5.md (69 gaps, owner summary 28), check script passes; written before gate r4 and G7 r3 were merged, so the round 3/4 fix rows say NOT RUN: refresh once G7 r4 and P1d r3 land, then final review round 5 |
 | (new) docfix | builder | claude-sonnet-5-5 | docstring and ticket corrections from the drift report (approvals/gate.py, G-text-deltas.md) | 08:14 | 08:30 | 100 | done | 1 | 0 | finished: gate.py G5 docstring, G-text-deltas Amendment 2, F ticket correction; cherry-picked a4b2ce2; redact.py 18-21 and _OWN_OUTPUT comment still to fix (redact lane) |
 | (new) p1dR | reviewer | claude-sonnet-5-5 | EGM RESULT review of P1d-a round 2 (egm:egm-codebase-details): oracle independence, over-defang, fail-before | 08:14 | 08:28 | 100 | done | 2 | 0 | reported: 0 Blocker, 3 Major, 3 Nit (G2-result-review-2.md) |
 | (new) g7D3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-design) | 08:17 | 08:30 | 100 | done | 3 | 0 | reported: no leak; 0B 2M 2N (G7-result-review-3.md) |
