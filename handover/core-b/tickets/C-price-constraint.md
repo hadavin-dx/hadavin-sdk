@@ -1,5 +1,6 @@
 # TICKET C: price constraint (owner core-b SPINE). Written 2026-11-20 from the lead's draft (inputs/draft-tickets-C-D.md), checked by core-b against origin/main 51c9fc4 and origin/core/P4a 4a0976f.
 - Package: step C of plan-v4-final B1. Path class: money. Extended review: no. Migration: none. Ticket review: one EGM round.
+- Done = the plan's stop rule for C and all gates green (tests, ruff, bandit, guard tests, CodeQL, SonarCloud, CodeRabbit); reviewers: correctness and adversarial, fresh agents, given the diff, this ticket and the evidence only.
 - Depends on: nothing merged first. Read-only input: PR #78 core/P4a (two validators, commits c31f336 and 781b8ba).
 - S = src/hadavin_sdk. Stages are demo, pilot, prod. Tests are written by a different agent than the builder.
 - The code below was tried on a scratch copy of main with pydantic 2.14.1 / pydantic-core 2.50.1 (the versions pinned in uv.lock:1662-1679): results are quoted under "Checked". No test suite was run.
@@ -8,21 +9,8 @@
 The cost of a model call is tokens times the price written on the route in config.yaml (S/llm/common.py:166-169, S/llm/fake.py:50-53). If that price is zero or negative, every call costs nothing or less, so no spending cap can ever fire. Today a config with such a price loads without complaint; only the replay command refuses a zero price, and only for the one route of the one agent it runs (S/k1b/replay.py:85-90). Nobody can tell from a config how old its prices are. After C a bad price is refused when the config loads, and a pilot or prod config must state the day its prices were read.
 
 ## Checked: the draft's citations on main
-| Citation | Result |
-|---|---|
-| S/config.py:57-64 Money, no bounds | CONFIRMED |
-| S/config.py:72-76 Route, both prices required | CONFIRMED |
-| S/config.py:398-400 detector route must exist | CONFIRMED |
-| S/config.py:407-430 the refuse-everything-at-once list | CONFIRMED (`_cross_checks` starts at 391-392; list 407-430) |
-| S/config.py:409-412 demo-only kinds refused in pilot and prod | CONFIRMED |
-| S/registry.py:116-119, 125, 135 Route is inside config_hash | CONFIRMED (dump 116-119 uses exclude_defaults; judge route 125; agent route 135) |
-| S/registry.py:342-343 unknown model_route refused | CONFIRMED |
-| S/llm/common.py:166-169 cost | CONFIRMED |
-| S/llm/fake.py:51-52 cost | CONFIRMED (whole expression is 50-53) |
-| S/k1b/replay.py:85-90, 118 | CONFIRMED |
-| S/backends/table.py:593-595 (llm, fake) is demo-only | CONFIRMED |
-| tests/test_k3_pilot_env.py:47 | CORRECTED: 47 is the price line inside `pilot_cfg` (35-87); the new key goes after line 43 (`"environment": env,`) |
-| tests/test_k1b_replay.py:382 model_copy to zero | CONFIRMED (helper 381-385) |
+- CONFIRMED as cited: S/config.py:57-64 (Money, no bounds), 72-76 (Route), 398-400 (detector route must exist), 407-430 (the refuse-everything-at-once list; `_cross_checks` itself starts at 391), 409-412 (demo-only kinds refused in pilot and prod); S/registry.py:116-119, 125, 135 (Route is inside config_hash; the dump uses exclude_defaults) and 342-343 (unknown model_route refused); S/llm/common.py:166-169; S/k1b/replay.py:85-90 and 118; S/backends/table.py:593-595; tests/test_k1b_replay.py:382 (helper 381-385).
+- CORRECTED: S/llm/fake.py cost is 50-53, not 51-52. tests/test_k3_pilot_env.py:47 is the price line inside `pilot_cfg` (35-87); the new key goes after line 43 (`"environment": env,`).
 
 ## Checked: the draft's UNVERIFIED items
 - NaN / Infinity: RESOLVED. pydantic 2.14.1 refuses "NaN", "sNaN", "Infinity", "-Infinity" and Decimal("NaN") for a Decimal field by itself (error type finite_number), with or without the Money wrapper. bool is refused (decimal_type); float is refused by `_money`. "-1" and "-0" LOAD on main.
@@ -136,14 +124,14 @@ def _price_refusals(cfg: Config) -> list[str]:
 Modify tests/test_k3_pilot_env.py: after line 43 add `"prices_as_of": "2026-11-01",` (a fixed past day; placed here, away from the lines P4a changes at 58 and 74).
 Not touched: S/k1b/replay.py, S/registry.py, README, SECURITY, CHANGELOG (the capped-spend sentence of plan B3 enters only with step F).
 
-## Signatures and the new config field
+## Signatures and the one new config field
 - `Route._price(cls, v: Decimal) -> Decimal` (field validator, raises ValueError).
 - `Config._plain_date(cls, v: object) -> object` (before-validator, raises ValueError).
 - `config._today() -> date`; `config._price_refusals(cfg: Config) -> list[str]` (private; not in `__all__`).
 - `defaults.MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6`.
 - New config.yaml key, top level: `prices_as_of: 2026-11-01` (quoted or not; YAML reads the unquoted form as a date). Optional in demo, required in pilot and prod. Every failure surfaces from `load_config` as ConfigError (config.py:540-543), from direct `Config(...)` as pydantic ValidationError.
 
-## Interfaces
+## Interfaces offered / needed
 Offered: the guarantee "a loaded Config has every route price > 0, or exactly 0 only with fake in demo"; step F's meter may rely on it, but only for configs built by validation (model_copy and model_construct skip it, which is why the replay check stays). Needed: nothing from other steps.
 
 ## Tests (tests/test_price_constraint.py)
@@ -172,19 +160,10 @@ FAIL-BEFORE (fails on today's main by assertion "DID NOT RAISE", not by import e
 Regression run (existing files, unchanged except the one fixture line): tests/test_k3_pilot_env.py, test_client_profile.py, test_stage_names.py, test_p1b_backends.py, test_k1b_replay.py, test_k5_tools.py, test_k5_round5.py, test_k5_round9b.py, test_k5_round10.py, warden_port/test_audit_chain.py.
 
 ## Mutation plan
-| Mutant | Killed by |
-|---|---|
-| M1 drop the stage test (`if live or` removed) | E4, E5 (pilot zero) |
-| M2 drop the kind test (`if live:` only) | E2 |
-| M3 `== 0` to `< 0` in `_price_refusals` | E2 |
-| M4 only the input field checked | E3 output-only |
-| M5 `is_signed()` branch removed | H1 "-1", "-0" |
-| M6 ceiling or decimals branch removed | E7 |
-| M7 `live and` removed from the required-date rule | N1, N3 |
-| M8 required-date rule removed | E5 |
-| M9 `>` to `>=` in the future rule | E6 today |
-| M10 `_plain_date` returns v unchecked | H4 (0, timestamps, datetime text) |
-| M11 `refused += _price_refusals(self)` removed | E2, E5 |
+Each mutant is one edit in S/config.py; the test in brackets kills it.
+- M1 drop the stage test (`if live or` removed) [E4, E5]. M2 drop the kind test (`if live:` only) [E2]. M3 `== 0` to `< 0` [E2]. M4 only the input field checked [E3]. M11 the `refused += _price_refusals(self)` line removed [E2, E5].
+- M5 `is_signed()` branch removed [H1]. M6 ceiling or decimals branch removed [E7].
+- M7 `live and` removed from the required-date rule [N1, N3]. M8 required-date rule removed [E5]. M9 `>` to `>=` in the future rule [E6]. M10 `_plain_date` returns v unchecked [H4].
 
 ## Evidence commands (raw output saved under handover/core-b/evidence/C/)
 - `git stash; uv run --all-extras --group test pytest tests/test_price_constraint.py` on main: the FAIL-BEFORE tests fail (save as fail-before.txt); `git stash pop`.
@@ -203,11 +182,7 @@ Refusing an old price date (plan B3 says so in words); a price floor above zero;
 2. "Today" in UTC with no slack? Recommended YES: an operator east of UTC writing the local day in the first hours of that day is refused once and writes the UTC day; the message says UTC. A host clock set far back refuses start, which is the safer side.
 3. Future-date rule also in demo when a date is given? Recommended YES (one rule, no stage branch).
 4. Negative-price and zero-price refusals arrive in two fix rounds when both are present (invariant 4). Accept? Recommended YES; merging them would move sign checks out of Route.
-5. Does #78 add a price table or price date? NO (notes/heads-stop-audit-price.md C.4.5); price stays on the route.
-6. fake in demo with an injected real model double and zero prices: out of scope here; step F meters it.
+5. Does #78 add a price table or price date? NO (notes/heads-stop-audit-price.md C.4.5); price stays on the route. fake in demo with an injected real model double and zero prices: out of scope here; step F meters it.
 
 ## Size
 About 50 source lines including comments and docstrings (27 statements; the draft said 20 and did not count `_price` or the plain-date guard), 3 lines in defaults.py, 1 fixture line, about 150 test lines.
-
-## Done
-The plan's stop rule for C, plus all gates green: tests, ruff, bandit, guard tests, CodeQL, SonarCloud, CodeRabbit. Reviewers: correctness and adversarial, fresh agents, given the diff, this ticket and the evidence only.

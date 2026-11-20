@@ -4,8 +4,10 @@
 | a5a79255 | builder | fable | step B source (migration 0006, grants, store, limits, CLI) in worktree /tmp/core-b-wt/B | 05:32 | +25 min | UNVERIFIED | running | review runs alongside | 0 | lead GO BUILD B |
 | a862ea5f | builder | fable | step C source (config.py price rule, prices_as_of) in worktree /tmp/core-b-wt/C | 05:32 | +15 min | UNVERIFIED | running | review runs alongside | 0 | lead GO BUILD C |
 | a86102dd | builder (tests) | fable | tests/test_audit_drain.py and mutants M1 to M9 for step A, worktree /tmp/core-b-wt/A-tests | 05:32 | +25 min | UNVERIFIED | running | none | 0 | tests by a different agent than the builder |
+| a5de8cd7 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:35 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | ORDER 004 item 3; started through the Skill tool |
+| adaa7521 | reviewer (egm-codebase-details) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:35 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | same stage, runs beside the other reviewer |
 | af8c3d3b | lookup | fable | checks lead draft B against the code, writes tickets/B-stop-state.md | 05:27 | +5 min | UNVERIFIED | running | 0 of 1 | 0 | ORDER 004 item 3 |
-| a2c397e1 | lookup | fable | checks lead draft C, writes tickets/C-price-constraint.md | 05:27 | +5 min | UNVERIFIED | running | 0 of 1 | 0 | ORDER 004 item 3 |
+| a2c397e1 | lookup | fable | tickets/C-price-constraint.md written (188 lines); its report not yet received | 05:27 | +1 min | 95 | running | 0 of 1 | 0 | ORDER 004 item 3 |
 | a64fad56 | builder | fable | step A source: commit 5eb1e7e on cloud/core-b (63 lines added, 14 removed) | 05:27 | done | 100 | done | none | 0 | 127 passed, 5 skipped on 4 existing test files; full suite NOT run |
 | ae122278 | lookup | fable | notes/heads-money.md | 05:22 | done | 100 | done | n/a | 0 | reserve/settle already exists on P4d-a2 (store) and P4b1 (caller) |
 | a367057d | lookup | fable | notes/heads-stop-audit-price.md | 05:22 | done | 100 | done | n/a | 0 | |
@@ -36,7 +38,7 @@
 | BUILD A audit drain | RUNNING | 60 | commit 5eb1e7e (source); tests being written | 1 | source done; new test file and mutants not done yet |
 | BUILD B stop state | RUNNING | 5 | none yet | 1 | |
 | BUILD C price constraint | RUNNING | 5 | none yet | 1 | |
-| T3 one EGM review round per ticket | WAIT T2 | 0 | | 0 | |
+| T3 one EGM review round per ticket | RUNNING | 10 | tickets/F-store-review-1.md (not yet) | 1 | F-store first (two reviewers now); then B, C, F-install one after the other: EGM stages never overlap |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 
 ## RESTARTS
