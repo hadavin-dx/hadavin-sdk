@@ -949,6 +949,37 @@ def test_e9_an_unreadable_stop_state_at_the_first_check_means_no_model_call(
     assert app.runtime.llm.calls == [] and fake_system.creates == 0
 
 
+def test_e9_a_stop_state_that_turns_unreadable_at_any_later_read_means_no_card_and_no_action(
+    w, app, fake_system, monkeypatch
+):
+    """The loop reads the limits more than once before a card is posted (before each model call and again once
+    the plan is ready). A clean run counts the reads; then, for every k after the first, a new run whose k-th and
+    later reads fail must go to a person with nothing done."""
+    from tests.test_cuj import _doc
+
+    real, broken, reads, fail_from = app.store.get_kill_switch, _unreadable(w), [], [0]
+
+    def counted():
+        reads.append(1)
+        return broken() if fail_from[0] and len(reads) >= fail_from[0] else real()
+
+    monkeypatch.setattr(app.store, "get_kill_switch", counted)
+    clean = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
+    total = len(reads)
+    assert clean.state == RunState.WAITING_FOR_APPROVAL, clean.reason_code
+    assert total >= 2, "the loop read the stop state once only: this case would test nothing"
+    seen = {}
+    for k in range(2, total + 1):
+        reads.clear()
+        app.runtime.llm._attempts.clear()  # the fake model replays the same recordings for the next run
+        fail_from[0] = k
+        run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
+        assert len(reads) >= k, f"read {k} was never made"
+        seen[k] = (run.state, run.reason_code)
+    assert seen == dict.fromkeys(range(2, total + 1), (RunState.NEEDS_PERSON, "limits_unavailable"))
+    assert fake_system.creates == 0
+
+
 def test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action(
     w, app, fake_system, monkeypatch
 ):
@@ -989,3 +1020,530 @@ def test_the_python_signatures_are_unchanged():
         assert list(inspect.signature(method).parameters) == ["self", "by"]
     names = list(inspect.signature(migrate).parameters)
     assert names[:5] == ["dsn", "runtime_role", "portal_role", "purge_role", "reset_role"]
+
+
+# ======================================================================================================================
+# Fix round 3 (ticket: "RESOLUTION of review round 1", S1 to S12). Written from the ticket by a different agent than
+# the builder. The cases above are unchanged.
+# ======================================================================================================================
+
+
+def _shadow(w, store, flag=True, stops=True, clears=True):
+    """What a taken-over runtime session could try (S1): TEMPORARY tables with the names of the stop relations, made
+    on the store's own connection. The temporary flag is off, the temporary stops are empty and the temporary
+    clears hold a clear for every real stop. Each shadow is proven to be what an unqualified name finds."""
+    db, real = store._db, sql.Identifier(w.schema)
+    if flag:
+        db.execute(
+            sql.SQL("CREATE TEMPORARY TABLE kill_switch AS SELECT * FROM {}.kill_switch").format(
+                real
+            )
+        )
+        db.execute('UPDATE kill_switch SET "on" = FALSE, "by" = \'temp:off\'')
+        assert db.execute('SELECT "by" FROM kill_switch').fetchall() == [("temp:off",)]
+    if stops:
+        db.execute(
+            sql.SQL(
+                "CREATE TEMPORARY TABLE kill_switch_stops (LIKE {}.kill_switch_stops INCLUDING DEFAULTS)"
+            ).format(real)
+        )
+        assert db.execute("SELECT count(*) FROM kill_switch_stops").fetchone()[0] == 0
+    if clears:
+        db.execute(
+            sql.SQL(
+                "CREATE TEMPORARY TABLE kill_switch_clears (LIKE {}.kill_switch_clears INCLUDING DEFAULTS)"
+            ).format(real)
+        )
+        db.execute(
+            sql.SQL(
+                "INSERT INTO kill_switch_clears (stop_id, \"by\") SELECT id, 'temp:clear' FROM {}.kill_switch_stops"
+            ).format(real)
+        )
+        n = db.execute("SELECT count(*) FROM kill_switch_clears").fetchone()[0]
+        assert n == w.count("kill_switch_stops")
+
+
+# ---- S1 (invariant 14): a temporary table does not change what the store reads or where a stop lands -----------------
+
+
+@pytest.mark.parametrize("which", ["stops", "clears", "all_three"])
+def test_s1_temporary_tables_on_the_runtime_connection_do_not_hide_an_open_stop(w, which):
+    _stop(w, "ops:real")
+    rt = w.store(w.runtime)
+    _shadow(
+        w,
+        rt,
+        flag=which == "all_three",
+        stops=which != "clears",
+        clears=which != "stops",
+    )
+    ks = rt.get_kill_switch()
+    assert ks.on is True
+    assert ks.by == "ops:real"
+    rt.set_kill_switch(KillSwitch(on=True, by="ops:second"))  # lands in the real table
+    assert w.count("kill_switch_stops") == 2
+    assert w.count("kill_switch_clears") == 0
+    assert w.read().on is True
+
+
+def test_s1_a_temporary_flag_table_does_not_hide_a_real_flag_that_is_on(w):
+    w.do('UPDATE kill_switch SET "on" = TRUE, "by" = \'owner:flag\'')
+    rt = w.store(w.runtime)
+    _shadow(w, rt, stops=False, clears=False)
+    ks = rt.get_kill_switch()
+    assert ks.on is True
+    assert ks.by == "owner:flag"
+
+
+def test_s1_a_temporary_flag_table_does_not_hide_a_missing_flag_row(w):
+    rt = w.store(w.runtime)
+    _shadow(w, rt, stops=False, clears=False)
+    w.do("DELETE FROM kill_switch")
+    assert rt.get_kill_switch().on is True
+
+
+def test_s1_temporary_tables_made_before_any_stop_do_not_swallow_the_stop(w):
+    rt = w.store(w.runtime)
+    _shadow(w, rt)
+    assert rt.get_kill_switch().on is False
+    rt.set_kill_switch(KillSwitch(on=True, by="ops:after-temp"))
+    stops = w.count("kill_switch_stops")
+    assert stops == 1, "the stop went into the temporary table, not the real one"
+    assert rt._db.execute("SELECT count(*) FROM kill_switch_stops").fetchone()[0] == 0
+    assert rt.get_kill_switch().on is True
+    ks = w.read()
+    assert (ks.on, ks.by) == (True, "ops:after-temp")
+
+
+def test_s1_the_runtime_login_cannot_reset_through_its_temporary_tables(w):
+    """With unqualified names the reset would 'succeed' on the session's own tables and the store would read OFF."""
+    _stop(w, "ops:kept")
+    rt = w.store(w.runtime)
+    _shadow(w, rt)
+    with pytest.raises(DENIED):
+        rt.set_kill_switch(OFF)
+    assert rt.get_kill_switch().on is True
+    assert w.read().on is True and w.count("kill_switch_clears") == 0
+
+
+def test_s1_a_reset_by_the_reset_login_with_temporary_tables_clears_the_real_stop(w):
+    _stop(w)
+    rs = w.store(w.reset)
+    _shadow(w, rs, flag=False, clears=False)  # the reset session "sees" no stop by the bare name
+    rs.set_kill_switch(OFF)
+    assert w.count("kill_switch_clears") == 1
+    assert w.read().on is False
+
+
+def test_s1_a_search_path_that_names_no_schema_is_refused_at_connect(w):
+    with pytest.raises(ConfigError, match="search_path names no schema"):
+        make(
+            "store",
+            PostgresSettings(**SETTINGS),
+            FakeSecretProvider({"pg-dsn": w.dsn_of(w.runtime, w.scope(f"sb_none_{w.sfx}"))}),
+        )
+
+
+# ---- S2 (invariant 7): who else can clear ----------------------------------------------------------------------------
+
+
+def _refused_naming(w, role, call=None):
+    """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
+    owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there."""
+    w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
+    before = {r: w.rights(r) for r in w.roles[:4]}
+    assert "DELETE" in before[w.runtime]["kill_switch_stops"]
+    with pytest.raises(
+        ConfigError, match="roles other than the reset role could clear a stop"
+    ) as e:
+        (call or w.migrate)()
+    names = str(e.value).split("could clear a stop", 1)[1].split(". Name the runtime")[0]
+    assert role in names, f"{role} is not named in: {e.value}"
+    assert {r: w.rights(r) for r in w.roles[:4]} == before
+    return names
+
+
+S2_STRAY = {
+    "update_on_the_flag": "GRANT UPDATE ON kill_switch TO {}",
+    "insert_on_the_clears": "GRANT INSERT ON kill_switch_clears TO {}",
+    "column_update_of_on": 'GRANT UPDATE ("on") ON kill_switch TO {}',
+    "column_insert_of_stop_id": "GRANT INSERT (stop_id) ON kill_switch_clears TO {}",
+}
+
+
+@pytest.mark.parametrize("case", sorted(S2_STRAY))
+def test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear(w, case):
+    third = w.new_role("x3", "NOLOGIN")
+    w.grant(S2_STRAY[case], third)
+    names = _refused_naming(w, third)
+    assert w.reset not in names and w.runtime not in names
+    w.grant("REVOKE ALL ON kill_switch, kill_switch_clears FROM {}", third)
+    assert w.migrate() == []  # the right gone: the same command passes
+
+
+@pytest.mark.parametrize("options", ["LOGIN NOINHERIT", "LOGIN"])
+def test_s2_migrate_refuses_a_member_of_the_reset_role(w, options):
+    member = w.new_role("mb", options)
+    w.grant("GRANT {} TO {}", w.reset, member)
+    _refused_naming(w, member)
+    w.grant("REVOKE {} FROM {}", w.reset, member)
+    assert w.migrate() == []
+
+
+def test_s2_migrate_refuses_a_member_of_a_member_of_the_reset_role(w):
+    middle, far = w.new_role("m1", "NOLOGIN NOINHERIT"), w.new_role("m2", "LOGIN NOINHERIT")
+    w.grant("GRANT {} TO {}", w.reset, middle)
+    w.grant("GRANT {} TO {}", middle, far)
+    names = _refused_naming(w, far)
+    assert middle in names
+
+
+def test_s2_migrate_refuses_the_runtime_role_as_a_noinherit_member_of_a_group_that_can_clear(w):
+    """The runtime role holds no right itself (NOINHERIT), so the per-role check sees nothing; it can SET ROLE."""
+    group = w.new_role("gr", "NOLOGIN")
+    w.grant("GRANT UPDATE ON kill_switch TO {}", group)
+    w.grant("GRANT USAGE ON SCHEMA {} TO {}", w.schema, group)
+    w.grant("ALTER ROLE {} NOINHERIT", w.runtime)
+    w.grant("GRANT {} TO {}", group, w.runtime)
+    assert "UPDATE" not in w.rights(w.runtime)["kill_switch"]
+    with w.as_(w.runtime) as db:  # the path is real: the runtime login turns the flag by SET ROLE
+        db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(group)))
+        db.execute('UPDATE kill_switch SET "on" = FALSE')
+    names = _refused_naming(w, w.runtime)
+    assert group in names
+
+
+def test_s2_migrate_refuses_a_member_of_pg_write_all_data(w):
+    """A predefined role that may INSERT and UPDATE everywhere: its member can clear without any grant here."""
+    writer = w.new_role("wa", "LOGIN")
+    w.grant("GRANT pg_write_all_data TO {}", writer)
+    _refused_naming(w, writer)
+
+
+def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
+    names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))
+    assert w.runtime not in names
+    assert w.rights(w.reset)["kill_switch_clears"] == {"SELECT", "INSERT"}
+
+
+@pytest.mark.parametrize("only", ["portal_role", "purge_role"])
+def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
+    third = w.new_role("x4", "NOLOGIN")
+    w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+    role = {"portal_role": w.portal, "purge_role": w.purge}[only]
+    names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
+    assert w.reset in names  # no reset role named: nobody but the owner is excluded
+
+
+def test_s2_the_four_roles_named_in_one_command_with_no_stray_right_pass(w):
+    fresh = w.new_schema("ok")
+    applied = migrate(
+        fresh, runtime_role=w.runtime, portal_role=w.portal, purge_role=w.purge, reset_role=w.reset
+    )
+    assert applied[-1] == "0006_stop_state"
+    with psycopg.connect(fresh, autocommit=True) as db:
+        assert migrate_mod.who_else_can_clear(db, w.reset) == []
+        assert migrate_mod.who_else_can_clear(db, None) == [w.reset]
+    assert w.migrate() == []  # and again on the schema of the fixture
+    rt = w.store(w.runtime, fresh)
+    rt.set_kill_switch(KillSwitch(on=True, by="ops"))
+    w.store(w.reset, fresh).set_kill_switch(OFF)
+    assert rt.get_kill_switch().on is False
+
+
+# ---- S7 and B-2 through the command line: the reset reports the state the store reads --------------------------------
+
+
+def _reset_cli(w, tmp_path, monkeypatch):
+    """A pilot config whose secrets hold only the reset login's DSN (the operator's machine)."""
+    cfg = _pilot(tmp_path)
+    _provide(w, monkeypatch, {RESET_REF: w.dsn_of(w.reset)})
+    return cfg
+
+
+def _waits_on_a_lock(w, role):
+    q = "SELECT count(*) FROM pg_stat_activity WHERE usename = %s AND wait_event_type = 'Lock'"
+    for _ in range(200):
+        if w.run(q, (role,))[0][0]:
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def _reset_in_a_thread(cfg, by="user:op"):
+    codes = []
+    t = threading.Thread(target=lambda: codes.append(_limits(cfg, "reset", by)))
+    t.start()
+    return t, codes
+
+
+def test_s7_cli_reset_with_the_flag_row_missing_exits_2_audits_reset_failed_and_stays_on(
+    w, tmp_path, monkeypatch, capsys
+):
+    cfg = _reset_cli(w, tmp_path, monkeypatch)
+    _stop(w, "ops:kept")
+    w.do("DELETE FROM kill_switch")
+    assert _limits(cfg, "reset") == 2
+    out, err = capsys.readouterr()
+    assert "kill switch NOT reset" in err and "ConfigError" in err and "Traceback" not in err
+    assert "kill switch OFF" not in out + err
+    assert w.kinds() == ["limits.reset", "limits.reset_failed"]
+    assert w.count("kill_switch_clears") == 0  # nothing was cleared
+    assert w.read().on is True
+    assert _limits(cfg, "reset") == 2  # and again: the same answer, never a quiet success
+    assert w.read().on is True and w.count("kill_switch_clears") == 0
+
+
+def test_s7_a_reset_with_the_flag_row_missing_clears_nothing_so_the_stop_survives_the_repair(w):
+    """Had the reset cleared the stop before it noticed the missing row, putting the row back would read OFF."""
+    _stop(w, "ops:kept")
+    w.do("DELETE FROM kill_switch")
+    with pytest.raises(ConfigError, match="kill_switch row missing"):
+        w.store(w.reset).set_kill_switch(OFF)
+    w.do('INSERT INTO kill_switch (id, schema_version, "on", ts) VALUES (1, 1, FALSE, now())')
+    ks = w.read()
+    assert (ks.on, ks.by) == (True, "ops:kept")
+
+
+def test_b2_cli_reset_says_still_on_when_a_stop_commits_after_its_clear_statement_began(
+    w, tmp_path, monkeypatch, capsys
+):
+    """Deterministic: the owner holds an uncommitted clear of the one open stop, so the reset's clear statement
+    (its snapshot already taken) waits on that row. A stop committed during the wait is not in the snapshot."""
+    cfg = _reset_cli(w, tmp_path, monkeypatch)
+    rt = _stop(w, "ops:before")
+    stop_id = w.run("SELECT id FROM kill_switch_stops")[0][0]
+    with psycopg.connect(w.scoped) as owner:
+        owner.execute(
+            'INSERT INTO kill_switch_clears (stop_id, "by") VALUES (%s, %s)',
+            (stop_id, "owner:hand"),
+        )
+        t, codes = _reset_in_a_thread(cfg)
+        try:
+            waited = _waits_on_a_lock(w, w.reset)
+            rt.set_kill_switch(KillSwitch(on=True, by="ops:during"))
+        finally:
+            owner.commit()
+            t.join(timeout=60)
+    assert waited, "the reset never waited on the owner's clear: nothing overlapped"
+    out, err = capsys.readouterr()
+    assert codes == [2], err
+    assert "kill switch still ON (by 'ops:during')" in err
+    assert "Run limits reset again" in err
+    assert "kill switch OFF" not in out + err
+    assert w.kinds() == ["limits.reset"]  # written, not failed
+    ks = w.read()
+    assert (ks.on, ks.by) == (True, "ops:during")
+    assert _limits(cfg, "reset", "user:again") == 0
+    assert "kill switch OFF (by user:again)" in capsys.readouterr().out
+    assert w.read().on is False
+
+
+def test_s5_a_stop_committed_between_the_audit_intent_and_the_clear_statement_is_cleared(
+    w, tmp_path, monkeypatch, capsys
+):
+    """The owner locks the flag row, so the reset waits at its first statement, after its audit intent."""
+    cfg = _reset_cli(w, tmp_path, monkeypatch)
+    rt = _stop(w, "ops:before")
+    with psycopg.connect(w.scoped) as owner:
+        owner.execute("SELECT 1 FROM kill_switch WHERE id = 1 FOR UPDATE")
+        t, codes = _reset_in_a_thread(cfg)
+        try:
+            waited = _waits_on_a_lock(w, w.reset)
+            kinds, clears = w.kinds(), w.count("kill_switch_clears")
+            rt.set_kill_switch(KillSwitch(on=True, by="ops:between"))
+        finally:
+            owner.commit()
+            t.join(timeout=60)
+    assert waited, "the reset never waited on the flag row"
+    assert (kinds, clears) == (
+        ["limits.reset"],
+        0,
+    )  # the intent was written before anything was cleared
+    out, err = capsys.readouterr()
+    assert codes == [0], err
+    assert "kill switch OFF (by user:op)" in out
+    assert w.count("kill_switch_clears") == 2
+    assert w.read().on is False
+
+
+def test_b2_cli_normal_reset_prints_off_and_exits_0(w, tmp_path, monkeypatch, capsys):
+    cfg = _reset_cli(w, tmp_path, monkeypatch)
+    _stop(w)
+    w.do('UPDATE kill_switch SET "on" = TRUE')
+    assert _limits(cfg, "reset", "user:resetter") == 0
+    out, err = capsys.readouterr()
+    assert out.strip().splitlines()[-1] == "kill switch OFF (by user:resetter)"
+    assert "still ON" not in err
+    assert w.read().on is False
+
+
+# ---- B-4: the reset ref must not name the runtime's own secret -------------------------------------------------------
+
+
+@pytest.mark.parametrize("env", ["demo", "pilot", "prod"])
+def test_b4_a_reset_ref_equal_to_the_runtime_secret_name_is_refused_before_any_connection(
+    w, cfg_dir, tmp_path, monkeypatch, capsys, env
+):
+    same = SETTINGS["dsn_secret_name"]
+    cfg = _demo(cfg_dir, same) if env == "demo" else _pilot(tmp_path, ref=same, env=env)
+    _stop(w)
+
+    def never(capability, *a, **k):
+        raise ConfigError(f"make({capability!r}) was called: the refusal must come first")
+
+    monkeypatch.setattr(cli, "make", never)
+    code = _limits(cfg, "reset")
+    err = capsys.readouterr().err
+    assert "was called" not in err, err
+    assert code == 2
+    assert err.startswith(
+        "refused: backends.store.reset_credential_ref names the same secret as "
+        "backends.store.dsn_secret_name"
+    )
+    assert w.kinds() == [] and w.count("kill_switch_clears") == 0
+    assert w.read().on is True
+
+
+# ---- S12: the ts of a stop -------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("ts", ["infinity", "-infinity"])
+def test_s12_a_stop_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
+    assert w.exists("kill_switch_stops")
+    with w.as_(w.runtime) as db, pytest.raises(errors.CheckViolation):
+        db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("agent:x", ts))
+    assert w.count("kill_switch_stops") == 0
+
+
+@pytest.mark.parametrize("ts", ["infinity", "-infinity"])
+def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
+    _stop(w)
+    with w.as_(w.reset) as db, pytest.raises(errors.CheckViolation):
+        db.execute(
+            'INSERT INTO kill_switch_clears (stop_id, "by", ts) SELECT id, %s, %s FROM kill_switch_stops',
+            ("admin:x", ts),
+        )
+    assert w.count("kill_switch_clears") == 0 and w.read().on is True
+
+
+@pytest.mark.parametrize("ts", ["1970-01-01T00:00:00Z", "2999-01-01T00:00:00Z"])
+def test_s12_a_hand_inserted_stop_with_another_date_is_an_open_stop_and_a_reset_clears_it(w, ts):
+    with w.as_(w.runtime) as db:
+        db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("ops:dated", ts))
+    ks = w.read()
+    assert (ks.on, ks.by) == (True, "ops:dated")
+    w.store(w.reset).set_kill_switch(OFF)
+    assert w.read().on is False
+    _stop(w, "ops:now")  # and an honest stop after it is open, whatever dates lie in the table
+    ks = w.read()
+    assert (ks.on, ks.by) == (True, "ops:now")
+
+
+def test_s12_the_stores_own_stop_does_not_send_ts(w):
+    """The caller's clock is not trusted: a KillSwitch dated in another century is stored with the database's now."""
+    from datetime import UTC, datetime
+
+    old = datetime(2001, 1, 1, tzinfo=UTC)
+    w.store(w.runtime).set_kill_switch(KillSwitch(on=True, by="ops:clock", ts=old))
+    fresh = w.run("SELECT ts > now() - interval '1 hour' AND ts <= now() FROM kill_switch_stops")
+    assert fresh == [(True,)]
+    assert w.read().ts != old
+
+
+# ---- S6: the two mutants that needed their own test ------------------------------------------------------------------
+
+
+def test_s6_two_resets_while_the_flag_row_is_missing_both_fail_loudly_and_clear_nothing(w):
+    """Since S7 a reset stops at the missing row, before its clear statement: two at once both raise the same
+    error (never a UniqueViolation, never a quiet success) and no stop is cleared."""
+    rt = _stop(w)
+    for n in range(5):
+        rt.set_kill_switch(KillSwitch(on=True, by=f"ops:{n}"))
+    w.do("DELETE FROM kill_switch")
+    stores, gate, seen = [w.store(w.reset), w.store(w.reset)], threading.Barrier(2), []
+
+    def reset(store):
+        try:
+            gate.wait(timeout=10)
+            store.set_kill_switch(OFF)
+            seen.append("no error")
+        except Exception as exc:  # noqa: BLE001 - compared below
+            seen.append(f"{type(exc).__name__}: {exc}"[:36])
+
+    threads = [threading.Thread(target=reset, args=(s,)) for s in stores]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=60)
+    assert seen == ["ConfigError: kill_switch row missing"] * 2
+    assert w.count("kill_switch_clears") == 0
+    assert w.read().on is True
+
+
+def test_s6_a_reset_that_meets_an_uncommitted_clear_of_the_same_stop_succeeds(w):
+    """The ON CONFLICT path. Two store resets never meet there (the flag row's lock puts them in a line), but a
+    clear written by hand does: the owner inserts a clear and has not committed; the reset's clear statement
+    waits on that key and, once the owner commits, must end without an error."""
+    _stop(w, "ops:a")
+    stop_id = w.run("SELECT id FROM kill_switch_stops")[0][0]
+    rs, failed = w.store(w.reset), []
+
+    def reset():
+        try:
+            rs.set_kill_switch(OFF)
+        except Exception as exc:  # noqa: BLE001 - reported below
+            failed.append(f"{type(exc).__name__}: {exc}")
+
+    t = threading.Thread(target=reset)
+    with psycopg.connect(w.scoped) as owner:
+        owner.execute(
+            'INSERT INTO kill_switch_clears (stop_id, "by") VALUES (%s, %s)',
+            (stop_id, "owner:hand"),
+        )
+        t.start()
+        try:
+            waited = _waits_on_a_lock(w, w.reset)
+        finally:
+            owner.commit()
+            t.join(timeout=60)
+    assert waited, "the reset never waited on the owner's clear: nothing overlapped"
+    assert failed == []
+    assert w.run('SELECT "by" FROM kill_switch_clears') == [("owner:hand",)]
+    assert w.read().on is False
+
+
+def test_s6_cli_reset_whose_clear_insert_is_refused_leaves_the_flag_on(
+    w, tmp_path, monkeypatch, capsys
+):
+    """The flag update and the clears are one transaction: the owner took INSERT on kill_switch_clears from the
+    reset role, so the second statement fails and the first (the flag off) must be undone."""
+    cfg = _reset_cli(w, tmp_path, monkeypatch)
+    _stop(w, "ops:kept")
+    w.do('UPDATE kill_switch SET "on" = TRUE, "by" = \'owner:flag\'')
+    w.grant("REVOKE INSERT ON kill_switch_clears FROM {}", w.reset)
+    assert _limits(cfg, "reset") == 2
+    err = capsys.readouterr().err
+    assert "kill switch NOT reset" in err and "InsufficientPrivilege" in err
+    assert w.run('SELECT "on", "by" FROM kill_switch') == [(True, "owner:flag")]
+    assert w.kinds() == ["limits.reset", "limits.reset_failed"]
+    assert w.count("kill_switch_clears") == 0
+    assert w.read().on is True
+
+
+# ---- S9: the migrate warning, on a real database ---------------------------------------------------------------------
+
+
+def test_cli_migrate_warns_on_stderr_when_a_runtime_role_is_named_without_a_reset_role(
+    w, cfg_dir, monkeypatch, capsys
+):
+    fresh = w.new_schema("wn")
+    _demo(cfg_dir)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", fresh)
+    base = ["--config", str(cfg_dir), "migrate", "--runtime-role", w.runtime]
+    assert cli.main(base) == 0
+    out, err = capsys.readouterr()
+    assert "warning: no reset role was named" in err and "--reset-role" in err
+    assert "no reset role" not in out
+    assert cli.main([*base, "--reset-role", w.reset]) == 0
+    assert "no reset role" not in capsys.readouterr().err
