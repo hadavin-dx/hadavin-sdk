@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:57:54Z
+UPDATED_UTC: 2026-11-20T16:58:27Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 1657Z REAL RUNNING AGENTS 2: G9c builder, G12d fix-diff reviewer. Load (/proc/loadavg) 2.10 1.87 2.27. P3 DONE: real-store gate e2e 18 pass + 2 strict xfail (wip/cloud-core-c/p3-scratch); findings F1 (BoundGate._settle calls meter.settle(res, usd) but Limits.settle needs agent_id: every paid call stays at worst case), F2 (reply not masked by the gate), F3 (stale test) in requests/for-core-b-p3-findings.md. Merged: DOCS6, G4d review fix (HOSTKEY CPU guard). Head f065c628e. 17:23Z REAL RUNNING AGENTS 6: G9c builder, DOCS6 builder, P3 builder (gate e2e with core-b store), reviewers for G13d, G12d, G4d diffs. Load (/proc/loadavg) 1.82 1.60 2.27. Lead 16:55 orders: docs review cap = 2 rounds: NO more docs review rounds (DOCS6 fix already running will merge, then stop; ope
+STATE: 17:05Z REAL RUNNING AGENTS 2: G9c builder, G12e builder. Load (/proc/loadavg) 1.61 1.77 2.22. G12d review: 0B/2M, leaks REPRODUCED on head (password=<HUNTER2, HUNTER2 leaves the second copy; same for ‹ADMIN_1›, <ABCD1234!, SECRET_001): a regression of my G12d merge, fix in flight (G12e). G13d review 0B/1M(unconfirmed, a possible over-refusal, ledger) docstrings fixed; G4d review 1M fixed. 1657Z REAL RUNNING AGENTS 2: G9c builder, G12d fix-diff reviewer. Load (/proc/loadavg) 2.10 1.87 2.27. P3 DONE: real-store gate e2e 18 pass + 2 strict xfail (wip/cloud-core-c/p3-scratch); findings F1 (BoundGate._settle calls meter.settle(res, usd) but Limits.settle needs agent_id: every paid call st
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 2
-CAPACITY: load 2.0 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
-DISK: / 53G free, 24% used; git worktrees 61; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+CAPACITY: load 1.6 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 62; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:57:52+00:00
+PUSHED_UTC: 2026-11-20T16:58:17+00:00
 
-(22:27 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:28 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -52,8 +52,9 @@ PUSHED_UTC: 2026-11-20T16:57:52+00:00
 | docs6 | builder | claude-sonnet-5-5 | BUILDS DOCS6: round 5 fixes (0 Blocker, 5 Major); /tmp/core-c-docs6 | 17:17 | 17:40 | 1 | done | 1 | 0 | docs only |
 | p3 | builder | claude-sonnet-5-5 | P3: gate end-to-end hostile test with core-b REAL store on a scratch merge of cloud/core-b + cloud/core-c; /tmp/core-c-p3 | 17:22 | 17:55 | 1 | done | 1 | 0 | 1 PG |
 | g13d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G13d fix diff | 17:23 | 17:35 | 1 | done | 1 | 0 | EGM |
-| g12d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G12d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
+| g12d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G12d fix diff | 17:23 | 17:35 | 1 | done | 1 | 0 | EGM |
 | g4d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G4d fix diff | 17:23 | 17:35 | 1 | done | 1 | 0 | EGM |
+| g12e | builder | claude-sonnet-5-5 | BUILDS G12e: G12d review fixes (2 REPRODUCED leaks: <HUNTER2 / ‹ADMIN_1› / SECRET_001 bare copies; map budget in aggregate); /tmp/core-c-g12e | 17:05 | 17:35 | 1 | running | 1 | 0 |  |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
