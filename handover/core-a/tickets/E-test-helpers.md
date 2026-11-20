@@ -11,7 +11,7 @@ Session core-a (DOOR). Written 2026-11-20 from origin/main 51c9fc4fb (S = src/ha
 The core promises that a run which dies half-way is never done twice and ends as NEEDS_PERSON: acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender must poll the run state. To prove that, a test must be able to stop the program at an exact place, for example "after the run row was written, before the model was called", and then look at what is left. Today no test can do that: tests only write an old row by hand and let the clean-up step find it (tests/test_p7_tick.py:216-232). This ticket adds one small test-only tool that wraps an object the test already hands to the runtime (the store, the model double) and, when the test has armed a named point, either raises a special error (same process) or kills the process (child process, for real PostgreSQL). It changes no existing file and no runtime code.
 
 ## 2. RIGHT-SIZE and NEEDED-CHECK
-RIGHT-SIZE: new shipping code, small and test-only (crash.py is 295 lines as built, wc -l 2026-11-20; the first estimate was about 110), but it is the proof tool of two guarantee-class steps (D door, F money), so it gets its own tests; no mutation run, no review round.
+RIGHT-SIZE: new shipping code, small and test-only (crash.py is 316 lines as built, wc -l 2026-11-20; the first estimate was about 110), but it is the proof tool of two guarantee-class steps (D door, F money), so it gets its own tests; no mutation run, no review round.
 ONE-PLACE-PER-JOB: "stop the program at a named place" lives ONLY in `hadavin_sdk.testing.crash`. Steps D, F, H and the other sessions import it; none writes its own kill switch, flag file or exit code.
 
 NEEDED-CHECK per proposed helper (what I read, then the verdict):
@@ -50,8 +50,8 @@ RUNG TABLE (CODE-LAST v1)
 
 ## 4. FILES
 Create (all new, ours):
-- `src/hadavin_sdk/testing/crash.py` (295 lines, wc -l 2026-11-20; planned about 110): the helper.
-- `tests/test_testing_crash.py` (1030 lines with 44 test functions, wc -l and grep 2026-11-20; planned about 190): its tests (flat name, like tests/test_mutation_runner.py:25 for the sibling module). The child script of the kill-mode tests is written into `tmp_path` by the test; no second file.
+- `src/hadavin_sdk/testing/crash.py` (316 lines, wc -l 2026-11-20; planned about 110): the helper.
+- `tests/test_testing_crash.py` (1166 lines with 50 test functions, wc -l and grep 2026-11-20; planned about 190): its tests (flat name, like tests/test_mutation_runner.py:25 for the sibling module). The child script of the kill-mode tests is written into `tmp_path` by the test; no second file.
 Modify: none by us. REQUESTS TO core-b: none required. One optional request at landing: R1 `CHANGELOG.md`, in the entry of the D+E group (plan-v4-final.md:19), one line "`hadavin_sdk.testing.crash`: test-only crash points (in the wheel, not used at run time)"; reason: CHANGELOG.md:347 already tells readers what of `testing` is in the wheel, and CHANGELOG is core-b's (plan-v3.md:6). NOT requested: any change to tests/conftest.py, pyproject.toml, uv.lock, guard lists.
 Delete: none.
 
@@ -153,7 +153,7 @@ Needed by E: nothing from core-b or core-c. From step D's own code: the worker m
 No interface ticket for the crash hook (dropped as ceremony, plan-v4-final.md:18).
 
 ## 8. TEST CASES for the helper (tests/test_testing_crash.py)
-(Planned list. The built file has 44 test functions in 1030 lines, wc -l and grep 2026-11-20, and also tests the behaviour added later: delete retries, a stuck flag, type errors for `flag_path`, `nth` and `wrap`.) All run on the memory store or with plain objects in this box, except P1. Normal:
+(Planned list. The built file has 50 test functions in 1166 lines, wc -l and grep 2026-11-20, and also tests the behaviour added later: delete retries, a stuck flag, type errors for `flag_path`, `nth` and `wrap`.) All run on the memory store or with plain objects in this box, except P1. Normal:
 - N1 unarmed wrap of a `MemoryStore`: create_run then get_run return the same run as unwrapped; `fired == ()`.
 - N2 arm `store.create_run:before`: SimulatedCrash, the store holds no run. N3 arm `:after`: SimulatedCrash, the run is there.
 - N4 one-shot: the second call of the same method passes; `fired` has one entry.
@@ -183,7 +183,7 @@ FAIL-BEFORE: N6 is the behaviour no existing test can show. Mutants (hand list, 
 - ruff rule S is on for src with only S101 lifted for tests (pyproject.toml:72, 78-79): no `assert` in crash.py; line length 100 (pyproject.toml:68).
 - The marker is written with `os.write(1, ...)` (no `print`) and `os._exit` is called once. Bandit runs at `-ll` on src (ci.yml:181); a finding there is reported, never suppressed (UNVERIFIED that none appears: not run).
 - Python 3.12 and 3.13 (ci.yml:74, 142): `def wrap[T]` is 3.12 syntax, allowed by requires-python (pyproject.toml:6).
-- Size estimate (first plan): crash.py about 110 lines, test file about 190 lines, 2 files, 0 existing files touched. As built (wc -l 2026-11-20): crash.py 295 lines, test file 1030 lines, still 2 files. Three-try cap applies (ORDERS.md:40).
+- Size estimate (first plan): crash.py about 110 lines, test file about 190 lines, 2 files, 0 existing files touched. As built (wc -l 2026-11-20): crash.py 316 lines, test file 1166 lines, still 2 files. Three-try cap applies (ORDERS.md:40).
 - Evidence: the pytest output of the one test file, saved to handover/core-a/raw/E-tests.log; P1 is NOT RUN here unless PostgreSQL starts as a non-root user (ORDERS.md:61).
 - Rollback: delete the two files; nothing else refers to them.
 
@@ -211,3 +211,5 @@ Open questions for the lead (none blocks the build):
 UNVERIFIED: that uv_build puts the new file into the wheel (no build run); that pytest sets `PYTEST_CURRENT_TEST` in `os.environ` during fixtures and tests and that children inherit it (test H1 and N7 pin it); that `ThreadPoolExecutor` stores a `BaseException` in the future (E4 pins it); that bandit and ruff raise nothing on `os._exit` and `os.write`; the Windows exit code; any fault-injection library on rung 4; pytest-socket version and licence; the method names of core-b's reserve and settle interface; the final signatures of step D (taken from the draft, not from a reviewed ticket).
 
 NOT READ: S/store/postgres.py outside lines 125-146, 192-270 and its method list; S/runtime/agent_loop.py outside 172-232, 352-412, 462-492 and its `except` list; S/runtime/tick.py outside 100-183 and 335-369; S/store/memory.py after line 104; tests/k1b_support.py, tests/tls_support.py, tests/fixtures/*, tests/contracts/*, tests/demo_askdata/*, tests/warden_port/fakes.py beyond their function lists; tests/contracts/kinds/store_postgres.py beyond lines 1-25 and its grep hits; the bodies of the guard tests beyond the cited lines; tools/mutation_runner.py beyond lines 10 and 69; uv.lock (one grep); README, SECURITY, docs; old-plan-v4-1.md, old-plan-v4-3.md, atlas-n8n.md, review-plan-1 and -2 files, resolve-plan-1.md; ticket C of the draft beyond a skim; any PR or branch; the demo's `trace.py` and tests.
+
+d-fix21 (drift, docs only; DRIFT-REPORT-2 R2-16, R2-17, R2-18). R2-16: sizes updated above (crash.py 316 lines, test file 1166 lines, 50 test functions). R2-17: the numeric line cites into crash.py in this ticket (delete retries `_UNLINK_TRIES`/`_UNLINK_PAUSE_S`, `_disarm`, the `flag_path`, `arm` and `wrap` TypeErrors, `__exit__`, the name cap, `CrashPoints`) are older than the 316-line file; find them by symbol with grep, not by number. R2-18, behaviour the ticket had not stated: (1) `hit` is an extension hook a caller may override; a delete that is still refused means nothing fires at this call and the next matching call tries again. (2) A flag read that fails with a sharing violation counts as "not armed this time" and the `nth` count does not advance. (3) `_still_there` counts an OS error as "still there" and answers False for an unsearchable folder on Linux. These add to invariants 5 and 8 and the flag-file paragraph, which say only "unreadable or missing means not armed".
