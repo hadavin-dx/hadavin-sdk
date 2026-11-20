@@ -327,6 +327,18 @@ The runtime login no longer writes audit checkpoints and no longer deletes from 
    tick step every tick (it has no EXECUTE on the outbox functions yet); an old runtime run after migrate cannot delete
    parked events or write checkpoints. Nothing in the chain is affected either way: intent and outcome writes need only
    SELECT and INSERT on `audit_entries`.
-5. Checkpoints are signed once per tick (not every `checkpoint_every` rows) when the checkpoint login is set; the memory
-   store keeps the inline checkpoint. A postgres deployment without the role writes NO checkpoint at all (the runtime login holds
-   SELECT only on `audit_checkpoints`): migrate warns, `app.build` logs one warning, and pilot and prod refuse to start.
+5. Checkpoints are signed once per tick (not every `checkpoint_every` rows) when the checkpoint login is set. Without it:
+   after `migrate --runtime-role` (no `--checkpoint-role`) the runtime login holds SELECT only on `audit_checkpoints`, so
+   NO checkpoint is written until the role is set up (migrate warns, `app.build` logs one warning, pilot and prod
+   refuse to start); where the login still holds INSERT (`migrate --no-roles`, a dev login that owns the tables or is a
+   superuser, the memory store) the inline checkpoint still runs on it.
+6. A draft database that already applied the OLD 0012 (before the quarantine function learned unique names; 0012 is
+   unreleased and was edited in place) keeps the old function until you do ONE of these:
+   a. Reset the draft (loses nothing but the two functions): as the owner, `DROP FUNCTION hadavin_audit_outbox_done(text);`
+      and `DROP FUNCTION hadavin_audit_outbox_quarantine(text, text);`, then `hadavin-sdk migrate ... --reset-draft
+      0012_audit_outbox_functions` (name ALL roles in the same command). It deletes the ledger row of 0012 and applies the
+      file again; the grants are re-applied by the same run.
+   b. Or, if you replaced the functions by hand with the current file's text (`CREATE OR REPLACE`), record the new
+      checksum: `hadavin-sdk migrate ... --accept-changed-draft 0012_audit_outbox_functions`.
+   Until then migrate warns on every run that the file and the ledger disagree, and a repeat-parked poison event is not
+   quarantined (the old function refuses a rename onto an existing name).

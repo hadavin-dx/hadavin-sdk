@@ -36,10 +36,12 @@ drain but loses nothing; and the runtime can append an `audit_entries` row with 
 `hadavin_audit_outbox_done(E)`, which deletes the real parked event E: a forged hash makes `audit verify` fail loudly
 (the row is append-only and stays), but a correctly computed hash (the hash is unkeyed, the runtime can compute it)
 verifies and is signed by the next checkpoint. That adds no authority beyond what the runtime already had (it can append
-any row); the wall stops accidental loss, a stray code path and an SQL-injection DELETE. A deployment migrated without
-`--checkpoint-role` (demo, dev, `--no-roles`) writes NO checkpoint at all with postgres: the runtime login holds SELECT
-only on `audit_checkpoints`, the chain stays unsigned, and `app.build` logs one warning at start (pilot and prod refuse to
-start). Only the memory store keeps the inline checkpoint. Checkpoints written by the tick are signed once per tick, not every
+any row); the wall stops accidental loss, a stray code path and an SQL-injection DELETE. After `migrate --runtime-role` WITHOUT
+`--checkpoint-role`, the runtime login holds SELECT only on `audit_checkpoints`, so NO checkpoint is written (the chain
+stays unsigned) until a checkpoint role and `backends.store.checkpoint_dsn_secret_name` are set up; `app.build` logs one
+warning at start when it sees this (pilot and prod refuse to start). Where the runtime login still holds INSERT
+(`migrate --no-roles`, a dev login that owns the tables or is a superuser, the memory store) the inline checkpoint
+still runs on that login. Checkpoints written by the tick are signed once per tick, not every
 `checkpoint_every` rows, so the unsigned tail is at most one tick long. Even then this is tamper evidence of past rows, not authenticity: a
 runtime process that is itself taken over can append new rows with valid hashes, and the chain cannot tell those from
 true ones. A signer and an anchor (checkpoints held outside the database) narrow this; they do not remove it.
