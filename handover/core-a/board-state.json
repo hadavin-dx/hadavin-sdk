@@ -759,6 +759,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "the dry-run agent looked at the wrong socket"
+  },
+  {
+   "id": "A6-rev-c-rekey",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "A6: core-c newest merge 2552bcc95 (pii recording re-keyed to the current redaction)",
+   "started UTC": "16:12",
+   "expected end": "10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 16:09 A6"
   }
  ],
  "tests": [
@@ -1131,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:12 PACKAGES A1-A6 (your 16:09 list; heads: core-c 443ef0b69, core-b 0aab18e9d, lead-b-migrate 0891d81bd, lead-b-ts-watermark de8967aba): A1 cfull fixes: DONE, NOTHING TO FIX: all 5 ids pass at core-c fc4af41a7 on py3.13.12 x3 and py3.12.3 (evidence/cfull-fix-check.md): no wip/core-a-for-c-cfull branch because there is no diff; A2 migrate review: DONE twice (reviews/rev-lead-migrate.md, rev-lead-migrate-2.md) -> handover/core-b/requests/xr-review-migrate.md (new file, name as you asked); A3 ts review: DONE twice -> handover/core-b/requests/xr-review-ts.md; heads unchanged since: waiting for your fix rounds; A4 integration dry-run: DONE (INTEGRATION-DRYRUN-2.md; scratch/core-a-integration-dryrun-2 never pushed) + integ-pg RUNNING (strict PG run of tests/triggers etc. on the merged tree: the dry-run agent wrongly said there is no PG: mine is on :55433); A5 CRASH-MATRIX part 2: DONE; A6 core-c newest merges: the only new code commit since G9b is 2552bcc95 (a test re-keyed to the current redaction: scrutinising whether it hides a regression): reviewer RUNNING. AGENTS 2 (integ-pg, A6). QUEUE.md has no READY item: I can take nothing more from the queue; from core-b I can take S1/R1/W1 tests not touching migrate.py if you send the names.",
   "15:58 INTEGRATION DRY-RUN 2 DONE (handover/core-a/INTEGRATION-DRYRUN-2.md; scratch branch scratch/core-a-integration-dryrun-2, never pushed, worktree /home/user/wt/integ): heads core-b 463760813 -> core-a d1ee703ab -> core-c bd7f9d978, handover excluded. Merging core-a into core-b: ONE conflict (tests/contracts/test_t1_reserve_cap.py add/add: core-b's F-store T1 vs core-a's original T1); merging core-c: FIVE (CHANGELOG.md, defaults.py, tests/conftest.py = kept both sides, no duplicate constants; guard/producers.py = core-c's wording (registered callers identical on both sides, no check lost); the T1 file again). Your five named files: CHANGELOG/defaults/producers/conftest conflict ONLY at the core-c step, test_t1 at both. DECISION NEEDED: THREE T1 files now coexist (core-b's at the path, core-a's and core-c's saved as test_t1_reserve_cap_core_a.py/_core_c.py): pick one canonical. Checks on the final tree: ruff ok, import ok, pytest --co 22535 collected 0 errors, anchors+runner tests 130 passed, no TypeError at import/collection; 168 files differ from core-b (142 added, 26 modified, 0 handover). RISK: both T1 variants and tests/test_grants_negative_0007.py / _roles.py call migrate() WITHOUT reset_role/no_roles which core-b's migrate refuses (PG-only, unrun). NOT done by that agent (it looked at the wrong socket: my PG is on :55433): strict-PG run of tests/triggers: running now as integ-pg. AGENTS 1.",
   "15:55 LEAD 15:52: your four items: (a) lane 2 cfull: DONE (all 5 ids pass at core-c fc4af41a7 on py3.13 x3 and py3.12: evidence/cfull-fix-check.md); no wip/core-a-for-c-cfull needed: nothing to fix; (b) lane 3 reviews of lead-b-migrate/ts-watermark: DONE twice (xr-review-wip-lead-b-*.md); heads unchanged; (c) integration prep: STARTED (agent integ-dryrun: scratch worktree, merge core-b head -> cloud/core-a -> cloud/core-c with handover excluded, lists every conflict incl. the five you named, resolution plan -> handover/core-a/INTEGRATION-DRYRUN-2.md; never pushed); (d) crash matrix part 2: DONE. AGENTS 1. Lane 1 skipped as you said. If lanes are empty I can take core-b's S1/R1/W1 test files that do not touch migrate.py: send me the list or the file names.",
   "15:53 LANE 2 DONE (evidence/cfull-fix-check.md): the cfull ids ALL PASS at core-c fc4af41a7 on py3.13.12 (3 repeats) and py3.12.3 (1 run) on a quiet box (start load 0.04): 17 passed, 0 failed per run: test_hostile_1 'fdfa', the py3.12 Unicode 15.1.0 test (passes, not skipped), test_glued_patterns_are_linear all 12 params, settle-loop thread_time test; whole-test times 3.2-4.3 s (3.13) and up to 5.25 s (3.12) for the glued ids, 11-12 s settle-loop, 39-42 s fold_budget. No fix needed from core-a: core-c's earlier fixes hold. ALL FOUR LANES DONE. AGENTS 0; nothing open on my side; waiting for new heads or orders.",
