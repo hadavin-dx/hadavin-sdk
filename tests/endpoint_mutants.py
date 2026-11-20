@@ -46,9 +46,12 @@ ROOT = Path(__file__).resolve().parents[1]
 TE = "tests/triggers/test_endpoint.py"
 TW = "tests/triggers/test_worker.py"
 TC = "tests/test_testing_crash.py"
+TS = "tests/triggers/test_t5_wsgiref.py"
+TP = "tests/triggers/test_t5_process.py"
 ENDPOINT = "src/hadavin_sdk/triggers/endpoint.py"
 WORKER = "src/hadavin_sdk/triggers/worker.py"
 CRASH = "src/hadavin_sdk/testing/crash.py"
+SERVER = "src/hadavin_sdk/triggers/server.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
 VERIFY = (
@@ -64,6 +67,19 @@ PARSE_FIRST = (
 )
 CLOSED = "            if closed:\n                return NO_ACK\n"
 SECRETS_TEST = "test_check_secrets_refuses_and_names_the_sender_not_the_value"
+SIGNED_TEST = "test_signed_request_over_the_socket_is_acked_with_run_id_and_state_only"
+QUIET_ERROR = (
+    '    error_headers: ClassVar[list[tuple[str, str]]] = [("Content-Length", "0")]\n'
+    '    error_body = b""\n'
+)
+LOG_NOTHING = '        """Nothing: the arguments hold the request line, which is text chosen by the caller."""\n'
+EMPTY_REFUSAL = (
+    "        self.send_response_only(code)\n"
+    '        self.send_header("Content-Length", "0")\n'
+    '        self.send_header("Connection", "close")\n'
+    "        self.end_headers()\n"
+)
+LOG_409 = '_LOG.warning("trigger status=409 sender=%s run=%s", req.sender, req.run_id)'
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -249,6 +265,128 @@ M = [
         "test_n2_before_crashes_and_nothing_was_written",
         "DID NOT RAISE NotFound",
     ),
+    # --- G8 the quiet server (step E2)
+    mutant(
+        "G8a the default error body and headers of the standard library are written again",
+        SERVER,
+        QUIET_ERROR,
+        "",
+        TS,
+        "test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only",
+        "A server error occurred",
+    ),
+    mutant(
+        "G8b log_message prints the request line to stderr again",
+        SERVER,
+        LOG_NOTHING,
+        LOG_NOTHING + "        super().log_message(format, *args)\n",
+        TS,
+        SIGNED_TEST,
+        '"POST /v1/trigger HTTP/1.1" 202',
+    ),
+    mutant(
+        "G8c send_error is the standard library's again (an HTML page as the refusal)",
+        SERVER,
+        EMPTY_REFUSAL,
+        "        super().send_error(code, message, explain)\n",
+        TS,
+        "test_garbage_instead_of_a_request_line_is_400_empty",
+        "<!DOCTYPE HTML",
+    ),
+    mutant(
+        "G8d the Server header names the Python version again",
+        SERVER,
+        "    server_software = None  # no Server header: it would name the Python version\n",
+        "",
+        TS,
+        SIGNED_TEST,
+        "wsgiserver/0.2 cpython",
+    ),
+    # --- G9 the secrets at start, the two later rules
+    mutant(
+        "G9a more than two secrets per sender are accepted",
+        ENDPOINT,
+        "        if len(values) > MAX_SECRETS_PER_SENDER:\n",
+        "        if False:\n",
+        TE,
+        "test_check_secrets_refuses_more_than_two_secrets_per_sender",
+        "DID NOT RAISE ValueError",
+    ),
+    mutant(
+        "G9b whitespace around a secret value is accepted",
+        ENDPOINT,
+        "            if value != value.strip():\n",
+        "            if False:\n",
+        TE,
+        "test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-both ends]",
+        "DID NOT RAISE ValueError",
+    ),
+    # --- G10 the timestamp boundary
+    mutant(
+        "G10 the clock is not cut to whole seconds in verify_any",
+        ENDPOINT,
+        "    now = int(now_ts)\n",
+        "    now = now_ts\n",
+        TE,
+        "test_verify_any_window_edge_is_exact_with_a_fractional_clock[0.001--300-sender-a]",
+        "None == 'sender-a'",
+    ),
+    # --- G11 the wait with no free slot
+    mutant(
+        "G11a the pause never grows while no slot is free",
+        WORKER,
+        "min(pause * 2, pause_cap)\n",
+        "pause\n",
+        TW,
+        "test_a_refused_request_reads_the_store_a_few_times_not_a_hundred",
+        "AssertionError: ",
+    ),
+    mutant(
+        "G11b a waiting request never takes a freed slot",
+        WORKER,
+        "                    job = self._submit(req)[0]\n",
+        "",
+        TW,
+        "test_a_waiting_request_takes_the_slot_as_soon_as_it_is_free",
+        "(503, {})",
+    ),
+    # --- G12 bind and shutdown
+    mutant(
+        "G12a check_bind accepts a non-loopback address without the switch",
+        WORKER,
+        "    if not loopback and allow_non_loopback is not True:\n",
+        "    if False:\n",
+        TW,
+        "test_non_loopback_host_needs_the_switch",
+        "DID NOT RAISE ConfigError",
+    ),
+    mutant(
+        "G12b check_bind accepts the IPv6 loopback address",
+        WORKER,
+        "    if address.version != 4:\n",
+        "    if address.version != 4 and not address.is_loopback:\n",
+        TW,
+        "test_ipv6_hosts_are_refused_the_loopback_one_too",
+        "DID NOT RAISE ConfigError",
+    ),
+    mutant(
+        "G12c the 409 log line carries trigger_ref",
+        WORKER,
+        LOG_409,
+        LOG_409[:-1].replace('run=%s"', 'run=%s ref=%s"') + ", req.trigger_ref)",
+        TW,
+        "test_409_writes_one_log_line_with_status_sender_and_run_id_only",
+        "sender-a/key-1#",
+    ),
+    mutant(
+        "G12d the SIGTERM handler does not stop the server",
+        WORKER,
+        '        threading.Thread(target=server.shutdown, name="trigger-stop", daemon=True).start()\n',
+        "        return None\n",
+        TP,
+        "test_d3_sigterm_stops_a_serving_worker_cleanly",
+        "the child did not end within",
+    ),
 ]
 
 if __name__ == "__main__":
@@ -272,7 +410,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TE, TW, TC],
+        [TE, TW, TC, TS, TP],
         extra_dirs=("tests",),
         only=only,
         on_result=show,
