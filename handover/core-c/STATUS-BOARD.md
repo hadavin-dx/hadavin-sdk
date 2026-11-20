@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:29:18Z
+UPDATED_UTC: 2026-11-20T05:29:54Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 5
 PERCENT: 76
 AGENTS_RUNNING: 3
-CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 3, heavy agents 0
-DISK: / 60G free, 13% used; git worktrees 1; 396K	/tmp/claude-0;116M	/root/.cache/uv;
+CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 1; 392K	/tmp/claude-0;351M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket F findings into tickets/F-review-1.md; write ticket G when the two surveys end; then one EGM round on G
-PUSHED_UTC: 2026-11-20T05:27:42+00:00
+PUSHED_UTC: 2026-11-20T05:29:18+00:00
 
 (10:59 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 

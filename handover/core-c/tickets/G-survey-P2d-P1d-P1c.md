@@ -129,7 +129,6 @@ a throw-away `{}` (judge.py:71, bedrock_guardrail.py:98, evals.py:63, tools.py:1
 
 ## 5. G5 wording
 approvals/gate.py lines 38-66, exact (65 closes the docstring, 66 is blank):
-
 ```
     the fences differ from the ones it kept, everything is cleaned as prose;
   - removals run until nothing changes: removing one token could join the rest into a link or image;
@@ -160,9 +159,7 @@ Verdicts: PASS (unchanged), REWRITE (G3 removed something), BLOCK (G5). G1 (ever
 P13 in the verifier; the report says when it fired.
 """
 ```
-
 guard/redact.py lines 10-20, exact (19 closes the docstring, 20 is blank):
-
 ```
 Every string is scrubbed before it can reach the model. Patterns FIND values; a final sweep then masks
 the other copies of each found value - every copy of a SECRET, every standalone copy of an identifier
@@ -175,17 +172,13 @@ everything that leaves. (A re-scan inside redact() used the sweep's own rule and
 it was removed - second review, 2026-09-30.)
 """
 ```
-
-Citations gate.py:42-44, 59, 63 VERIFIED; redact.py:16 VERIFIED (the sentence runs 15-17). "G5" is at gate.py 42, 59, 63 on core/P2d-1,
-rebase/P1b-o140 and core/P1d-a too. Facts: no `def` of `enforce`, `for_terminal`, `outbound_data`, `hedge` or `leaked_kinds` exists in
-`src/` (grep: no hit); gate.py:5-7 already says "Not ported (WARDEN outbound policy): enforce, hedge,
-leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal, outbound_data, sanitise_data, GateResult." Equally stale in the
-same block: gate.py:46-50 (G2 `hedge`) and 58-61.
-What the plans require:
+Citations gate.py:42-44, 59, 63 VERIFIED; redact.py:16 VERIFIED (the sentence runs 15-17); "G5" is at gate.py 42, 59, 63 on core/P2d-1,
+rebase/P1b-o140 and core/P1d-a too. No `def` of `enforce`, `for_terminal`, `outbound_data`, `hedge` or `leaked_kinds` exists in `src/`
+(grep: no hit); gate.py:5-7 lists them under "Not ported (WARDEN outbound policy)". Equally stale: gate.py:46-50 (G2 `hedge`) and 58-61.
+### 5.1 What the plans require the wording to say
 - The fault: inventory-gap.md:20 "G5: `approvals/gate.py:42` and `guard/redact.py:16` promise a second leak check that has no code (lead
   dropped it, ORDER 009, text not reworded)."
-- Place and owner: review-plan-3-codebase.md:18 "G5 text is in approvals\gate.py:42-44, 59, 63 and guard\redact.py:16; one owner";
-  plan-v4-final.md:14 "(owner TEXT)".
+- Place and owner: review-plan-3-codebase.md:18 "G5 text is in approvals\gate.py:42-44, 59, 63 and guard\redact.py:16; one owner" (TEXT, plan-v4-final.md:14).
 - The replacement text: plan is silent. The nearest sentence that bounds any new claim is plan-v4-final.md:31: "every document and
   message passes the pattern redactor and a mask failure means no call; this is not \"nothing secret can reach a model\" (patterns catch
   the named kinds only; operator prompts and tool schemas are not masked; text sent to tools and sources is out of scope)."
@@ -195,11 +188,12 @@ What the plans require:
    revision 7 and the corpus be supplied? Is the look-alike placeholder marker part of it?
 2. Which fold head is the "one head": rebase/P1b-o140 (4 behind main; its commit 2a7e169 is titled "WIP snapshot, UNVERIFIED") or core/P1b?
 3. P2d-1: port its 14 own files (2,642 lines, plus the three textnorm names) onto the fold head, or merge and resolve 18 conflicts?
-4. P1d-a and P2d-1 both edit `guard/redact.py`; git reports an auto-merge, the result was not tested.
+4. P1d-a and P2d-1 both edit `guard/redact.py`; git reports an auto-merge, the merged result was not tested. Which lands first?
 5. Check-only function: name, return type (bool or kinds found), and whether it may touch `RunMap.redact_cache`.
 6. "Pattern redactor kind" and "put-back": cut (section 4), or does the lead name a delta?
 7. G5: delete the stale WARDEN notes or mark them "not ported"? Does the check-only function become the SDK's G5?
-NOT CHECKED: no test, linter or mutant run on any head; CI state of #63, #70, #77 (no network). Test diffs of both heads (file names and
-docstring heads only); fixture contents. `_fold_scan` and textnorm logic (signatures and docstrings only, no correctness review).
-core/P1b-fixwip (ancestry only). agent_loop.py:844-876 (plan-v3.md:37) not read; replay.py:119-123 read only to confirm the refusal.
-ORDER 009, orders 64 and 70 are known only through the plans. Whether the merge-tree results hold once main moves: UNVERIFIED.
+### 6.1 NOT CHECKED
+- No test, linter or mutant run on any head; CI state of #63, #70, #77 (no network). Test diffs of both heads (file names and docstring
+  heads only); fixture contents. `_fold_scan` and textnorm logic (signatures and docstrings only, no correctness review).
+- core/P1b-fixwip (ancestry only). agent_loop.py:844-876 (plan-v3.md:37) not read; replay.py:119-123 read only to confirm the refusal.
+- ORDER 009, orders 64 and 70 are known only through the plans. Whether the merge-tree results hold once main moves: UNVERIFIED.
