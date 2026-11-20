@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:33:21Z
+UPDATED_UTC: 2026-11-20T10:37:58Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.34 of 4 cores, mem 1/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
+CAPACITY: load 1.84 of 4 cores, mem 1/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
 DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.3G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T10:33:19Z (previous push; this board is pushed right after writing)
-IST: 16:03 IST
+PUSHED_UTC: 2026-11-20T10:37:56Z (previous push; this board is pushed right after writing)
+IST: 16:07 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -209,3 +209,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 10:26Z E13: OPTION A DONE and MERGED (M10, b32f358fd; due 10:45Z): pg_temp-safe seq guard, NOT VALID ts CHECKs (an upgrade can't fail on a planted ts), audit_checkpoints guard, (agent_id, day) index, honest wording (tripwire; 0008 'ONLY way' reworded), 4 reproduced bypasses pinned as xfail(strict); H1 consumed-fall NOT done (not cheap: option B removes it). Tests on the merged tree (11 checkpoint-touching modules, -x): 300 passed, 4 xfailed, 1 failed: test_release_expired_spend_pg.py::test_the_command_with_the_reset_login_behind_the_reference_is_refused_by_the_database (now refused earlier by the B6a start-up self-check: fixing the test). OPTION B: ticket tickets/F-money-definer.md WRITTEN with 6 questions for the lead (migration 0011; add_cost stays Python; purge as function; superuser owner note-only; residual 'a runtime can settle a hold it names to 0 once, caps are a caller argument'; stop-migrate-start deploy); PLAN REVIEW ROUND 1 RUNNING (due 10:40Z); build by 11:30Z or handover with the exact next step. RUNNING: B8 (E12 Medium 3+4 code; merge by 10:35Z), F-money-definer plan reviewer. who_else round 6 head 56081abe0: cherry-pick next.
 
 10:32Z STATE: MERGED B8 (E12 Medium 3+4 code: the reset writes kill_switch_resets + moves the watermark in the same transaction; the gate read does NOT use the watermark: a ts-based watermark can hide a planted older stop, so the read uses count(stops) > count(clears) (index-only, 200000 cleared stops fast); audit_seq stays NULL: write_intent returns an event id, not a seq). Fixed on the merged tree: release command turns a start-up self-check ConfigError into exit 2; test_u4 lists 0009's reset rows. IN PROGRESS: contract model test (tests/contracts/test_store_spend_model.py) failing 39 on PG after the purge rule + 0010 guard changes (test-only fix by an agent). F-money-definer plan review round 1: FIX FIRST (4 Majors, no Blocker: broken-test list incomplete, function calls must be schema-qualified, one owner for all definer functions, PL/pgSQL traps) report tickets/F-money-definer-plan-review-1.md; honest split: steps 2-3 today, 4-5 next session. NEXT (in order): who_else round 6 FINAL cherry-pick (head cb88b8b41), then full stop-state + CLI modules and evidence batch 9. LIVE AGENT: contract-model test fixer.
+
+10:37Z ON TRACK? E13 OPTION A (due 10:45Z): DONE and merged at 10:21Z (M10, b32f358fd) with its fixes since (release command exit 2 on a self-check ConfigError; test_u4 rows; contract model test follows the purge rule: agent fixing, 39 PG failures were test-side). B PLAN REVIEW ROUND 1 (due 10:40Z): DONE at 10:30Z: FIX FIRST (4 Majors, 0 Blocker): ROUND 2 = the ticket revision is RUNNING now (due 10:45Z), then a second fresh review by 10:55Z, then builders (honest: steps 2-3 today, 4-5 next session). who_else FINAL picked. Stop-state + CLI modules (14 files) RUNNING in the background (started 10:33Z, ~10 min on the shared server). LIVE AGENTS (sonnet): contract-model test fixer, F-money-definer ticket reviser.
