@@ -37,9 +37,9 @@ MAX_DOCUMENT_BYTES = (
 # LAPTOP IS OVER THE 6 s BUDGET BELOW: on that machine today the `curl -u ` text is REFUSED (InputTooLarge); nothing is shown. The figures
 # that count are the Linux test machine's (2026-11-20, G7 fix round 4; raw run in handover/core-c/evidence/G7-1.md), for a text of the keyword
 # repeated up to the cap with a planted chain of three rounds, a compound tail and a backslash so that the views run, through
-# redact_untrusted, in CPU seconds of the thread: "password=" 2.5 to 3.2 s, "curl -u " 4.5 to 5.3 s (budget 6.0 s). One pattern pass plus one
+# redact_untrusted, in CPU seconds of the thread: "password=" 2.5 to 3.2 s, "curl -u " 4.5 to 5.4 s (runs of 4.51, 4.53, 5.27, 5.33 and 5.36 s; budget 6.0 s). One pattern pass plus one
 # sweep of that text (the UNIT below): 0.35 to 0.63 s for "password=", 1.96 to 2.41 s for "curl -u ". So a machine about 25 percent slower
-# than the test machine (4.8 s x 1.25 = 6.0 s; at the slow end of the runs, 5.3 s, 14 percent is enough) REFUSES a `curl -u `-shaped 262 KB text with InputTooLarge: fail closed, and a legitimate
+# than the test machine (4.8 s x 1.25 = 6.0 s; at the slow end of the runs, 5.36 s, 12 percent is enough) REFUSES a `curl -u `-shaped 262 KB text with InputTooLarge: fail closed, and a legitimate
 # document of that shape is lost, never half masked. The test machine's margin is 1.1x to 1.3x on that text; a plain text costs about 7 us a
 # character and is nowhere near it. The bound of a call is stated below: size a timeout around that, not around the 7 us.
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
@@ -57,7 +57,7 @@ CUT_MARGIN = 8192
 # over the strings the previous round changed plus a sweep; the loop ends on a round that changes no text, at most 4 rounds, then the
 # call is refused as NotSettled), inside `_build` (every 512th stored value) and inside EVERY sweep of a call, the FIRST included
 # (`redact` and `redact_many` pass the call's deadline since G7 fix round 4): every 32nd free segment (only when the map holds a value), every value replaced, and every 1,024th
-# unit of work of the compound-form scan (a placeholder token of the text, with or without a form, or one step of a trie walk). A spent
+# unit of work of the compound-form scan (a placeholder token of the text, with or without a form, a step of the backward prefix walk, a step of the forward suffix walk, or an entry looked up at a suffix terminal) and the registration of a union (one per character). A spent
 # budget raises InputTooLarge, a round is never skipped (that would fail open). A direct `sweep()` call with no deadline is not checked, and
 # a `redact()` or `redact_many()` with no `_deadline` has no total bound at all (the fold scan restarts a fresh 6 s allowance on each `find`).
 # NOT checked: a direct pass of the pattern table (`find` over a string, and the loop over the strings of one round), `_views`
@@ -66,8 +66,9 @@ CUT_MARGIN = 8192
 # loops.
 # THE BOUND, one statement (the tests enforce it, tests/test_redact_settle_loop.py T4). For ONE call of `redact` or `redact_many` the time past
 # the budget is at most the pass in progress when the budget is crossed (pass 1 over the strings, or the pass of a round) plus the one
-# `str.replace` or finder pass of the sweep that was running. A `bank_near` flip (a bank word found only in a folded view) reads again only
-# the strings read before it, each after a deadline check, so it adds one string pass at most, never a second pass over every string.
+# `str.replace` or finder pass of the sweep that was running. A `bank_near` flip (a bank word found only in a folded view) reads again the
+# strings read up to it, EACH after a deadline check: a flip at the LAST string IS a second pass over every string (checked before each
+# string), so what holds is that the overrun past the budget is at most one string pass, not that the flip is cheap.
 # `redact_text` and `redact_untrusted` are a SERIES of such calls (the text, then up to a handful of views) against ONE absolute deadline, so
 # their worst case is: budget + the pass of the call in progress + one sweep + 0.5 s PER VIEW for what no check reaches (a regex pass, `_views`,
 # `_keep_earlier_masks`, the final `_clean`). The test asserts budget + twice the measured UNIT (one pattern pass and one sweep over the biggest
@@ -86,18 +87,28 @@ CUT_MARGIN = 8192
 # 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
 REDACT_BUDGET_S = 6.0
 # The scan of the written forms of compound secrets (`guard.redact._Redactor._spelled_sweep`; a secret found whole after its first copy was cut,
-# `<SECRET_1>xy`, or a value with a placeholder inside it, `a=1; sid=<JWT_1>`) looks each placeholder token of a text up in a trie of the forms
-# registered under it: backwards over what stood BEFORE the token in the form, forwards over what stood after it. The cost of a token is the
-# prefix that really matches the text plus the suffix walks of the prefixes that matched, whatever the NUMBER of forms or of distinct prefix
-# lengths registered (before round 5 a cap on offsets (32) and on forms (256) per token refused honest cookie logs: a header preceded by cookies
-# of another length on every line is a new offset on every line). Instead the total work of one scan (every step of a walk and every token counts
-# one unit) is counted, read every 1,024 units together with the deadline, and refused past this many units (`InputTooLarge("SpelledWorkTooMuch")`,
-# nothing shown). The figure is measured, not chosen (evidence handover/core-c/evidence/G7-1.md, fix round 5): across the repo's real-shaped corpora
-# (1,835 inputs of tests/test_redact_idempotent_property.py) no first token has more than 1 offset and 1 form registered under it, and across 2,000
-# generated compositions at most 1 offset and 6 forms; the worst HONEST case built (300 cookie lines with 300 different prefix lengths, 262,144
-# characters of copies of them) needs about 243,000 units and 300 signed-id forms about 77,000: the limit is 16 times the first. A hostile text of
-# 300 prefixes x 60-character suffixes at 130 KB needs about 5e6 units and is refused in about 0.4 s. The deadline (`REDACT_BUDGET_S`) bounds the time
-# of a scan on a slower machine whatever this says.
+# `<SECRET_1>xy`, or a value with a placeholder inside it, `a=1; sid=<JWT_1>`) looks each placeholder token of a text up in two tries of the forms
+# registered under it: backwards over what stood BEFORE the token in the form (the prefixes; the ids of the ones that match are collected) and then
+# forwards ONCE over what stood after it (all the suffixes in one trie; at a terminal, the matched prefix ids are looked up). The cost of a token is
+# the prefix that really matches the text, plus the suffix that really matches, plus the entries looked up at the terminals met (P + S + entries; round 5
+# walked the suffix once per matched prefix, P x S: a cookie jar growing by one cookie per line with the same signed suffix needed 3.3 to 3.6 million
+# units at 64 to 128 characters of suffix, 83 to 90 percent of the limit, and was one character away from refusing an honest log). Nothing is capped
+# by the NUMBER of forms or of prefix lengths (before round 5 a cap of 32 offsets and 256 forms per token refused honest cookie logs). Instead the
+# total work of one scan (every step of a walk, every token and every entry looked up counts one unit; registering a union of overlapping forms counts one per
+# character) is counted, read every 1,024 units together with the deadline, and refused past this many units (`InputTooLarge("SpelledWorkTooMuch")`,
+# nothing shown). The figure is CHOSEN, not measured: a round number with a margin over the honest shapes MEASURED on the Linux test machine
+# (evidence handover/core-c/evidence/G7-1.md "G7 fix round 6", script g7r6_units.py): the grown cookie jar 305,000 units (330 lines, 64-character suffix) and
+# 255,000 (275 lines, 128 characters), 300 cookie lines of 300 prefix lengths 245,000, 300 signed ids 98,000: the limit is 13 times the largest. The
+# repo's corpora (1,835 inputs of tests/test_redact_idempotent_property.py) have at most 1 offset and 1 form under a first token, 2,000 generated
+# compositions at most 1 offset and 6 forms. A hostile text (2,800 forms, 70 prefixes x 40 suffix lengths in 213,000 characters, then 262,000 characters of
+# copies) needs 6.3 million units and is refused after 0.53 s of CPU; the measured cost is 0.09 to 0.23 microseconds per unit (0.115 on the hostile text),
+# so the limit costs 0.4 to 0.9 s at most. WHAT THIS DOES NOT BOUND: with no deadline the scan is 4 million units per sweep per string per round,
+# no total bound (stated); the deadline (`REDACT_BUDGET_S`) bounds the time on a slower machine whatever this says. A hostile author can therefore FORCE A
+# REFUSAL of the whole document (`SpelledWorkTooMuch` is an `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost
+# (SECURITY wording). MEMORY (no cap by count; bounded by the input cap): a registration costs about one dict per character of its written form: a single
+# 200,000-character compound value (the generic SECRET class has no length cap) is about 200,000 trie nodes, 37 MB measured, per registration, and the
+# registry lives for one call of `redact` or `redact_many`. Two OPEN limits (E10, pinned by tests): an overlap of forms completed in a LATER round (registered after the earlier form's text was swept) leaves the swallowed
+# literal prefix or tail readable, and two compound values that overlap as RAW text leave the tail of one readable in the literal sweep.
 SPELLED_MAX_WORK = 4_000_000
 
 

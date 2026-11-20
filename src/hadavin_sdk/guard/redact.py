@@ -958,9 +958,20 @@ def redact(
     """
     r = _Redactor(mapping, _cache, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
+    near_before = r.bank_near
     out = r.find(text)
+    if r.bank_near != near_before:
+        # SAFETY NET (round 6, design M-D): a bank word found only in a folded view while the text was read. Within one `find` the flag is set
+        # before any line is masked and before the direct patterns run (the dry hits of the fold scan do not depend on it), so no leak was
+        # reproduced (evidence G7-1.md); the text is read once more with the flag set, as `redact_many` does, because the cost is one more
+        # pass on a rare text and the alternative is a proof about a function of 200 lines. The deadline is read first.
+        r._check_deadline()
+        out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
-        out = r.settle([text], [r.sweep(out, r._deadline)])[0]
+        known = len(
+            r.mapping
+        )  # before the first sweep: a union it registers must count as growth (round 6, design M-E)
+        out = r.settle([text], [r.sweep(out, r._deadline)], known=known)[0]
     return RedactionResult(text=out, mapping=r.mapping, actions=r.actions)
 
 
@@ -1131,18 +1142,25 @@ class _Redactor:
         self.bank_near = False  # redact_many: a bank word in some string of the batch
         # A secret compound value written with a placeholder in it (`<SECRET_1>xy`, as the first sweep left it): swept as a literal
         # before the placeholder split (see `sweep`), so another copy the first sweep already cut is not left with its tail.
-        # Indexed by the FIRST placeholder token the written form holds -> a character trie of what stands BEFORE that token in the
-        # form (its prefix, stored REVERSED, so the scan reads the text backwards from the token); a node holding key "" carries the
-        # forward trie of what stands AFTER the token (the suffix); a terminal of that one (key "") holds (placeholder, full value).
-        # The scan of a token of the text therefore costs the length of the prefix that really matches the text before it, plus the suffix
-        # walks of the prefixes that matched: it does NOT depend on how many forms or distinct prefix lengths are registered (a log of
-        # cookie headers with a different run of cookies before the same token is one path, not one walk per prefix length). The total
-        # work of a scan is counted and bounded (`defaults.SPELLED_MAX_WORK`) and the deadline is read in it. A rolled-back registration
-        # deletes its form (`_unspell`); an entry whose placeholder no longer maps to its full value is still ignored when read (a safety net).
-        self._spelled: dict[str, dict[str, Any]] = {}
+        # Indexed by the FIRST placeholder token the written form holds -> TWO tries: a BACKWARD one of what stands BEFORE the token in
+        # the form (its prefix, stored reversed, so the scan reads the text backwards from the token; a node that ends a registered prefix
+        # holds key "" -> [prefix id, forms using it]) and ONE forward trie of everything that stands AFTER the token, all forms together
+        # (a terminal, key "", holds {prefix id: (placeholder, full value)}). The scan of a token reads the text backwards once, collecting
+        # the ids of the prefixes that match, and then forwards ONCE through the suffix trie, at each terminal looking up the matched ids: the
+        # cost of a token is the matched prefix length plus the suffix length plus the entries met at the terminals (P + S, not P x S: a
+        # cookie jar that grows by one cookie per line, every line ending in the same signed suffix, matches one prefix more per line and
+        # walks the suffix once, not once per prefix). The total work of a scan is counted and bounded (`defaults.SPELLED_MAX_WORK`) and
+        # the deadline is read in it. A rolled-back registration deletes its form (`_unspell`). MEMORY: the tries hold one dict per
+        # distinct character position of every registered written form (prefix and suffix), so a registration costs about the length of
+        # its written form in nodes (measured: evidence G7-1.md, "registry memory"); a single compound value of 200,000 characters is about
+        # 200,000 nodes, tens of megabytes, per registration. The registry lives as long as the `_Redactor` (one call), is not capped by
+        # count, and is bounded by the call's input cap. `_spelled_at` holds, per placeholder, the written form's token, its prefix and
+        # suffix (substrings of the written form; the full value is the SAME object as in `mapping` and in the terminal, not a copy).
+        self._spelled: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
         self._spelled_at: dict[
-            str, str
-        ] = {}  # placeholder -> the written form registered for it (to delete it on a rollback)
+            str, tuple[str, str, str, int]
+        ] = {}  # placeholder -> (token, prefix reversed, suffix, prefix id)
+        self._next_prefix_id = 0
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
             self._built_for = len(self.mapping)
@@ -1162,7 +1180,7 @@ class _Redactor:
                 out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
 
-    def settle(self, originals: list[str], swept: list[str]) -> list[str]:
+    def settle(self, originals: list[str], swept: list[str], known: int | None = None) -> list[str]:
         """The pattern passes after the first sweep, to a fixed point with a hard cap (G7; ORDER 020 MJ-B; fix round 3).
 
         `swept`: one call's strings after find() and sweep(), `originals` the strings they were made from. A ROUND is:
@@ -1181,6 +1199,10 @@ class _Redactor:
         text since (or a flip no round has read since). The cap is a fail-closed margin over the measured depth (tests/test_redact_settle_loop.py), not a
         derived bound. A text that needs no more passes pays nothing extra: the confirming round runs over the strings
         the previous round changed, and a clean text, or one whose second pass finds nothing, ends in round 1.
+
+        `known`: the size of the map read by the caller BEFORE its first sweep (`redact`, `redact_many`): the first round compares the map with
+        it, so an entry the first sweep registered (a union of overlapping forms, `_place_union`) counts as growth and every string is swept once
+        more; without it the size is read at the start of the round.
 
         A `bank_near` flip (a bank word found in a folded view while a round read a string) puts EVERY string back in `todo`: the strings
         that no round changed were read without that context. So a round after a flip runs over every string, and a flip in the LAST round
@@ -1205,7 +1227,10 @@ class _Redactor:
             if not todo:
                 return cur
             self._check_deadline()
-            known = len(self.mapping)
+            # the map size to compare with after the table ran: the caller's (read BEFORE the first sweep, so an entry that sweep
+            # registered, a union, counts as growth and every string is swept again) for the first round, else the size now
+            before = len(self.mapping) if known is None else known
+            known = None
             near_before = self.bank_near
             changed: set[int] = set()
             for i in sorted(todo):
@@ -1213,7 +1238,7 @@ class _Redactor:
                 if text != cur[i]:
                     cur[i] = text
                     changed.add(i)
-            scope = range(len(cur)) if len(self.mapping) != known else sorted(changed)
+            scope = range(len(cur)) if len(self.mapping) != before else sorted(changed)
             for i in scope:
                 text = self.sweep(cur[i], self._deadline)
                 if text != cur[i]:
@@ -1670,8 +1695,9 @@ class _Redactor:
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
         self.reverse[full] = placeholder
-        if label in SECRET_KINDS and original != full and len(full) >= 4:
-            self._spell(original, placeholder, full)
+        first = _PLACEHOLDER.search(original) if label in SECRET_KINDS else None
+        if first is not None and original != full and len(full) >= 4:
+            self._spell(original, first, placeholder, full)
         if self._journal is not None:
             self._journal.append(("map", placeholder, full))
         for piece in (
@@ -1685,61 +1711,63 @@ class _Redactor:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
         return placeholder
 
-    def _spell(self, original: str, placeholder: str, full: str) -> None:
-        """Register the written form `original` (it holds at least one placeholder token, since it differs from `full`)."""
-        first = _PLACEHOLDER.search(original)
-        if first is None:
-            return
-        node = self._spelled.setdefault(first.group(1), {})
-        for ch in reversed(original[: first.start()]):  # the prefix, read backwards from the token
+    def _spell(self, original: str, first: re.Match[str], placeholder: str, full: str) -> None:
+        """Register the written form `original` for `placeholder`; `first` is the first placeholder token in it (`_place` found it:
+        `original` differs from `full`, so it holds one the map resolves)."""
+        back_root, fwd_root = self._spelled.setdefault(first.group(1), ({}, {}))
+        prefix = original[: first.start()][::-1]  # read backwards from the token
+        suffix = original[first.end() :]
+        node = back_root
+        for ch in prefix:
             node = node.setdefault(ch, {})
-        node = node.setdefault("", {})  # the forward trie of what follows the token
-        for ch in original[first.end() :]:
-            node = node.setdefault(ch, {})
-        node[""] = (placeholder, full)
-        self._spelled_at[placeholder] = original
+        entry = node.get("")
+        if entry is None:
+            entry = node[""] = [self._next_prefix_id, 0]  # [prefix id, forms that use this prefix]
+            self._next_prefix_id += 1
+        ahead = fwd_root
+        for ch in suffix:
+            ahead = ahead.setdefault(ch, {})
+        terminals = ahead.setdefault("", {})
+        if (
+            entry[0] in terminals
+        ):  # the same (prefix, suffix) again (a reissue after a rollback) replaces the form: one form, counted once
+            self._spelled_at.pop(terminals[entry[0]][0], None)
+        else:
+            entry[1] += 1
+        terminals[entry[0]] = (placeholder, full)
+        self._spelled_at[placeholder] = (first.group(1), prefix, suffix, entry[0])
 
     def _unspell(self, placeholder: str) -> None:
-        """Delete the written form registered for `placeholder` (a rolled-back registration), and the trie nodes only it used."""
-        original = self._spelled_at.pop(placeholder, None)
-        first = _PLACEHOLDER.search(original) if original is not None else None
-        if original is None or first is None:
+        """Delete the written form registered for `placeholder` (a rolled-back registration), and the trie nodes only it used. Every
+        registration is made whole by `_spell`, so its paths exist; a placeholder with no written form is simply not in `_spelled_at`."""
+        at = self._spelled_at.pop(placeholder, None)
+        if at is None:
             return
-        token = first.group(1)
-        prefix, suffix = original[: first.start()][::-1], original[first.end() :]
-        root = self._spelled.get(token)
-        if root is None:
-            return
-        back = [root]
+        token, prefix, suffix, pid = at
+        back_root, fwd_root = self._spelled[token]
+        back = [back_root]
         for ch in prefix:
-            nxt = back[-1].get(ch)
-            if nxt is None:
-                return
-            back.append(nxt)
-        fwd_root = back[-1].get("")
-        if fwd_root is None:
-            return
+            back.append(back[-1][ch])
         ahead = [fwd_root]
         for ch in suffix:
-            nxt = ahead[-1].get(ch)
-            if nxt is None:
-                return
-            ahead.append(nxt)
-        term = ahead[-1].get("")
-        if term is None or term[0] != placeholder:
-            return  # the form there is another entry's: leave it
-        del ahead[-1][""]
-        for depth in range(len(suffix), 0, -1):  # prune the forward nodes that hold nothing now
-            if ahead[depth]:
-                break
-            del ahead[depth - 1][suffix[depth - 1]]
-        if not fwd_root:
+            ahead.append(ahead[-1][ch])
+        terminals = ahead[-1][""]
+        del terminals[pid]
+        if not terminals:
+            del ahead[-1][""]
+            for depth in range(len(suffix), 0, -1):  # prune the forward nodes that hold nothing now
+                if ahead[depth]:
+                    break
+                del ahead[depth - 1][suffix[depth - 1]]
+        entry = back[-1][""]
+        entry[1] -= 1
+        if entry[1] == 0:
             del back[-1][""]
-        for depth in range(len(prefix), 0, -1):  # and the backward ones
-            if back[depth]:
-                break
-            del back[depth - 1][prefix[depth - 1]]
-        if not root:
+            for depth in range(len(prefix), 0, -1):  # and the backward ones
+                if back[depth]:
+                    break
+                del back[depth - 1][prefix[depth - 1]]
+        if not back_root and not fwd_root:
             del self._spelled[token]
 
     def _spelled_sweep(self, out: str, deadline: float | None) -> str:
@@ -1750,16 +1778,25 @@ class _Redactor:
         covered, and nothing is done. One that begins inside and ENDS BEYOND it (an overlap: `xyz<SECRET_1>` and `<SECRET_1>ab` over
         `xyz<SECRET_1>ab`) fails closed: the span of the whole run of overlapping candidates is registered, on the spot, as an entry of its
         own (a compound value `xyz` + V + `ab`, `_place_union`) and replaced by that placeholder, so no part of it stays readable.
-        What is NOT covered: an overlap that is only complete in a LATER round, when the first form was already swept and replaced by its
-        placeholder before the second form was registered (the text is then `xyz<BEARER_1>` and the second form `xyz<SECRET_1>` no longer
-        matches it): the part of the later form that the earlier placeholder swallowed (its prefix or tail, `xyz`) stays readable. Stated limit,
-        pinned in tests/test_redact_settle_loop.py.
+        What is NOT covered (two OPEN limits, both stated, both pinned in tests/test_redact_settle_loop.py, escalation E10 in ESCALATIONS.md; a plan review
+        of a fixed-point loop for (1) is separate):
+        (1) an overlap that is only complete in a LATER round, when the first form was already swept and replaced by its placeholder before the
+        second form was registered (the text is then `xyz<BEARER_1>` and the second form `xyz<SECRET_1>` no longer matches it). The part of the later form that the earlier
+        placeholder swallowed (its literal prefix or tail, `xyz`) stays readable in the call's result.
+        (2) two compound VALUES that overlap as RAW text (V+`ab` and `xyz`+V, a raw copy `xyz`+V+`ab`): the literal sweep, which runs after this
+        scan, replaces the longest value first (`xyz`+V) and the rule of the other no longer matches what is left, so `ab` stays readable. This is
+        older than G7, is not limited to compound values (any two stored values that overlap are cut the same way, `abcdefgh` and `efghijkl`) and
+        has no detector.
+        "No part of it stays readable" holds only for written forms that overlap inside ONE sweep; with (1) and (2) open, that is the claim.
 
-        Cost: a token of the text walks its prefix trie backwards (as far as the text matches a registered prefix) and, at each matched
-        prefix, the suffix trie forwards. Every step counts one unit of work. The scan REFUSES (`InputTooLarge("SpelledWorkTooMuch")`) a
-        text that needs more than `defaults.SPELLED_MAX_WORK` units, and reads the deadline (when given) every `_SPELL_CHECK_EVERY`
-        units, a token with no form counting one, so a text of tokens with no forms is checked too. The limit is read at the same points
-        as the deadline, so it can be passed by up to `_SPELL_CHECK_EVERY` units."""
+        Cost: a token of the text walks its prefix trie backwards (as far as the text matches a registered prefix), collecting the ids of the
+        prefixes that matched, and, when one did, walks the ONE suffix trie of the token forwards (as far as the text matches a registered
+        suffix) and looks the matched prefix ids up at each terminal it meets: P + S + the entries met, not P x S. Every step counts one
+        unit of work, a token counts one, and so does every entry looked at in a terminal. The scan REFUSES
+        (`InputTooLarge("SpelledWorkTooMuch")`) a text that needs more than `defaults.SPELLED_MAX_WORK` units, and reads the deadline (when
+        given) every `_SPELL_CHECK_EVERY` units, a token with no form counting one, so a text of tokens with no forms is checked too. The
+        limit is read at the same points as the deadline, so it can be passed by up to `_SPELL_CHECK_EVERY` units. The work of registering
+        the union of an overlap (`_place_union`) is counted too, one unit per character of the union."""
         if not self._spelled:
             return out
         found: list[tuple[int, int, str]] = []
@@ -1776,33 +1813,16 @@ class _Redactor:
                     self._work_refused()
                 if deadline is not None:
                     self._over_budget(deadline)
-            node = self._spelled.get(m.group(1))
-            if node is None:
+            tries = self._spelled.get(m.group(1))
+            if tries is None:
                 continue
+            node, fwd_root = tries
             at, after, back = m.start(), m.end(), 0
+            matched: dict[int, int] = {}  # prefix id -> the characters of that prefix
             while True:
-                ahead = node.get("")
-                if (
-                    ahead is not None
-                ):  # a prefix of `back` characters is matched: walk what follows the token
-                    cur, best, i = ahead, None, after
-                    while True:
-                        work += 1
-                        if work >= _SPELL_CHECK_EVERY:
-                            done += work
-                            work = 0
-                            if done > limit:
-                                self._work_refused()
-                            if deadline is not None:
-                                self._over_budget(deadline)
-                        term = cur.get("")
-                        if term is not None and self.mapping.get(term[0]) == term[1]:
-                            best = (i, term[0])
-                        if i >= n or (cur := cur.get(out[i])) is None:
-                            break
-                        i += 1
-                    if best is not None:
-                        found.append((at - back, best[0], best[1]))
+                entry = node.get("")
+                if entry is not None:
+                    matched[entry[0]] = back
                 k = at - back - 1
                 if k < 0:
                     break
@@ -1817,6 +1837,47 @@ class _Redactor:
                 if (node := node.get(out[k])) is None:
                     break
                 back += 1
+            if not matched:
+                continue
+            cur, i = fwd_root, after
+            best: dict[
+                int, tuple[int, str]
+            ] = {}  # prefix id -> (end, placeholder) of the longest form met
+            while True:
+                work += 1
+                if work >= _SPELL_CHECK_EVERY:
+                    done += work
+                    work = 0
+                    if done > limit:
+                        self._work_refused()
+                    if deadline is not None:
+                        self._over_budget(deadline)
+                terminals = cur.get("")
+                if terminals is not None:
+                    # look the smaller side up in the larger; every entry looked at is a unit
+                    if len(matched) <= len(terminals):
+                        hits = [(pid, terminals[pid]) for pid in matched if pid in terminals]
+                        cost = len(matched)
+                    else:
+                        hits = [(pid, t) for pid, t in terminals.items() if pid in matched]
+                        cost = len(terminals)
+                    work += cost
+                    if work >= _SPELL_CHECK_EVERY:
+                        done += work
+                        work = 0
+                        if done > limit:
+                            self._work_refused()
+                        if deadline is not None:
+                            self._over_budget(deadline)
+                    for pid, term in hits:
+                        # defence in depth (kept, pinned by a test that edits the map): a form whose placeholder no longer maps to its value is not applied
+                        if self.mapping.get(term[0]) == term[1]:
+                            best[pid] = (i, term[0])
+                if i >= n or (cur := cur.get(out[i])) is None:
+                    break
+                i += 1
+            for pid, (end, placeholder) in best.items():
+                found.append((at - matched[pid], end, placeholder))
         if not found:
             return out
         found.sort(key=lambda c: (c[0], -c[1]))
@@ -1833,6 +1894,14 @@ class _Redactor:
         last = 0
         for start, end, placeholder, overlapped in spans:
             if overlapped:
+                done += (
+                    end - start + work
+                )  # registering the union reads and stores its text: one unit per character
+                work = 0
+                if done > limit:
+                    self._work_refused()
+                if deadline is not None:
+                    self._over_budget(deadline)
                 placeholder = self._place_union(out[start:end], placeholder)
             pieces += (out[last:start], placeholder)
             last = end
@@ -2216,4 +2285,7 @@ def redact_many(
         for n in range(flipped_at + 1):
             r._check_deadline()
             found[n] = r.find(items[n])
-    return r.settle(items, [r.sweep(text, r._deadline) for text in found]), r.mapping
+    known = len(
+        r.mapping
+    )  # before the first sweep: a union it registers must count as growth (round 6, design M-E)
+    return r.settle(items, [r.sweep(text, r._deadline) for text in found], known=known), r.mapping

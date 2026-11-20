@@ -91,7 +91,9 @@ Consequence for the lead: the fold's false-hit rate is above the documented rate
 - Fixed in the same round: the overlap inside ONE sweep (the union is registered on the spot, tests with a long tail and a chain).
 - Tries: 2 designs considered on paper, none built: (1) register derived forms `A<Q_E>rest` for every earlier entry E compatible with a new form (cost grows with the number of E under one token: the quadratic risk the caps were removed for); (2) scan an expanded text where each placeholder with a written form is replaced by it (changes every offset, doubles the scan). Neither fits one round without a new cap.
 - State: stated limit in `_spelled_sweep`, defaults.py note, ticket ROUND 5; pinned by `test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit`. Leak size: the literal prefix or tail of the later form.
-- Needed: an owner decision (accept the limit in SECURITY wording, or a design round for derived forms).
+- Round 6 (2026-11-20): both cases REPRODUCED with exact inputs and outputs (evidence g7r6_overlaps.py, G7-1.md "G7 fix round 6"): (a) RAW overlap in the literal sweep (F1 = V+`ab`, F2 = `xyz`+V, raw copy `see xyz`+V+`ab end` -> `see <F2>ab end`; plain values `abcdefgh`/`efghijkl` in `abcdefghijkl` -> `<S1>ijkl`): older than G7, no detector, wider than compound values; (b) cross-round, as above. The leak is the literal prefix, tail or overlapped part of a value the map holds; the attacker needs no secret knowledge, only control of order (a log author).
+- Not fixed in round 6, by the lead's order: a separate ticket and plan review of a FIXED-POINT loop (the spelled scan repeated, bound 4 passes, refuse as NotSettled if not converged; no derived forms, no new quadratic cap) comes first. The pinned test (`round3 == xyz{f1} != f2`) and the raw-overlap pin stay as stated limits. Status: OPEN (plan review pending).
+- Needed: the plan review, then the build; until then the SECURITY wording must say the overlap limits.
 
 
 ## E12 (09:12Z) redact_mutants.py: mutant "N15 the alias build asks for no budget" has an `old` text that occurs 0 times at HEAD (found by the G4 v4 drafter)
