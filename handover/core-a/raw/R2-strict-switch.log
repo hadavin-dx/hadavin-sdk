@@ -4,7 +4,7 @@ exit code: 1
      64 ERROR tests/triggers/test_t5_cases.py
      11 ERROR tests/triggers/test_t5_nul_document.py
      13 ERROR tests/triggers/test_t5_postgres.py
-first error text:
+first error text: HADAVIN_REQUIRE_PG=1: this test needs the PostgreSQL server and must not be skipped. Set HADAVIN_TEST_PG_DSN to a reachable server (with the psycopg driver installed), or unset HADAVIN_REQUIRE_PG. The skip reason was: Skipped: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
 441 passed, 2 skipped, 88 errors in 15.14s
 ## run 2: HADAVIN_REQUIRE_PG=1 and HADAVIN_TEST_PG_DSN set
 exit code: 0

@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:28:35Z
+UPDATED_UTC: 2026-11-20T06:29:30Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 45
+ITEMS_TOTAL: 46
 ITEMS_OPEN: 14
-PERCENT: 75
+PERCENT: 76
 AGENTS_RUNNING: 7
-CAPACITY: load 1.23 of 4 cores (1-minute average), mem 1.0/15.7 GB, 7 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.97 of 4 cores (1-minute average), mem 0.8/15.7 GB, 7 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 15%; 528M /home/user/hadavin-sdk; 336M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
-FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
+FAILED: open findings in my own code: fuzz (505 for an HTTP version 2.0 request line), design review Majors M2 (no cap on waiting threads) and M3; fixes queued behind the agent that edits those files. Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: code-minors agent ends: start in one batch (a) design-review code fixes + worker switch to App.trigger_secret + start test through main, (b) more mutants for all new guards
-PUSHED_UTC: 2026-11-20T06:27:23Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:28:37Z (the push before this board)
 NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder
 
 ## QUEUE ITEMS
@@ -50,7 +50,7 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | O14-2 | missing mutant scripts for core-b's steps (audit drain, price) (= backlog 3) | SKIPPED (they exist) | 100 | git ls-tree origin/cloud/core-b: tests/audit_drain_mutants.py and tests/price_mutants.py are there (also stop_state_mutants.py) | 0 | ORDER 014 item 2 says: check first, skip any that exist. Both exist on core-b's branch at 06:12Z, so nothing to write. NOT done: I did not run or review core-b's scripts |
 | O14-3 | switch the worker to core-b's bound reader and run the worker start test for real | READY (queued behind O17-code, same file) | 0 |  | 0 | core-b's NEW head has a bound reader, named App.trigger_secret (not trigger_resolve); my worker refuses to start on both heads until it reads that name; with the name supplied it starts (probed by the trial). Switch + the start test through main start when the agent editing worker.py ends |
 | O15 | fix the n8n template from the lead's run in a real n8n 2.47.7 (8 fixes: Set node version, webhook id, secret only through a crypto credential, status field, retry numbers, guard answers the caller, publish step, guard before hash) | DONE in the files; NOT re-imported into any n8n | 100 | n8n/ (3 files), tests/triggers/test_n8n_template.py, raw/n8n-template-tests-2.log | 1 | all 8 fixes applied from the lead's evidence file; template checks 150 passed (with 2 rule files). Fix 6 (answer the caller when the guard stops) is written from memory: the evidence shows no working shape for it. 16 UNVERIFIED marks remain. The evidence file differs from the ORDER 015 summary in 6 points, see LEAD ACTIONS |
-| B4-fuzz | fuzz test for the endpoint: 2000 seeded requests in-process, 300 over a real socket, 300 on PostgreSQL | RUNNING | 5 | raw/D-fuzz-pg16.log (not yet) | 1 | backlog 4 |
+| B4-fuzz | fuzz test for the endpoint: 2000 seeded requests in-process, 300 over a real socket, 300 on PostgreSQL | DONE with 1 FINDING (fix queued) | 100 | tests/triggers/test_t5_fuzz.py, raw/D-fuzz-pg16.log | 1 | 2000 requests in-process (39 percent fully valid), 301 over a raw socket, 300 on PostgreSQL 16: no row for an unsigned request, no text in a refusal, store equal to the oracle. FINDING: a request line with HTTP version 2.0 or higher gets 505 from the standard library parser (a 5xx that is not 503; empty body, no row): kept as a strict expected-failure. Also pinned, not failures: a request with no HTTP version gets no answer and a WARNING line 'AttributeError'; header names with underscores are accepted as if they were hyphens; of two different Content-Length headers the first wins. NOT covered: concurrent requests, a moving clock, the 503 paths (next item) |
 | B5-matrix | crash matrix for step D: kill at every store call on the request path, PostgreSQL 16, expected end state per point | DONE | 100 | tests/triggers/test_t5_crash_matrix.py, CRASH-MATRIX.md, raw/D-crash-matrix-pg16.log | 1 | 83 passed in 54 s: 43 kill points on PostgreSQL 16 (child process killed), 39 on memory; NO finding: at most one row per key, at most one model call across kill and retry, nothing left open after the tick. LIMITS: only the path where the model says 'nothing to do'; run 1 had 1 failure from the test itself (it read 'no row' before the dead process's database session had ended), fixed, 2 of 3 tries used. Read from code, NOT asserted: a kill after the final state write leaves a final row without its audit event and card; a kill between the model call and the spend booking leaves one model call uncounted |
 | B6-fstore | run my 102 spend contract tests against core-b's pushed F-store code (memory and PostgreSQL 16); failures are findings | DONE | 100 | FINDINGS-core-b-F-store.md (my shortened copy; the agent was not allowed to write it), raw/F-store-*.log, tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py | 1 | on core-b f390b7d6e: 183 passed, 4 strict expected-failures, 0 skipped (memory and PostgreSQL 16). 2 findings: F1 the memory store books the amount before it builds the row, so a refused reserve leaks budget for good; F2 a huge cap gives a driver error on PostgreSQL. T1: 50 connections, cap 3.00, amount 1.00: 3 granted, 47 refused, 50 distinct database processes; control (old pattern): 50 of 50 admitted. core-b's OWN tests for this step are not on its branch. 2 of our 102 tests were corrected because the interface changed (12 decimal places; settled amount after expiry), none weakened |
 | B7-g7 | non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora) | RUNNING | 5 | FINDINGS-core-c-G7-redaction.md (not yet) | 1 | backlog 7 |
@@ -65,6 +65,7 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | CFG-2 | update tests/test_trigger_config.py to core-b's new head: its fixes make all 16 strict expected-failures pass (so the file shows 17 failures there until the markers are removed); add tests for the bound reader | RUNNING | 5 | raw/trigger-config-tests-on-core-b-run2.log (not yet) | 1 | found by the trial integration; started in the same batch |
 | METER | non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py | RUNNING | 5 | raw/meter-contract-on-core-b.log (not yet) | 1 | ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch |
 | M1-template | n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end' | RUNNING | 5 | raw/n8n-template-tests-4.log (not yet) | 1 | design review Major M1: the only place this gap can be closed today |
+| B4b-fuzz-concurrent | concurrent fuzz: 16 client threads, store outages and slowness, a moving clock, raw sockets from 8 threads, PostgreSQL, close under load | RUNNING | 5 | raw/D-fuzz-concurrent-pg16.log (not yet) | 1 | ORDER 016 item 4b: the first fuzz was sequential and never reached the 503 paths |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -92,7 +93,7 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | o13-gate | builder (tests, non-builder of the code under test) | fable | reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder | 06:01 | ended | 100 | done | n/a | 0 | finished |
 | o14-trial | evidence runner (integration trial, fixes nothing) | fable | builds the combined tree in a scratch worktree, lists conflicts and mismatches, runs the whole suite once on PostgreSQL 16, classifies failures; owns the local PostgreSQL start and stop | 06:12 | ended | 100 | done | n/a | 0 | finished, 217k tokens; its PostgreSQL on port 55432 is stopped |
 | o15-n8n | builder (templates and text) | fable | applies the 8 observed fixes to the two workflow files, the README and the template checks | 06:13 | ended | 100 | done | n/a | 0 | finished |
-| b4-fuzz | builder (tests) | fable | writes tests/triggers/test_t5_fuzz.py and runs it once | 06:16 | about 25 min after start | 5 | running | n/a | 0 | backlog 4 |
+| b4-fuzz | builder (tests) | fable | writes tests/triggers/test_t5_fuzz.py and runs it once | 06:16 | ended | 100 | done | n/a | 0 | finished |
 | b5-matrix | builder (tests) and evidence runner | fable | writes tests/triggers/test_t5_crash_matrix.py and CRASH-MATRIX.md, child processes killed on PostgreSQL | 06:16 | ended | 100 | done | n/a | 0 | finished |
 | b6-fstore | evidence runner (non-builder) | fable | runs the spend contract tests on a scratch copy of core-b's tree, corrects wrong shape assumptions, writes findings | 06:16 | ended | 100 | done | n/a | 0 | finished; the harness refused its findings file write, it returned the text and I saved a shortened copy |
 | b7-g7 | builder (tests, non-builder of the code) | fable | writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree | 06:16 | about 35 min after start | 5 | running | n/a | 0 | backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line |
@@ -103,22 +104,17 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | meter | builder (tests, non-builder of the code) and evidence runner | fable | writes tests/contracts/test_meter.py, runs it on a scratch copy of core-b's tree (memory and PostgreSQL 16), plants 5 bugs in the scratch copy to prove the tests bite | 06:27 | about 40 min after start | 5 | running | n/a | 0 | ORDER 016 item 4c |
 | cfg-2 | builder (tests, non-builder) | fable | removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use | 06:27 | about 25 min after start | 5 | running | n/a | 0 | trial integration result; 8 agents run (fuzz, G7, design review, n8n, code minors, matrix part 2, meter, config tests) |
 | m1-n8n | builder (templates and text) | fable | adds the required state check loop to the template, the README section and checks | 06:28 | about 20 min after start | 5 | running | own design review, fix pass | 0 | 7 agents run (fuzz, G7, code minors, matrix part 2, meter, config tests, template state check) |
+| b4b-fuzz2 | builder (tests) | fable | writes tests/triggers/test_t5_fuzz_concurrent.py and runs it (at most 3 runs) | 06:29 | about 35 min after start | 5 | running | n/a | 0 | 7 agents run |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 9291 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 56s ago | running | matched by name in ps |
-| 9305 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 56s ago | running | matched by name in ps |
-| 10417 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 10420 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 10782 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 10798 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 845s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 845s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 845s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 845s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 845s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 845s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 900s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 900s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 900s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 900s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 900s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 900s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -149,6 +145,7 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | tests/contracts/test_model_gate_contract.py on core-c's tree (scratch copy) | origin/cloud/core-c 619a3e5 | 1 (agent) | 201 passed, 0 xfailed, 1 skipped | none | done | non-builder contract test; not in my batch 3 (it landed after), in the checkout it skips |
 | tests/triggers/test_t5_crash_matrix.py | working tree | 2 (agent; run 1: 82 passed, 1 failed from the test's own timing, fixed) | 83 / 0 / 0 (54 s) | run 1: point r4, 'no row' read too early | done | PostgreSQL 16.15 on port 55433 |
 | TRIAL: whole suite of the combined tree (core-b + core-c + core-a code paths on main), PostgreSQL 16.15 | local throwaway branch trial/combined 96768f66d (core-b 44d691b24, core-c c73b55238 + 3 wip branches, core-a 7129afc9b); NOT pushed | 1 of 1 | 13655 / 15 / 0, 25 skipped, 21 xfailed (309 s) | see TRIAL-INTEGRATION.md section 6: 1 inherited, 1 single-branch (core-c), 13 combination | done | ORDER 014 item 1; lint clean except 1 file the trial's own conflict joins touched |
+| tests/triggers/test_t5_fuzz.py | working tree | 1 (agent) | 3 passed, 1 xfailed (strict) in 16 s | FINDING: HTTP/2.0 request line answered 505 | done | PostgreSQL 16.15 on port 55433 |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |

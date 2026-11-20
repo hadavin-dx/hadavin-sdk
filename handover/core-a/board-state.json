@@ -280,11 +280,11 @@
   {
    "item": "B4-fuzz",
    "what": "fuzz test for the endpoint: 2000 seeded requests in-process, 300 over a real socket, 300 on PostgreSQL",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/D-fuzz-pg16.log (not yet)",
+   "state": "DONE with 1 FINDING (fix queued)",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_fuzz.py, raw/D-fuzz-pg16.log",
    "tries": 1,
-   "reason": "backlog 4"
+   "reason": "2000 requests in-process (39 percent fully valid), 301 over a raw socket, 300 on PostgreSQL 16: no row for an unsigned request, no text in a refusal, store equal to the oracle. FINDING: a request line with HTTP version 2.0 or higher gets 505 from the standard library parser (a 5xx that is not 503; empty body, no row): kept as a strict expected-failure. Also pinned, not failures: a request with no HTTP version gets no answer and a WARNING line 'AttributeError'; header names with underscores are accepted as if they were hyphens; of two different Content-Length headers the first wins. NOT covered: concurrent requests, a moving clock, the 503 paths (next item)"
   },
   {
    "item": "B5-matrix",
@@ -411,6 +411,15 @@
    "evidence file": "raw/n8n-template-tests-4.log (not yet)",
    "tries": 1,
    "reason": "design review Major M1: the only place this gap can be closed today"
+  },
+  {
+   "item": "B4b-fuzz-concurrent",
+   "what": "concurrent fuzz: 16 client threads, store outages and slowness, a moving clock, raw sockets from 8 threads, PostgreSQL, close under load",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-fuzz-concurrent-pg16.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 016 item 4b: the first fuzz was sequential and never reached the 503 paths"
   }
  ],
  "agents": [
@@ -716,15 +725,15 @@
   {
    "model": "fable",
    "started UTC": "06:16",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "b4-fuzz",
    "role": "builder (tests)",
    "what exactly it is doing": "writes tests/triggers/test_t5_fuzz.py and runs it once",
-   "expected end": "about 25 min after start",
-   "reason": "backlog 4"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -855,6 +864,19 @@
    "review round n of cap": "own design review, fix pass",
    "retries so far": 0,
    "reason": "7 agents run (fuzz, G7, code minors, matrix part 2, meter, config tests, template state check)"
+  },
+  {
+   "id": "b4b-fuzz2",
+   "role": "builder (tests)",
+   "model": "fable",
+   "what exactly it is doing": "writes tests/triggers/test_t5_fuzz_concurrent.py and runs it (at most 3 runs)",
+   "started UTC": "06:29",
+   "expected end": "about 35 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "7 agents run"
   }
  ],
  "tests": [
@@ -1091,6 +1113,15 @@
    "first failing line": "see TRIAL-INTEGRATION.md section 6: 1 inherited, 1 single-branch (core-c), 13 combination",
    "state": "done",
    "reason": "ORDER 014 item 1; lint clean except 1 file the trial's own conflict joins touched"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_fuzz.py",
+   "branch and SHA": "working tree",
+   "run number": "1 (agent)",
+   "passed / failed / errors": "3 passed, 1 xfailed (strict) in 16 s",
+   "first failing line": "FINDING: HTTP/2.0 request line answered 505",
+   "state": "done",
+   "reason": "PostgreSQL 16.15 on port 55433"
   }
  ],
  "restarts": [],
@@ -1128,5 +1159,5 @@
   "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
- "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"
+ "failed": "open findings in my own code: fuzz (505 for an HTTP version 2.0 request line), design review Majors M2 (no cap on waiting threads) and M3; fixes queued behind the agent that edits those files. Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md"
 }
