@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:05:33Z
+UPDATED_UTC: 2026-11-20T10:07:58Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.59 of 4 cores, mem 2/15 GB, disk 50G free, 29% used, agents light 4 heavy 2
+CAPACITY: load 2.00 of 4 cores, mem 2/15 GB, disk 50G free, 29% used, agents light 4 heavy 2
 DISK: / 50G free, 29% used; worktrees /tmp/core-b-wt 3.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T10:05:31Z (previous push; this board is pushed right after writing)
-IST: 15:35 IST
+PUSHED_UTC: 2026-11-20T10:07:55Z (previous push; this board is pushed right after writing)
+IST: 15:37 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -201,3 +201,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 09:56Z E12 Low 5 (B6b session pins): BUILT, MERGED on cloud/core-b (6121eb977), its 2 new tests + lock-timeout tests 7 passed, fail-first shown. E11 (F7): BUILT (purge keeps expired: fail-first 2==1 / 4==3; money guard trigger 0010: 5 failed without it, 8 pass with it, mutants killed) but NOT MERGEABLE until migration 0009 exists (ledger refuses 0010 without 0009): B7 STARTED NOW for 0009 (schema only: reset table, seq guard, watermark, ts CHECKs; no reset code), then F7 merges. Design note from F7: a plain 'never lower' trigger broke ordinary settle; the rule now allows a counter to fall only by the reserved-minus-settled of holds settled in the same transaction (documented limit: add_spend charges can be lowered by that amount only). B6a (Majors 1+2) and F6 reports pending.
 
 10:03Z E11/E12 STATE (09:55Z deadline passed). BUILT+TESTED+MERGED on cloud/core-b: E12 Low 5 session pins (B6b, fresh review pending), F6 negative/NaN cost (fresh review done: store side CLEAN, Major at agent_loop call sites -> F8 builds validators on Reply/Verdict, running), stop-state mutants refresh (107 mutants, 0 survivors), E9 (A10+A11, reviews 8-9). BUILT, NOT YET MERGED: E11 M3+M4 (F7): committed, own tests pass (guard 8, mutants 7, purge 2 modes fail-first), but 0010 needs 0009 first: B7 (migration 0009: reset table, seq guard, watermark+index, ts CHECKs) RUNNING since 09:56Z; I commit to MERGE F7 + B7 by 10:20Z, then evidence batch and fresh reviews by 10:35Z. NOT YET BUILT: E12 Majors 1+2 (B6a: compare-and-clear reset + rights self-check): STILL BUILDING since 09:27Z (my commitment: committed and tested by 10:15Z, else I split it into two builders). The B7 follow-up (reset writes the reset table, reads the watermark: Medium 3/4 code) starts when B6a lands. LIVE AGENTS (sonnet): B6a, B7, F8.
+
+10:07Z MERGED on cloud/core-b (d0e93a832): B7 migration 0009 (stop-state hardening: kill_switch_resets, audit seq guard trigger, watermark + index, ts range CHECKs) + F7 (E11 M3 purge keeps expired holds; M4 money guard migration 0010). On the merged tree: 0009 tests+mutants, money-guard tests+mutants, purge-keeps-expired, p2_postgres, k2_migrations, repo_rules: 141 passed, 0 failed. NOT YET RUN on the merged tree: full tests/test_stop_state_roles.py (199 tests, slow on the shared server: 3 agents' pytest runs share it) and evidence batch 9: both queued after B6a lands (B6a: still building; committed-by 10:15Z). Fresh reviews of 0009 and 0010 queued now. LIVE AGENTS (sonnet): B6a, F8; starting: reviewers of 0009 and 0010.
