@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Thirty-three groups (G32 is E1: ten mutants, G33 is E1 fix2: six), one per guarantee:
+first failing line that holds `expect`. Thirty-four groups (G32 is E1: ten mutants, G33 is E1 fix2: six, G34 is d-fix13: one), one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -126,6 +126,7 @@ SERVER = "src/hadavin_sdk/triggers/server.py"
 T6 = "tests/triggers/test_d_fix6_e1.py"
 T8 = "tests/triggers/test_d_fix8_e1fix.py"
 T9 = "tests/triggers/test_d_fix9_e1fix2.py"
+T13 = "tests/triggers/test_d_fix13_single_write.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
 VERIFY = (
@@ -1279,6 +1280,16 @@ M = [
         T9,
         "test_fix2_an_unsigned_or_wrongly_signed_conflicting_document_writes_no_event",
         "assert 409 == 401",
+    ),
+    # --- G34 d-fix13: one write per answer
+    mutant(
+        "G34 QuietWSGIHandler._write sends at once (the answer is four writes again)",
+        SERVER,
+        "        self._answer += data\n",
+        "        super()._write(data)\n",
+        T13,
+        "test_every_answer_is_one_write[202]",
+        "AssertionError: [b'HTTP/1.0 202 Accepted",
     ),
 ]
 

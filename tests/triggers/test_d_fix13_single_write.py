@@ -33,7 +33,6 @@ KEY = "k13-key"
 CLIENT_TIMEOUT_S = 8.0
 BODY = json.dumps({"key": KEY, "document": "alert from the checkout"}).encode()
 RUN_ID = endpoint.derive_run_id(TENANT, SENDER, KEY)
-REF = endpoint.trigger_ref(SENDER, KEY, "alert from the checkout")
 
 
 class Recorder:
@@ -62,7 +61,11 @@ class Recorder:
 
 def _start(status, answer=None):
     def start(req):
-        return status, ({"run_id": req.run_id, "state": "RECEIVED", "trigger_ref": req.trigger_ref} if answer is None else answer)
+        return status, (
+            {"run_id": req.run_id, "state": "RECEIVED", "trigger_ref": req.trigger_ref}
+            if answer is None
+            else answer
+        )
 
     return start
 
@@ -91,7 +94,7 @@ def _boom(environ, start_response):
 
 # name -> (wsgi, request bytes, expected status, expected body)
 def _cases():
-    ok = json.dumps({"run_id": RUN_ID, "state": "RECEIVED", "trigger_ref": REF}).encode()
+    ok = json.dumps({"run_id": RUN_ID, "state": "RECEIVED"}).encode()
     return {
         "202": (_wsgi(_start(202)), _post(), 202, ok),
         "200": (_wsgi(_start(200)), _post(), 200, ok),
@@ -102,7 +105,12 @@ def _cases():
         "404": (_wsgi(), _get("/nope"), 404, b""),
         "405": (_wsgi(), _get(endpoint.PATH), 405, b""),
         "400-bad-body": (_wsgi(), _post(body=b"x", declared=1), 400, b""),
-        "health-200": (_wsgi(health=lambda: (True, 0)), _get("/health"), 200, b'{"status": "ok", "store_failures": 0}'),
+        "health-200": (
+            _wsgi(health=lambda: (True, 0)),
+            _get("/health"),
+            200,
+            b'{"status": "ok", "store_failures": 0}',
+        ),
         "health-503": (
             _wsgi(health=lambda: (False, 2)),
             _get("/health"),
@@ -148,7 +156,9 @@ def _exchange(name: str):
     wsgi, data, _status, _body = _cases()[name]
     log: list[list[bytes]] = []
     with _serving(wsgi, log) as server:
-        sock = socket.create_connection((worker.LOOPBACK, server.server_address[1]), timeout=CLIENT_TIMEOUT_S)
+        sock = socket.create_connection(
+            (worker.LOOPBACK, server.server_address[1]), timeout=CLIENT_TIMEOUT_S
+        )
         try:
             sock.sendall(data)
             raw = b""
@@ -188,10 +198,10 @@ def test_every_answer_is_one_write(name):
 @pytest.mark.parametrize("name", NAMES)
 def test_the_one_write_holds_status_line_headers_and_the_whole_body(name):
     """A kill between writes is impossible when the first and only write is the complete answer."""
-    _wsgi_, _data, status, body = _cases()[name]
+    _app, _data, status, body = _cases()[name]
     _raw, writes = _exchange(name)
     first = writes[0]
-    head, sep, tail = first.partition(b"\r\n\r\n")
+    _head, sep, tail = first.partition(b"\r\n\r\n")
     assert sep and first.startswith(b"HTTP/1.")
     assert tail == body
     resp = _parse(first)
@@ -221,7 +231,9 @@ def test_a_failure_after_the_headers_still_sends_what_the_stdlib_would_have_sent
 
     log: list[list[bytes]] = []
     with _serving(app, log) as server:
-        sock = socket.create_connection((worker.LOOPBACK, server.server_address[1]), timeout=CLIENT_TIMEOUT_S)
+        sock = socket.create_connection(
+            (worker.LOOPBACK, server.server_address[1]), timeout=CLIENT_TIMEOUT_S
+        )
         try:
             sock.sendall(_get("/x"))
             raw = b""
@@ -234,4 +246,21 @@ def test_a_failure_after_the_headers_still_sends_what_the_stdlib_would_have_sent
     assert raw.startswith(b"HTTP/1.0 200 OK\r\n") and raw.endswith(b"\r\n\r\nabc")
 
 
-GOLDEN: dict[str, bytes] = {}
+GOLDEN: dict[str, bytes] = {
+    "202": b'HTTP/1.0 202 Accepted\r\nDate: DATE\r\nContent-Length: 71\r\nContent-Type: application/json\r\n\r\n{"run_id": "run-2ef744c750de65546f94c3facbb10c8b", "state": "RECEIVED"}',
+    "200": b'HTTP/1.0 200 OK\r\nDate: DATE\r\nContent-Length: 71\r\nContent-Type: application/json\r\n\r\n{"run_id": "run-2ef744c750de65546f94c3facbb10c8b", "state": "RECEIVED"}',
+    "409-empty": b"HTTP/1.0 409 Conflict\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+    "401-empty": b"HTTP/1.0 401 Unauthorized\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+    "503-empty": b"HTTP/1.0 503 Service Unavailable\r\nDate: DATE\r\nContent-Length: 0\r\nRetry-After: 1\r\n\r\n",
+    "413": b"HTTP/1.0 413 Content Too Large\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+    "404": b"HTTP/1.0 404 Not Found\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+    "405": b"HTTP/1.0 405 Method Not Allowed\r\nDate: DATE\r\nContent-Length: 0\r\nAllow: POST\r\n\r\n",
+    "400-bad-body": b"HTTP/1.0 400 Bad Request\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+    "health-200": b'HTTP/1.0 200 OK\r\nDate: DATE\r\nContent-Length: 37\r\nContent-Type: application/json\r\n\r\n{"status": "ok", "store_failures": 0}',
+    "health-503": b'HTTP/1.0 503 Service Unavailable\r\nDate: DATE\r\nContent-Length: 45\r\nContent-Type: application/json\r\nRetry-After: 1\r\n\r\n{"status": "store_down", "store_failures": 2}',
+    "health-405": b"HTTP/1.0 405 Method Not Allowed\r\nDate: DATE\r\nContent-Length: 0\r\nAllow: GET\r\n\r\n",
+    "app-raises-503": b"HTTP/1.0 503 Service Unavailable\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+    "414-long-line": b"HTTP/1.0 414 URI Too Long\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+    "400-garbage": b"HTTP/1.0 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+    "400-no-length": b"HTTP/1.0 400 Bad Request\r\nDate: DATE\r\nContent-Length: 0\r\n\r\n",
+}
