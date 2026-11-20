@@ -627,6 +627,15 @@
    "evidence file": "raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet)",
    "tries": 1,
    "reason": "found by the rerun"
+  },
+  {
+   "item": "D-fix2",
+   "what": "fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest",
+   "state": "QUEUED after d-fix1 ends",
+   "percent": 0,
+   "evidence file": "reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md",
+   "tries": 0,
+   "reason": "d-fix1 still edits the same files"
   }
  ],
  "agents": [
@@ -1439,41 +1448,41 @@
   {
    "model": "sonnet",
    "started UTC": "07:15",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "tests round 1 of 3",
    "retries so far": 0,
    "id": "egm-D-tests",
    "role": "reviewer (egm:egm-codebase-details, fresh)",
    "what exactly it is doing": "reads the step D tests: invariant to test table, what passes on broken code",
    "expected end": "about 25 min",
-   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+   "reason": "report received; resolved into reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md, WINDOWS-NOTES.md"
   },
   {
    "model": "sonnet",
    "started UTC": "07:15",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "mutant script round 1 of 3",
    "retries so far": 0,
    "id": "egm-mut",
    "role": "reviewer (egm:egm-design, fresh)",
    "what exactly it is doing": "reads tests/endpoint_mutants.py and the runner: real guards, wrong-reason kills, the allow_crash override",
    "expected end": "about 25 min",
-   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+   "reason": "report received; resolved into reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md, WINDOWS-NOTES.md"
   },
   {
    "model": "sonnet",
    "started UTC": "07:15",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "win-notes",
    "role": "analysis (writes one file)",
    "what exactly it is doing": "collects every Windows risk from the reviews into a checklist for the laptop",
    "expected end": "about 25 min",
-   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+   "reason": "report received; resolved into reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md, WINDOWS-NOTES.md"
   },
   {
    "model": "sonnet",
