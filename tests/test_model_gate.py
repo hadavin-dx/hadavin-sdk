@@ -989,7 +989,12 @@ def test_q2_an_unknown_worst_case_reserves_the_usd_cap_and_without_a_cap_is_refu
     bound = ModelGate(
         client, meter=meter, audit=sink, worst_case=lambda *a: None, usd_cap=cap
     ).bind("agent-1", "run-1", mapping=runmap.RunMap())
-    bound.chat(CLEAN, system="s", route="main")
+    refused = False
+    try:
+        bound.chat(CLEAN, system="s", route="main")
+    except model_gate.WorstCaseInvalid:
+        refused = True
+    assert not refused, "q2 unknown worst case did not reserve the cap"
     assert meter.reserved["res_1"][1] == cap, "q2 unknown worst case did not reserve the cap"
     client2, meter2, sink2 = Client(), Meter(), Sink()
     bound2 = ModelGate(client2, meter=meter2, audit=sink2, worst_case=lambda *a: None).bind(

@@ -649,7 +649,7 @@ M = [
     mutant("Q2a a worst case of 0 for a non-empty input is reserved",
         "        elif failure is None and reserved == 0 and has_input(system, messages, tools, documents):\n",
         "        elif False:\n",
-        "test_q2_a_zero_worst_case_for_a_non_empty_input_is_refused_as_bad_amount", "q2 zero worst case reserved"),
+        "test_q2_a_zero_worst_case_for_a_non_empty_input_is_refused_as_bad_amount", "DID NOT RAISE WorstCaseInvalid"),
     mutant("Q2b an unknown worst case does not reserve the cap",
         "        if failure is None and reserved is None and usable_amount(self._usd_cap):\n",
         "        if False:\n",
