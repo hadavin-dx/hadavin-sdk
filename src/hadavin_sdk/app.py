@@ -53,6 +53,9 @@ class App:
     executor: Executor | None  # None in pilot and prod: Hadavin executes nothing there
     approvals: Approvals
     runtime: Runtime
+    # The secrets object this app was built with. For the trigger worker, which reads only the names listed under
+    # `config.triggers.senders` (checked at start-up); nothing else may take the provider from here.
+    secrets: SecretProvider
     # The configured read sources (probed at start-up and again by the tick) and the store the purge step
     # runs under (its own database role when `purge_dsn_secret_name` is set; else the store above).
     sources: dict[str, Source] = field(default_factory=dict)
@@ -165,6 +168,12 @@ def build(
         }
         | {sc.token_secret_name for sc in cfg.sources.values() if sc.token_secret_name}
         | ({cfg.evidence.restored_hash_key_secret_name} - {None})
+        # The signed trigger endpoint's sender secrets: read once here, and never shared with a backend or an action.
+        | {
+            n
+            for sender in (cfg.triggers.senders if cfg.triggers else {}).values()
+            for n in sender.secret_names
+        }
     )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
@@ -292,6 +301,7 @@ def build(
         executor,
         approvals,
         runtime,
+        secrets,
         sources={**built_sources, **(sources or {})},
         disabled_sources=disabled_sources,
         purge_store=purge_store,

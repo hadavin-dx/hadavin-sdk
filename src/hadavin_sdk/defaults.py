@@ -132,3 +132,15 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 # The most one model price may be, in USD per million tokens. 10**6 is one dollar per token, far above any list price
 # known to the author; it is not read from a provider's price list (UNVERIFIED), so a lead may lower it.
 MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6
+
+# --- triggers: the signed trigger endpoint (Config.triggers, TriggerSettings) -------------------------------------------
+TRIGGER_MAX_BODY_BYTES = (
+    262_144  # the largest request body the endpoint reads (JSON around one document)
+)
+TRIGGER_MAX_BODY_BYTES_CEILING = (
+    2 * MAX_DOCUMENT_BYTES
+)  # a config cannot raise the body cap above this
+TRIGGER_MAX_RUNNING = 4  # runs the worker's pool handles at once
+TRIGGER_MAX_RUNNING_CEILING = 64
+TRIGGER_ACK_WAIT_S = 5.0  # how long a request waits for its run row before it answers 503
+TRIGGER_ACK_WAIT_S_CEILING = 30.0

@@ -48,6 +48,8 @@ __all__ = [
     "Route",
     "ScrubSettings",
     "SourceConfig",
+    "TriggerSender",
+    "TriggerSettings",
     "confined",
     "load_config",
     "load_yaml",
@@ -337,6 +339,56 @@ class SourceConfig(_Strict):
         return self
 
 
+# A tenant or sender id of the signed trigger endpoint. In pydantic's pattern engine `$` is the end of the text only
+# (no trailing newline passes); with Python's `re`, use `fullmatch`.
+_TRIGGER_ID = r"^[a-z0-9-]{1,40}$"
+TriggerId = Annotated[str, Field(pattern=_TRIGGER_ID)]
+_Name = Annotated[str, Field(min_length=1)]
+
+
+class TriggerSender(_Strict):
+    """One sender of signed trigger requests: the NAMES (in the secrets kind) of its signing secrets, and the agent
+    and principal its runs use. Two names allow a secret change with no downtime (old and new both verify)."""
+
+    secret_names: tuple[_Name, ...] = Field(min_length=1, max_length=2)
+    agent_id: _Name
+    principal_id: _Name
+
+
+class TriggerSettings(_Strict):
+    """The signed trigger endpoint (`hadavin_sdk.triggers`). Not part of ``config_hash``: adding a sender must not
+    un-qualify an agent. That each sender's agent and principal exist is checked in ``registry``."""
+
+    tenant: TriggerId
+    senders: dict[TriggerId, TriggerSender] = Field(min_length=1)
+    max_body_bytes: int = Field(
+        default=defaults.TRIGGER_MAX_BODY_BYTES, gt=0, le=defaults.TRIGGER_MAX_BODY_BYTES_CEILING
+    )
+    max_running: int = Field(
+        default=defaults.TRIGGER_MAX_RUNNING, ge=1, le=defaults.TRIGGER_MAX_RUNNING_CEILING
+    )
+    ack_wait_s: float = Field(
+        default=defaults.TRIGGER_ACK_WAIT_S, gt=0, le=defaults.TRIGGER_ACK_WAIT_S_CEILING
+    )
+
+
+def _trigger_refusals(triggers: TriggerSettings | None) -> list[str]:
+    """A sender is known by the secret that verified, so no secret name may appear twice: not inside one sender,
+    not in two. Names the senders, never a secret name (a mistyped config may hold the secret itself there)."""
+    out: list[str] = []
+    owner: dict[str, str] = {}
+    for sender_id, sender in sorted((triggers.senders if triggers else {}).items()):
+        if len(set(sender.secret_names)) != len(sender.secret_names):
+            out.append(f"triggers.senders.{sender_id}.secret_names: the same name twice")
+        for name in set(sender.secret_names):
+            if name in owner:
+                out.append(
+                    f"triggers.senders.{sender_id}.secret_names: a name is also used by sender {owner[name]}"
+                )
+            owner.setdefault(name, sender_id)
+    return out
+
+
 _DIGEST = re.compile(r"[0-9a-f]{64}")
 
 
@@ -394,6 +446,9 @@ class Config(_Strict):
     # The day the route prices were read from the provider's price list (UTC), YYYY-MM-DD; required in pilot and prod.
     # On Config, not on Route: a route is inside config_hash, so a date there would un-qualify agents at every refresh.
     prices_as_of: date | None = None
+    # The signed trigger endpoint: who may send requests, and the agent and principal each sender runs as. Not part
+    # of config_hash (adding a sender never un-qualifies an agent).
+    triggers: TriggerSettings | None = None
     root: Path
 
     @field_validator("prices_as_of", mode="before")
@@ -449,6 +504,7 @@ class Config(_Strict):
         refused += sends_text_out
         refused += _anchor_refusals(self.environment, self.backends)
         refused += _price_refusals(self)
+        refused += _trigger_refusals(self.triggers)
         if refused:
             tail = (
                 "; a demo config that names a real model, a vendor detector or a real approval channel "

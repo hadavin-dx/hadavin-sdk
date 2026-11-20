@@ -224,6 +224,7 @@ def load_registry(config: Config) -> Registry:
     except (ValidationError, TypeError, yaml.YAMLError) as exc:
         raise ConfigError(str(exc)) from exc
     problems = _cross_check(config, agents, chains, contracts)
+    problems += _trigger_problems(config, agents, principals)
     if problems:
         raise ConfigError("; ".join(problems))
     tools = _load_tools(config, agents, contracts)
@@ -333,6 +334,22 @@ def _module_pin_problems(config: Config) -> list[str]:
             out.append(
                 f"tool module {module}: its source hash is {actual[:12]}..., the pin says {pin[:12]}..."
             )
+    return out
+
+
+def _trigger_problems(config, agents, principals) -> list[str]:
+    """A trigger sender that points to a missing agent or principal stops the start, not the first request. Names
+    the sender and the field, never the value written there."""
+    out = []
+    for sender_id, sender in sorted((config.triggers.senders if config.triggers else {}).items()):
+        where = f"triggers.senders.{sender_id}"
+        if sender.agent_id not in agents:
+            out.append(f"{where}.agent_id: no agent with this id in agents.yaml")
+        principal = principals.get(sender.principal_id)
+        if principal is None:
+            out.append(f"{where}.principal_id: no principal with this id in principals.yaml")
+        elif principal.kind != "service":
+            out.append(f"{where}.principal_id: the principal must be of kind service")
     return out
 
 
