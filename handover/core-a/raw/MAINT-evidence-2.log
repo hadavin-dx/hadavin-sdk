@@ -16,4 +16,20 @@ cbaa2097215ff9c68b93c8a3fe0cee1c244d0504baed0b1824b97f0dbc82f4a4  tests/test_red
 ........................................................................ [ 40%]
 ........................................................................ [ 50%]
 ........................................................................ [ 60%]
-........
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+....................................................................     [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_trigger_config.py:158: field not built on this branch: a limit on the number of triggers.senders
+SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: triggers.poll_s
+SKIPPED [7] tests/test_trigger_config.py:92: field not built on this branch: triggers.port
+SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: triggers.allow_non_loopback
+696 passed, 20 skipped in 62.37s (0:01:02)
+== import path core-c
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev-c/src/hadavin_sdk/__init__.py
+== pytest core-c
+........................................................................ [ 19%]
+.....................................................s.................. [ 39%]
+.......................................................F................ [ 59%]
+x....................................xxx
