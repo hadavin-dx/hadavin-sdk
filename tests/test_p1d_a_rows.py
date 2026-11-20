@@ -138,6 +138,24 @@ def test_card_masks_what_model_masks():
             m = runmap.PLACEHOLDER.fullmatch(ph)
             if m and m.group(1) in ("EMAIL", "HOSTNAME"):
                 assert original not in shown, f"CARD LEAK: {original!r} in {shown!r} for {x!r}"
+                # review M7: a leaked TAIL (`.m@example.orgsq`) passed the check above. No `@` with the address's domain
+                # (or its URL-encoding) may stay, and no copy of the domain written as a host.
+                if m.group(1) == "EMAIL" and "@" in original:
+                    domain = original.rsplit("@", 1)[-1]
+                    for at in ("@", "%40"):
+                        assert at + domain not in shown, (
+                            f"CARD TAIL: {at + domain!r} in {shown!r} for {x!r}"
+                        )
+
+
+def test_row_TS1_card():
+    """N3: the secret is found ONLY by the tag-stripped view (`password%<i></i>3Dx` reads as `password=x` once the tags are
+    deleted). The card must take that view's result, defanged and settled like any other (kills mutant A11)."""
+    x = "see docs" + ".example" + ".com and password%<i></i>3Dhunter" + "2xyz now"
+    shown = channel.clean(x)
+    assert shown == "see docs[.]example[.]com and password=<SECRET_1> now", (
+        f"ROW TS1 card: {shown!r}"
+    )
 
 
 def test_stored_card_round_trip():

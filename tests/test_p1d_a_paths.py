@@ -46,7 +46,6 @@ def order(monkeypatch):
 
     monkeypatch.setattr(runmap, "redact_text", spy_redact)
     monkeypatch.setattr(channel, "defang_text", spy_defang)
-    monkeypatch.setattr(slack_channel, "defang_text", spy_defang)
     return events
 
 
@@ -150,7 +149,7 @@ def test_path_slack_blocks_of_a_summary_built_by_summary(order):
     assert shown == stored
     kinds = [k for k, _ in order]
     assert kinds[-1] == "defang" and "redact" in kinds[: kinds.index("defang")], kinds
-    assert all("[.]" not in t.replace("<HOSTNAME_1>[.]", "") for k, t in order if k == "redact")
+    assert all("[.]" not in t for k, t in order if k == "redact")
 
 
 def test_path_slack_notify(order, monkeypatch):
@@ -267,7 +266,7 @@ def test_secret_patterns_are_linear_on_a_50000_character_run(name):
 # --- fix round: defang over the whole token, glued addresses, a card that reads the same twice --------------------
 EVIL = "evil" + "." + "com"
 _PIECES = [
-    EM, HOST, PUBLIC, EVIL, "www" + "." + "evil" + "." + "digital", "<HOSTNAME_1>", "<EMAIL_1>",
+    EM, "_a@b.cc_", "a@b.cc9", HOST, PUBLIC, EVIL, "www" + "." + "evil" + "." + "digital", "<HOSTNAME_1>", "<EMAIL_1>",
     "_", "*", "[", "]", "(", ")", "-", "@", ".", ",", ":", "/", "~", "0", "9", "x", "q", "é", "例",
     "。", " ", " ", "\n", "08::", "pass" + "word=", "&", "?",
 ]  # fmt: skip
@@ -363,11 +362,12 @@ def test_property_no_linkable_host_on_the_card_and_the_card_reads_the_same_twice
         if "`" not in shown:
             _assert_not_linkable(shown, x)
         plain = shown.replace("[.]", ".")
-        # The card shows no address or host the model's view masks. (An address with a digit or `_` glued behind
-        # it is masked in neither: the EMAIL pattern ends at a word boundary. Not part of this fix.)
+        # A protected value never reaches a card unmasked (review M2: this used to be `plain.count(value) <=
+        # model.count(value)`, which excused an address with a digit or `_` glued behind it, shown by both).
         model = runmap.redact_text(x, runmap.RunMap())
-        for value in (EM, HOST):
-            assert plain.count(value) <= model.count(value), f"SHOWN: {value!r}: {x!r} -> {shown!r}"
+        for value in (EM, HOST, "a@b.cc"):
+            assert value not in plain, f"SHOWN: {value!r}: {x!r} -> {shown!r}"
+            assert value not in model, f"SHOWN TO THE MODEL: {value!r}: {x!r} -> {model!r}"
         again = slack._blocks(_request(shown), None)[0]["text"]["text"]
         assert again == shown, f"ROUND TRIP: {x!r}: {shown!r} / {again!r}"
         # a stored card is read again through `undefang_text` (SlackChannel._blocks, FakeChannel.send)
@@ -416,3 +416,29 @@ def test_glued_addresses_are_linear(unit):
     t0 = time.perf_counter()
     gate.defang_text((PUBLIC + "_") * 5_000 + ("a." * 20_000))
     assert time.perf_counter() - t0 < 5.0
+
+
+def test_glued_search_for_the_end_of_the_token_is_bounded():
+    """Review M1: `_sub_glued` searched for the end of the token to the END OF THE TEXT for every match of a run of glued
+    addresses: O(matches x token). Every search now gets an end position at most `_GLUED_WINDOW` away (a deterministic step
+    bound, not a clock), and the result is unchanged."""
+    import importlib
+
+    R = importlib.import_module("hadavin_sdk.guard.redact")
+    calls: list[tuple[int, int | None]] = []
+    real = R._NOT_ADDRESS
+
+    class Spy:
+        def search(self, text, pos=0, endpos=None):
+            calls.append((pos, endpos))
+            return real.search(text, pos) if endpos is None else real.search(text, pos, endpos)
+
+    text = EM * 3_000  # one token of ~54,000 characters, far beyond the window
+    R._NOT_ADDRESS = Spy()
+    try:
+        out = R.redact(text).text
+    finally:
+        R._NOT_ADDRESS = real
+    assert calls, "the glued rest was never tried"
+    assert all(e is not None and e - p <= R._GLUED_WINDOW for p, e in calls), calls[:3]
+    assert "@" not in out and "example" not in out

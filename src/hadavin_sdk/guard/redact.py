@@ -1152,13 +1152,14 @@ class _Redactor:
         the character before it is a name character. That rest was shown, and a second pass over the masked text
         masked it (the character before it is then the `>` of a placeholder): one pass was no fixed point. Here
         the rest is tried at once, as that second pass would read it: on a copy of the token that starts there
-        (the token, one character more for the pattern's `\\b`, at most `_GLUED_WINDOW` characters)."""
+        (the token and the character that ends it, at most `_GLUED_WINDOW` characters; the search for its end is bounded as well)."""
         parts: list[str] = []
         last, behind_masked = 0, False
         while True:
             m = None
             if behind_masked:
-                stop = _NOT_ADDRESS.search(text, last)
+                # the search is bounded too (review M1): an unbounded one rescanned to the end of the token for every match
+                stop = _NOT_ADDRESS.search(text, last, last + _GLUED_WINDOW)
                 end = min(stop.end() if stop else len(text), last + _GLUED_WINDOW)
                 m = pattern.match(text[last:end])
             if m is not None:
