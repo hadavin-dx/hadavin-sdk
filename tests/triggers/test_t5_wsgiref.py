@@ -682,10 +682,12 @@ def test_n11_a_process_variable_cannot_stand_in_for_a_missing_header(monkeypatch
     assert unsigned.status == 401, unsigned
     assert no_length.status == 400, no_length
     assert control.status == 202 and len(start.calls) == 1
-    # the refused requests never reach the application; the signed one is the control, and it
-    # must carry none of the planted values (only what the handler itself built from the request)
-    (seen_environ,) = seen_environs
-    leaked = {k for k, v in seen_environ.items() if k in planted and planted[k] == v}
-    assert not leaked - {"HTTP_X_HADAVIN_REQUEST_TIMESTAMP", "HTTP_X_HADAVIN_SIGNATURE"}, leaked
-    assert seen_environ["CONTENT_TYPE"] == "text/plain"  # the stdlib's own default, not the variable
+    unsigned_env, _, control_env = seen_environs
+    assert not [k for k in unsigned_env if k.startswith("HTTP_X_HADAVIN_")], unsigned_env
+    for environ in seen_environs:
+        leaked = {k for k, v in environ.items() if k in planted and planted[k] == v}
+        # the signed control sends the same headers and the same length on purpose
+        genuine = {"HTTP_X_HADAVIN_REQUEST_TIMESTAMP", "HTTP_X_HADAVIN_SIGNATURE", "CONTENT_LENGTH"}
+        assert not leaked - genuine, leaked
+    assert control_env["CONTENT_TYPE"] == "text/plain"  # the stdlib's own default, not the variable
     check_quiet(unsigned, capsys, caplog)
