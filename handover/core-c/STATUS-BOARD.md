@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:51:56Z
+UPDATED_UTC: 2026-11-20T09:52:39Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,28 +6,29 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: load 4.6 of 4 cores, mem 0/15 GB, disk 57G free, 18% used, light agents 7, heavy agents 0
+AGENTS_RUNNING: 8
+CAPACITY: load 4.1 of 4 cores, mem 0/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
 DISK: / 57G free, 18% used; git worktrees 20; 1.3G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: LIVE only. E9(2) landed (e8ff6de2b) + fix round 1 (c4d68c6ef: error-path trade-off stated and pinned, stale docs; builder batch 422 passed); E9 result review round 2 pending. G9 (E10) and G10 (E11) tickets drafting: plan review round 1 starts when each lands. Heavy batches running: 1 (Q9 mutant run).
-PUSHED_UTC: 2026-11-20T09:51:47+00:00
+PUSHED_UTC: 2026-11-20T09:51:57+00:00
 
-(15:21 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | ab19d791 | builder | claude-sonnet-5-5 | Q9 mutants and tests (30 code points; 3 wrong-reason + 4 surviving textnorm mutants; stale N15; both mutant lists on HEAD) | RESTARTED 09:36Z on /tmp/core-c-q9 | 09:36 | 10:10 | 30 | running | 1 | 1 | container restart 09:35Z |
 | adfc4857 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point (E10) | plan review round 1 next (max 3) | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
-| a759f3ff | drafter | claude-opus-5-5 | ticket G10: text-fold deadline + published false-hit rates (E11) | plan review round 1 next | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a2db832a | drafter | claude-opus-5-5 | ticket G4 v5 (plan review round 4 findings; card-path fix) | plan review round 5 next | 09:37 | 10:10 | 0 | running | 5 | 1 | container restart 09:35Z |
 | ae8bb529 | drafter | claude-opus-5-5 | ticket G8 v3 (plan review round 2 findings; IBAN opaque-token measurement) | plan review round 3 next | 09:37 | 10:10 | 0 | running | 3 | 1 | container restart 09:35Z |
 | a83c98d5 | evidence runner | claude-sonnet-5-5 | E11(c) split of Latin false hits (low load only) | 09:37 | 10:00 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a6a89e42 | builder | claude-sonnet-5-5 | G7 fix round 7 (registry memory limit, actions double count, structural growth trigger, counts/figures/scripts) | G7 result review round 6 done (0 Blocker, 1+4 Major) | 09:52 | 10:25 | 1 | running | 7 | 0 | from G7-result-review-6.md; E10 fixed point waits for ticket G9 |
+| a5b7b759 | reviewer | claude-sonnet-5-5 | G10 PLAN review round 1 (implementation readiness): text-fold deadline + false-hit wording | 09:55 | 10:10 | 2 | running | 1 | 0 | max 3 rounds, then build |
+| a19f95a7 | reviewer | claude-sonnet-5-5 | G10 PLAN review round 1 (codebase): pins, callers, DeadlinePassed vs TextTooLong | 09:55 | 10:10 | 2 | running | 1 | 0 | max 3 rounds, then build |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
