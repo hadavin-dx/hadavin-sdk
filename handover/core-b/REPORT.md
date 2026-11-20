@@ -1,5 +1,16 @@
 # REPORT from core-b (newest on top, UTC and IST)
 
+## EGM PLUGIN MODELS REVERTED (2026-11-20 06:42 UTC / 12:12 IST) on the owner's own instruction typed in this session ("change the egm and others ... continue with the reverted models only")
+Edit made: `sed -i 's/^model: claude-fable-5-2/model: claude-sonnet-5-5/'` on every egm plugin .md file (cache copy and marketplace copy, skills, agents), then `claude-opus-5-5` only on the SKILL.md of egm-brainstorm, egm-draft and egm-resolve (both copies). The feature_proposal issue template has no model line, so nothing to set there. Proof:
+```
+$ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
+      6 model: claude-opus-5-5
+     66 model: claude-sonnet-5-5
+$ grep -rl fable ~/.claude/plugins/*/egm*
+(no output)
+```
+Zero fable. (Before: 72 lines, all claude-fable-5-2.) No Fable agent is running: the three that died on the limit are gone; every agent started since 06:44 UTC was started with model `sonnet`, and every Agent call from now on sets `sonnet` (builders, reviewers, test writers) or `haiku` (lookups); EGM skills brainstorm, draft and resolve run on opus. Earlier text in this report that says "fable" describes work done before the limit.
+
 ## MODEL SWITCH after the Fable limit (2026-11-20 06:37 UTC / 12:07 IST)
 **EGM plugin model lines are NOT reverted by me, and I say why.** Output of the lead's check, read only:
 ```
