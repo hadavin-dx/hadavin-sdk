@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import logging
+import signal
 import sys
 import threading
 import time
@@ -48,13 +49,14 @@ from pathlib import Path
 from typing import Any, Final, Self
 from wsgiref.simple_server import WSGIServer
 
-from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.models import Run, RunState
+from hadavin_sdk.errors import ConfigError as AnyConfigError
+from hadavin_sdk.models import Run, RunState, now
 from hadavin_sdk.store.protocol import NotFound, StoreUnavailable, is_connectivity_error
 from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi
 from hadavin_sdk.triggers.server import QuietRequestHandler, QuietServer
 
 POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it waits
+NO_SLOT_POLL_CAP_S: Final[float] = 1.0  # with no free slot the wait doubles from POLL_S up to this
 MAX_RUNNING: Final[int] = 1  # see the module text: parallel runs can pass a budget
 ACK_WAIT_S: Final[float] = 5.0
 CLOSE_WAIT_S: Final[float] = 30.0  # how long `close` waits for running loops
@@ -62,12 +64,19 @@ SOCKET_SLACK_S: Final[float] = 10.0  # a connection may stay open ack_wait_s plu
 LOOPBACK: Final[str] = "127.0.0.1"
 PORT: Final[int] = 8081
 TRIGGER_KIND: Final[str] = "event"
+STUCK_STEP: Final[str] = "stuck"  # the tick step that ends a cut-off run
+TICK_MAX_AGE_S: Final[float] = 600.0  # a good "stuck" tick older than this is warned about at start
 IN_PROGRESS: Final[frozenset[RunState]] = frozenset({RunState.RECEIVED, RunState.WORKING})
 NO_ACK: Final[tuple[int, dict[str, str]]] = (503, {})
 CONFLICT: Final[tuple[int, dict[str, str]]] = (409, {})
 EXIT_OK, EXIT_CONFIG, EXIT_FAILED, EXIT_STORE = 0, 2, 3, 4
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
+
+
+class ConfigError(AnyConfigError):
+    """A start refusal written in THIS file: its text is built here from ids and bounds, so `main` prints it.
+    Any other config or store error is printed by class name only (its text could hold a value)."""
 
 
 class Runner:
@@ -121,6 +130,7 @@ class Runner:
                 return NO_ACK
             # job None = no free slot: wait for the row all the same, another request may be writing it.
             deadline = time.monotonic() + self._ack_wait_s
+            pause, pause_cap = self._poll_s, max(self._poll_s, NO_SLOT_POLL_CAP_S)
             while True:
                 # read BEFORE the row, so one look at the row follows the end of the loop
                 ended = job is not None and job.done()
@@ -130,9 +140,10 @@ class Runner:
                 left = deadline - time.monotonic()
                 if ended or left <= 0:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
-                if job is None:  # no slot so far: take one as soon as it is free, then as above
+                if job is None:  # no slot so far: take one once it is free, else look less and less often
                     job = self._submit(req)[0]
-                time.sleep(min(self._poll_s, left))
+                    pause = self._poll_s if job is not None else min(pause * 2, pause_cap)
+                time.sleep(min(pause, left))
         except Exception as exc:  # noqa: BLE001 - the store failed: no ack, the sender retries
             what = "store unreachable" if is_connectivity_error(exc) else "store error"
             _LOG.warning("trigger start: %s (%s)", what, type(exc).__name__)
@@ -254,14 +265,18 @@ def read_secrets(
 
 
 def check_bind(host: str, allow_non_loopback: bool) -> None:
-    """Refuse a host that is not loopback unless the config says so in plain words. A host must be an IP
-    address or the name localhost: any other text (an empty one would mean every interface) is refused."""
+    """Refuse a host that is not loopback unless the config says so in plain words. A host must be an IPv4
+    address or the name localhost: any other text (an empty one would mean every interface) is refused, and
+    so is every IPv6 address, the loopback one too, because the server opens an IPv4 socket only."""
     if host == "localhost":
         return
     try:
-        loopback = ipaddress.ip_address(host).is_loopback
+        address = ipaddress.ip_address(host)
     except ValueError:
         raise ConfigError("--host must be an IP address or localhost") from None
+    if address.version != 4:
+        raise ConfigError("--host is an IPv6 address: the server listens on IPv4 only") from None
+    loopback = address.is_loopback
     if not loopback and allow_non_loopback is not True:
         raise ConfigError(
             f"--host {host} is not loopback: set triggers.allow_non_loopback: true to listen there"
@@ -323,6 +338,52 @@ def _qualified_agents(registry: Any) -> list[str]:
     return agents
 
 
+def check_tick(store: Any) -> bool:
+    """True when the store holds a good "stuck" tick not older than TICK_MAX_AGE_S. Else one warning; the
+    start goes on in every case."""
+    try:
+        state = store.get_tick_state(STUCK_STEP)
+        last = None if state is None else state.last_ok_at
+        if last is not None and (now() - last).total_seconds() <= TICK_MAX_AGE_S:
+            return True
+        seen = "none recorded" if last is None else "the last good one is too old"
+    except Exception as exc:  # noqa: BLE001 - a warning only: never a reason not to start
+        seen = f"could not be read ({type(exc).__name__})"
+    _LOG.warning(
+        "trigger worker: no good %s tick in the last %d s (%s): is the tick running?",
+        STUCK_STEP,
+        TICK_MAX_AGE_S,
+        seen,
+    )
+    return False
+
+
+def serve(server: WSGIServer, runner: Any) -> int:
+    """Serve until Ctrl-C or SIGTERM, then close the socket and wait for the running loops (`Runner.close`).
+
+    The signal handler only starts a thread that calls `server.shutdown()`: called in the thread that serves,
+    `shutdown` would wait for itself. Not in the main thread no handler can be set; that is logged."""
+
+    def on_term(signum: int, frame: object) -> None:
+        threading.Thread(target=server.shutdown, name="trigger-stop", daemon=True).start()
+
+    previous: Any = None
+    try:
+        previous = signal.signal(signal.SIGTERM, on_term)
+    except ValueError:
+        _LOG.warning("trigger worker: not the main thread, SIGTERM is not handled")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+        runner.close()
+        if previous is not None:
+            signal.signal(signal.SIGTERM, previous)
+    return EXIT_OK
+
+
 def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
     from hadavin_sdk.app import build
     from hadavin_sdk.config import load_config
@@ -335,6 +396,7 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
     check_bind(host, getattr(settings, "allow_non_loopback", False))
     app = build(args.config_dir, _qualified_agents(load_registry(config)))
     wsgi, runner = make_app(app)
+    check_tick(app.store)
     try:
         timeout = getattr(settings, "ack_wait_s", ACK_WAIT_S) + SOCKET_SLACK_S
         return make_server(host, port, wsgi, timeout), runner
@@ -344,7 +406,7 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Exit codes: 0 stopped cleanly, 2 config error, 4 store not reachable at start, 3 anything else."""
+    """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 4 store not reachable at start, 3 anything else."""
     parser = argparse.ArgumentParser(prog="python -m hadavin_sdk.triggers.worker")
     parser.add_argument("--config-dir", type=Path, default=None)
     parser.add_argument("--host", default=None, help="default: triggers.host (loopback)")
@@ -353,11 +415,14 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
     try:
         server, runner = _prepare(args)
-    except StoreUnavailable as exc:  # a ConfigError subclass: must come first
-        print(f"trigger worker: {exc}", file=sys.stderr)
+    except StoreUnavailable as exc:  # a config error subclass: must come first
+        print(f"trigger worker: store unreachable: {type(exc).__name__}", file=sys.stderr)
         return EXIT_STORE
-    except ConfigError as exc:
+    except ConfigError as exc:  # written in this file: ids and bounds only
         print(f"trigger worker: config error: {exc}", file=sys.stderr)
+        return EXIT_CONFIG
+    except AnyConfigError as exc:  # class name only: the text could hold a value
+        print(f"trigger worker: config error: {type(exc).__name__}", file=sys.stderr)
         return EXIT_CONFIG
     except Exception as exc:  # noqa: BLE001 - class name only: the text could hold a value
         if is_connectivity_error(exc):
@@ -369,14 +434,7 @@ def main(argv: list[str] | None = None) -> int:
         "trigger worker: serving on port %d; the tick must run too, or a cut-off run never reaches a person",
         server.server_port,
     )
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
-        runner.close()
-    return EXIT_OK
+    return serve(server, runner)
 
 
 if __name__ == "__main__":

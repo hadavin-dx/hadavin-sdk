@@ -228,6 +228,8 @@ def check_quiet(seen: Seen, capsys, caplog) -> None:
         if not 200 <= seen.status < 300:
             assert seen.body == b"", seen.body[:200]
             assert b"content-type" not in seen.head.lower()
+        assert b"python" not in seen.head.lower() and b"wsgiserver" not in seen.head.lower()
+        assert b"\r\nserver:" not in seen.head.lower()
     captured = capsys.readouterr()
     for name, text in (
         ("answer", seen.raw.decode("latin-1")),
@@ -237,7 +239,7 @@ def check_quiet(seen: Seen, capsys, caplog) -> None:
     ):
         for needle in needles():
             assert needle not in text, f"{needle!r} in the {name}: {text[:300]!r}"
-        assert _signatures and not [s for s in _signatures if s in text], f"signature: {name}"
+        assert not [s for s in _signatures if s in text], f"a signature in the {name}"
     assert captured.err == "", captured.err[:300]
 
 

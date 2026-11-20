@@ -45,6 +45,7 @@ class _NoStream:
 class QuietWSGIHandler(ServerHandler):
     """Runs the application for one request. A failure is 503 with an empty body, logged by class name."""
 
+    server_software = None  # no Server header: it would name the Python version
     error_status = STATUS_TEXT[503]
     error_headers: ClassVar[list[tuple[str, str]]] = [("Content-Length", "0")]
     error_body = b""
@@ -60,6 +61,9 @@ class QuietWSGIHandler(ServerHandler):
 
 class QuietRequestHandler(WSGIRequestHandler):
     """One connection, one request. Refusals made before the application runs have an empty body."""
+
+    server_version = "trigger"  # the stdlib default names its own and the Python version
+    sys_version = ""
 
     def log_message(self, format: str, *args: Any) -> None:
         """Nothing: the arguments hold the request line, which is text chosen by the caller."""

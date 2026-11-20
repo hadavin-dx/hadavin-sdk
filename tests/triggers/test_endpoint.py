@@ -189,6 +189,9 @@ def test_derive_run_id_many_seeded_triples():
         ("t", "s", "k\n"),
         ("t" * 41, "s", "k"),
         ("t", "s", "k" * 129),
+        ("t\n", "s", "k"),
+        ("t", "s\n", "k"),
+        ("t", "s", "\nk"),
     ],
 )
 def test_derive_run_id_refuses_bad_input(triple):
@@ -245,6 +248,17 @@ MALFORMED = {
     "deep nesting": b"[" * 10000 + b"]" * 10000,
     "huge number": b'{"key": "k", "document": ' + b"9" * 3000 + b"}",
     "trailing data": b'{"key": "k", "document": "d"} x',
+    "byte-order mark": b'\xef\xbb\xbf{"key": "k", "document": "d"}',
+    "document NaN": b'{"key": "k", "document": NaN}',
+    "document Infinity": b'{"key": "k", "document": Infinity}',
+    "document -Infinity": b'{"key": "k", "document": -Infinity}',
+    "key NaN": b'{"key": NaN, "document": "d"}',
+    "extra NaN": b'{"key": "k", "document": "d", "n": NaN}',
+    "bare NaN": b"NaN",
+    "lone low surrogate": b'{"key": "k", "document": "a\\udc00b"}',
+    "reversed surrogates": b'{"key": "k", "document": "\\ude00\\ud83d"}',
+    "key lone surrogate": b'{"key": "k\\ud800", "document": "d"}',
+    "key trailing newline raw": b'{"key": "k\n", "document": "d"}',
 }
 
 
@@ -264,6 +278,12 @@ def test_bad_request_never_quotes_the_body():
     with pytest.raises(BadRequest) as info:
         parse_body(json.dumps({"key": marker + "/", "document": marker}).encode())
     assert marker not in str(info.value)
+
+
+def test_parse_body_takes_a_surrogate_pair_escape_and_refuses_half_of_one():
+    assert parse_body(b'{"key": "k", "document": "\\ud83d\\ude00"}') == ("k", "\U0001f600".encode())
+    with pytest.raises(BadRequest):
+        parse_body(b'{"key": "k", "document": "\\ud83d"}')
 
 
 # ---- verify_any, check_secrets ----
@@ -310,9 +330,65 @@ def test_verify_any_refuses_when_two_senders_match():
     assert verify_any(signed(body, OLD_A), body, NOW, shared) is None
 
 
+@pytest.mark.parametrize(("offset", "sender"), [(-300, "sender-a"), (300, "sender-a")])
+@pytest.mark.parametrize("fraction", [0.0, 0.001, 0.5, 0.999])
+def test_verify_any_window_edge_is_exact_with_a_fractional_clock(offset, sender, fraction):
+    body = body_of()
+    assert verify_any(signed(body, OLD_A, NOW + offset), body, NOW + fraction, SECRETS) == sender
+    one_more = offset + (1 if offset > 0 else -1)
+    assert verify_any(signed(body, OLD_A, NOW + one_more), body, NOW + fraction, SECRETS) is None
+
+
 def test_check_secrets_accepts_a_good_set():
     check_secrets(SECRETS)
     check_secrets({"sender-a": ("z" * 32,)})
+    check_secrets({"sender-a": ("z" * 16 + " \t" + "z" * 16,)})  # whitespace inside is kept
+    assert endpoint.MAX_SECRETS_PER_SENDER == 2
+
+
+WHITESPACE_EDGES = {
+    "trailing newline": ("", "\n"),
+    "trailing CRLF": ("", "\r\n"),
+    "trailing space": ("", " "),
+    "trailing tab": ("", "\t"),
+    "leading space": (" ", ""),
+    "leading newline": ("\n", ""),
+    "no-break space": ("", "\u00a0"),
+    "both ends": (" ", " "),
+}
+
+
+@pytest.mark.parametrize("name", sorted(WHITESPACE_EDGES))
+@pytest.mark.parametrize("position", [0, 1])
+def test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender(name, position):
+    before, after = WHITESPACE_EDGES[name]
+    bad = before + STRANGER + after
+    values = (bad, NEW_A) if position == 0 else (NEW_A, bad)
+    with pytest.raises(ValueError) as info:
+        check_secrets({"sender-a": values, "sender-b": (ONLY_B,)})
+    text = str(info.value)
+    assert "sender-a" in text and "whitespace" in text
+    assert "sender-b" not in text
+    for value in (bad, STRANGER, NEW_A, ONLY_B):
+        assert value not in text
+    start = Recorder()
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(), {"sender-a": values, "sender-b": (ONLY_B,)}, start)
+
+
+def test_check_secrets_refuses_more_than_two_secrets_per_sender():
+    third = fake_secret("g" * 20, "h" * 20)
+    check_secrets({"sender-a": (OLD_A, NEW_A), "sender-b": (ONLY_B, third)})
+    three = {"sender-a": (OLD_A,), "sender-b": (ONLY_B, NEW_A, third)}
+    with pytest.raises(ValueError) as info:
+        check_secrets(three)
+    text = str(info.value)
+    assert "sender-b" in text and "more than 2" in text
+    assert "sender-a" not in text
+    for value in (OLD_A, NEW_A, ONLY_B, third):
+        assert value not in text
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(), three, Recorder())
 
 
 @pytest.mark.parametrize(
@@ -350,6 +426,11 @@ def test_make_wsgi_refuses_a_bad_setup():
         make_wsgi(FakeSettings(), {**SECRETS, "sender-c": (STRANGER,)}, start)
     with pytest.raises(ValueError):
         make_wsgi(FakeSettings(tenant="Bad Tenant"), SECRETS, start)
+    with pytest.raises(ValueError):  # fullmatch: a trailing newline is not part of an id
+        make_wsgi(FakeSettings(tenant="tenant-one\n"), SECRETS, start)
+    newline = (FakeSender("sender-a\n", "agent-a", "svc-a"),)
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(senders=newline), {"sender-a\n": (OLD_A,)}, start)
     with pytest.raises(ValueError):
         make_wsgi(FakeSettings(max_body_bytes=0), SECRETS, start)
     twice = (FakeSender("sender-a", "agent-a", "svc-a"), FakeSender("sender-a", "agent-b", "svc-b"))
@@ -523,6 +604,19 @@ def test_t5_3_timestamp_window(offset, status):
     body = body_of()
     headers = signed(body, OLD_A, NOW + offset)  # a correct signature over that timestamp
     app, start = build()
+    got = call(app, headers=headers, body=body)
+    assert got[0] == status
+    assert len(start.calls) == (1 if status == 202 else 0)
+    if status == 401:
+        refused(got, 401)
+
+
+@pytest.mark.parametrize("fraction", [0.001, 0.5, 0.999])
+@pytest.mark.parametrize(("offset", "status"), [(-300, 202), (300, 202), (-301, 401), (301, 401)])
+def test_t5_3_timestamp_window_is_exact_with_a_fractional_clock(offset, status, fraction):
+    body = body_of()
+    headers = signed(body, OLD_A, NOW + offset)
+    app, start = build(now=NOW + fraction)
     got = call(app, headers=headers, body=body)
     assert got[0] == status
     assert len(start.calls) == (1 if status == 202 else 0)
@@ -771,6 +865,40 @@ def test_logs_hold_neither_body_nor_signature_nor_secret(caplog):
     for forbidden in (marker, key, sig, sig[3:], OLD_A, NEW_A, ONLY_B, STRANGER, str(NOW)):
         assert forbidden not in text
     assert all(r.exc_info is None for r in caplog.records)
+
+
+def test_one_line_per_request_and_the_409_line_is_left_to_start(caplog):
+    """ORDER 009 E1a: the 409 line (status, sender id, run id) is written by ``start``, which decides
+    the 409; the endpoint adds no second line for that request."""
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.triggers")
+    body = body_of()
+    good = signed(body, OLD_A)
+
+    def lines():
+        got = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.triggers"]
+        caplog.clear()
+        return got
+
+    app, _ = build()
+    assert call(app, headers=good, body=body)[0] == 202
+    assert lines() == ["trigger status=202 sender=sender-a"]
+    refused(call(app, headers=signed(body, STRANGER), body=body), 401)
+    assert lines() == ["trigger status=401 sender=-"]
+
+    app, _ = build(Recorder(answer=(409, {})))  # a start that logs nothing
+    refused(call(app, headers=good, body=body), 409)
+    assert lines() == []
+
+    def conflict(req):  # the shape of the worker's line
+        logging.getLogger("hadavin_sdk.triggers").warning(
+            "trigger status=409 sender=%s run=%s", req.sender, req.run_id
+        )
+        return 409, {}
+
+    app, _ = build(conflict)
+    refused(call(app, headers=good, body=body), 409)
+    rid = derive_run_id("tenant-one", "sender-a", "order-1")
+    assert lines() == [f"trigger status=409 sender=sender-a run={rid}"]
 
 
 def test_endpoint_imports_no_runtime_store_or_app_module():
