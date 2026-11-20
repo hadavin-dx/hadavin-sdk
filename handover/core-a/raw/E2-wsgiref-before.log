@@ -1,0 +1,307 @@
+# E2 BEFORE: worker.make_server as it is (stdlib wsgiref handler, only log_message silenced). 2026-11-20T05:43:50Z
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+=== 1 signed request
+end=closed seconds=0.001 start_calls=1
+status line: b'HTTP/1.0 202 Accepted'
+head: b'HTTP/1.0 202 Accepted\r\nDate: Fri, 20 Nov 2026 05:43:50 GMT\r\nServer: WSGIServer/0.2 CPython/3.13.18\r\nContent-Length: 71\r\nContent-Type: application/json'
+body (71 bytes): b'{"run_id": "run-ae1b6d84b55c54d0ac9ab47c9c8b62ee", "state": "RECEIVED"}'
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=202 sender=sender-a
+
+=== 2 Content-Length larger than sent, client half-closes
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nDate: Fri, 20 Nov 2026 05:43:50 GMT\r\nServer: WSGIServer/0.2 CPython/3.13.18\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=-
+
+=== 3 Content-Length larger than sent, client stalls (timeout 0.5 s)
+end=closed seconds=0.502 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nDate: Fri, 20 Nov 2026 05:43:51 GMT\r\nServer: WSGIServer/0.2 CPython/3.13.18\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=-
+
+=== 3b headers not ended, client stalls
+end=closed seconds=0.504 start_calls=0
+status line: b''
+head: b''
+body (0 bytes): b''
+stderr (1595 chars):
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 57490)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/wsgiref/simple_server.py", line 122, in handle
+    if not self.parse_request(): # An error code has been sent, just exit
+           ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 361, in parse_request
+    self.headers = http.client.parse_headers(self.rfile,
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+                                             _class=self.MessageClass)
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/http/client.py", line 260, in parse_headers
+    headers = _read_headers(fp)
+  File "/usr/local/lib/python3.13/http/client.py", line 233, in _read_headers
+    line = fp.readline(_MAXLINE + 1)
+  File "/usr/local/lib/python3.13/socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+TimeoutError: timed out
+----------------------------------------
+
+log hadavin_sdk.triggers:
+
+=== 3c client sends nothing, stalls
+end=closed seconds=0.502 start_calls=0
+status line: b''
+head: b''
+body (0 bytes): b''
+stderr (1038 chars):
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 47842)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/wsgiref/simple_server.py", line 114, in handle
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+TimeoutError: timed out
+----------------------------------------
+
+log hadavin_sdk.triggers:
+
+=== 4 garbage instead of a request line
+end=closed seconds=0.001 start_calls=0
+status line: b"HTTP/1.0 400 Bad request syntax ('\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2')"
+head: b"HTTP/1.0 400 Bad request syntax ('\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2')\r\nServer: WSGIServer/0.2 Python/3.13.18\r\nDate: Fri, 20 Nov 2026 05:43:52 GMT\r\nConnection: close\r\nContent-Type: text/html;charset=utf-8\r\nContent-Length: 391"
+body (391 bytes): b'<!DOCTYPE HTML>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Error response</title>\n    </head>\n    <body>\n        <h1>Error response</h1>\n        <p>Error code: 400</p>\n        <p>Message: Bad request syntax (\'\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2\').</p>\n        <p>Error code explanation: 400 - Bad request syntax or unsupported method.</p>\n    </body>\n</html>\n'
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+
+=== 5 request line of 65537 bytes
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 414 URI Too Long'
+head: b'HTTP/1.0 414 URI Too Long\r\nServer: WSGIServer/0.2 Python/3.13.18\r\nDate: Fri, 20 Nov 2026 05:43:52 GMT\r\nConnection: close\r\nContent-Type: text/html;charset=utf-8\r\nContent-Length: 319'
+body (319 bytes): b'<!DOCTYPE HTML>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Error response</title>\n    </head>\n    <body>\n        <h1>Error response</h1>\n        <p>Error code: 414</p>\n        <p>Message: URI Too Long.</p>\n        <p>Error code explanation: 414 - URI is too long.</p>\n    </body>\n</html>\n'
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+
+=== 6 no Content-Length (body sent)
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nDate: Fri, 20 Nov 2026 05:43:52 GMT\r\nServer: WSGIServer/0.2 CPython/3.13.18\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=-
+
+=== 7 client drops the connection before the answer
+end=client gone seconds=0.001 start_calls=2
+status line: b''
+head: b''
+body (0 bytes): b''
+next request on the same server: b'HTTP/1.0 202 Accepted'
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=202 sender=sender-a
+trigger status=202 sender=sender-a
+
+=== 8 (extra) the WSGI app raises
+end=closed seconds=0.002 start_calls=0
+status line: b'HTTP/1.0 500 Internal Server Error'
+head: b'HTTP/1.0 500 Internal Server Error\r\nDate: Fri, 20 Nov 2026 05:43:52 GMT\r\nServer: WSGIServer/0.2 CPython/3.13.18\r\nContent-Type: text/plain\r\nContent-Length: 59'
+body (59 bytes): b'A server error occurred.  Please contact the administrator.'
+stderr (402 chars):
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/wsgiref/handlers.py", line 137, in run
+    self.result = application(self.environ, self.start_response)
+                  ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/tests/triggers/test_t5_wsgiref.py", line 214, in broken_app
+    raise RuntimeError(BOOM_MARK)
+RuntimeError: ZQ7-private-failure-text
+
+log hadavin_sdk.triggers:
+
+
+# pytest on the new test file, before any source change
+E        +    where <built-in method endswith of bytes object at 0x7f339b12d220> = b"HTTP/1.0 400 Bad request syntax ('\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2')".endswith
+E        +      where b"HTTP/1.0 400 Bad request syntax ('\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2')" = Seen(raw=b'HTTP/1.0 400 Bad request syntax (\'\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2\')\r\nServer: WSGIServer/0.2 Py...0 - Bad request syntax or unsupported method.</p>\n    </body>\n</html>\n', end='closed', seconds=0.000739557000088098).status_line
+
+tests/triggers/test_t5_wsgiref.py:315: AssertionError
+__________________ test_request_line_over_64_kb_is_414_empty ___________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f339ba3fbd0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f339ba3fac0>
+
+    def test_request_line_over_64_kb_is_414_empty(capsys, caplog):
+        start = FakeStart()
+        with serving(make_wsgi(start)) as server:
+            seen = drive_long_request_line(server.server_port)
+        assert seen.status == 414 and seen.end == "closed", (seen.raw[:200], seen.end)
+        assert start.calls == []
+>       check_quiet(seen, capsys, caplog)
+
+tests/triggers/test_t5_wsgiref.py:326: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+seen = Seen(raw=b'HTTP/1.0 414 URI Too Long\r\nServer: WSGIServer/0.2 Python/3.13.18\r\nDate: Fri, 20 Nov 2026 05:43:53 GMT\r...ror code explanation: 414 - URI is too long.</p>\n    </body>\n</html>\n', end='closed', seconds=0.0005841429999691172)
+capsys = <_pytest.capture.CaptureFixture object at 0x7f339ba3fbd0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f339ba3fac0>
+
+    def check_quiet(seen: Seen, capsys, caplog) -> None:
+        """Call after the server is closed, so every connection thread has written what it writes."""
+        if seen.raw:
+            assert seen.raw.startswith(b"HTTP/1."), seen.raw[:80]
+            assert seen.status is not None
+            if not 200 <= seen.status < 300:
+>               assert seen.body == b"", seen.body[:200]
+E               AssertionError: b'<!DOCTYPE HTML>
+E                 <html lang="en">
+E                     <head>
+E                         <meta charset="utf-8">
+E                         <title>Error response</title>
+E                     </head>
+E                     <body>
+E                         <h1>Error response</h1>
+E                         <p>Error code: 414</p>
+E                  '
+E               assert b'<!DOCTYPE H...y>\n</html>\n' == b''
+E                 
+E                 Use -v to get more diff
+
+tests/triggers/test_t5_wsgiref.py:231: AssertionError
+_____________________ test_no_content_length_is_400_empty ______________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f339b168490>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f339b168160>
+
+    def test_no_content_length_is_400_empty(capsys, caplog):
+        start = FakeStart()
+        with serving(make_wsgi(start)) as server:
+>           seen = drive_no_content_length(server.server_port)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/triggers/test_t5_wsgiref.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/triggers/test_t5_wsgiref.py:193: in drive_no_content_length
+    return exchange(port, request(body_bytes(), declared=None))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/triggers/test_t5_wsgiref.py:130: in request
+    signed = hmac_v0.sign(body, int(time.time()), SECRET, endpoint.PREFIX)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (b'{"key": "zq7-key-marker", "document": "alert ZQ7-document-marker-41c9 from the checkout"}', 1795153433, 'wwwwwwwwwwwwwwwwwwww55555555555555555555', 'X-Hadavin')
+kwargs = {}
+
+    def sign(*args, **kwargs):
+        headers = real(*args, **kwargs)
+>       made.append(headers[endpoint.SIGNATURE_HEADER])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'X-Hadavin-Signature'
+
+tests/triggers/test_t5_wsgiref.py:257: KeyError
+____ test_client_gone_before_the_answer_leaves_the_server_quiet_and_serving ____
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f339b1b1d50>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f339b1b1c50>
+
+    def test_client_gone_before_the_answer_leaves_the_server_quiet_and_serving(capsys, caplog):
+        start = FakeStart()
+        with serving(make_wsgi(start)) as server:
+>           gone = drive_client_gone(server.server_port, start)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/triggers/test_t5_wsgiref.py:342: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/triggers/test_t5_wsgiref.py:204: in drive_client_gone
+    sock.sendall(request(body, declared=len(body)))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/triggers/test_t5_wsgiref.py:130: in request
+    signed = hmac_v0.sign(body, int(time.time()), SECRET, endpoint.PREFIX)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (b'{"key": "zq7-key-marker", "document": "alert ZQ7-document-marker-41c9 from the checkout"}', 1795153433, 'wwwwwwwwwwwwwwwwwwww55555555555555555555', 'X-Hadavin')
+kwargs = {}
+
+    def sign(*args, **kwargs):
+        headers = real(*args, **kwargs)
+>       made.append(headers[endpoint.SIGNATURE_HEADER])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'X-Hadavin-Signature'
+
+tests/triggers/test_t5_wsgiref.py:257: KeyError
+______ test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only ______
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f339b1b2650>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f339b1b2550>
+
+    def test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only(capsys, caplog):
+        with serving(broken_app) as server:
+>           seen = drive_signed(server.server_port)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/triggers/test_t5_wsgiref.py:352: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/triggers/test_t5_wsgiref.py:162: in drive_signed
+    return exchange(port, request(body, declared=len(body)))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/triggers/test_t5_wsgiref.py:130: in request
+    signed = hmac_v0.sign(body, int(time.time()), SECRET, endpoint.PREFIX)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (b'{"key": "zq7-key-marker", "document": "alert ZQ7-document-marker-41c9 from the checkout"}', 1795153433, 'wwwwwwwwwwwwwwwwwwww55555555555555555555', 'X-Hadavin')
+kwargs = {}
+
+    def sign(*args, **kwargs):
+        headers = real(*args, **kwargs)
+>       made.append(headers[endpoint.SIGNATURE_HEADER])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'X-Hadavin-Signature'
+
+tests/triggers/test_t5_wsgiref.py:257: KeyError
+=========================== short test summary info ============================
+FAILED tests/triggers/test_t5_wsgiref.py::test_signed_request_over_the_socket_is_acked_with_run_id_and_state_only
+FAILED tests/triggers/test_t5_wsgiref.py::test_fewer_bytes_than_content_length_then_half_close_is_400_empty
+FAILED tests/triggers/test_t5_wsgiref.py::test_fewer_bytes_than_content_length_then_stall_is_400_empty_at_the_timeout
+FAILED tests/triggers/test_t5_wsgiref.py::test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_headers_then_stall]
+FAILED tests/triggers/test_t5_wsgiref.py::test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_silent_client]
+FAILED tests/triggers/test_t5_wsgiref.py::test_garbage_instead_of_a_request_line_is_400_empty
+FAILED tests/triggers/test_t5_wsgiref.py::test_request_line_over_64_kb_is_414_empty
+FAILED tests/triggers/test_t5_wsgiref.py::test_no_content_length_is_400_empty
+FAILED tests/triggers/test_t5_wsgiref.py::test_client_gone_before_the_answer_leaves_the_server_quiet_and_serving
+FAILED tests/triggers/test_t5_wsgiref.py::test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only
+10 failed in 0.94s
