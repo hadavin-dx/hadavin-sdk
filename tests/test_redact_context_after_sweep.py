@@ -59,7 +59,8 @@ def test_the_same_shape_through_runmap_redact_text_is_masked_in_one_pass():
     out = runmap.redact_text(DIRECT, mapping)
     assert out == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
     assert dict(mapping) == {"<BANKCODE_1>": BSB, "<BANKACCT_1>": ACCOUNT}
-    assert runmap.is_masked(out, mapping) is True
+    held = dict(mapping)
+    assert runmap.redact_text(out, mapping) == out and dict(mapping) == held  # a fixed point
 
 
 def test_mirror_the_account_after_a_keyword_whose_only_bank_context_is_a_swept_code():
@@ -140,11 +141,10 @@ def test_a_second_redact_pass_changes_nothing(name):
 
 
 @pytest.mark.parametrize("name", sorted(SHAPES))
-def test_a_second_redact_text_pass_changes_nothing_and_is_masked_agrees(name):
+def test_a_second_redact_text_pass_changes_nothing(name):
     mapping = runmap.RunMap()
     once = runmap.redact_text(SHAPES[name], mapping)
     held = dict(mapping)
-    assert runmap.is_masked(once, mapping) is True
     assert runmap.redact_text(once, mapping) == once
     assert dict(mapping) == held
 
@@ -226,7 +226,6 @@ def test_e5_through_redact_text_one_pass_is_a_fixed_point(name):
     once = runmap.redact_text(text, mapping)
     assert once == expected
     held = dict(mapping)
-    assert runmap.is_masked(once, mapping) is True
     assert runmap.redact_text(once, mapping) == once and dict(mapping) == held
 
 

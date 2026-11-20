@@ -64,8 +64,8 @@ def test_the_error_path_output_reads_as_masked_with_the_hook_it_was_redacted_wit
     rmap = _run_map_after_a_document()
     exc = ValueError(f"login failed password={PW} host {IP}")
     out = tools.prepare_output(tools.ERROR_PREFIX + tools.error_reason(exc), rmap, 4096)
-    assert runmap.is_masked(out, rmap, runmap.neutralise_untrusted) is True
-    assert runmap.redact_untrusted(out, rmap) == out
+    held = dict(rmap)
+    assert runmap.redact_untrusted(out, rmap) == out and dict(rmap) == held
 
 
 def test_a_tool_that_echoes_a_secret_placeholder_from_its_arguments():
