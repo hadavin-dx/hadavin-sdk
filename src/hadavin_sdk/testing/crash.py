@@ -9,23 +9,43 @@ a child process: the parent arms a flag file, the child reads it. One arm gives 
 point is disarmed (or its flag file deleted) before the crash, and if that fails nothing happens.
 
 Flag file: one line of text, `<point>` or `<point>#<nth>`. A missing, unreadable or malformed file
-means "not armed".
+means "not armed". `arm` writes it through a temp file in the same folder and `os.replace`, so a
+reader never sees half a flag. A child counts the matching calls per flag text: when the text it
+reads changes (another process armed again), the count starts again.
 
 What a test must know, or the helper misleads it:
 
-- Exit code 137 is also what a real forced kill shows (128 + 9). A test of mode "exit" asserts the
-  marker line on the child's stdout AND the exit code; the code alone proves nothing. If the marker
-  cannot be written (a closed stdout), the process still exits with the code, with no marker.
+- The gate is a speed bump, not a security control. It is the environment variable
+  PYTEST_CURRENT_TEST: a `CrashPoints` refuses to be built outside a test, also at import or
+  collection time (pytest sets the variable only while a test runs). A child process inherits the
+  variable; a child started with another environment cannot build one.
+- Exit code 137 is also what a shell reports for a real forced kill (128 + 9). A test of mode
+  "exit" asserts the marker line on the child's stdout AND the exit code; the code alone proves
+  nothing. The marker is written straight to file descriptor 1, so text still buffered in
+  `sys.stdout` is lost, as in a real crash. If the marker cannot be written (a closed stdout), the
+  process still exits with the code, with no marker.
 - A flag file left on disk kills the next child that uses the same path. Arm inside a `with` block
-  (it deletes a flag that never fired), or delete the flag in a `finally`.
-- Mode "raise" behind the real trigger server does not simulate a crash: the server's own error
-  handling catches what the application raises and answers 503. Use mode "exit" in a child there.
-- The gate is an environment variable that a child process inherits from pytest; a child started
-  with another environment cannot build a `CrashPoints`.
+  (it deletes a flag that never fired and raises if the file stays), or delete the flag in a
+  `finally`.
+- The proxy from `wrap` is not transparent: no setattr through it, no `isinstance`, no dunder
+  methods (wrap refuses those names). Coroutine, async generator and generator methods are refused
+  too: their body runs after the call returns, so `:after` would be wrong.
+- Mode "raise" behind a worker pool: the crash is stored in the Future and the process lives on.
+  Behind the real trigger server it becomes a 503, not a crash. Use mode "exit" in a child there.
+- A swallowed crash can let a test pass. With the default, assert `cp.fired` yourself. Opt in with
+  `CrashPoints(require_claim=True)`: then `cp.expect_fired(point)` claims a point that fired, and
+  leaving the `with` block raises if a point fired and was never claimed. In mode "exit" the child
+  fires, not the parent: the parent asks `cp.flag_taken()`.
+- A real crash tidies nothing up, but in mode "raise" `finally` blocks run and may still use the
+  wrapped object. `CrashPoints(latch=True)` makes every later call through any proxy of that
+  object raise `SimulatedCrash` before it touches the target. A reference to the unwrapped object
+  escapes the latch. The default is off: tests that go on using the proxy after a crash keep
+  working.
 """
 
 from __future__ import annotations
 
+import inspect
 import os
 import re
 import threading
@@ -76,7 +96,14 @@ class CrashPoints:
     """The set of crash points of one test. Use it in a `with` block: a point still armed at the
     end is an error."""
 
-    def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        mode: Mode = "raise",
+        flag_path: Path | None = None,
+        latch: bool = False,
+        require_claim: bool = False,
+    ) -> None:
         if _GATE not in os.environ:
             raise RuntimeError(
                 "CrashPoints is a test tool: it can only be built inside a pytest run"
@@ -87,12 +114,20 @@ class CrashPoints:
             raise ValueError('mode "exit" needs a flag_path')
         if mode == "raise" and flag_path is not None:
             raise ValueError('mode "raise" takes no flag_path')
+        if latch and mode != "raise":
+            raise ValueError('latch is for mode "raise"')
         self._mode: Mode = mode
         self._flag = flag_path
         self._lock = threading.Lock()
         self._memory: tuple[str, int] | None = None
         self._seen: dict[str, int] = {}
         self._fired: list[str] = []
+        self._latch = bool(latch)
+        self._latched: str | None = None  # set once a raise-mode crash fired and latch is on
+        self._require_claim = bool(require_claim)
+        self._claimed: set[str] = set()
+        self._text: str | None = None  # the flag text the per-process count belongs to
+        self._was_armed = False
 
     def __enter__(self) -> Self:
         return self
@@ -102,8 +137,17 @@ class CrashPoints:
             left = self._current()
             if left is not None:
                 self._take()
-        if left is not None and exc_type is None:
+            stuck = left is not None and self._flag is not None and self._flag.exists()
+        if exc_type is not None:
+            return
+        if left is not None:
             raise RuntimeError(f"crash point left armed, it never fired: {left[0]}")
+        if stuck:
+            raise RuntimeError(f"the flag file could not be deleted: {self._flag}")
+        if self._require_claim:
+            loose = [p for p in dict.fromkeys(self._fired) if p not in self._claimed]
+            if loose:
+                raise RuntimeError(f"crash point fired and was never claimed: {', '.join(loose)}")
 
     @property
     def fired(self) -> tuple[str, ...]:
@@ -177,6 +221,8 @@ class CrashPoints:
         before, after = f"{name}.{method}:before", f"{name}.{method}:after"
 
         def call(*args: Any, **kwargs: Any) -> Any:
+            if self._latched is not None:
+                raise SimulatedCrash(self._latched)
             self.hit(before)
             result = getattr(target, method)(*args, **kwargs)
             self.hit(after)

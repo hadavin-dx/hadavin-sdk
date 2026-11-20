@@ -37,6 +37,7 @@ import random
 import re
 import threading
 import time
+import warnings
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -108,19 +109,7 @@ REPORT: list[str] = []
 def say(text: str) -> None:
     """One line for the terminal report (a test's own print is captured, this is not)."""
     REPORT.append(text)
-    reporter = _REPORTER.get("tr")
-    if reporter is not None:
-        reporter.write_line(text)
-
-
-_REPORTER: dict[str, object] = {}
-
-
-@pytest.fixture(autouse=True)
-def _terminal(request):
-    _REPORTER["tr"] = request.config.pluginmanager.get_plugin("terminalreporter")
-    yield
-    _REPORTER.pop("tr", None)
+    warnings.warn(text, UserWarning, stacklevel=2)  # shown in the warnings summary of the run
 
 
 # ---- doubles ------------------------------------------------------------------------------------
