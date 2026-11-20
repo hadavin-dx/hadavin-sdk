@@ -7,6 +7,16 @@
 - `triggers.conflict_events_per_minute` (strict whole number, 1 to 1000, default 10): the cap on `trigger.conflict` audit events per sender per minute. Optional, outside `config_hash`.
 
 ### Upgrade steps
+- **Breaking: the runtime login loses INSERT and UPDATE on the money tables (F-money-definer step 4, `migrate`).**
+  - **What changed.** After `migrate` the runtime login holds only SELECT on `spend` and `spend_month` (`spend_totals`
+    reads them) and no right at all on `spend_reservations`; the purge login holds no right on it either (the purge is
+    the function `hadavin_purge_spend_reservations`, EXECUTE only). Reserve, settle, expire and add-spend run as
+    SECURITY DEFINER functions (0011) the runtime may EXECUTE. A hand GRANT of any write right on these tables is
+    repaired by the next `migrate`, and a role that inherits one is refused.
+  - **Upgrade: stop, migrate, start.** Stop the tick scheduler and every runtime process first (old code writes
+    these tables directly and would be refused); run `migrate` naming ALL roles; start; run one smoke `tick`. Anything
+    of yours that read `spend_reservations` or wrote a money table as the runtime login must use the store methods or
+    an admin login.
 - **Every Postgres deployment now needs a reset login, and every run is refused until the caps are synced (F-money-definer step 6, migration 0011).**
   - Deploy order: stop the tick and every runtime-side process; `migrate` naming ALL roles including `--reset-role`;
     set `backends.store.reset_credential_ref`; `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke tick.

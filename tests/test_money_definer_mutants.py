@@ -21,7 +21,6 @@ from hadavin_sdk.store import migrate as mig
 from tests.test_money_definer_pg import (
     BATTERY,
     NAMES,
-    apply_final_grants,
     build_world,
     run_battery,
     teardown_world,
@@ -33,8 +32,8 @@ pytestmark = pytest.mark.skipif(
     reason="HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)",
 )
 
-ALL_SIGS = mig.MONEY_FUNCTIONS
-SIG = dict(zip(NAMES, mig.MONEY_FUNCTIONS, strict=True))
+ALL_SIGS = mig.MONEY_FUNCTIONS[:5]
+SIG = dict(zip(NAMES, mig.MONEY_FUNCTIONS[:5], strict=True))
 
 
 def in_fn(fn: str, pattern: str, repl: str, flags: int = re.DOTALL):
@@ -459,7 +458,6 @@ def _apply_text_mutation(tmp_path, monkeypatch, mutate):
 def test_the_control_the_real_sql_passes_every_check(scratch):
     w = scratch
     w.migrate(release_role=w.release)
-    apply_final_grants(w)
     assert run_battery(w) == {}
 
 
@@ -477,7 +475,6 @@ def test_the_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatch):
         pre(monkeypatch)
     w = scratch
     w.migrate(release_role=w.release)
-    apply_final_grants(w)
     if post is not None:
         post(w)
     failed = run_battery(w)

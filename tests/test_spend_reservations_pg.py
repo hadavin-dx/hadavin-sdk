@@ -419,10 +419,14 @@ def test_settle_racing_the_expire_step_never_lowers_a_booking(w, actual):
     """Many rounds, either may win. If the expiry won, the worst case stays (a lower settle changes no counter); if
     the settle won, the row was open and the actual amount is booked. Never anything else."""
     a, b = w.store(w.runtime), w.store(w.runtime)
-    run_id = _new_run(a)
+    runs = []
     orders = set()
     for n in range(40):
         agent = f"race-{n}"
+        run = Run(agent_id=agent, principal_id="p", trigger_kind="event", trigger_ref="t")
+        a.create_run(run)  # the run belongs to the hold's agent: the settle adds the cost only then
+        runs.append(run.run_id)
+        run_id = run.run_id
         rid = _reserve(a, "1.00", agent=agent, run_id=run_id)
         settled, expired = _together(
             [lambda r=rid: a.settle_spend(r, D(actual)), lambda: b.expire_spend_reservations(0)]
@@ -435,7 +439,9 @@ def test_settle_racing_the_expire_step_never_lowers_a_booking(w, actual):
         assert (row.status, row.settled_usd) == ("settled", booked), f"round {n} expired={expired}"
         assert _table(w)[rid] == ("settled", D("1.00"), booked)
         assert _counters(w, agent) == (booked, booked), f"round {n} expired={expired}"
-    assert a.get_run(run_id).cost_usd == 40 * D(actual)  # the run always gets the real amount, once
+    assert sum(a.get_run(r).cost_usd for r in runs) == 40 * D(
+        actual
+    )  # each run gets the real amount, once
     assert orders <= {0, 1}
 
 
@@ -510,10 +516,10 @@ def _column_rights(w, role):
 @pg
 def test_the_four_roles_hold_exactly_the_rights_of_the_ticket_on_the_table(w):
     assert GRANTS[TABLE].kind == "table"
-    assert w.rights(w.runtime)[TABLE] == {"SELECT", "INSERT", "UPDATE"}
-    assert w.rights(w.purge)[TABLE] == {"DELETE"}
-    assert _column_rights(w, w.purge) == {("status", "SELECT"), ("closed_at", "SELECT")}
-    for role in (w.portal, w.reset):
+    # F-money-definer step 4: no login holds any right on the table (every booking is a definer function)
+    assert w.rights(w.runtime)["spend"] == {"SELECT"}
+    assert w.rights(w.runtime)["spend_month"] == {"SELECT"}
+    for role in (w.runtime, w.purge, w.portal, w.reset):
         assert TABLE not in w.rights(role), role
         assert _column_rights(w, role) == set(), role
     for role in (w.purge, w.portal, w.reset):
@@ -582,15 +588,9 @@ def test_the_purge_login_can_run_the_purge_delete_and_removes_settled_rows_only(
     rt.settle_spend(closed, D("0.40"))
     _age(w, expired, 4000)
     assert rt.expire_spend_reservations(3600) == 1
-    with w.as_(w.purge) as db:  # the statement itself, as the purge login
-        assert db.execute(
-            "SELECT status FROM spend_reservations WHERE closed_at IS NULL"
-        ).fetchall()
-        gone = db.execute(
-            "DELETE FROM spend_reservations WHERE status = 'settled' AND closed_at < %s",
-            (now() - timedelta(days=1),),
-        ).rowcount
-        assert gone == 0  # closed a moment ago: kept
+    # the purge login holds no table right: the direct statements are refused, the function is the only way
+    _denied(w, w.purge, "SELECT status FROM spend_reservations WHERE closed_at IS NULL", TABLE)
+    _denied(w, w.purge, "DELETE FROM spend_reservations WHERE status = 'settled'", TABLE)
     purge = w.store(w.purge)
     assert (
         purge.purge_spend_reservations(now() + timedelta(days=1)) == 1
@@ -669,9 +669,9 @@ def test_the_portal_and_the_reset_login_cannot_use_any_of_the_four_methods(w, wh
 def test_a_hand_grant_of_delete_to_the_runtime_role_is_removed_by_migrate(w):
     w.grant("GRANT DELETE ON spend_reservations TO {}", w.runtime)
     w.grant("GRANT TRUNCATE ON spend_reservations TO {}", w.runtime)
-    assert {"DELETE", "TRUNCATE"} <= w.rights(w.runtime)[TABLE]
+    assert {"DELETE", "TRUNCATE"} <= w.rights(w.runtime)[TABLE]  # hand-granted
     assert w.migrate() == []  # nothing to apply and no problem reported
-    assert w.rights(w.runtime)[TABLE] == {"SELECT", "INSERT", "UPDATE"}
+    assert TABLE not in w.rights(w.runtime)
     _denied(w, w.runtime, "DELETE FROM spend_reservations", TABLE)
 
 
@@ -679,7 +679,7 @@ def test_a_hand_grant_of_delete_to_the_runtime_role_is_removed_by_migrate(w):
 def test_a_hand_grant_to_the_purge_role_is_removed_by_migrate(w):
     w.grant("GRANT SELECT, UPDATE ON spend_reservations TO {}", w.purge)
     assert w.migrate() == []
-    assert w.rights(w.purge)[TABLE] == {"DELETE"}
+    assert TABLE not in w.rights(w.purge)
     _denied(w, w.purge, "SELECT reserved_usd FROM spend_reservations", TABLE)
 
 
@@ -719,7 +719,7 @@ def test_the_table_checks_refuse_what_the_store_never_writes(w):
         (D(1), D("0.5"), "expired", at),
         (D(1), D(1), "released", at),
     ]
-    with w.as_(w.runtime) as db:
+    with w.admin() as db:  # the owner: the runtime login holds no INSERT any more
         for n, row in enumerate(bad):
             with pytest.raises(errors.CheckViolation):
                 db.execute(insert, (f"bad-{n}", *row))
