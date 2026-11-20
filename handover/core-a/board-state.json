@@ -746,7 +746,47 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [],
+ "agents": [
+  {
+   "id": "wipc-fixes",
+   "role": "builder in worktree /home/user/wt/for-c, branch wip/core-a-for-c",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c Majors: tools.py error_reason sanitise (+test+mutant) and test_k5_producers exemption (+test)",
+   "started UTC": "13:09",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:09: build for other lanes on wip/core-a-for-<x>"
+  },
+  {
+   "id": "wipci-matrix",
+   "role": "builder in worktree /home/user/wt/for-ci, branch wip/core-a-for-ci",
+   "model": "sonnet",
+   "what exactly it is doing": "CI python matrix 3.12/3.13 in ci.yml + test that pyproject floor == CI floor",
+   "started UTC": "13:09",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:09: build for other lanes on wip/core-a-for-<x>"
+  },
+  {
+   "id": "list-cfree",
+   "role": "fresh read-only reader (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "list core-c open items not held by G4/G9/M3/E14, recommend 3",
+   "started UTC": "13:09",
+   "expected end": "10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:09: build for other lanes on wip/core-a-for-<x>"
+  }
+ ],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1117,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:09 Lead order 13:09 taken: wipc-fixes (the 2 core-c Majors, branch wip/core-a-for-c), wipci-matrix (CI matrix, branch wip/core-a-for-ci), list-cfree (free core-c queue items). Request line to core-c written (handover/core-c/requests/from-core-a.md, new file: copy to cloud/core-c). I do NOT touch tests/endpoint_mutants.py or its two anchor/docstring edits. Pushes only to wip/core-a-for-*. A fresh review of each branch follows.",
   "13:07 driftfix21 DONE: DRIFT-REPORT-2 doc-fixable items fixed (the HIGH, status table incl. 431/header cap, memory store demo-only, 414/431 are our caps, 503 row, N4 wording, CRASH-MATRIX cites). LEFT: R2-10..14,17 stale line cites (replaced by 'cite by name' warning), R2-26/27 need the endpoint_mutants.py docstring (owner-gated file edit: same permission wall as G33d), xfail line text in test_mutants_anchors.py says 1255 but mutant is at 1236, R2-28 waits for core-b REQ-002. I hold no agents. Waiting for your run 6.",
   "13:02 EGM DRIFT REPORT on my area DONE: handover/core-a/DRIFT-REPORT-2.md: 1 HIGH, 12 MEDIUM, 15 LOW (HIGH: ticket says a store-down start has no in-process retry, code self-recovers). Verified closed: report-1 D1,D2,D7,E2,E3,N1-N7. R2-25: tests/endpoint_mutants.py exits 2 on the stale G33d anchor (known, owner decision). docfix20 done (overclaims fixed). driftfix21 running (doc-fixable drift items). Pass DRIFT-REPORT-2.md into the integration.",
   "13:07 xreview core-b (all commits since 785871401) DONE: reviews/xreview-bfix2.md + NEW FILE handover/core-b/requests/xr-bfix2.md (copy into cloud/core-b). No Blocker; 4 NEW Majors: (1) chain.py:480 outbox read raises on out-of-range ts and ONE planted audit_outbox row wedges the drain, (2) 'tamper evidence' guarantee in README/SECURITY has unenforced conditions (runtime owning tables, DELETE on audit_outbox, INSERT on audit_checkpoints), (3) AuditEvent field limits crash the run loop (agent_loop.py:521 provider-supplied stop_reason), (4) Anthropic narrowing is a denylist. Earlier M3 fixed; M1/M2/M4/M5/M6 still open.",
