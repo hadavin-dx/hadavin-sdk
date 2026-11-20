@@ -67,8 +67,15 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   it): `hunter2-<SECRET_2>`, and (2) a SECRET value found in a decoded form of the chunk (`runmap.held_in_views`: without
   NUL, NFKC, invisible characters removed, JSON/percent/entity/backslash escapes undone, composed). G13b: a piece that is
   only the public start of a value (`https://` of a webhook URL, `Bearer `) or only separator characters is not read,
-  so `https://<HOSTNAME_1>/health` is sent beside a webhook value (a secret whose own first characters are ordinary
-  words still refuses text that starts so beside a key: a stated limit). A text over `runmap.VIEW_WINDOW` is read in
+  so `https://<HOSTNAME_1>/health` is sent beside a webhook value (the public auth words `Bearer`, `Basic`, `Token`,
+  `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`, `AWS4-HMAC-SHA256`, `Bot`, `Key` count in any letter case; G13c: a
+  piece that starts or ends a value made only of separators IS read). Stated limit (G13c-6): a secret whose own
+  first characters are ordinary words (`the quick brown fox`) refuses text that starts so beside a key (`the <HOST_1>`:
+  the net cannot tell a copy of those words from a leak), with the same `held_value_left` code as a leak, and the
+  refusal is PERMANENT for the run: the message stays in the history, so every later call that carries it is refused
+  too; a planted value of that kind can do it on purpose. One key reads at most 4,096 head hits
+  (`runmap._KEY_HITS_MAX`): past it the call is refused as `mask_budget_exceeded` (a dense run of one head beside a
+  key, fail closed; also permanent while the text stays in the history). A text over `runmap.VIEW_WINDOW` is read in
   windows; a value of more than 1,636 characters gets an overlap of `runmap.WINDOW_OVERLAP_MAX` only (its raw copy is
   found on the whole text). NOT read: a piece from the middle of a value between two keys, a piece one character
   away from a key, a piece shorter than 4, another letter case, an ANSI-split copy, a base64-encoded copy (the

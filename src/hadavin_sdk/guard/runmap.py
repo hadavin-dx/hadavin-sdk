@@ -1347,33 +1347,58 @@ NET_MIN_PIECE = 4
 # G13b (design M-1): a piece that is only the public start of a value (its URL scheme `https://`, `postgres://`, or an
 # auth word `Bearer `) or only separator characters is no leak: `https://<HOSTNAME_1>/health` is ordinary text beside a
 # WEBHOOK value that starts `https://hooks...`. A piece that goes one character past that start (the scheme plus one letter) still is.
-_LEAD = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.\-]{0,14}://|(?:Bearer|Basic|Token|Digest)[ \t]+)")
+_LEAD = re.compile(
+    r"(?:[A-Za-z][A-Za-z0-9+.\-]{0,14}://"
+    r"|(?i:Bearer|Basic|Token|Digest|OAuth|ApiKey|Negotiate|NTLM|AWS4-HMAC-SHA256|Bot|Key)[ \t]+)"
+)
 _SEPARATORS = " \t\r\n/\\:;,.?&=#@!-_+*~|<>()[]{}'\"%"
 _LOOKUP_COST = 64  # characters one piece lookup charges to the call budget (a compare stops at the first difference)
-PieceIndex = tuple[list[str], dict[int, list[str]], list[str], frozenset[str], frozenset[str], int]
+_KEY_HITS_MAX = 4096  # G13c: the most head hits the net reads around one key (both sides); past it InputTooLarge
+PieceIndex = tuple[
+    list[str],
+    dict[int, list[str]],
+    list[str],
+    list[str],
+    list[str],
+    frozenset[str],
+    frozenset[str],
+    int,
+]
 
 
 def _piece_index(values: frozenset[str]) -> PieceIndex:
     """G13: the secret values longer than `NET_MIN_PIECE` that have no public start, sorted; those that have one (G13b:
     `_LEAD`; only starts of `NET_MIN_PIECE` or more matter), sorted, by the length of that start; the reversals of all of
-    them, sorted; the first and the last `NET_MIN_PIECE` characters of each; the longest length of any value (kept here so
-    a chunk does not scan the values). `_touching_piece` looks a piece up by bisection."""
+    them, sorted; G13c: the values made only of separator characters (a piece of those is read even where it is only
+    separators), forward and reversed, sorted, which are not in the lists before; the first and the last
+    `NET_MIN_PIECE` characters of each; the longest length of any value (kept here so a chunk does not scan the
+    values). `_touching_piece` looks a piece up by bisection."""
     fwd = [v for v in values if len(v) > NET_MIN_PIECE]
     plain: list[str] = []
     leaded: dict[int, list[str]] = {}
+    seps: list[str] = []
     for v in fwd:
         lead = _LEAD.match(v)
-        if lead and lead.end() >= NET_MIN_PIECE:
+        if not v.strip(_SEPARATORS):
+            seps.append(v)
+        elif lead and lead.end() >= NET_MIN_PIECE:
             leaded.setdefault(lead.end(), []).append(v)
         else:
             plain.append(v)
     plain.sort()
     for group in leaded.values():
         group.sort()
-    rev = sorted(v[::-1] for v in fwd)
+    seps.sort()
+    rev = sorted(v[::-1] for v in fwd if v.strip(_SEPARATORS))
+    seps_rev = sorted(v[::-1] for v in seps)
     heads = frozenset(v[:NET_MIN_PIECE] for v in fwd)
     tails = frozenset(v[-NET_MIN_PIECE:] for v in fwd)
-    return plain, leaded, rev, heads, tails, max(map(len, values), default=0)
+    return plain, leaded, rev, seps, seps_rev, heads, tails, max(map(len, values), default=0)
+
+
+def _digest(piece: str) -> bytes:
+    """G13c: a 16-byte digest of a long piece (what `_touching_piece` remembers instead of the piece)."""
+    return hashlib.blake2b(piece.encode("utf-8", "surrogatepass"), digest_size=16).digest()
 
 
 def _starts_one(ordered: list[str], piece: str) -> bool:
@@ -1389,50 +1414,84 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
     one was masked across the other, whatever the placeholder holds. Not a piece (G13b, design M-1): characters that
     are only separators, and the public start of a value (`https://`, `Bearer `; `_LEAD`) taken alone: ordinary text
     beside a placeholder (`https://<HOSTNAME_1>/health`) is not refused because a webhook value starts the same way;
-    a scheme plus one more character is a piece. Stated limit: a secret whose own first characters are ordinary words refuses text that
-    starts the same way beside a key (the net cannot tell a copy of those words from a leak). Only the text between
-    the key and the next (or previous) key is read, at most the longest value's length minus one. A piece is looked
-    up only where its first (left) or last (right) `NET_MIN_PIECE` characters are those of a value; a piece already
-    looked up in this text is not looked up, nor charged, again; each lookup spends at most `_LOOKUP_COST` characters
-    of the call's budget (`InputTooLarge` past it) and the deadline is read every 1,024 lookups."""
-    plain, leaded, rev, heads, tails, longest = snap.pieces
+    a scheme plus one more character is a piece. G13c (m2): the separator rule exempts a piece only because of the
+    value it is a piece OF: a piece that starts (ends) a value made ONLY of separators (`!!!!!!!!`, `....----`) is a
+    piece however short, and a piece of separators that starts a value with other characters (`-----BEGIN`) is not. G13c (m1): the public auth words of `_LEAD` are read in any letter case
+    (`bearer `, `BEARER `) and are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`,
+    `AWS4-HMAC-SHA256`, `Bot`, `Key`; any other word before a secret (a custom scheme) is not exempt. Stated limit:
+    a secret whose own first characters are ordinary words (`the quick brown fox`) refuses text that starts the same way
+    beside a key (`the <HOST_1>`; the net cannot tell a copy of those words from a leak), and that refusal stays for
+    the run (the message stays in the history); it is the same `held_value_left` code as a leak (pinned, G13c-7). Only
+    the text between the key and the next (or previous) key is read, at most the longest value's length minus one.
+    Cost (G13c): a position is tested by its first (left) or last (right) `NET_MIN_PIECE` characters (a slice of
+    that size) BEFORE the piece is cut, so a gap with no head hit copies nothing and a hit copies one piece (the
+    earlier code cut a piece of up to the longest value's length at every position: quadratic in the gap, unbudgeted).
+    A piece is looked up only where those characters are those of a value; a piece already looked up in this text is
+    not looked up, nor charged, again; `seen` keeps the piece itself when it is at most `_LOOKUP_COST` characters and
+    else a 16-byte digest, so its memory does not grow with the length of the pieces (it held every piece whole: about
+    370 MB at a 16,000-character value on a hostile gap); each lookup spends at most `_LOOKUP_COST` characters of the
+    call's budget (`InputTooLarge` past it) and the deadline is read every 256 hits. At most `_KEY_HITS_MAX` head hits
+    are read around one key (both sides together, repeated pieces included): past it `InputTooLarge`, which the
+    gate reports as `mask_budget_exceeded` (fail closed: a hostile run of one head repeated, one hit a character,
+    would otherwise cost the whole call's budget; the 1,978-input property corpus never gets near it)."""
+    plain, leaded, rev, seps, seps_rev, heads, tails, longest = snap.pieces
     if not heads:
         return False
     budget, k = snap.budget, NET_MIN_PIECE
     tokens = [m.span() for m in _PLACEHOLDER.finditer(text) if m.group() in snap]
-    seen: set[tuple[bool, str]] = set()  # the pieces looked up in this text that were not a leak
+    seen: set[tuple[bool, str | bytes]] = (
+        set()
+    )  # the pieces looked up in this text that were not a leak
+    hits = 0
     for n, (start, end) in enumerate(tokens):
         if not n % 256:
             budget.check()
         before = tokens[n - 1][1] if n else 0
         after = tokens[n + 1][0] if n + 1 < len(tokens) else len(text)
         left = text[max(before, start - longest + 1) : start]
+        key_hits = 0
         for i in range(len(left) - k, -1, -1):  # the piece left[i:] ends at the key
-            piece = left[i:]
-            if left[i : i + k] not in heads or (True, piece) in seen:
+            if left[i : i + k] not in heads:
                 continue
-            seen.add((True, piece))
-            budget.spend_chars(min(len(piece), _LOOKUP_COST))
-            if not len(seen) % 1024:
+            key_hits += 1
+            if key_hits > _KEY_HITS_MAX:
+                raise InputTooLarge("InputTooLarge")
+            hits += 1
+            if not hits % 256:
                 budget.check()
-            if piece.strip(_SEPARATORS) and (
+            piece = left[i:]
+            mark = (True, piece if len(piece) <= _LOOKUP_COST else _digest(piece))
+            if mark in seen:
+                continue
+            seen.add(mark)
+            budget.spend_chars(min(len(piece), _LOOKUP_COST))
+            if (
                 _starts_one(plain, piece)
                 or any(
                     len(piece) > lead and _starts_one(group, piece)
                     for lead, group in leaded.items()
                 )
+                if piece.strip(_SEPARATORS)
+                else _starts_one(seps, piece)
             ):
                 return True
         right = text[end : min(after, end + longest - 1)]
         for j in range(k, len(right) + 1):  # the piece right[:j] starts at the key
-            piece = right[:j]
-            if right[j - k : j] not in tails or (False, piece) in seen:
+            if right[j - k : j] not in tails:
                 continue
-            seen.add((False, piece))
-            budget.spend_chars(min(len(piece), _LOOKUP_COST))
-            if not len(seen) % 1024:
+            key_hits += 1
+            if key_hits > _KEY_HITS_MAX:
+                raise InputTooLarge("InputTooLarge")
+            hits += 1
+            if not hits % 256:
                 budget.check()
-            if piece.strip(_SEPARATORS) and _starts_one(rev, piece[::-1]):
+            piece = right[:j]
+            mark = (False, piece if len(piece) <= _LOOKUP_COST else _digest(piece))
+            if mark in seen:
+                continue
+            seen.add(mark)
+            budget.spend_chars(min(len(piece), _LOOKUP_COST))
+            if _starts_one(rev if piece.strip(_SEPARATORS) else seps_rev, piece[::-1]):
                 return True
     return False
 

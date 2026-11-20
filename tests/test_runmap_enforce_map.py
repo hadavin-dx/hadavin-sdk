@@ -8,6 +8,7 @@ import importlib
 import sys
 import threading
 from types import MappingProxyType, SimpleNamespace
+from typing import ClassVar
 
 import pytest
 
@@ -1055,3 +1056,135 @@ def test_g13b_6_the_deadline_is_read_before_the_views_of_a_window_are_built(monk
         assert not built, "G13b-6 the views were built before the deadline was read"
         return
     raise AssertionError("G13b-6 the spent deadline was not read")
+
+
+# --- G13c (design review round 2: M-A, M-B, per-key cap, m1, m2) -----------------------------------------------------------
+class _CountingText(str):
+    """A text that records the length of every slice cut from it (and from what it cuts)."""
+
+    cuts: ClassVar[list[int]] = []
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            _CountingText.cuts.append(len(range(*index.indices(len(self)))))
+            return _CountingText(super().__getitem__(index))
+        return super().__getitem__(index)
+
+
+def _g13c_snap(values, host="d1"):
+    entries = {f"<SECRET_{n}>": v for n, v in enumerate(values, 1)}
+    return runmap.snapshot(runmap.RunMap({**entries, "<HOST_1>": host}))
+
+
+def test_g13c_1_a_gap_with_no_head_hit_cuts_no_piece():
+    """G13c-1 (M-B): the net tests the first (last) 4 characters of a position before it cuts the piece; a gap that has
+    no head hit cut a piece of up to the longest value's length at every position before (O(gap^2), not budgeted)."""
+    snap = _g13c_snap(["hunt" + "A" * 60_000])
+    text = _CountingText((("x" * 20_000) + "<HOST_1>" + ("y" * 20_000)) * 4)
+    _CountingText.cuts = []
+    assert not runmap._touching_piece(text, snap)
+    long_cuts = [n for n in _CountingText.cuts if n > runmap.NET_MIN_PIECE]
+    assert len(long_cuts) <= 2 * 4 + 4, (
+        f"G13c-1 pieces were cut at positions with no head hit: {len(long_cuts)}"
+    )
+    assert not snap.budget.chars < runmap.ENFORCE_MAX_TOTAL_CHARS, "G13c-1 a lookup was charged"
+
+
+def test_g13c_2_the_seen_set_does_not_hold_long_pieces_whole():
+    """G13c-2 (M-A): the pieces already looked up are remembered by a digest when longer than a lookup's cost; held whole,
+    a 16,000-character value and distinct tails before each key held about 370 MB (7 MB now)."""
+    import tracemalloc
+
+    snap = _g13c_snap(["aaaa" + "c" * 16_380])
+    text = "".join("aaaab" * 2_000 + f"{n:05d}<HOST_1>" for n in range(6))
+    tracemalloc.start()
+    try:
+        assert not runmap._touching_piece(text, snap)
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 40_000_000, f"G13c-2 the pieces looked up were kept whole: peak {peak:,} bytes"
+
+
+def test_g13c_3_one_key_reads_a_bounded_number_of_head_hits():
+    """G13c-3: at most `_KEY_HITS_MAX` (4,096) head hits are read around one key; the next one is InputTooLarge (the gate
+    reports `mask_budget_exceeded`): a dense run of one head (a hit a character) cannot spend the whole call's budget."""
+    cap = runmap._KEY_HITS_MAX
+    assert cap == 4096, "G13c-3 the cap moved"
+    left = _g13c_snap(
+        ["aaaa" + "c" * 5_000]
+    )  # `a`*n + `b`: n - 3 hits, none of them a start of the value
+    assert not runmap._touching_piece("a" * (cap + 3) + "b<HOST_1>", left)  # cap hits: read
+    with pytest.raises(runmap.InputTooLarge):
+        runmap._touching_piece("a" * (cap + 4) + "b<HOST_1>", left)
+    right = _g13c_snap(["c" * 5_000 + "aaaa"])
+    assert not runmap._touching_piece("<HOST_1>b" + "a" * (cap + 3), right)
+    with pytest.raises(runmap.InputTooLarge):
+        runmap._touching_piece("<HOST_1>b" + "a" * (cap + 4), right)
+    # the count is per key: many keys, each under the cap, are not refused
+    assert not runmap._touching_piece(("a" * 2_000 + "b<HOST_1>") * 8, left)
+
+
+def test_g13c_4_a_piece_of_a_value_of_only_separators_is_a_piece():
+    """G13c-4 (m2): beside a key, 4 or more characters that start (end) `!!!!!!!!` or `....----` are a piece (refused);
+    separators that start a value with other characters (`-----BEGIN KEY-----`) are still not."""
+    snap = _g13c_snap(["!!!!!!!!", "....----", "-----BEGIN KEY-----"])
+    for text in (
+        "!!!!!<HOST_1>",
+        "<HOST_1>!!!!!",
+        "x....---<HOST_1>",
+        "<HOST_1>----",
+        "!!!!!!!<HOST_1>",
+    ):
+        assert runmap._touching_piece(text, snap), (
+            f"G13c-4 a piece of a separator value was sent: {text}"
+        )
+    for text in ("-----<HOST_1>", "<HOST_1>/////", "a /////<HOST_1>"):
+        assert not runmap._touching_piece(text, snap), (
+            f"G13c-4 separators of an ordinary value were read: {text}"
+        )
+    # held_value_left sees the whole value as before (the sweep)
+    assert runmap.held_value_left("!!!!!!!!<HOST_1>", snap)
+
+
+G13C_LEADS = (
+    "Bearer ", "Basic ", "Token ", "Digest ", "bearer ", "BEARER ", "OAuth ", "ApiKey ", "Negotiate ",
+    "NTLM ", "AWS4-HMAC-SHA256 ", "Bot ", "Key ", "Bearer  ",
+)  # fmt: skip
+
+
+def test_g13c_5_the_public_auth_words_are_exempt_in_any_case_and_one_secret_character_is_not():
+    """G13c-5 (m1): beside a key the auth word of a value is sent (two lead lengths, a lowercase and an upper-case spelling,
+    a value that IS the lead), the word plus one character of the secret is refused."""
+    values = [lead + f"s3cr3t{n}Zq9x" for n, lead in enumerate(G13C_LEADS)]
+    snap = _g13c_snap(values)
+    for lead in G13C_LEADS:
+        assert not runmap._touching_piece(f"a {lead}<HOST_1>", snap), (
+            f"G13c-5 a public lead was a piece: {lead!r}"
+        )
+        assert runmap._touching_piece(f"a {lead}s<HOST_1>", snap), (
+            f"G13c-5 lead plus a character was sent: {lead!r}"
+        )
+    bare = _g13c_snap(
+        ["Bearer ", "Basic "]
+    )  # a value that is exactly its lead: no secret in the lead
+    assert not runmap._touching_piece("a Bearer <HOST_1> Basic <HOST_1>", bare), (
+        "G13c-5 a value that is the lead was refused"
+    )
+
+
+def test_g13c_6_a_value_that_starts_with_ordinary_words_refuses_text_that_starts_so_a_stated_limit():
+    """G13c-6: STATED LIMIT, current behaviour: the value `the quick brown fox` makes `the <HOST_1>` a piece (4 characters
+    that start it): refused (`held_value_left`) for the run. The lead decided not to build a letter-only rule."""
+    snap = _g13c_snap(["the quick brown fox"])
+    assert runmap.held_value_left("the <HOST_1>", snap), (
+        "G13c-6 the stated limit changed (now sent?)"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True, reason="stated limit (G13c-6): ordinary words that start a secret refuse the text"
+)
+def test_g13c_6b_desired_ordinary_words_beside_a_key_are_sent():
+    snap = _g13c_snap(["the quick brown fox"])
+    assert not runmap.held_value_left("the <HOST_1>", snap)
