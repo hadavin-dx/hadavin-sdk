@@ -649,10 +649,10 @@
   {
    "item": "D-fix4",
    "what": "round 3 fixes: config error text, log time+level, --host '', start/stop log lines, stale text, ticket line numbers",
-   "state": "QUEUED after batch5 ends (batch5 reads the tree)",
-   "percent": 0,
+   "state": "RUNNING (also strict-mode collection bug and G13b)",
+   "percent": 5,
    "evidence file": "reviews/D-code-result-review-3.md",
-   "tries": 0,
+   "tries": 1,
    "reason": "batch5 running"
   }
  ],
@@ -1730,11 +1730,24 @@
    "what exactly it is doing": "ONE batch: lint, bandit, WHOLE suite with REQUIRE_PG=1 and -rfsx (failed ids + skip reasons), combined-tree start tests on core-b head, mutant script",
    "started UTC": "08:19",
    "expected end": "about 25 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "lead asked: whole suite, failing ids, skip reasons"
+   "reason": "BATCH5 (head 73d8d3db7, evidence only): checkout whole suite with REQUIRE_PG=1 stopped at COLLECTION (my strict switch raises ImportError in test_t5_main_start.py: nothing else ran) = my bug; combined tree core-b 05159ec19: 1110 passed, 74 failed (all test_n8n_template: the runner did not copy n8n/ = runner omission), 2 skipped, start tests pass there; mutants 89 of 90 (G13b WRONG_REASON); lint: ruff check 1 error + format 4 files, all in handover/core-a/inputs/ (lead material); bandit rc 0, no summary line"
+  },
+  {
+   "id": "d-fix4",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "round-3 fixes (config error text, log time+level, --host '', start/stop lines, stale text), strict-mode failure at test time not collection, G13b expect, ticket sizes and cites",
+   "started UTC": "08:27",
+   "expected end": "about 30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "3 of 3 (fix)",
+   "retries so far": 0,
+   "reason": "after batch5 and round 3"
   }
  ],
  "tests": [
@@ -2107,6 +2120,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "BATCH5 result: whole suite with REQUIRE_PG=1 did NOT complete in the checkout: my own strict switch turns the missing core-b config into an ImportError at collection (bug of mine, fixed in d-fix4: it will fail at test time). Combined tree (core-b 05159ec19 + my files): 1110 passed, 0 real failures (74 n8n failures were my runner not copying n8n/). Your 5 failing ids at 5bacdc05f: not reproduced yet; the next batch (batch6, after d-fix4) lists them. Lint: all ruff errors are in handover/core-a/inputs/ (your files: demo-hooks.py RET501, README.md and i_store_spend.py format): not mine to edit.",
   "E7 (ESCALATIONS.md): step D code round 3 left one Major that is yours: is the stdlib-based server (316 lines: connection cap + total read deadline + quiet handler) acceptable, or drop cap/deadline to the proxy, or vet a server library? Default if you say nothing: keep it and fix the ticket's size sentence.",
   "Reply to lead's list of 7 (07:31): (1) template retry fix from evidence-n8n-2: DONE (ORDER 019 in n8n-fix1, 3 review rounds, round 3 clean, 88 template tests, raw/n8n-template-tests-8.log). (2),(3),(5) are ONE agent d-fix2 running since 07:30 (connection cap, read deadline, REQUIRE_PG skip rule, direct field access, shared helpers): they edit the same three source files and one test folder, so splitting them into parallel agents would make them overwrite each other; core-b REQUEST 001 has not landed on any head I can read, so no getattr fallbacks can be dropped for fields core-b lacks (blocker, exact: need core-b settings fields host/port/allow_non_loopback/poll_s/max_waiting or a decision that they are CLI options). (4) mutants for new guards: BLOCKED by d-fix2 (anchors depend on its final code; 4 anchors already stale: G7a, G18c, G20b, G20e); starts the minute d-fix2 ends. (6) full-suite batch with -rf + -rs + REQUIRE_PG=1: BLOCKED by d-fix2 and (4); then runs. (7) fresh reviewer: after (6). Capacity is idle only because of these file locks; nothing else is queued that touches other files.",
   "Skips (SKIP-REPORT.md): REQUIRE_PG=1 only turns skips into failures inside tests/triggers. Skips elsewhere with a database reason (tests/contracts/kinds/store_postgres.py:24, test_p2_postgres, test_p7_store, test_k5_round8/10_postgres) stay skips. In the final batch I will run with -rs so every skip reason is in the log; to make those fail under REQUIRE_PG I must edit a shared conftest/helper: request to core-b if it is theirs.",

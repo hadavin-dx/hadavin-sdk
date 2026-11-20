@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:27:08Z
+UPDATED_UTC: 2026-11-20T08:27:44Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 72
 ITEMS_OPEN: 20
 PERCENT: 82
 AGENTS_RUNNING: 2
-CAPACITY: load 0.61 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.34 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 553M /home/user/hadavin-sdk; 475M /tmp/claude-0; 134M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T08:26:19Z (the push before this board)
+PUSHED_UTC: 2026-11-20T08:27:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -91,7 +91,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | MAINT-1 | update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files | DONE (one last re-run on core-c's newest head at the final batch) | 95 | raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet) | 1 | found by the rerun |
 | D-fix2 | fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest | code+tests DONE; mutant script fix and fresh review RUNNING; then evidence batch | 60 | reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md | 1 | d-fix1 still edits the same files |
 | D-fix3 | round 2 code nits (validate read_deadline_s/max_connections/port as ConfigError, AttributeError -> ConfigError naming the field, nested finally for slot release, rate-limited WARNING on cap hit, public Runner.ack_wait_s, handler on hadavin_sdk.triggers only, make_wsgi docstring on custom start) | DONE; round 3 fresh review + evidence batch RUNNING | 90 | reviews/D-code-result-review-2 (to write) | 1 | mut-fix reads the same source files now |
-| D-fix4 | round 3 fixes: config error text, log time+level, --host '', start/stop log lines, stale text, ticket line numbers | QUEUED after batch5 ends (batch5 reads the tree) | 0 | reviews/D-code-result-review-3.md | 0 | batch5 running |
+| D-fix4 | round 3 fixes: config error text, log time+level, --host '', start/stop log lines, stale text, ticket line numbers | RUNNING (also strict-mode collection bug and G13b) | 5 | reviews/D-code-result-review-3.md | 1 | batch5 running |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -178,17 +178,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | ticket-D2 | builder (text only) | sonnet | rewrite the superseded ticket D passages to the code as it is; re-cite line numbers | 07:45 | about 10 min | 100 | done | 2 of 3 (fix) | 0 | ticket D rewritten to the code (invariants 7,8,10-16, sections 6,7,7b,9,10b,14); ~75 cites re-done, ~45 checked; test-file line numbers and cites outside triggers/ not re-verified; 'main exits 3 on this tree' from reading only |
 | d-fix3 | builder | sonnet | round 2 code nits + test pollution fix, then one mutant run | 07:54 | about 30 min | 100 | done | 2 of 3 (fix) | 0 | R2-2..R2-8 done (ConfigError naming a missing core-b field, nested slot release, cap warning once a minute, bounds checks, Runner.ack_wait_s, handler on hadavin_sdk.triggers only + test pollution gone); tests/triggers 1175 passed 5 skipped (own run, default order); mutants 90 of 90 as expected (run 13); bandit printed no summary line (unconfirmed) |
 | D-rev3 | fresh reviewer (zoom-out) | sonnet | round 3 (last under the cap) read-only review of the step D code | 08:19 | about 15 min | 100 | done | 3 of 3 | 0 | round 3: 0 Blocker, 4 Major (thin-door size = lead decision E7; config error text; log format; stale ticket line numbers), 8 Nits; round 3 is the cap |
-| batch5 | evidence runner (never judges) | sonnet | ONE batch: lint, bandit, WHOLE suite with REQUIRE_PG=1 and -rfsx (failed ids + skip reasons), combined-tree start tests on core-b head, mutant script | 08:19 | about 25 min | 5 | running | n/a | 0 | lead asked: whole suite, failing ids, skip reasons |
+| batch5 | evidence runner (never judges) | sonnet | ONE batch: lint, bandit, WHOLE suite with REQUIRE_PG=1 and -rfsx (failed ids + skip reasons), combined-tree start tests on core-b head, mutant script | 08:19 | about 25 min | 100 | done | n/a | 0 | BATCH5 (head 73d8d3db7, evidence only): checkout whole suite with REQUIRE_PG=1 stopped at COLLECTION (my strict switch raises ImportError in test_t5_main_start.py: nothing else ran) = my bug; combined tree core-b 05159ec19: 1110 passed, 74 failed (all test_n8n_template: the runner did not copy n8n/ = runner omission), 2 skipped, start tests pass there; mutants 89 of 90 (G13b WRONG_REASON); lint: ruff check 1 error + format 4 files, all in handover/core-a/inputs/ (lead material); bandit rc 0, no summary line |
+| d-fix4 | builder | sonnet | round-3 fixes (config error text, log time+level, --host '', start/stop lines, stale text), strict-mode failure at test time not collection, G13b expect, ticket sizes and cites | 08:27 | about 30 min | 5 | running | 3 of 3 (fix) | 0 | after batch5 and round 3 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 7959s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 7959s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 7959s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 7959s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 7959s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 7959s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 7995s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 7995s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 7995s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 7995s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 7995s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 7995s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -250,6 +251,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- BATCH5 result: whole suite with REQUIRE_PG=1 did NOT complete in the checkout: my own strict switch turns the missing core-b config into an ImportError at collection (bug of mine, fixed in d-fix4: it will fail at test time). Combined tree (core-b 05159ec19 + my files): 1110 passed, 0 real failures (74 n8n failures were my runner not copying n8n/). Your 5 failing ids at 5bacdc05f: not reproduced yet; the next batch (batch6, after d-fix4) lists them. Lint: all ruff errors are in handover/core-a/inputs/ (your files: demo-hooks.py RET501, README.md and i_store_spend.py format): not mine to edit.
 - E7 (ESCALATIONS.md): step D code round 3 left one Major that is yours: is the stdlib-based server (316 lines: connection cap + total read deadline + quiet handler) acceptable, or drop cap/deadline to the proxy, or vet a server library? Default if you say nothing: keep it and fix the ticket's size sentence.
 - Reply to lead's list of 7 (07:31): (1) template retry fix from evidence-n8n-2: DONE (ORDER 019 in n8n-fix1, 3 review rounds, round 3 clean, 88 template tests, raw/n8n-template-tests-8.log). (2),(3),(5) are ONE agent d-fix2 running since 07:30 (connection cap, read deadline, REQUIRE_PG skip rule, direct field access, shared helpers): they edit the same three source files and one test folder, so splitting them into parallel agents would make them overwrite each other; core-b REQUEST 001 has not landed on any head I can read, so no getattr fallbacks can be dropped for fields core-b lacks (blocker, exact: need core-b settings fields host/port/allow_non_loopback/poll_s/max_waiting or a decision that they are CLI options). (4) mutants for new guards: BLOCKED by d-fix2 (anchors depend on its final code; 4 anchors already stale: G7a, G18c, G20b, G20e); starts the minute d-fix2 ends. (6) full-suite batch with -rf + -rs + REQUIRE_PG=1: BLOCKED by d-fix2 and (4); then runs. (7) fresh reviewer: after (6). Capacity is idle only because of these file locks; nothing else is queued that touches other files.
 - Skips (SKIP-REPORT.md): REQUIRE_PG=1 only turns skips into failures inside tests/triggers. Skips elsewhere with a database reason (tests/contracts/kinds/store_postgres.py:24, test_p2_postgres, test_p7_store, test_k5_round8/10_postgres) stay skips. In the final batch I will run with -rs so every skip reason is in the log; to make those fail under REQUIRE_PG I must edit a shared conftest/helper: request to core-b if it is theirs.
