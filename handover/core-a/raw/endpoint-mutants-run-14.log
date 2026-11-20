@@ -1,0 +1,8 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+# endpoint mutants run, python 3.13.18, platform linux
+# sha256 8ff23e60491745b59f2840d04d516179300edbc8eecca18d619812ce8a2131cf  src/hadavin_sdk/triggers/__init__.py
+# sha256 9654c455859897220fa1f31a2c23acfbf3eb6b5fb369aa8a4d25da9086e3356e  src/hadavin_sdk/triggers/endpoint.py
+# sha256 8cd743ed0552a4d7ef3c058cbd0634f00b5be9edd9160dbfcc368bafea883e84  src/hadavin_sdk/triggers/server.py
+# sha256 803bf93317dff87e93a1af768e95cfaa82c7253130109af758053bbfb08a7b37  src/hadavin_sdk/triggers/worker.py
+# sha256 54fdff27f9baa03f45d474041e649cbbfc6e8124b5b56bdd4c2a7a3f36b10826  src/hadavin_sdk/testing/crash.py
+# sha256 74bcb73f8d8e78469eb3c495c231d8af7332068eb0805ba0812384c2b46a6e09  tests/endpoint_mutants.py
