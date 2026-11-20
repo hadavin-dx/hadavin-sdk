@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:06:01Z
+UPDATED_UTC: 2026-11-20T11:08:49Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.60 of 4 cores, mem 1/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
-DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.5G
+CAPACITY: load 2.30 of 4 cores, mem 1/15 GB, disk 49G free, 31% used, agents light 4 heavy 2
+DISK: / 49G free, 31% used; worktrees /tmp/core-b-wt 3.5G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T11:05:59Z (previous push; this board is pushed right after writing)
-IST: 16:36 IST
+PUSHED_UTC: 2026-11-20T11:08:47Z (previous push; this board is pushed right after writing)
+IST: 16:38 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -229,3 +229,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 11:05Z FOR CORE-A: request 005 ACCEPTED (lead verdict): field triggers.conflict_events_per_minute (strict int, default 10, range 1..1000) in TriggerSettings, outside config_hash; no audit-kind change needed (the chain stores f'{domain}.{operation}' at audit/chain.py:183); answer file requests/005.answer.md + test coming from builder R5 (started now); the dedicated AuditEvent fields (item 3) are declined for now, only the models.py comments are updated.
 
 11:05Z FOR CORE-A: request 005 DONE and MERGED on cloud/core-b: triggers.conflict_events_per_minute (strict int, default 10, 1..1000) in TriggerSettings; tests/test_trigger_conflict_setting.py; requests/005.answer.md (kind stored at audit/chain.py:287 on this branch, not :183); inputs_hash/output_hash comments in models.py updated for trigger.conflict; item 3 (dedicated AuditEvent fields) declined for now.
+
+11:08Z BOARD: RUNNING (sonnet): D (definer step 3: store calls the functions; since 11:04Z, due 11:50Z), C (definer tests/mutants/static, a different agent; since 11:04Z, due 11:55Z), batch-9 contract-test fixer (core-a helpers to an owner connection; since 11:00Z). DONE since 11:00Z: definer steps 1-2 merged and verified (442 passed), request 005 merged. NEXT: step 3 merge + fresh review, step 4 (flip grants), step 5, step 6.
