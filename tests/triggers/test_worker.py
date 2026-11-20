@@ -86,7 +86,7 @@ def _free(runner: Runner, timeout_s: float = 20.0) -> None:
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         with runner._lock:
-            if not runner._flying:
+            if not runner._jobs:
                 return
         time.sleep(0.01)
     raise AssertionError("a loop is still running")
@@ -186,9 +186,10 @@ def test_same_key_with_another_document_is_409_and_writes_nothing(rt):
 # --- several at once ---------------------------------------------------------------------------------
 
 
-def test_50_parallel_requests_with_one_key_make_one_run(rt):
+@pytest.mark.parametrize("max_running", [1, 4])
+def test_50_parallel_requests_with_one_key_make_one_run(rt, max_running):
     req = _req()
-    with Runner(rt, rt.store, max_running=4) as runner:
+    with Runner(rt, rt.store, max_running=max_running) as runner:
         answers = _parallel(runner, [req] * 50)
         assert all(isinstance(a, tuple) for a in answers), answers
         assert [a[0] for a in answers if a[0] not in OK] == []
@@ -210,13 +211,73 @@ def test_one_slot_still_answers_every_parallel_request_for_one_key(rt):
     assert len(rt.store._runs) == 1 and rt.llm.calls == 1
 
 
+@pytest.mark.parametrize("max_running", [1, 4])
+def test_one_key_with_two_documents_in_parallel_is_one_ack_and_one_409(rt, max_running):
+    for n in range(5):
+        first, other = _req(n), _req(n, OTHER_DOCUMENT)
+        with Runner(rt, rt.store, max_running=max_running) as runner:
+            answers = _parallel(runner, [first, other])
+            assert all(isinstance(a, tuple) for a in answers), answers
+            statuses = sorted(a[0] for a in answers)
+            assert statuses[0] in OK and statuses[1] == 409, answers  # never 503
+            won = first if answers[0][0] in OK else other
+            assert rt.store.get_run(first.run_id).trigger_ref == won.trigger_ref
+            _settle(rt.store, first.run_id)
+            _free(runner)
+        assert len(rt.store._runs) == n + 1 and rt.llm.calls == n + 1
+
+
+@pytest.mark.parametrize(
+    ("document", "expected"), [(DOCUMENT, OK), (OTHER_DOCUMENT, (409,)), (None, (503,))]
+)
+def test_no_slot_here_while_another_worker_writes_the_row(rt, document, expected):
+    """Two Runners on one store stand for two worker processes. Ours has its one slot taken by a run of another
+    key; the other one writes the row for our key a little later (or never). The answer comes from the row."""
+
+    def holds_its_slot(store, **kw):
+        _insert(store, **kw)
+        hold.wait(30)
+
+    hold, ours = threading.Event(), _req(1, document or DOCUMENT)
+    busy = FakeRuntime(rt.store, holds_its_slot)
+    with Runner(rt, rt.store) as other, Runner(busy, rt.store, ack_wait_s=0.6, poll_s=0.02) as here:
+        try:
+            assert here.start(_req(9))[0] in OK
+            assert not here._slots.acquire(blocking=False)  # the one slot is taken
+            late = threading.Timer(0.15, other.start, args=(_req(1),))
+            if document is not None:
+                late.start()
+            began = time.monotonic()
+            try:
+                answer = here.start(ours)
+            finally:
+                if document is not None:
+                    late.join(30)
+            waited = time.monotonic() - began
+            assert answer[0] in expected, answer
+            if document is None:
+                assert answer == (503, {}) and 0.6 <= waited < 5.0
+                with pytest.raises(NotFound):
+                    rt.store.get_run(ours.run_id)
+            else:
+                assert rt.store.get_run(ours.run_id).trigger_ref == _req(1).trigger_ref
+                _settle(rt.store, ours.run_id)
+                _free(other)
+        finally:
+            hold.set()
+        _free(here)
+    assert busy.calls == 1  # our Runner never started a loop for the key
+
+
 def test_20_parallel_requests_with_distinct_keys_are_acked_or_refused(rt):
     reqs = [_req(n) for n in range(20)]
     rt.llm.gate.clear()  # every started loop waits in the model, so the four slots stay taken
     try:
-        with Runner(rt, rt.store, max_running=4) as runner:
+        with Runner(rt, rt.store, max_running=4, ack_wait_s=0.5) as runner:
             try:
+                began = time.monotonic()
                 answers = _parallel(runner, reqs)
+                assert time.monotonic() - began >= 0.5  # a refusal comes only after ack_wait_s
                 assert all(isinstance(a, tuple) for a in answers), answers
                 assert {a[0] for a in answers} <= {200, 202, 503}
                 acked = [r for r, a in zip(reqs, answers, strict=True) if a[0] in OK]
@@ -245,11 +306,13 @@ def test_pool_full_is_503_and_a_later_retry_is_acked(rt):
     try:
         with Runner(rt, rt.store, max_running=1, ack_wait_s=1.0) as runner:
             try:
-                assert runner.start(first)[0] == 202
+                assert runner.start(first)[0] in OK
+                began = time.monotonic()
                 assert runner.start(second) == (503, {})
+                assert time.monotonic() - began >= 1.0  # not at once: only after ack_wait_s
                 with pytest.raises(NotFound):
                     rt.store.get_run(second.run_id)
-                assert runner.start(first)[0] == 202  # a repeat of the running key needs no slot
+                assert runner.start(first)[0] in OK  # a repeat of the running key needs no slot
             finally:
                 rt.llm.gate.set()
             _settle(rt.store, first.run_id)
@@ -359,6 +422,45 @@ def test_the_row_decides_not_the_exception():
         assert runner.start(_req(1)) == (409, {})
 
 
+def test_handle_raising_after_the_row_is_logged_by_class_name_only(caplog):
+    def fails_late(store, **kw):
+        _insert(store, **kw)
+        raise RuntimeError("private text of the failure")
+
+    store = MemoryStore()
+    with (
+        caplog.at_level("WARNING", logger="hadavin_sdk.triggers"),
+        Runner(FakeRuntime(store, fails_late), store) as runner,
+    ):
+        assert runner.start(_req())[0] in OK  # the row exists: acked, the tick ends the run later
+        _free(runner)
+        assert runner._slots.acquire(blocking=False)
+        runner._slots.release()
+    assert "RuntimeError" in caplog.text and "private text" not in caplog.text
+    assert DOCUMENT.decode() not in caplog.text and _req().trigger_ref not in caplog.text
+
+
+def test_close_lets_a_running_loop_end_and_refuses_new_keys(rt):
+    first, second = _req(1), _req(2)
+    rt.llm.gate.clear()
+    runner = Runner(rt, rt.store, max_running=2)
+    try:
+        assert runner.start(first)[0] in OK
+        runner.close(
+            wait_s=0.05
+        )  # the loop is still in the model: close returns, the loop is not cut off
+        began = time.monotonic()
+        assert runner.start(second) == (503, {})
+        assert time.monotonic() - began < 2.0  # closed: refused at once, no wait
+        assert runner.start(first)[0] in OK  # a stored row is still answered
+    finally:
+        rt.llm.gate.set()
+    assert _settle(rt.store, first.run_id).state == RunState.NO_ACTION
+    _free(runner)
+    runner.close()
+    assert len(rt.store._runs) == 1 and rt.llm.calls == 1
+
+
 def test_closed_runner_takes_no_new_work(rt):
     runner = Runner(rt, rt.store)
     runner.close()
@@ -385,7 +487,8 @@ def test_crash_after_the_row_then_tick_ends_with_a_person(rt):
     with crash.CrashPoints() as cp, Runner(rt, plain) as runner:
         rt.store = cp.wrap(plain, "store", ["create_run"])  # after the build, as ticket E says
         cp.arm("store.create_run:after")
-        assert runner.start(req) == (202, {"run_id": req.run_id, "state": "RECEIVED"})
+        status, body = runner.start(req)
+        assert status in OK and body["run_id"] == req.run_id
         _free(runner)
         assert cp.fired == ("store.create_run:after",)
         rt.store = plain
@@ -485,7 +588,11 @@ def test_non_loopback_host_needs_the_switch():
     worker.check_bind("127.0.0.1", False)
     worker.check_bind("::1", False)
     worker.check_bind("localhost", False)
-    for host in ("0.0.0.0", "10.1.2.3", "door-host"):  # noqa: S104 - the refusal under test
+    for host in ("", " ", "door-host", "127.0.0.1:80", "localhost.", "999.1.1.1"):
+        for allow in (False, True):
+            with pytest.raises(ConfigError, match="IP address or localhost"):
+                worker.check_bind(host, allow)
+    for host in ("0.0.0.0", "10.1.2.3", "::"):  # noqa: S104 - the refusal under test
         with pytest.raises(ConfigError, match="not loopback"):
             worker.check_bind(host, False)
         with pytest.raises(ConfigError):

@@ -6,19 +6,42 @@
       "name": "Trigger placeholder",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "parameters": {
         "httpMethod": "POST",
         "path": "replace-with-your-path",
         "responseMode": "onReceived"
       },
-      "notes": "UNVERIFIED: typeVersion and the parameter names httpMethod, path, responseMode (the atlas names the respond mode 'Immediately' but gives no JSON field names). Replace this node with the client's own trigger (webhook, mailbox, schedule). A webhook call can start two executions; the key rule in the next node is what keeps that to one run."
+      "notes": "UNVERIFIED: typeVersion and the parameter names httpMethod, path, responseMode (the atlas names the respond mode 'Immediately' but gives no JSON field names). Replace this node with the client's own trigger (webhook, mailbox, schedule). A webhook call can start two executions; the key rule in the next node (a stable business id, hashed) is what keeps that to one run."
+    },
+    {
+      "name": "Hash business id",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "action": "hash",
+        "type": "SHA256",
+        "value": "={{ String($json.body.record_id) }}",
+        "dataPropertyName": "key",
+        "encoding": "hex"
+      },
+      "notes": "UNVERIFIED: every parameter of this node (the atlas does not cover the Crypto node) and whether it keeps the other fields of the item. key = SHA-256 hex of a STABLE business id (a mail Message-ID, or record id plus event name), never the execution id. The hash is sent, not the raw id, for two reasons: a raw id such as a Message-ID holds characters the key rule refuses (allowed: A-Z a-z 0-9 . _ : - and 1 to 128 long), and the key is stored where portal users can read it, so it must not be personal data. $json.body.record_id is a placeholder for the client's field."
     },
     {
       "name": "Build request",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [220, 0],
+      "position": [
+        440,
+        0
+      ],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -30,19 +53,22 @@
             {
               "name": "body",
               "type": "string",
-              "value": "={{ JSON.stringify({ key: String($json.body.record_id), document: String($json.body.text) }) }}"
+              "value": "={{ JSON.stringify({ key: $json.key, document: String($json.body.text) }) }}"
             }
           ]
         },
         "includeOtherFields": false
       },
-      "notes": "UNVERIFIED: typeVersion and the whole 'assignments' shape (the atlas does not describe the Set node). key = a STABLE business id (a mail Message-ID, or record id plus event name), never the execution id; allowed characters A-Z a-z 0-9 . _ : - and 1 to 128 long. $json.body.record_id and $json.body.text are placeholders for the client's fields. body is ONE string and is used unchanged for signing and for sending. ts = Unix seconds as text."
+      "notes": "UNVERIFIED: typeVersion and the whole 'assignments' shape (the atlas does not describe the Set node), and that $json.key and $json.body.text are both still on the item here. $json.body.text is a placeholder for the client's document field (text only). body is ONE string and is used unchanged for signing and for sending. ts = Unix seconds as text."
     },
     {
       "name": "Sign (option A, Crypto node)",
       "type": "n8n-nodes-base.crypto",
       "typeVersion": 1,
-      "position": [440, 0],
+      "position": [
+        660,
+        0
+      ],
       "parameters": {
         "action": "hmac",
         "type": "SHA256",
@@ -57,7 +83,10 @@
       "name": "Sign (option B, Code node)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 200],
+      "position": [
+        660,
+        200
+      ],
       "disabled": true,
       "parameters": {
         "mode": "runOnceForEachItem",
@@ -70,7 +99,10 @@
       "name": "Send to Hadavin",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [660, 0],
+      "position": [
+        880,
+        0
+      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
@@ -80,8 +112,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Hadavin-Request-Timestamp", "value": "={{ $json.ts }}" },
-            { "name": "X-Hadavin-Signature", "value": "={{ 'v0=' + $json.hmac }}" }
+            {
+              "name": "X-Hadavin-Request-Timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "X-Hadavin-Signature",
+              "value": "={{ 'v0=' + $json.hmac }}"
+            }
           ]
         },
         "sendBody": true,
@@ -92,13 +130,16 @@
           "timeout": 10000
         }
       },
-      "notes": "UNVERIFIED: typeVersion; the names retryOnFail, maxTries, waitBetweenTries and their limits; the raw-body fields contentType, rawContentType, body; the header list shape; the unit and default of options.timeout; and that the body leaves n8n byte-identical to the signed string. Atlas: the node succeeds only on a 2xx answer unless Never Error is on, so keep Never Error OFF. Retry On Fail is on for THIS node only, so a retry reuses the same ts and signature (valid for 300 seconds)."
+      "notes": "UNVERIFIED: typeVersion; the names retryOnFail, maxTries, waitBetweenTries and their limits; the raw-body fields contentType, rawContentType, body; the header list shape; the unit and default of options.timeout; and that the body leaves n8n byte-identical to the signed string. Atlas: the node succeeds only on a 2xx answer unless Never Error is on, so keep Never Error OFF. Retry On Fail is on for THIS node only, so a retry reuses the same ts and signature (valid for 300 seconds). A 503 (busy, nothing accepted) is what the retry is for; 401 and 409 end in the error workflow by design."
     },
     {
       "name": "Check state (optional)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [880, 0],
+      "position": [
+        1100,
+        0
+      ],
       "parameters": {
         "conditions": {
           "combinator": "and",
@@ -106,7 +147,10 @@
             {
               "leftValue": "={{ $json.state }}",
               "rightValue": "NEEDS_PERSON",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ]
         }
@@ -116,16 +160,59 @@
   ],
   "connections": {
     "Trigger placeholder": {
-      "main": [[{ "node": "Build request", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Hash business id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash business id": {
+      "main": [
+        [
+          {
+            "node": "Build request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build request": {
-      "main": [[{ "node": "Sign (option A, Crypto node)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Sign (option A, Crypto node)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Sign (option A, Crypto node)": {
-      "main": [[{ "node": "Send to Hadavin", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send to Hadavin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Send to Hadavin": {
-      "main": [[{ "node": "Check state (optional)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Check state (optional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {

@@ -4,9 +4,11 @@
 the run row and that row is for the same agent, principal and `trigger_ref` (same sender, key and document). The
 answer is always decided from the ROW, never from which exception the loop raised. 202 = the run is RECEIVED or
 WORKING, 200 = any later state, 409 = a row exists for the same key but another document (nothing is written),
-503 = no free slot, store not reachable, or no row within `ack_wait_s` (no ack; the sender retries with the same
-key). At most one run per key rests on the primary key of the runs table, not on anything in this process: the
-table of calls in flight below only lets a second request for the same key wait for the row without a slot.
+503 = store not reachable, or no row within `ack_wait_s` (no ack; the sender retries with the same key). A
+request that finds no free slot is not refused at once: it waits for the row like any other, because another
+request for the same key may be writing it right now; with no row by the end of `ack_wait_s` it gets 503. At most
+one run per key rests on the primary key of the runs table, and every answer on the stored row: nothing in this
+process remembers keys.
 
 Several threads at once: what was read, and what was not
 - `Runtime` keeps no per-run state on itself: its fields are set once in `__init__` (runtime/agent_loop.py:208-213)
@@ -49,7 +51,7 @@ from wsgiref.simple_server import WSGIRequestHandler, WSGIServer
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Run, RunState
-from hadavin_sdk.store.protocol import NotFound, StoreUnavailable
+from hadavin_sdk.store.protocol import NotFound, StoreUnavailable, is_connectivity_error
 from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi
 
 POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it waits
@@ -86,8 +88,8 @@ class Runner:
         self._ack_wait_s, self._poll_s = float(ack_wait_s), float(poll_s)
         self._slots = threading.BoundedSemaphore(max_running)
         self._pool = ThreadPoolExecutor(max_workers=max_running, thread_name_prefix="trigger-run")
-        self._lock = threading.Lock()  # guards _flying and _closed
-        self._flying: dict[str, Future[None]] = {}  # run_id -> the handle call of this process
+        self._lock = threading.Lock()  # guards _jobs and _closed
+        self._jobs: set[Future[None]] = set()  # handle calls not yet ended, for `close` only
         self._closed = False
 
     def __enter__(self) -> Self:
@@ -97,12 +99,16 @@ class Runner:
         self.close()
 
     def close(self, wait_s: float = CLOSE_WAIT_S) -> None:
-        """Take no new work, drop work that has not begun, wait up to `wait_s` for running loops."""
+        """Take no new work, drop work that has not begun, wait up to `wait_s` for running loops.
+
+        From this call on `start` begins no loop: a key with no row gets 503, a key whose row exists is still
+        answered from that row. A loop that is already running is NOT cut off: it runs to its end, also after
+        `wait_s` has passed (its thread then keeps the process alive until it ends). May be called twice."""
         with self._lock:
             self._closed = True
-            flying = list(self._flying.values())
+            jobs = list(self._jobs)
         self._pool.shutdown(wait=False, cancel_futures=True)
-        wait_all(flying, timeout=wait_s)
+        wait_all(jobs, timeout=wait_s)
 
     def start(self, req: Accepted) -> tuple[int, dict[str, str]]:
         """The status and answer body for one verified request. Never raises for a store or loop failure."""
@@ -110,14 +116,14 @@ class Runner:
             found = self._row(req.run_id)
             if found is not None:
                 return _answer(found, req)
-            job = self._submit(req)
-            if job is None:
-                # No slot. A row written since the first look still counts: a repeat needs no slot.
-                found = self._row(req.run_id)
-                return NO_ACK if found is None else _answer(found, req)
+            job, closed = self._submit(req)
+            if closed:
+                return NO_ACK
+            # job None = no free slot: wait for the row all the same, another request may be writing it.
             deadline = time.monotonic() + self._ack_wait_s
             while True:
-                ended = job.done()  # read BEFORE the row, so one look at the row follows the end
+                # read BEFORE the row, so one look at the row follows the end of the loop
+                ended = job is not None and job.done()
                 found = self._row(req.run_id)
                 if found is not None:
                     return _answer(found, req)
@@ -126,7 +132,8 @@ class Runner:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
                 time.sleep(min(self._poll_s, left))
         except Exception as exc:  # noqa: BLE001 - the store failed: no ack, the sender retries
-            _LOG.warning("trigger start: store error %s", type(exc).__name__)
+            what = "store unreachable" if is_connectivity_error(exc) else "store error"
+            _LOG.warning("trigger start: %s (%s)", what, type(exc).__name__)
             return NO_ACK
 
     def _row(self, run_id: str) -> Run | None:
@@ -135,28 +142,27 @@ class Runner:
         except NotFound:
             return None
 
-    def _submit(self, req: Accepted) -> Future[None] | None:
-        """The handle call for this run id: the one in flight, or a new one in a free slot, or None (no slot)."""
+    def _submit(self, req: Accepted) -> tuple[Future[None] | None, bool]:
+        """(the new handle call, or None when no slot is free; True when the Runner is closed)."""
         with self._lock:
-            job = self._flying.get(req.run_id)
-            if job is not None:
-                return job
-            if self._closed or not self._slots.acquire(blocking=False):
-                return None
+            if self._closed:
+                return None, True
+            if not self._slots.acquire(blocking=False):
+                return None, False
             try:
                 job = self._pool.submit(self._run, req)
             except BaseException:
                 self._slots.release()
                 raise
-            self._flying[req.run_id] = job
+            self._jobs.add(job)
         # Outside the lock: a job that has already ended runs the callback at once, in this thread.
-        job.add_done_callback(lambda _job, run_id=req.run_id: self._ended(run_id))
-        return job
+        job.add_done_callback(self._ended)
+        return job, False
 
-    def _ended(self, run_id: str) -> None:
+    def _ended(self, job: Future[None]) -> None:
         """The slot is given back only here, when the loop has ended (or was dropped by `close`)."""
         with self._lock:
-            self._flying.pop(run_id, None)
+            self._jobs.discard(job)
         self._slots.release()
 
     def _run(self, req: Accepted) -> None:
@@ -245,11 +251,14 @@ def read_secrets(
 
 
 def check_bind(host: str, allow_non_loopback: bool) -> None:
-    """Refuse a host that is not loopback unless the config says so in plain words."""
+    """Refuse a host that is not loopback unless the config says so in plain words. A host must be an IP
+    address or the name localhost: any other text (an empty one would mean every interface) is refused."""
+    if host == "localhost":
+        return
     try:
         loopback = ipaddress.ip_address(host).is_loopback
     except ValueError:
-        loopback = host == "localhost"
+        raise ConfigError("--host must be an IP address or localhost") from None
     if not loopback and allow_non_loopback is not True:
         raise ConfigError(
             f"--host {host} is not loopback: set triggers.allow_non_loopback: true to listen there"
@@ -352,13 +361,16 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
     try:
         server, runner = _prepare(args)
-    except StoreUnavailable as exc:
+    except StoreUnavailable as exc:  # a ConfigError subclass: must come first
         print(f"trigger worker: {exc}", file=sys.stderr)
         return EXIT_STORE
     except ConfigError as exc:
         print(f"trigger worker: config error: {exc}", file=sys.stderr)
         return EXIT_CONFIG
     except Exception as exc:  # noqa: BLE001 - class name only: the text could hold a value
+        if is_connectivity_error(exc):
+            print(f"trigger worker: store unreachable: {type(exc).__name__}", file=sys.stderr)
+            return EXIT_STORE
         print(f"trigger worker: start failed: {type(exc).__name__}", file=sys.stderr)
         return EXIT_FAILED
     _LOG.info(
