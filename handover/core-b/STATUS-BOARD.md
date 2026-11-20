@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:45:38Z
+UPDATED_UTC: 2026-11-20T17:24:01Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 0.94 of 4 cores, mem 1/15 GB, disk 39G free, 44% used, agents light 4 heavy 2
-DISK: / 39G free, 44% used; worktrees /tmp/core-b-wt 4.2G
+CAPACITY: load 2.86 of 4 cores, mem 1/15 GB, disk 36G free, 49% used, agents light 4 heavy 2
+DISK: / 36G free, 49% used; worktrees /tmp/core-b-wt 4.3G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T15:44:56Z (previous push; this board is pushed right after writing)
-IST: 21:15 IST
+PUSHED_UTC: 2026-11-20T17:20:02Z (previous push; this board is pushed right after writing)
+IST: 22:54 IST
 
 MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
@@ -47,25 +47,15 @@ Order required: brainstorm, draft, plan review, resolve, build, evidence runner,
 | F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
 Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
 
-## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
-| id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
-|---|---|---|---|---|---|---|---|---|---|---|
-| adc513b3 | builder (fix) | sonnet | D-config fix round 2: commit cf1e33d landed; canonical secret names in a new secret_name.py; "/" dropped from the charset; 1184 passed, 26 skipped | 07:03 | done | 100 | done | none | 1 | result review Major 1 |
-| adab2bba | builder (tests) | sonnet | tests for the provider mark fix and the canonical sender secret names, 4 mutants; worktree PMT | 07:12 | +20 min | UNVERIFIED | running | none | 0 | the fix builders write no tests |
-| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: commit 37c8e93 landed (per-kind refused statuses for routers, truncated chain, docstrings); 334 passed, 1 skipped | 07:08 | done | 100 | done | none | 1 | result review Majors 1 and 2 |
-| a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
-| ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
-| a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
-| a83fab17 | reviewer (egm-codebase-details) | sonnet | F-install round 3 second reviewer: 1 Blocker, 10 Majors, 4 Nits; both reviewers ran, round NOT clean, answered (Z) and Y4 escalated (E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
-| a8ee3c2e | builder (merge) | sonnet | second merge of cloud/core-b into the integration tree (retry.py, defaults.py, ii-meter.md) and the F-install test commit on top; worktree Y | 07:22 | +20 min | UNVERIFIED | running | none | 0 | the integration tree must carry the mark fix, F-store fix 3 and D-config fix 2 before batch run 3 |
-| a9cce047 | builder (tests) | sonnet | F-install tests: commit 6a312ef (test_model_gate_install, contracts/test_meter, gate_install_mutants): 579 passed, 2 failed (both are core-c's gate: it has no usd_cap and its own test about the mark); mutants 28 of 28 killed | 06:46 | done | 100 | done | none | 0 | evidence/F-install-tests-evidence.txt |
-| a8678338 | builder (tests) | sonnet | tests for F-store fix round 3 (ids, caps, memory atomicity, sender secret reader, document sizing, lock timeout) and 7 mutants; worktree FT | 07:15 | +25 min | UNVERIFIED | running | none | 0 | the fix builder wrote no tests |
-| a99a298a | builder (fix) | sonnet | F-store fix round 3: commit 83b1bb7 landed (F1 to F7); 862 passed on its list; lock timeout set in build(), not on the migrate connection | 06:58 | done | 100 | done | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
-| abb69602 | builder (merge) | sonnet | merge of cloud/core-b into the F-install integration tree: DONE, merge commit 28abb73 and 0aa9e9e pushed to wip/cloud-core-b/F-install; 958 passed, 1 failed (core-c's known test) on its list | 06:58 | done | 100 | done | none | 0 | |
-| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config: 2 doc Blockers, 7 Majors, 10 Nits; report tickets/F-store-hostile-review-1.md | 06:46 | done | 100 | done | 1 of 1 | 1 | answered: code in fix round 3, docs fixed |
-| earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
-| 3 Fable agents | | fable | died on the limit at 06:44; commits recovered | | | | KILLED (limit) | | | |
-| 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
+## AGENTS (REWRITTEN 16:55Z; all sonnet or haiku, none fable; the old 07:xx rows are history in git; load 0.46 0.76 1.22; pytest processes by ps: 4)
+| name | role | model | package / files held | worktree | started UTC | state |
+|---|---|---|---|---|---|---|
+| AB5 | builder | sonnet | P2 B5 audit-rights fixes (review M1 texts, M2 quarantine collision, minors): migrate.py audit grants, chain.py, app.py, SECURITY.md | MAB5 (wip/cloud-core-b/audit-rights fdf4b214e pushed) | 15:00 | running |
+| P1 | builder | sonnet | F-install: merge core-c 0e33c0641 + core-b head into the F-install branch; agent_loop gate/reserve decision; guard/model_gate wiring | MP1 | 16:55 | running |
+| P3 | builder | sonnet | F-store-hostile-review-1 (2 doc Blockers + 7 Majors): status table + fixes, docs and tests (NOT migrate.py) | MP3 | 16:55 | running |
+| P4 | reviewer (read-only) | sonnet | D-config fix 2 + provider-mark round 1 re-review | none | 16:55 | running |
+| P5 | builder | sonnet | 0010/0011 draft checksum hard ConfigError + unmapped old overload + upgrade-path tests (migrate.py ledger region) on wip/cloud-core-b/merge-migrate | MP5 | 16:55 | running |
+| P6 | evidence batch run 3 (haiku) | haiku | ONE heavy run on the merged tree after P1 lands | own DB | not started | waits for P1 |
 
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
@@ -332,3 +322,70 @@ LEAD 15:37 FIX LIST on cloud/core-b head e337feb6e+: (1) money-definer collectio
 15:31Z The lead's list of READY items (S1, R1, W1, B2, AR reviewer) is already RUNNING-or-DONE, per the 15:24Z status: DONE+merged: R1, B2 (+review fixes), AR (design), W1 (commit waits via S1), I1, F7. RUNNING now (3, sonnet/haiku): S1 stop-state fixer (since 14:14Z) | HR hostile end-to-end re-read of the whole money path (sonnet, since 15:30Z; tickets/money-hostile-reread-2.md) | EV11 evidence batch 11, whole suite on its own DB (haiku, since 15:30Z; evidence/batch-11.md). Heavy batches: 1 of 2.
 
 15:41Z PER AGENT (the lead's five names): S1 = DONE, merged 6a688ae57 (stop-state tests 216 passed here, mutants 126 killed / 0 survived / 11 N/A needing PG15) | R1 = DONE, merged e337feb6e (money battery, mutant baselines 20/31/22/37/56 all good, hand 4/4 and 27/27) | W1 = DONE, its commit 600feeba0 merged inside S1's merge (test-side gate; I refused its migrate.py weakening) | B2 = DONE, merged d070fda3d (live path reserve/settle + review fixes; 32 tests, 6/6 mutants) | AR reviewer = DONE (A-audit-rights-review-1.md; decision in DECISIONS.md; builder waits for the lead's yes + merge of wip/lead-b-migrate). RUNNING NOW (2): H3 builder (MH3, sonnet since 15:40Z: add_spend day window + memory parity, start-up self-check of the runtime login's money rights in postgres.py, clock-skew log hint) | EV11 evidence batch 11 (haiku since 15:30Z, whole suite, own DB). HR hostile re-read DONE (no Blocker; M1/M2 to laptop list items 5-6, M3/m1/m3 to H3, M4 accepted).
+
+15:50Z REAL AGENT COUNT: 2 running (sonnet): F8 regression fixer for evidence batch 11 (MF8; 25 warden_port audit_chain pattern failures, money_guard_mutants 3, k1b_cli, retry vendor word, 2 PG setup errors) | MMG merger of the laptop's wip/lead-b-migrate 0891d81bd into a local branch (dry run conflicts in migrate.py + cli.py; resolves by combining, adds the caps login to H3's start-check exemption, fixes the docs 'reset login sets caps'; nothing pushed until the laptop review is clean). Idle/READY items: none left that does not share a file with these two or wait on the lead: A-audit-rights builder (needs the lead's yes + the merged migrate.py), hostile re-read M1 (draft DB overload, migrate.py, after MMG). The lead's five (S1, R1, W1, B2, AR) are all DONE (see 15:41Z line).
+
+15:57Z STATE: S1, R1, W1, B2, AR (the lead's five) = all DONE and merged (see 15:41Z line). Since then merged: H3 (7a6d74f2f: add_spend day window, start-up money-rights self-check, clock-skew hint), F8 (batch 11 failures: warden_port 25, money_guard mutants 3, k1b_cli, retry vendor word; no code bugs), scrub of the vendor string from core-b's own files. RUNNING: 1 agent (MMG, sonnet: merge of wip/lead-b-migrate 0891d81bd into a local branch, conflicts in migrate.py/cli.py, docs 'reset login sets caps'). WAITING ON THE LAPTOP: wip/lead-b-migrate fix round 1 (I merge after its review is clean; MMG prepares it, if the laptop changes the branch I re-merge), wip/lead-b-ts-watermark fix round 3 (N2 ts CHECK validation, N3 watermark; I merge when announced). WAITING ON THE LEAD: yes for the A-audit-rights design (DECISIONS.md 14:30Z: new checkpoint role + migration 0012 outbox functions), then a builder; hostile re-read M1/M2 land in the laptop list items 5-6 / after the merge. HEADS FOR PG EVIDENCE: cloud/core-b 463760813 (everything above merged, full suite here on 763d71c42 earlier: 43 failed of which the stop-state 12, audit chain 25, mutants 3, k1b, retry word are fixed since; the remaining known failure is the vendor-string test: 3 lead files still contain it). Do not run evidence on wip/* until I merge them.
+
+15:59Z BLOCKED/ON WHOM: (a) A-audit-rights builder: on the LEAD's yes (DECISIONS.md 14:30Z) and on the merged migrate.py (MMG running, then the laptop's round 1); (b) hostile re-read M1/M2 (migrate.py: draft-DB overload, writer-check coverage of hadavin_caps/limits + column grants): on the laptop branch (items 4-6 of lead-build-4.md) / MMG; (c) F-install gate install: on core-c (NO_MAP request 3, usd_cap, mark on ProviderExhausted, K5); (d) PG15/17 evidence: on the lead's laptop, head cloud/core-b d8f1449c4. Not blocked and running: MMG only. S1, R1, W1, B2, AR: DONE.
+
+16:03Z MMG DONE: merge of wip/lead-b-migrate (0891d81bd) onto cloud/core-b 6c638624a prepared and pushed as wip/cloud-core-b/merge-migrate (merge 55df54150 + docs e653f5092; 637 passed, 8 skipped, 2 xfailed in one combined run on its own DB; conflicts only migrate.py/cli.py, combined both sides: --caps-role with --accept-changed-draft/--reset-draft, no refusal weakened; 4 stop-state tests fixed to name the caps role; start-check tests for the caps login; runbook/README say the CAPS login writes caps and runs sync-caps). NOT merged into cloud/core-b: the lead said to take the laptop branch after its review is clean. I merge it the moment the lead says so (or re-merge if the laptop pushes round 1). stop_state_mutants.py (changed by the laptop) not re-run yet. RUNNING: 0 agents.
+
+16:07Z ROWS B1-B7 (lead's packages; branch | sha | state):
+B1 stop-state failures (S1) | local/code-MS1 -> merged cloud/core-b 6a688ae57 | DONE (216 passed, mutants 126 killed/0 survived/11 N/A PG15)
+B2 money_definer failures + mutant baselines (R1, F7, T1, T2, MH1) | merged e337feb6e, 84fa98213 | DONE (mutants 20/31/22/37/56 good)
+B3 audit_drain 7 + spend_reservations_pg 6 (T1, T2, A3, R1, F7) | merged | DONE (re-run by R1: pass; shared-DB role interference seen, not code)
+B4 parallel-run isolation (W1) | local/code-MW1 600feeba0 merged inside 6a688ae57 | DONE test-side (pg_gate); I refused weakening _money_table_writers
+B5 A-audit-rights: design review DONE (A-audit-rights-review-1.md) | builder AB5 RUNNING since 16:07Z on wip base wip/cloud-core-b/merge-migrate (0012 outbox functions, checkpoint role, owner refusal, flip 2 xfail pins) | the lead's list asked for it: started
+B6 B2 live path reserve/settle (MB2) | merged 5931cf3b3 + d070fda3d | DONE (32 tests, mutants 6/6)
+B7 fresh reviewers on merged diffs: done: step 4, H1, I1, B2, M6, A3/A4, step 6 x2, H2, hostile re-read; RUNNING: RH3 (H3 + F8 diffs), RM6 (M6 fix round + B2 fix round) | row also: laptop wip/lead-b-migrate merge prepared (wip/cloud-core-b/merge-migrate 55df54150): not on cloud/core-b until the lead says its review is clean.
+AGENTS RUNNING: 3 (AB5, RH3, RM6, sonnet). Not 7: B1-B4 and B6 are finished; I do not invent work to reach 7. Heavy test runs: 1 (AB5).
+
+16:15Z LOAD (/proc/loadavg) 3.55 2.60 1.88. ROWS B1-B7 (branch | sha | state):
+B1 stop-state failures | merged cloud/core-b 6a688ae57 | DONE
+B2 money_definer failures + mutant baselines | merged e337feb6e, 84fa98213 | DONE
+B3 audit_drain 7 + spend_reservations_pg 6 | merged (T1/T2/F7/R1) | DONE
+B4 parallel-run isolation (W1) | merged inside 6a688ae57 | DONE
+B5 A-audit-rights (0012 outbox functions, checkpoint role) | local/code-MAB5 (worktree MAB5) | BUILDING (AB5, based on wip/cloud-core-b/merge-migrate)
+B6 B2 live path | merged 5931cf3b3, d070fda3d, a34597a4a (review-2 fixes) | DONE
+B7 fresh reviewers | done on every merged diff so far (last: H3+F8 -> 1 Major, M6+B2 fix rounds -> 1 Major, both fixed/queued); next: reviewer on H3's round 2, AB5's diff
+RUNNING: AB5 (audit rights), H3 round 2 (NOINHERIT closure, owner per table, nits), MT1R (test_t1_reserve_cap.py port of core-a's cases). core-a rev-b-newest2.md: answered in handover/core-b/ANSWERS/rev-b-newest2.md. HEAD a34597a4a.
+
+16:24Z LOAD (/proc/loadavg) 1.53 1.84 1.86. HEAD 491aaff0e. ROWS (branch | sha | state):
+B1 stop-state failures | cloud/core-b 6a688ae57 | DONE
+B2 money_definer failures + mutant baselines | cloud/core-b e337feb6e, 84fa98213 | DONE
+B3 audit_drain 7 + spend_reservations_pg 6 | cloud/core-b (T1/T2/F7/R1) | DONE
+B4 parallel-run isolation (W1) | cloud/core-b (inside 6a688ae57) | DONE
+B5 A-audit-rights | local/code-MAB5 (worktree MAB5, base wip/cloud-core-b/merge-migrate 55df54150) | BUILDING (AB5 sonnet)
+B6 B2 live path reserve/settle | cloud/core-b 5931cf3b3, d070fda3d, a34597a4a | DONE
+B7 fresh reviewers | done for every merged diff (last: H3 round 2 clean, 5 minors); next: AB5's diff when it lands
+Also merged since 15:57Z: H3 (7a6d74f2f) + round 2 (9b7610007), M6 round 2 (fbebb390f), T1 contract cases (a1b9b077e), B2 review-2 fixes (a34597a4a).
+core-a rev-b-newest2.md: answered in handover/core-b/ANSWERS/rev-b-newest2.md (Major 1 and 2 FIXED in 9b7610007; Major 3 partly covered by M6, rest queued after the migrate.py merge). T1 decision: tests/contracts/test_t1_reserve_cap.py is core-b's base file; core-a's extra cases ported (25 passed with PG, no divergence), merged a1b9b077e; core-c drops its copy.
+Waiting for the lead's 'clean': wip/lead-b-migrate (merge prepared as wip/cloud-core-b/merge-migrate), wip/lead-b-ts-watermark (fix round 4 on the laptop). RUNNING: 1 agent (AB5).
+
+16:34Z LOAD 0.76 0.92 1.33. B5 audit-rights: builder AB5 has committed in /tmp/core-b-wt/MAB5 (docs d9fd303ca: limits closed, checkpoint role runbook, deploy order, 0012 in MIGRATIONS.md; mutants 52eaf9148 / 5a2a87c77: A5, A8, A9 killers); still running: migration+functions/role/tests pending report, not pushed. QUEUE.md: Q1-Q18 are old, all DONE or DROP/ledger (see rows above); READY item started now: TA (sonnet, MTA, since 16:34Z): the loud tick alert for expired-unreleased holds (hostile re-read M4 follow-up: one read-only definer function hadavin_expired_holds, store method, tick step check_expired_holds, runbook). RUNNING: 2 (AB5, TA). Waiting for the lead: clean on wip/lead-b-migrate (fix round 1) and wip/lead-b-ts-watermark (round 4).
+
+16:38Z LOAD 2.00 1.54 1.47. B5 audit-rights (AB5, MAB5): commits so far 6 on top of the laptop-merge base; not pushed until it reports. TA (expired-hold alert, MTA) running. xr-from-core-a-3.md: not landed yet. RUNNING 2.
+
+16:51Z LOAD 0.39 1.13 1.45. B5 audit-rights BUILT (AB5, 7 commits, tip 8977977ab) and pushed as wip/cloud-core-b/audit-rights (base wip/cloud-core-b/merge-migrate 55df54150, i.e. includes the laptop's unreviewed migrate branch): 0012 outbox functions (done/quarantine, extra rule: no rename onto an existing row), checkpoint role (--checkpoint-role, checkpoint_dsn_secret_name, pilot/prod require it), runtime loses DELETE audit_outbox and INSERT audit_checkpoints, 2 xfail pins flipped, 10/10 mutants killed, tests: 980 passed/1 failed(fixed) in the migrate set, 2040 passed/9 failed(fixed, 114 re-run) in the wider set; 26 new tests. Known caveats AB5 is fixing now: unit tests for the 3 app.py refusals, close the checkpoint connection on refusal, loud warning for demo/dev checkpoint loss. FRESH REVIEWER RAB5 running (since 16:51Z, writes tickets/A-audit-rights-build-review-1.md). NOT on cloud/core-b: lands after wip/lead-b-migrate is clean. RUNNING 2 (AB5 caveats, RAB5).
+
+16:55Z LOAD 0.46 0.76 1.22 (ps pytest count 6). Lead order 16:55Z: P1 F-install (merge core-c 0e33c0641), P2 B5 = AB5 (branch pushed: wip/cloud-core-b/audit-rights fdf4b214e; left: its review's M1 texts, M2 quarantine collision, minors; then fresh reviewer), P3 F-store hostile fixes, P4 re-reviews, P5 hard ConfigError, P6 batch 3 after P1: all started or queued per the AGENTS table above. Each package ends with a fresh egm:* reviewer in sequence.
+
+17:02Z LOAD 2.68 2.16 1.67 (ps pytest 8). MERGED on cloud/core-b since 17:00Z: P3 (F-store hostile review status: 13 already fixed, 6 residual, 1 needs migrate.py -> lead-build-4 item 7), P7 router-429 under-count fix b6ab3d31e (+ round 2 minors running), re-review reports (D-config + provider mark, P7 review 2). WIP BRANCHES (not on cloud/core-b): wip/cloud-core-b/audit-rights tip 477cdb037 (B5 round 3 fixes: docs overclaim, close-on-failure, quarantine rename/dup counts, FOR UPDATE, runbook step 6; reviews 1-2 had no Blocker); wip/cloud-core-b/draft-upgrade b2cdc2941 (P5: hard ConfigError on a changed 0010/0011 checksum with roles named, unmapped-overload message, --reset-draft drops unmapped hadavin_* functions; 403 passed; fresh reviewer RP5 running); wip/cloud-core-b/merge-migrate 55df54150 (laptop's migrate branch merged). RUNNING: P1 (F-install + Limits.for_agent adapter + core-c F1-F3), P7 round 2, RP5 reviewer. Waiting for the lead: clean on wip/lead-b-migrate and wip/lead-b-ts-watermark.
+
+17:13Z LOAD 3.30 2.28 1.87, pytest procs (ps) 6. P1 (MP1) last commits (uncommitted files: 0):
+9dbe9b14f code F-install: mapping=NO_MAP at the eval and k1b sites, the run map to the judge (bind chain); drop core-c's T1 copy (it writes spend_reservations as the runtime login, which the grants flip refuses; core-b's test_t1_reserve_cap.py covers the cap)
+4bde120db docs F-install: ii-meter point 15 (Limits.for_agent), request to core-c on F1/F2/F3
+ce9af83bb code F-install: tests for Limits.for_agent / Budget.for_agent; core-c's P3 gate-store e2e test file (F1 passes with the adapter, F2 stays a strict xfail)
+bdb0c9cd4 code F-install: merge core-c f065c628e (SECURITY.md and CHANGELOG.md combined)
+adf11f7a6 code F-install: gate owns the one reserve/settle; Limits.for_agent / Budget.for_agent meter adapter; loop keeps its settle-failure rule via _RunMeter
+P5 (MP5) last commits (uncommitted files: 7):
+b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook)
+4f6ba2103 code F-store: migrate refuses a changed 0010/0011 draft when roles are named; actionable unmapped-function refusal; --reset-draft drops unmapped hadavin_* functions
+8296038d3 Merge origin/cloud/core-b into merge-migrate (keep caps role + M6/H3 round 2)
+8273ff1d0 docs core-b: audit rights build review 1
+wip/lead-b-ts-watermark 5c4d1faf8: NOT merged by me; assigned to P5 as the ONE builder (after its review fixes: strict NULL checksum, idempotent 0011 tables, quoting, dependent-object error, docs); I tell P5 the later commit when the lead says. P6 batch 3: waits for P1.
+
+17:17Z LOAD 2.54 2.53 2.08, pytest procs 7. P1 tip: 8c5569fad docs F-install: status, SECURITY.md spend-limits sentence follows the install | P5 tip: b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook). Both still running (P1 F-install gate/meter integration; P5 review fixes then the ts-watermark merge). Nothing newly merged on cloud/core-b since 5d2095124.
+
+17:20Z NOTE (idle fix, lead 17:20Z): I did NOT create a CronCreate cron. What I did: a background Bash loop (run_in_background, 2 h limit) that runs handover/core-b/tools/board.sh (pull --rebase, regenerate STATUS-BOARD, push) every 240 s under flock; it restarts whenever a turn of mine starts a new one (the earlier loops hit their 2 h limit). Agent reports still wake me by notification. LOAD 2.82 2.67 2.19. P1 tip: 8c5569fad docs F-install: status, SECURITY.md spend-limits sentence follows the install | P5 tip: b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook).
