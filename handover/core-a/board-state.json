@@ -37,17 +37,17 @@
   {
    "item": "T1",
    "what": "plan read-back",
-   "state": "RUNNING",
-   "percent": 50,
-   "evidence file": "PLAN-READBACK.md (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "PLAN-READBACK.md, QUESTIONS.md (10 questions)",
    "tries": 1,
-   "reason": "lookup agent reading inputs/ plans and round-3 reviews"
+   "reason": "written, 103 lines; 11 of 12 code facts verified in src, 1 does not match (count of test files building Runtime: review says 17, grep finds 7)"
   },
   {
    "item": "T2-E",
    "what": "ticket step E test helpers",
    "state": "RUNNING",
-   "percent": 15,
+   "percent": 30,
    "evidence file": "tickets/E-test-helpers.md (not yet)",
    "tries": 1,
    "reason": "started before T1 ended: lead note 05:20Z gave draft tickets, see DECISIONS"
@@ -56,7 +56,7 @@
    "item": "T2-D",
    "what": "ticket step D signed endpoint + worker + n8n template",
    "state": "RUNNING",
-   "percent": 15,
+   "percent": 30,
    "evidence file": "tickets/D-signed-endpoint.md (not yet)",
    "tries": 1,
    "reason": "starts from lead draft inputs/draft-tickets-C-D.md, checks every cited line"
@@ -118,17 +118,17 @@
    "model": "fable",
    "what exactly it is doing": "T1: reads plan-v2, v3, v4-final and round-3 reviews, writes PLAN-READBACK.md",
    "started UTC": "05:19",
-   "expected end": "05:31",
-   "percent": 50,
-   "state": "running",
+   "expected end": "ended 05:24",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "queue item T1 READY"
+   "reason": "finished, 119k tokens, PLAN-READBACK.md written"
   },
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 15,
+   "percent": 30,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -141,7 +141,7 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 15,
+   "percent": 30,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -157,6 +157,7 @@
  "loops": [],
  "lost": [],
  "lead_actions": [
-  "none right now"
+  "QUESTIONS.md has 10 questions with a recommended answer each; 1, 9 and 10 need a lead word, the rest are decided in ticket D unless the lead says otherwise",
+  "interface (i) of core-b is needed in inputs/ before queue item T4 can start"
  ]
 }
