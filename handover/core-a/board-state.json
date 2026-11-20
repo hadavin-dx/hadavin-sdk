@@ -707,17 +707,43 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "e1-fix2",
-   "role": "builder",
+   "id": "mut17",
+   "role": "builder (mutants)",
    "model": "sonnet",
-   "what exactly it is doing": "E1 review Majors 1-4 + test gaps + nits; one test run; bandit line",
-   "started UTC": "09:52",
+   "what exactly it is doing": "anchors re-checked, mutants for the e1-fix2 guards, ONE full mutant run 17 (E1, E5/E11, all)",
+   "started UTC": "10:03",
    "expected end": "25 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "fix after round 1 (no cap)",
+   "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "after E1-rev"
+   "reason": "tree quiet"
+  },
+  {
+   "id": "E1-rev2",
+   "role": "fresh reviewer (design)",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 round 2: are the 4 Major fixes real, new bugs from the fixes (pending flags, locks, exit codes, logs)",
+   "started UTC": "10:03",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2, no cap (behaviour-changing)",
+   "retries so far": 0,
+   "reason": "after e1-fix2"
+  },
+  {
+   "id": "flake",
+   "role": "investigator",
+   "model": "sonnet",
+   "what exactly it is doing": "rare flake test_memory_raise_at_point[propose01-store.create_run-1-before]: code race or test race (read + 2 runs)",
+   "started UTC": "10:03",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "1 failure in 1364 under -n 3"
   }
  ],
  "tests": [
@@ -1138,7 +1164,7 @@
   "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
- "failed": "09:58 UTC, none in my own files. Last independent whole suite (BATCH7, before E1): 12 failed = 10 strict-mode by design in the checkout (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree core-b 2bdbba391: 1327 passed 0 failed) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket). Builder run after E1: tests/triggers+crash 1352 passed 5 skipped.",
+ "failed": "10:03 UTC: 1 failed in my last builder run: tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose01-store.create_run-1-before] (tick left NEEDS_PERSON/approval_missing; passed 4 reruns): a RARE FLAKE under investigation (agent flake): I will not skip or weaken it; verdict in FINDINGS-flake-crash-matrix.md. Everything else 1363 passed, 5 skipped. Last independent whole suite BATCH7: see lead_actions.",
  "interrupted": "Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md",
  "agents_done": [
   {
@@ -2546,6 +2572,19 @@
    "retries so far": 0,
    "reason": "mutants G32a-j (E1) written and hand-probed (all fail their killer on a temp copy); G30a/b, G31 not run; the full run (run 17) is redone after e1-fix2",
    "what_exactly_it_is_doing": "told to stop the full mutant run (tree changes under e1-fix2); keeps its mutant edits; full run redone after the fixes"
+  },
+  {
+   "id": "e1-fix2",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 review Majors 1-4 + test gaps + nits; one test run; bandit line",
+   "started UTC": "09:52",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix after round 1 (no cap)",
+   "retries so far": 0,
+   "reason": "E1 review Majors 1-4 + test gaps + nits fixed: close App stores on every failed try, ping assigned after start, bounded audit write (2 s, one pending), 5 non-store recovery failures = exit 3, ack_wait nit; 12 new tests, kill checks by scratch mutants; tests/triggers+crash 1363 passed 1 failed 5 skipped: the failure is a RARE FLAKE test_t5_crash_matrix_paths::test_memory_raise_at_point[propose01-store.create_run-1-before] (passed 4 reruns): under investigation; bandit: no issues"
   }
  ]
 }
