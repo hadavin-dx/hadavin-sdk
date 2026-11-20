@@ -1,0 +1,212 @@
+=== F-store tests evidence, HEAD 21c869b + five new test files, 2026-11-20T06:18:46Z
+
+=== ruff check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+=== ruff format --check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+5 files already formatted
+
+=== pytest WITH HADAVIN_TEST_PG_DSN (PostgreSQL 16.15)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 15%]
+........................................................................ [ 30%]
+........................................................................ [ 45%]
+........................................................................ [ 61%]
+........................................................................ [ 76%]
+........................................................................ [ 91%]
+.......................................                                  [100%]
+471 passed in 52.04s
+
+=== pytest WITHOUT HADAVIN_TEST_PG_DSN
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.s.s.s.s.s.s.s.s.s.s.s.....sssss.s.s....ssss.s..................ssssssss [ 15%]
+ssssssssss..................ssssssssssssssssss.....sssss.s.............. [ 30%]
+......s.s.s.s....ssss.s.s.s.s...sss.s.s.s..ss..ss.s..s.s..sssssss....... [ 45%]
+.............................................................sssssssssss [ 61%]
+sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss........ss. [ 76%]
+........................................................................ [ 91%]
+.......................................                                  [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_store_spend.py:134: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:153: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:161: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:169: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:180: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:185: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:191: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:199: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:208: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:218: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:232: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [5] tests/contracts/test_store_spend.py:244: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:255: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:265: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [4] tests/contracts/test_store_spend.py:274: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:289: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [18] tests/contracts/test_store_spend.py:324: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [18] tests/contracts/test_store_spend.py:332: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [5] tests/contracts/test_store_spend.py:344: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:356: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:385: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:398: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:413: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:421: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [4] tests/contracts/test_store_spend.py:429: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:445: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:453: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:475: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:485: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [3] tests/contracts/test_store_spend.py:492: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:508: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:524: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:553: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/contracts/test_store_spend.py:577: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/contracts/test_store_spend.py:590: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:603: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:645: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_spend.py:654: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:144: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:161: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:171: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:181: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:198: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:209: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:232: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:178: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:198: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_spend_reservations_pg.py:234: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:259: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [3] tests/test_spend_reservations_pg.py:268: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:299: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:310: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:325: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:374: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_spend_reservations_pg.py:400: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_spend_reservations_pg.py:426: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:446: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:463: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:494: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [26] tests/test_spend_reservations_pg.py:554: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:562: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:585: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:598: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [18] tests/test_spend_reservations_pg.py:621: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_spend_reservations_pg.py:634: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:650: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:660: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:668: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:682: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:862: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_spend_reservations_pg.py:874: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+300 passed, 171 skipped in 5.63s
+
+=== tests/test_no_reference_material.py
+E       assert not ["handover/BRIEF-PREAMBLE.md: '[vendor name removed by core-b so the repo's own guard test passes]'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+1 failed, 2 passed in 0.19s
+
+=== mutants, runner list M (no database): python tests/reserve_mutants.py
+ok  KILLED       M1 memory: the day cap clause is removed  [test_one_micro_dollar_over_the_day_cap_is_refused_with_which_day]
+ok  KILLED       M2 memory: the month cap clause is removed  [test_the_month_cap_binds_when_it_is_the_lower_one]
+ok  CRASH        M3 memory: <= becomes < on the day cap  [test_a_reserve_that_reaches_the_cap_exactly_passes]
+ok  CRASH        M3 memory: <= becomes < on the month cap  [test_the_month_cap_binds_when_it_is_the_lower_one]
+ok  KILLED       M4 memory: booked < day_cap is removed  [test_a_budget_of_zero_refuses_even_an_amount_of_zero]
+ok  KILLED       M4 memory: month < month_cap is removed  [test_a_budget_of_zero_refuses_even_an_amount_of_zero]
+ok  KILLED       M7 memory: a settled row is claimed again  [test_settle_twice_the_first_wins_and_the_second_changes_nothing[0.40]]
+ok  KILLED       M8 memory: the delta sign is flipped  [test_settle_lower_equal_and_higher_books_the_actual_amount[0]]
+ok  KILLED       M9 memory: settle books on today's day  [test_a_settle_on_the_next_day_moves_only_the_day_and_month_of_the_reserve[0.40]]
+ok  KILLED       M11 memory: expire sets settled_usd to 0  [test_expire_closes_old_rows_only_and_the_counters_do_not_move]
+ok  KILLED       M11 memory: expire lowers the counters  [test_expire_with_age_zero_closes_every_open_row_with_the_totals_unchanged]
+ok  KILLED       M12 memory: expire ignores the age  [test_expire_leaves_young_rows_alone]
+ok  KILLED       M13 memory: the counters go down after expiry  [test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters[0.40]]
+ok  KILLED       M14 memory: the actual amount is clamped to the reserved one  [test_settle_lower_equal_and_higher_books_the_actual_amount[1.75]]
+ok  KILLED       M19 memory: purge deletes open rows  [test_purge_with_a_cutoff_in_the_future_still_keeps_open_rows]
+ok  KILLED       M20 memory: the run cost update is removed  [test_settle_adds_the_actual_amount_to_the_cost_of_a_run_that_exists]
+ok  KILLED       M21 memory: the booked amount ignores the prior status  [test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters[0.40]]
+ok  KILLED       M9b amount helper: the exponent bounds are removed  [test_the_amount_helper_refuses_every_hostile_amount[huge_exponent_zero]]
+ok  KILLED       M9c amount helper: a Decimal subclass is accepted  [test_the_amount_helper_returns_a_good_amount_unchanged]
+ok  KILLED       M15 Limits.reserve returns an id after a store error  [test_a_store_that_raises_in_reserve_spend_is_limits_unavailable[key_error]]
+ok  KILLED       M16 Limits.reserve skips the stop state  [test_the_stop_state_refuses_with_kill_switch_and_nothing_is_booked]
+ok  KILLED       M16b Limits.reserve does not check the amount  [test_a_hostile_amount_is_bad_amount_and_the_store_is_never_asked[bool]]
+ok  CRASH        M16c Limits.reserve looks the agent up after the stop state  [test_an_unknown_agent_is_a_key_error_even_while_the_stop_state_is_on]
+ok  KILLED       M16d Limits.settle audits a replay again  [test_an_overshoot_is_booked_in_full_returned_and_audited_once]
+ok  KILLED       M16e Limits.settle takes the overshoot from the request, not the stored row  [test_an_overshoot_is_booked_in_full_returned_and_audited_once]
+ok  CRASH        M16f Limits.settle lets an audit failure through  [test_a_raising_audit_sink_does_not_make_settle_raise]
+ok  KILLED       M18 the tick step row is removed  [test_the_step_is_the_last_one_and_comes_after_audit_drain]
+ok  KILLED       M18b the expiry age takes the smallest stuck-run age  [test_the_expiry_age_with_two_agents_is_the_larger_of_their_quiet_times]
+ok  KILLED       M18c the expiry age is the bare default  [test_the_expiry_age_with_two_agents_is_the_larger_of_their_quiet_times]
+ok  KILLED       M18d the expiry age may fall below the default  [test_the_expiry_age_is_never_below_the_default]
+ok  KILLED       M18e the purge line is removed from the evidence purge  [test_the_evidence_purge_also_purges_closed_reservations_before_the_hook]
+by hand (--hand, needs PostgreSQL): H1 the day cap clause is removed -> test_t1_cap_3_and_worst_1_grants_exactly_3_of_50
+by hand (--hand, needs PostgreSQL): H2 the month cap clause is removed -> test_t1_the_month_cap_binds_when_it_is_the_lower_one
+by hand (--hand, needs PostgreSQL): H3 <= becomes < on the day cap -> test_a_reserve_that_reaches_the_cap_exactly_passes[postgres]
+by hand (--hand, needs PostgreSQL): H3 <= becomes < on the month cap -> test_the_month_cap_binds_when_it_is_the_lower_one[postgres]
+by hand (--hand, needs PostgreSQL): H4 usd < cap is removed on the day -> test_a_budget_of_zero_refuses_even_an_amount_of_zero[postgres]
+by hand (--hand, needs PostgreSQL): H4 usd < cap is removed on the month -> test_a_budget_of_zero_refuses_even_an_amount_of_zero[postgres]
+by hand (--hand, needs PostgreSQL): H5 the cap is checked by a SELECT, then an unconditional UPDATE books -> test_t1_cap_3_and_worst_1_grants_exactly_3_of_50
+by hand (--hand, needs PostgreSQL): H6 the reservation insert is outside the transaction -> test_a_refused_reserve_leaves_the_totals_and_the_rows_unchanged[postgres]
+by hand (--hand, needs PostgreSQL): H6 (crash form) a fault at the month UPDATE leaves the row and the day booking -> test_c3_a_fault_at_the_month_update_in_reserve_changes_nothing[raised]
+by hand (--hand, needs PostgreSQL): H7 the settle claim has no status test -> test_settle_twice_the_first_wins_and_the_second_changes_nothing[postgres-0.40]
+by hand (--hand, needs PostgreSQL): H8 the delta sign is flipped -> test_settle_lower_equal_and_higher_books_the_actual_amount[postgres-0]
+by hand (--hand, needs PostgreSQL): H9 settle books on today's day -> test_a_settle_when_the_clock_says_the_next_day_moves_only_the_reserved_day[postgres-0.40]
+by hand (--hand, needs PostgreSQL): H9 (no row for today) settle books on today's day -> test_a_settle_on_the_next_day_moves_only_the_day_and_month_of_the_reserve[postgres-0.40]
+by hand (--hand, needs PostgreSQL): H10 the month key is taken from today -> test_a_settle_when_the_clock_says_the_next_day_moves_only_the_reserved_day[postgres-0.40]
+by hand (--hand, needs PostgreSQL): H11 expire sets settled_usd to 0 -> test_expire_with_age_zero_closes_every_open_row_with_the_totals_unchanged[postgres]
+by hand (--hand, needs PostgreSQL): H12 expire ignores the age -> test_expire_leaves_young_rows_alone[postgres]
+by hand (--hand, needs PostgreSQL): H13 the counters go down after expiry -> test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters[postgres-0.40]
+by hand (--hand, needs PostgreSQL): H14 the actual amount is clamped to the reserved one -> test_settle_lower_equal_and_higher_books_the_actual_amount[postgres-1.75]
+by hand (--hand, needs PostgreSQL): H17 the runtime grant gains DELETE -> test_the_runtime_login_cannot_delete_or_truncate_reservations
+by hand (--hand, needs PostgreSQL): H19 purge deletes open rows -> test_purge_with_a_cutoff_in_the_future_still_keeps_open_rows[postgres]
+by hand (--hand, needs PostgreSQL): H20 the runs update is removed -> test_settle_adds_the_actual_amount_to_the_cost_of_a_run_that_exists[postgres]
+by hand (--hand, needs PostgreSQL): H21 the booked amount ignores the prior status -> test_a_settle_that_waits_for_an_uncommitted_expiry_sees_the_row_as_expired[0.25-1.00]
+by hand (--hand, needs PostgreSQL): H21 (contract form) the booked amount ignores the prior status -> test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters[postgres-0.40]
+by hand (--hand, needs PostgreSQL): H21 (race form) the booked amount ignores the prior status -> test_settle_racing_the_expire_step_never_lowers_a_booking[0.25]
+by hand (--hand, needs PostgreSQL): H21b the claim reads the status without the row lock -> test_a_settle_that_waits_for_an_uncommitted_expiry_sees_the_row_as_expired[0.25-1.00]
+by hand (--hand, needs PostgreSQL): H22 the session isolation SET is removed -> test_t1_with_a_role_default_of_repeatable_read_still_grants_exactly_3
+equivalent (not run): 19 (plain form) purge: `status <> 'open' AND` removed from the DELETE: an open row has closed_at NULL (table CHECK), so `closed_at < before` alone never matches it: see H19, M19
+equivalent (not run): 10 (memory form) the month key taken from today: the memory store keeps no month counter: the month is the sum over the days, so only M9 applies
+equivalent (not run): 6 (memory form) the reservation insert outside the transaction: the memory store checks both caps before it writes anything, under one lock: there is no partial state
+equivalent (not run): 5 (memory form) check by SELECT, then an unconditional UPDATE: one process, one lock around the check and the booking: the two steps cannot interleave
+equivalent (not run): 22 (memory form) the session isolation SET removed: the memory store has no session
+equivalent (not run): 17 (runner form) the runtime grant gains DELETE: a grant is only real in a database: see H17
+31 of 31 good; problems: []
+exit 0
+
+=== mutants, HAND list (PostgreSQL): python tests/reserve_mutants.py --hand
+ok  KILLED   | H1 the day cap clause is removed | src/hadavin_sdk/store/postgres.py | tests/contracts/test_t1_reserve_cap.py::test_t1_cap_3_and_worst_1_grants_exactly_3_of_50
+ok  KILLED   | H2 the month cap clause is removed | src/hadavin_sdk/store/postgres.py | tests/contracts/test_t1_reserve_cap.py::test_t1_the_month_cap_binds_when_it_is_the_lower_one
+ok  KILLED   | H3 <= becomes < on the day cap | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_reserve_that_reaches_the_cap_exactly_passes[postgres]
+ok  KILLED   | H3 <= becomes < on the month cap | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_the_month_cap_binds_when_it_is_the_lower_one[postgres]
+ok  KILLED   | H4 usd < cap is removed on the day | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_budget_of_zero_refuses_even_an_amount_of_zero[postgres]
+ok  KILLED   | H4 usd < cap is removed on the month | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_budget_of_zero_refuses_even_an_amount_of_zero[postgres]
+ok  KILLED   | H5 the cap is checked by a SELECT, then an unconditional UPDATE books | src/hadavin_sdk/store/postgres.py | tests/contracts/test_t1_reserve_cap.py::test_t1_cap_3_and_worst_1_grants_exactly_3_of_50
+ok  KILLED   | H6 the reservation insert is outside the transaction | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_refused_reserve_leaves_the_totals_and_the_rows_unchanged[postgres]
+ok  KILLED   | H6 (crash form) a fault at the month UPDATE leaves the row and the day booking | src/hadavin_sdk/store/postgres.py | tests/test_spend_reservations_pg.py::test_c3_a_fault_at_the_month_update_in_reserve_changes_nothing[raised]
+ok  KILLED   | H7 the settle claim has no status test | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_settle_twice_the_first_wins_and_the_second_changes_nothing[postgres-0.40]
+ok  KILLED   | H8 the delta sign is flipped | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_settle_lower_equal_and_higher_books_the_actual_amount[postgres-0]
+ok  KILLED   | H9 settle books on today's day | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_settle_when_the_clock_says_the_next_day_moves_only_the_reserved_day[postgres-0.40]
+ok  KILLED   | H9 (no row for today) settle books on today's day | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_settle_on_the_next_day_moves_only_the_day_and_month_of_the_reserve[postgres-0.40]
+ok  KILLED   | H10 the month key is taken from today | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_a_settle_when_the_clock_says_the_next_day_moves_only_the_reserved_day[postgres-0.40]
+ok  KILLED   | H11 expire sets settled_usd to 0 | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_expire_with_age_zero_closes_every_open_row_with_the_totals_unchanged[postgres]
+ok  KILLED   | H12 expire ignores the age | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_expire_leaves_young_rows_alone[postgres]
+ok  KILLED   | H13 the counters go down after expiry | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters[postgres-0.40]
+ok  KILLED   | H14 the actual amount is clamped to the reserved one | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_settle_lower_equal_and_higher_books_the_actual_amount[postgres-1.75]
+ok  KILLED   | H17 the runtime grant gains DELETE | src/hadavin_sdk/store/migrate.py | tests/test_spend_reservations_pg.py::test_the_runtime_login_cannot_delete_or_truncate_reservations
+ok  KILLED   | H19 purge deletes open rows | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_purge_with_a_cutoff_in_the_future_still_keeps_open_rows[postgres]
+ok  KILLED   | H20 the runs update is removed | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_settle_adds_the_actual_amount_to_the_cost_of_a_run_that_exists[postgres]
+ok  KILLED   | H21 the booked amount ignores the prior status | src/hadavin_sdk/store/postgres.py | tests/test_spend_reservations_pg.py::test_a_settle_that_waits_for_an_uncommitted_expiry_sees_the_row_as_expired[0.25-1.00]
+ok  KILLED   | H21 (contract form) the booked amount ignores the prior status | src/hadavin_sdk/store/postgres.py | tests/contracts/test_store_spend.py::test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters[postgres-0.40]
+ok  KILLED   | H21 (race form) the booked amount ignores the prior status | src/hadavin_sdk/store/postgres.py | tests/test_spend_reservations_pg.py::test_settle_racing_the_expire_step_never_lowers_a_booking[0.25]
+ok  KILLED   | H21b the claim reads the status without the row lock | src/hadavin_sdk/store/postgres.py | tests/test_spend_reservations_pg.py::test_a_settle_that_waits_for_an_uncommitted_expiry_sees_the_row_as_expired[0.25-1.00]
+ok  KILLED   | H22 the session isolation SET is removed | src/hadavin_sdk/store/postgres.py | tests/contracts/test_t1_reserve_cap.py::test_t1_with_a_role_default_of_repeatable_read_still_grants_exactly_3
+equivalent (not run): 19 (plain form) purge: `status <> 'open' AND` removed from the DELETE: an open row has closed_at NULL (table CHECK), so `closed_at < before` alone never matches it: see H19, M19
+equivalent (not run): 10 (memory form) the month key taken from today: the memory store keeps no month counter: the month is the sum over the days, so only M9 applies
+equivalent (not run): 6 (memory form) the reservation insert outside the transaction: the memory store checks both caps before it writes anything, under one lock: there is no partial state
+equivalent (not run): 5 (memory form) check by SELECT, then an unconditional UPDATE: one process, one lock around the check and the booking: the two steps cannot interleave
+equivalent (not run): 22 (memory form) the session isolation SET removed: the memory store has no session
+equivalent (not run): 17 (runner form) the runtime grant gains DELETE: a grant is only real in a database: see H17
+26 of 26 good; problems: []
