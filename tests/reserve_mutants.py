@@ -52,6 +52,7 @@ PG = "src/hadavin_sdk/store/postgres.py"
 PROTO = "src/hadavin_sdk/store/protocol.py"
 LIM = "src/hadavin_sdk/limits.py"
 TICK = "src/hadavin_sdk/runtime/tick.py"
+MODELS = "src/hadavin_sdk/models.py"
 MIG = "src/hadavin_sdk/store/migrate.py"
 SQL11 = (
     "src/hadavin_sdk/store/migrations/0011_money_definer.sql"  # the SQL of the bookings (step 3)
@@ -141,8 +142,8 @@ def mutant(name, file, old, new, killer, expect, crash=""):
 
 
 # --- M: run by the mutation runner, no database ----------------------------------------------------------------------
-M_DAY = "            if not (booked < day_cap and booked + usd <= day_cap):"
-M_MONTH = "            if not (month < month_cap and month + usd <= month_cap):"
+M_DAY = "            if not day_ok:"
+M_MONTH = "            if not month_ok:"
 M_BOOK = "            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd"
 M_BOOKED = '            booked = max(actual_usd, row.reserved_usd) if row.status == "expired" else actual_usd'
 M_EXPIRE_LOOP = (
@@ -188,19 +189,19 @@ M = [
         M_BOOKED.replace("else actual_usd", "else min(actual_usd, row.reserved_usd)"),
         SETTLE + "[1.75]", "assert ('settled', D"),
     mutant("M19 memory: purge deletes open rows", MEM,
-        'if r.status != "open" and r.closed_at is not None and r.closed_at < before',
-        'if r.status == "open" or (r.closed_at is not None and r.closed_at < before)',
+        'if r.status == "settled" and r.closed_at is not None and r.closed_at < before',
+        'if r.status == "open" or (r.status == "settled" and r.closed_at is not None and r.closed_at < before)',
         PURGE_OPEN, "assert 2 == 1"),
     mutant("M20 memory: the run cost update is removed", MEM,
-        "            if run is not None:  # a missing run row moves only the counters", "            if False:",
+        "                    if run is not None\n                    else None", "                    if False\n                    else None",
         RUN_COST, "Decimal('0.40')"),
     mutant("M21 memory: the booked amount ignores the prior status", MEM, M_BOOKED,
         "            booked = actual_usd",
         LATE_LOW + "[0.40]", "assert ('settled', D"),
-    mutant("M9b amount helper: the exponent bounds are removed", PROTO,
+    mutant("M9b amount helper: the exponent bounds are removed", MODELS,
         "        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT\n", "",
         HELPER + "[huge_exponent_zero]", NOT_RAISED),
-    mutant("M9c amount helper: a Decimal subclass is accepted", PROTO,
+    mutant("M9c amount helper: a Decimal subclass is accepted", MODELS,
         "type(usd) is not Decimal", "not isinstance(usd, Decimal)",
         HELPER_TYPE, NOT_RAISED),
     mutant("M15 Limits.reserve returns an id after a store error", LIM,
@@ -213,8 +214,11 @@ M = [
         '            raise SpendRefused("bad_amount") from None', "            pass",
         BAD_AMOUNT + "[bool]", "limits_unavailable"),
     mutant("M16c Limits.reserve looks the agent up after the stop state", LIM,
-        "        budget = self.registry.agents[agent_id].budget_usd\n        try:\n",
-        "        try:\n            budget = self.registry.agents[agent_id].budget_usd\n",
+        "        try:\n            budget = self.registry.agents[agent_id].budget_usd\n"
+        "        except TypeError:  # an unhashable agent id\n            raise KeyError(agent_id) from None\n"
+        "        try:\n            if self.store.get_kill_switch().on:\n                raise SpendRefused(\"kill_switch\")\n",
+        "        try:\n            if self.store.get_kill_switch().on:\n                raise SpendRefused(\"kill_switch\")\n"
+        "            budget = self.registry.agents[agent_id].budget_usd\n",
         UNKNOWN, "limits_unavailable", crash="SpendRefused"),
     mutant("M16d Limits.settle audits a replay again", LIM,
         "        if applied and over > 0:", "        if over > 0:",
@@ -230,16 +234,16 @@ M = [
         '    TickStep("expire_reservations", 0, expire_reservations),\n', "",
         LAST_STEP, "['sweep', 'reconcile'"),
     mutant("M18b the expiry age takes the smallest stuck-run age", TICK,
-        "longest = max((stuck_after_s(app, a) for a in app.registry.agents), default=0)",
-        "longest = min((stuck_after_s(app, a) for a in app.registry.agents), default=0)",
+        "longest = max(ages, default=0)",
+        "longest = min(ages, default=0)",
         TWO_AGENTS, "assert 3600 == 24060"),
     mutant("M18c the expiry age is the bare default", TICK,
-        "    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))",
+        "    return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))",
         "    return defaults.RESERVATION_EXPIRE_S",
         TWO_AGENTS, "assert 3600 == 24060"),
     mutant("M18d the expiry age may fall below the default", TICK,
-        "    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))",
-        "    return math.ceil(longest) or defaults.RESERVATION_EXPIRE_S",
+        "    return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))",
+        "    return min(MAX_EXPIRY_AGE_S, math.ceil(longest) or defaults.RESERVATION_EXPIRE_S)",
         FLOOR, "== 3600"),
     mutant("M18e the purge line is removed from the evidence purge", TICK,
         "    reservations = store.purge_spend_reservations(\n"

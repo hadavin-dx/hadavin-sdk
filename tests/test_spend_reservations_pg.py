@@ -753,12 +753,27 @@ def _longest_quiet_s(max_steps, call_timeout_s, max_attempts):
     return max_steps * call_timeout_s * max_attempts + 60
 
 
+# By name, never by position. A list filter, not `next`: with the step removed, the order test below still
+# fails with the real list instead of the whole module failing on import.
+_EXPIRE_STEP = ([s for s in tick.STEPS if s.name == "expire_reservations"] or [None])[0]
+
+
 def test_the_step_is_the_last_one_and_comes_after_audit_drain():
+    """Kept name: the step is now second to last; check_caps follows it. The whole order, in one place."""
     names = [s.name for s in tick.STEPS]
-    assert names[-1] == "expire_reservations", names
-    assert names.count("expire_reservations") == 1
+    assert names == [
+        "sweep",
+        "reconcile",
+        "stuck",
+        "checkpoint",
+        "purge_evidence",
+        "reprobe_sources",
+        "audit_drain",
+        "expire_reservations",
+        "check_caps",
+    ], names
     assert names.index("audit_drain") < names.index("expire_reservations")
-    last = tick.STEPS[-1]
+    last = _EXPIRE_STEP
     assert last.fn is tick.expire_reservations and last.every_s == 0 and last.interval is None
 
 
@@ -769,7 +784,7 @@ def test_the_step_expires_old_reservations_and_keeps_young_ones_and_the_totals()
     old, young = _reserve(store, "1.00"), _reserve(store, "0.25")
     _older(store, old, age + 5)
     _older(store, young, age - 600)
-    assert run_tick(app, now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, now=now(), steps=[_EXPIRE_STEP]) == 0
     rows = _rows(store)
     assert (rows[old].status, rows[old].settled_usd) == ("expired", D("1.00"))
     assert rows[young].status == "open"
@@ -786,10 +801,10 @@ def test_the_step_uses_the_longer_age_while_a_run_could_still_be_working():
     _older(
         store, rid, defaults.RESERVATION_EXPIRE_S + 600
     )  # past the default, inside the run's quiet time
-    assert run_tick(app, now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, now=now(), steps=[_EXPIRE_STEP]) == 0
     assert _rows(store)[rid].status == "open"
     _older(store, rid, _longest_quiet_s(200, 60, 2))
-    assert run_tick(app, now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, now=now(), steps=[_EXPIRE_STEP]) == 0
     assert _rows(store)[rid].status == "expired"
 
 
@@ -803,7 +818,7 @@ def test_a_failing_store_marks_the_step_failed_and_the_other_steps_still_run(cap
     store.expire_spend_reservations = down
     steps = [
         TickStep("before", 0, lambda ctx: ran.append("before")),
-        tick.STEPS[-1],
+        _EXPIRE_STEP,
         TickStep("after", 0, lambda ctx: ran.append("after")),
     ]
     with caplog.at_level("INFO", logger="hadavin_sdk.tick"):
@@ -883,7 +898,7 @@ def test_the_step_runs_as_the_runtime_login_and_expires_only_old_rows(w):
     old, young = _reserve(rt, "1.00"), _reserve(rt, "0.25")
     _age(w, old, defaults.RESERVATION_EXPIRE_S + 5)
     _age(w, young, defaults.RESERVATION_EXPIRE_S - 600)
-    assert run_tick(_app(rt), now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(_app(rt), now=now(), steps=[_EXPIRE_STEP]) == 0
     assert _table(w) == {old: ("expired", D("1.00"), D("1.00")), young: ("open", D("0.25"), None)}
     assert _counters(w) == (D("1.25"), D("1.25"))
     assert rt.get_tick_state("expire_reservations").last_error is None
@@ -902,7 +917,7 @@ def test_the_step_fails_and_the_next_step_runs_when_the_runtime_login_lost_its_e
         w.runtime,
     )
     ran = []
-    steps = [tick.STEPS[-1], TickStep("after", 0, lambda ctx: ran.append("after"))]
+    steps = [_EXPIRE_STEP, TickStep("after", 0, lambda ctx: ran.append("after"))]
     assert run_tick(_app(rt), now=now(), steps=steps) == 1
     assert ran == ["after"]
     assert rt.get_tick_state("expire_reservations").last_error.startswith("InsufficientPrivilege")

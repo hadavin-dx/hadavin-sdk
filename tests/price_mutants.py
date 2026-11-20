@@ -81,7 +81,12 @@ CEILING = (
     '            raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")\n'
 )
 DECIMALS = (
-    '        if v != v.quantize(Decimal("1E-6")):\n'
+    "        try:\n"
+    "            with localcontext(defaults.money_context()):  # not the caller's precision\n"
+    '                fine = v == v.quantize(Decimal("1E-6"))\n'
+    "        except ArithmeticError as exc:\n"
+    '            raise ValueError("a price could not be checked for decimal places") from exc\n'
+    "        if not fine:\n"
     '            raise ValueError("a price may have at most 6 decimal places")\n'
 )
 PLAIN = "        if v is not None and not text and (not isinstance(v, date) or isinstance(v, datetime)):"

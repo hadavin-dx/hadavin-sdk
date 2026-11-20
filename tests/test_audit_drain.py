@@ -104,8 +104,8 @@ def test_n1_audit_drain_is_the_last_tick_step():
     names = [s.name for s in tick.STEPS]
     assert names.count(STEP) == 1  # first: without the row this fails here, not in the lookup below
     assert next(s for s in tick.STEPS if s.name == STEP).every_s == 0
-    # audit_drain comes before expire_reservations, which is the last step
-    assert names[-2:] == [STEP, "expire_reservations"]
+    # audit_drain comes before expire_reservations and check_caps, which is the last step
+    assert names[-3:] == [STEP, "expire_reservations", "check_caps"]
 
 
 def test_n2_one_tick_writes_a_parked_outcome_to_the_chain(app, monkeypatch, caplog):
