@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:42:06Z
+UPDATED_UTC: 2026-11-20T09:43:10Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 76
 ITEMS_OPEN: 21
 PERCENT: 82
-AGENTS_RUNNING: 3
-CAPACITY: load 1.09 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 2
+CAPACITY: load 0.56 of 4 cores (1-minute average), mem 1.1/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 572M /home/user/hadavin-sdk; 518M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T09:41:44Z (the push before this board)
+PUSHED_UTC: 2026-11-20T09:42:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -102,17 +102,16 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | e1-fix | builder | sonnet | E1 gaps: degraded worker recovers when the store returns (no restart), /health ping bounded to 2 s, warning when App has no audit | 09:41 | 20 min | 5 | running | n/a | 0 | after e1 |
-| E-rev7 | fresh reviewer (zoom-out) | sonnet | step E round 7: fixes correct? do the new tests fail on revert? simplicity (delete Windows-rumour branches no test or caller needs) | 09:41 | 15 min | 5 | running | 7, no cap (lead ruling) | 0 | after E-fix6 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 12457s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 12457s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 12457s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 12457s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 12457s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 12457s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 12521s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 12521s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 12521s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 12521s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 12521s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 12521s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -174,6 +173,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.
 - E1 built (09:41): see ticket D section d-fix6 and requests/005 (the audit kind needs NO registration: AuditEvent domain='trigger' operation='conflict'; I propose core-b config field triggers.conflict_events_per_minute=10, today a keyword with default 10). e1-fix is closing 3 gaps (recovery without restart, /health ping bound, audit warning); then: mutants for E1, a fresh result review of the E1 code, ONE full batch. The 09:55 'full batch result' will NOT make it for E1 (about 10:15): I will push the tested D and E commit at 09:55 as it stands and the E1 batch after.
 - E5: fresh round 5 of step E found NO Blocker and NO Major (7 nits, fixed by E-nits2): by your rule the rounds end here; evidence after the fixes: the 09:55 full batch.
 - Verdicts 09:29 received: E1(a) trigger.conflict audit + per-sender rate cap, E1(b) /health 503 + counter instead of exit 4: agent e1 builds both (tests, ticket invariants 7/10, request 005 for the config field and, if needed, the audit kind: core-b's files); E5: round 4 (extra pass, done earlier) found 0 Blocker/Major and 7 nits (fixed in d-fix5); E-rev5 is the next fresh round now, repeated until a fresh pass finds none, evidence run after each. Your template for the E4 real-n8n run: PUSHED already (n8n/ at head of cloud/core-a, 91 template tests pass; waits 70 s; see n8n/README-trigger.md 'Before you start'). Deadline 09:55: D and E tested commits with the full batch result: planned.

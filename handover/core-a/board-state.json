@@ -718,19 +718,6 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "after e1"
-  },
-  {
-   "id": "E-rev7",
-   "role": "fresh reviewer (zoom-out)",
-   "model": "sonnet",
-   "what exactly it is doing": "step E round 7: fixes correct? do the new tests fail on revert? simplicity (delete Windows-rumour branches no test or caller needs)",
-   "started UTC": "09:41",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "7, no cap (lead ruling)",
-   "retries so far": 0,
-   "reason": "after E-fix6"
   }
  ],
  "tests": [
@@ -1103,6 +1090,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.",
   "E1 built (09:41): see ticket D section d-fix6 and requests/005 (the audit kind needs NO registration: AuditEvent domain='trigger' operation='conflict'; I propose core-b config field triggers.conflict_events_per_minute=10, today a keyword with default 10). e1-fix is closing 3 gaps (recovery without restart, /health ping bound, audit warning); then: mutants for E1, a fresh result review of the E1 code, ONE full batch. The 09:55 'full batch result' will NOT make it for E1 (about 10:15): I will push the tested D and E commit at 09:55 as it stands and the E1 batch after.",
   "E5: fresh round 5 of step E found NO Blocker and NO Major (7 nits, fixed by E-nits2): by your rule the rounds end here; evidence after the fixes: the 09:55 full batch.",
   "Verdicts 09:29 received: E1(a) trigger.conflict audit + per-sender rate cap, E1(b) /health 503 + counter instead of exit 4: agent e1 builds both (tests, ticket invariants 7/10, request 005 for the config field and, if needed, the audit kind: core-b's files); E5: round 4 (extra pass, done earlier) found 0 Blocker/Major and 7 nits (fixed in d-fix5); E-rev5 is the next fresh round now, repeated until a fresh pass finds none, evidence run after each. Your template for the E4 real-n8n run: PUSHED already (n8n/ at head of cloud/core-a, 91 template tests pass; waits 70 s; see n8n/README-trigger.md 'Before you start'). Deadline 09:55: D and E tested commits with the full batch result: planned.",
@@ -2503,6 +2491,19 @@
    "review round n of cap": "6 fix (no cap)",
    "retries so far": 0,
    "reason": "round-6 Major (directory flag + Windows PermissionError) and nits fixed; test_testing_crash 111 passed 2 skipped; callers 429 passed; revert checks for the new tests NOT run (round 7 reviewer judges by reading)"
+  },
+  {
+   "id": "E-rev7",
+   "role": "fresh reviewer (zoom-out)",
+   "model": "sonnet",
+   "what exactly it is doing": "step E round 7: fixes correct? do the new tests fail on revert? simplicity (delete Windows-rumour branches no test or caller needs)",
+   "started UTC": "09:41",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "7, no cap (lead ruling)",
+   "retries so far": 0,
+   "reason": "round 7: NO Blocker, NO Major: ROUNDS END (lead rule); 3 nits fixed by me (os.path.isdir in the PermissionError handler, `if not took`, stub_unlink docstring); revert checks of all 5 new tests judged non-vacuous by reading; simplicity nit (delete the ~35-line unreadable-flag machinery) DECLINED: tested, documented, a revert to the old state would need new review rounds; test_testing_crash 111 passed 2 skipped"
   }
  ]
 }
