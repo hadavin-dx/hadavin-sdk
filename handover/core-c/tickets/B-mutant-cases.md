@@ -1,62 +1,47 @@
 # B-mutant-cases: mutants for plan step B and the test that kills each
 
-Written 2026-11-20 by the test-writer of core-c (not the builder of step B). Test file:
-`tests/test_grants_negative_roles.py` (short name below: T). "Case n" is entry n of the list "Cases to enable when
-step B lands" in the docstring of T: it is NOT code yet, because it needs a role, table or migration name that
-step B has not chosen.
-
-Status words: KILLED = a test in T fails today when the mutant is applied (the first row was run, see the end);
-KILLED-PG = the same, but only with `HADAVIN_TEST_PG_DSN` set; XFAIL = the test exists, is marked
-`xfail(strict=True)` and turns red when step B makes it pass (remove the marker then); TO ENABLE = not code.
+Revised 2026-11-20 by the test-writer of core-c (not the builder of step B, which is core-b). Test file:
+`tests/test_grants_negative_roles.py` (T). The 12 former "cases to enable" are real tests now (docstring of T);
+they run when `STEP_B` is true (`migrate()` takes `reset_role`) and skip with a reason on main's tree.
+"APPLIED" = the mutant was applied by hand in the worktree of core-b 576f292 (never in /home/user/hadavin-sdk/src),
+run with PostgreSQL 16, and the named tests failed; see `evidence/B-grants-rework.md` for the raw lists.
+"NOT APPLIED" = the killing test exists and is green on the real code, the mutant itself was not run.
+Test names are shortened to the part after `test_`.
 
 | # | Mutant | Killed by | Status |
 |---|---|---|---|
-| 1 | A grant row gets wider in `GRANTS` (any role, any table, any write privilege; example: `purge="UPDATE"` or `portal=True` on `kill_switch`) | T `test_every_write_privilege_is_on_the_reviewed_list`, `test_only_the_runtime_role_holds_anything_on_the_stop_table`, `test_the_portal_role_writes_nothing_and_reads_no_secret_or_control_table`, `test_the_purge_role_holds_delete_only_and_no_whole_table_read` | KILLED (run) |
-| 2 | Grant UPDATE on the stop table to the runtime role (the state of main: `migrate.py:55`) | T `test_step_b_the_grant_map_gives_the_runtime_role_no_way_to_switch_the_stop_off`; T `test_pg_step_b_the_runtime_role_cannot_switch_the_stop_off` (plain UPDATE and the upsert of `postgres.py:453-457`, checks the row afterwards) | XFAIL (case 3) |
-| 3 | The stop state moves to a new relation and the runtime role may switch it OFF there | case 3 (statements to update), case 2 | TO ENABLE |
-| 4 | Reset identity added without negative tests (a fourth role keyword in `migrate()` or a new `Grant` field) | T `test_the_identities_are_the_ones_this_file_knows` goes red until `HOLDS` and `WRITES` name the role | KILLED (pin) |
-| 5 | Reset role holds more than stop-OFF plus audit append (reads evidence, writes runs or spend, DELETE, TRUNCATE) | case 2 (the matrix by statement, once the role is in `HOLDS`); T `test_no_role_may_truncate_any_table`, `test_delete_is_held_only_on_the_outbox_and_the_purged_evidence` | TO ENABLE (TRUNCATE and DELETE parts KILLED once the role is in `HOLDS`) |
-| 6 | Reset role cannot append the audit intent (reset is then impossible, or done without audit) | case 5 | TO ENABLE |
-| 7 | Reset without the audit intent first (switch, then audit; or `write_outcome` in place of `write_intent`) | T `test_reset_writes_the_audit_intent_before_it_touches_the_switch`, `test_reset_leaves_the_switch_alone_when_the_audit_intent_fails`; existing `tests/test_review_fixes.py::test_stop_works_when_audit_is_down`; database level: case 8 | KILLED (in memory) |
-| 8 | Reset through the runtime DSN (`limits reset` keeps building one store, `cli.py:184-209`) | case 7; and row 2 at database level (the runtime identity is refused whatever the CLI does) | TO ENABLE / XFAIL |
-| 9 | Reset role is the same role as, or a member of, the runtime role (one identity under two names) | case 1 | TO ENABLE |
-| 10 | Stop that waits for audit (intent before the switch, or an audit error stops the switch) | T `test_stop_switches_first_and_does_not_wait_for_the_audit_write`; existing `test_stop_works_when_audit_is_down`; database level: case 9 | KILLED (in memory) |
-| 11 | Step B takes so much from the runtime role that it cannot switch the stop ON | T `test_pg_the_runtime_role_can_switch_the_stop_on` (a pin on today's table and column: update it if the stop state moves) | KILLED-PG |
-| 12 | A grant row without its migration | T `test_a_grant_row_without_its_migration_stops_migrate_before_it_connects` (the real files, and `migrate()` refuses before `connect`) | KILLED |
-| 13 | A migration without its grant row (new relation, no `GRANTS` entry) | T `test_a_migration_without_its_grant_row_stops_migrate_before_it_connects`; case 10 for the manifest pins | KILLED |
-| 14 | A migration grants to PUBLIC, or leaves a default privilege (a role nobody granted can read or write) | T `test_pg_each_role_is_refused_what_the_map_does_not_give[stranger]`, `test_pg_the_catalog_agrees_with_the_matrix_for_every_relation_of_the_schema` | KILLED-PG |
-| 15 | `_apply_grants` gives a role a privilege the map does not name, or the three roles granted together leak into each other | T `test_pg_each_role_is_refused_what_the_map_does_not_give[runtime, portal, purge]` (one statement per cell, connected as the role) | KILLED-PG |
-| 16 | Portal or purge role can read or write the stop state | T `test_pg_no_role_but_the_runtime_role_can_read_or_write_the_stop_state`; after step B: case 6 | KILLED-PG |
-| 17 | Runtime role can DELETE or TRUNCATE the stop row (a missing row reads as ON, but the "by" is lost) | T `test_pg_the_runtime_role_cannot_remove_the_stop_row`, `test_only_the_runtime_role_holds_anything_on_the_stop_table` | KILLED |
-| 18 | A wildcard or `ALL` in a grant row; UPDATE (setval) on a sequence; a sequence opened to portal or purge | T `test_no_grant_uses_a_wildcard_or_a_privilege_outside_the_plain_ones`, `test_no_role_but_the_runtime_role_may_use_a_sequence`, `test_pg_only_the_runtime_role_may_draw_from_a_sequence` | KILLED |
-| 19 | Runtime role may UPDATE or DELETE an audit row | T `test_nobody_may_change_or_remove_an_audit_row`; existing `tests/test_k2_migrations.py::test_the_runtime_role_cannot_update_or_delete_the_audit_log` | KILLED |
-| 20 | `migrate()` run again does not take back a hand-made grant to the reset role; a superuser reset role is accepted | case 11 | TO ENABLE |
-| 21 | The stop row is missing in the new shape and reads as OFF | case 12 | TO ENABLE |
+| 1 | A grant gets wider in `GRANTS` (any role, table, write privilege) | T `every_write_privilege_is_on_the_reviewed_list`, `the_portal_role_writes_nothing_...`, `the_purge_role_holds_delete_only_...`; PG `pg_each_role_is_refused_what_the_map_does_not_give[*]` | APPLIED as M1, M2: killed |
+| 2 | Runtime role gets UPDATE on the stop table (`kill_switch` row `"SELECT, UPDATE"`) | T `step_b_the_grant_map_gives_the_runtime_role_no_way_to_switch_the_stop_off`, `every_write_privilege_...`, `only_the_reviewed_roles_hold_anything_on_the_stop_state`; also `migrate()` itself refuses ("roles other than the reset role could clear a stop"), so all 52 PG tests error in the fixture. PG `pg_step_b_the_runtime_role_cannot_switch_the_stop_off` and `pg_case3_...` need a map migrate() accepts: NOT APPLIED that way | APPLIED (M1): killed. On main's tree these two are strict xfail (feature test `STEP_B`) |
+| 3 | The stop state moves to a new relation and the runtime role may switch it OFF there | `pg_case3_every_way_to_switch_the_stop_off_is_refused_to_the_runtime_role`, `only_the_reviewed_roles_hold_anything_on_the_stop_state` (a new `kill_switch*` relation is not on the list) | NOT APPLIED |
+| 4 | A fourth role keyword or `Grant` field added without negative tests | `the_identities_are_the_ones_this_file_knows`, `the_feature_test_agrees_with_the_grant_map` | NOT APPLIED (pin) |
+| 5 | Reset role holds more than stop-OFF plus audit append (reads evidence, writes runs or spend, DELETE, TRUNCATE) | `case2_the_reset_identity_holds_exactly_the_reviewed_cells`, `pg_case2_the_reset_role_is_refused_everything_outside_its_reviewed_cells`, `pg_each_role_is_refused_...[reset]`, `no_role_may_truncate_any_table[reset]` | APPLIED as M2 (DELETE on `audit_entries`): 7 tests failed |
+| 6 | Reset role cannot append the audit intent | `pg_case5_the_reset_role_appends_its_audit_intent_...`, `pg_case7_limits_reset_with_the_reset_dsn_works_...`, `pg_case2_...` (holds INSERT) | NOT APPLIED |
+| 7 | Reset without the audit intent first (intent dropped, or written after the switch) | `reset_writes_the_audit_intent_before_it_touches_the_switch`, `reset_leaves_the_switch_alone_when_the_audit_intent_fails`, `pg_case8_reset_with_the_audit_intent_refused_leaves_the_stop_on`, `case8_...reset_failed` | APPLIED as M4 (line `write_intent` removed from `Limits.reset`): 9 tests failed |
+| 8 | Reset through the runtime DSN (`cli.py` builds the store from `dsn_secret_name`, not `reset_credential_ref`) | `case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only`, `case7_..._refused_before_anything_is_built[*]`, `pg_case7_limits_reset_with_the_runtime_login_...`, `pg_case7_limits_reset_with_the_reset_dsn_works_...` | APPLIED as M3: 3 tests failed |
+| 9 | Reset role is the same role as, or a member of, another identity | `case1_the_reset_role_is_refused_when_it_is_another_identity[*]`, `pg_case1_migrate_refuses_membership_...[*]` | NOT APPLIED |
+| 10 | Stop that waits for the audit write | `stop_switches_first_and_does_not_wait_for_the_audit_write`, `pg_case9_stop_by_the_runtime_role_works_with_the_audit_tables_refusing_writes` | NOT APPLIED |
+| 11 | Step B takes so much from the runtime role that it cannot switch the stop ON | `pg_the_runtime_role_can_switch_the_stop_on` (statement chosen per tree) | NOT APPLIED |
+| 12 | A grant row without its migration | `a_grant_row_without_its_migration_stops_migrate_before_it_connects`, `case10_a_reset_grant_row_without_its_migration_stops_migrate`, `case10_the_real_migrations_and_the_grant_map_agree` | APPLIED as M6 (row `no_such_relation` in the real map): killed |
+| 13 | A migration without its grant row | `a_migration_without_its_grant_row_stops_migrate_before_it_connects`, `case10_a_stop_state_relation_without_its_grant_row_stops_migrate[*]`, `case10_the_stop_state_migration_and_its_grant_rows_arrived_together` | APPLIED as M5 (row `kill_switch_clears` deleted): killed |
+| 14 | A migration grants to PUBLIC or leaves a default privilege | `pg_each_role_is_refused_...[stranger]`, `pg_the_catalog_agrees_with_the_matrix_...`, `pg_case11_migrate_refuses_a_reset_role_...[public_grant]` | NOT APPLIED |
+| 15 | `_apply_grants` gives a role a privilege the map does not name | `pg_each_role_is_refused_what_the_map_does_not_give[runtime, portal, purge, reset]` | NOT APPLIED |
+| 16 | Portal or purge role can read or write the stop state | `pg_no_role_but_the_runtime_and_reset_role_can_read_or_write_the_stop_state[*]` | NOT APPLIED |
+| 17 | Runtime role can DELETE or TRUNCATE a stop row | `pg_the_runtime_role_cannot_remove_a_row_of_the_stop_state`, `only_the_reviewed_roles_hold_anything_on_the_stop_state` | NOT APPLIED |
+| 18 | Wildcard or `ALL` in a grant row; UPDATE on a sequence | `no_grant_uses_a_wildcard_...`, `no_role_but_the_runtime_role_may_use_a_sequence`, `pg_only_the_runtime_role_may_draw_from_a_sequence[*]` | NOT APPLIED |
+| 19 | A role may UPDATE or DELETE an audit row | `nobody_may_change_or_remove_an_audit_row[*]`, `pg_case5_...` (as the reset role) | APPLIED as M2: killed |
+| 20 | `migrate()` again does not take back a hand-made grant of the reset role; a superuser reset role is accepted | `pg_case11_migrate_again_takes_back_...`, `pg_case11_migrate_refuses_a_reset_role_that_holds_more_...[*]` | NOT APPLIED |
+| 21 | A missing stop row reads as OFF, or a reset turns it into OFF | `pg_case12_a_missing_stop_row_reads_as_on`, `pg_case12_a_reset_cannot_turn_a_missing_stop_row_into_off` | NOT APPLIED |
 
-## Pins the builder of step B must change on purpose (plan v4 B2, last bullet)
+## Pins the builder of a later step must change on purpose
+- `WRITES_AFTER_STEP_B` and its siblings (`STOP_HOLDS_*`, `RESET_HOLDS`, `DELETES_*`, `PURGE_COLS_*`, `PORTAL_NEVER_*`,
+  `AUDIT_HOLDERS_*`): the hand-written, reviewed lists; a new table or privilege goes in by someone who is not the builder.
+- `STEP_B` is the one feature test; `the_feature_test_agrees_with_the_grant_map` fails on a half-built tree.
+- `TABLES_AT_LEAST`, `GRANT_FIELDS_*`, `ROLE_KEYWORDS_*`.
 
-- T `test_the_identities_are_the_ones_this_file_knows`: the role keywords of `migrate()` and the fields of `Grant`.
-- T `WRITES`: the hand-written list of every write privilege. A new row for the reset role and any change to the
-  runtime row of the stop table go here, reviewed by someone who is not the builder.
-- T `test_only_the_runtime_role_holds_anything_on_the_stop_table` and
-  `test_pg_the_runtime_role_can_switch_the_stop_on`: named after today's `kill_switch` table and its "on" column.
-- The two XFAIL tests: remove the marker when they pass (strict: an unexpected pass is reported as a failure).
+## Findings on main (not fixed, not ours)
+- main `migrate.py:55`: the runtime role may UPDATE the one stop row (what step B removes).
+- `redaction_maps` is granted `_RW` while the comment says "append and purge only (no UPDATE)". See evidence/B-grants-rework.md.
 
-## Run on 2026-11-20 (this box)
-
-- Without a database: 19 passed, 13 skipped, 1 xfailed.
-- With a throwaway PostgreSQL 16 (trust on loopback like CI, stopped and removed afterwards): 31 passed, 2 xfailed.
-  CI runs PostgreSQL 17.10: NOT RUN there.
-- Mutant 1 applied in memory (`GRANTS['kill_switch'] = Grant('table', 'SELECT, INSERT, UPDATE', portal=True,
-  purge='UPDATE')`, no source file changed): 4 failed, 15 passed in the pure layer.
-- Rows 11, 14, 15, 16 were NOT mutated and run: their tests pass on the unmutated code only. Rows marked
-  TO ENABLE kill nothing today.
-
-## Finding (not fixed, not ours)
-
-- `src/hadavin_sdk/store/migrate.py:55`: `"kill_switch": Grant("table", _RW)`. The runtime role (the identity
-  the agent's process uses) may UPDATE the one row that holds the stop state, so it can switch the stop OFF
-  with one statement. This is what step B removes; the two XFAIL tests show it on main.
-- `src/hadavin_sdk/store/migrate.py:60` and `:65`: the comment says "append and purge only (no UPDATE)" for the
-  K5 evidence tables, and `redaction_maps` is granted `_RW` (UPDATE) to the runtime role. Either the comment
-  is about `tool_calls` only or the grant is wider than the comment. Not decided here; `WRITES` records main.
+## Runs
+See `handover/core-c/evidence/B-grants-rework.md` (core-b tree with PostgreSQL 16: 106 passed; main's tree: 37 passed,
+39 skipped, 2 xfailed with a DSN). PostgreSQL 17, Python 3.12: NOT RUN.
