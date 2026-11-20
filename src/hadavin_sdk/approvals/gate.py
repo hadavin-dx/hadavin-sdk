@@ -110,12 +110,18 @@ _MENTION = re.compile(r"(?<![\w@])@(here|channel|everyone)\b", re.IGNORECASE)
 # and Slack links a bare domain under any real TLD.
 _TLDS = r"[a-z]{2,24}|xn--[a-z0-9-]+|[^\x00-\x7f\W\d_]{2,}"
 # Not an email's local part (`priya.nair@`): only what follows the `@` is a host.
-_DOMAIN = re.compile(rf"(?<![\w./-])((?:[\w-]+\.)+)({_TLDS})(?![\w@-])", re.IGNORECASE)
+# Boundaries (P1d-a review round 3): a name character or `-` before it (so a label is taken whole), a name character
+# or `@` after it. A `.` or `/` before and a `-` after are NOT boundaries that save a host: a chat renderer may link
+# `x/evil.com`, `..evil.com` and `evil.com-x`, so they are defanged. Only a `.` that follows a name character blocks a
+# start (`(?<![\w-]\.)`): the host starts further left, and a start behind every dot of `a.a.a.a...` made the search
+# quadratic (perf test `test_glued_addresses_are_linear`) (over-defanging `src/app.py` to
+# `src/app[.]py` is the stated cost, `undefang_text` recovers it).
+_DOMAIN = re.compile(rf"(?<![\w-])(?<![\w-]\.)((?:[\w-]+\.)+)({_TLDS})(?![\w@])", re.IGNORECASE)
 # Labels holding a non-ASCII character. Bounded as DNS bounds a name (labels of 63, at most 127 of them; Sonar
 # python:S8786, 2026-10-16): unbounded, a long run of such letters was split every way it could be. A longer one is
 # no host, and what passes the bounds is defanged in pieces.
 _NON_ASCII_HOST = re.compile(
-    r"(?<![\w@.\[/-])((?:[\w-]{0,62}[^\x00-\x7f][\w-]{0,62}\.){1,127})([\w-]{1,63})"
+    r"(?<![\w@-])((?:[\w-]{0,62}[^\x00-\x7f][\w-]{0,62}\.){1,127})([\w-]{1,63})"
 )
 # CommonMark fences: at most 3 spaces of indent, ``` or ~~~, closed by the same character at least as
 # long. `lstrip().startswith("```")` let a 4-space-indented or ~~~ line flip the state and leave the
@@ -244,7 +250,9 @@ def _defang_plain(part: str) -> str:
 # renderer that reads `_` as emphasis, a link. Two rules close it, whatever is glued on:
 # 1. `_` ends a top-level domain (`evil.com_x`, where `_DOMAIN` finds nothing at all);
 # 2. a dotted token that holds one `[.]` gets every dot between two name characters written `[.]`.
-_DOMAIN_LAST = re.compile(rf"(?<![\w./-])((?:[\w-]+\.)+)({_TLDS})(?![^\W_]|[@-])", re.IGNORECASE)
+_DOMAIN_LAST = re.compile(
+    rf"(?<![\w-])(?<![\w-]\.)((?:[\w-]+\.)+)({_TLDS})(?![^\W_]|@)", re.IGNORECASE
+)
 _DOTTED_TOKEN = re.compile(r"(?:\[\.\]|[\w.-])+")
 _NAME_DOT = re.compile(r"(?<=[\w-])\.(?=[\w-])")
 
