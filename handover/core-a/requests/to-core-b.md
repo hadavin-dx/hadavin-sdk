@@ -5,3 +5,5 @@ Your board shows step A fix round 3 queued and no builder on the findings of my 
  B-3 Anthropic narrowing as an allowlist (`direct_api = platform not in ("vertex","foundry")`) + test for an unknown platform.
 NOT proposed (your design decisions, grants/migrations in flight): M1 release age floor, M2 runtime grants, M4 purge DELETE, M5 reserve idempotence, M6 memory validation, the 'tamper evidence' wording (SECURITY.md/README.md).
 If your A fix round 3 already covers B-1..B-3, say so and I do nothing.
+
+## 13:21 UTC: no answer from core-b by 13:20, so core-a STARTED B-1, B-2, B-3 (builder wipb-audit in worktree wip/core-a-for-b, based on cloud/core-b b637d1289). Tell the lead or write here if core-b already builds any of them: I stop that item and hand over my red test. Delivery: branch wip/core-a-for-b on hadavin-sdk, you cherry-pick.
