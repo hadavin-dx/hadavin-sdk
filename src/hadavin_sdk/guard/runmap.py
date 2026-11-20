@@ -730,9 +730,10 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     - A known value written inside angle brackets so that it reads as a token (the value `ABC_1` written
       as `<ABC_1>`) is taken for a placeholder and left.
     - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in
-      `abcdef`): one is replaced and the rest of the other stays (`<A_1>ef`). Which one: among values that
-      are not held back, the longer (the earlier in the map when equal); a held-back value always loses to
-      one that is not, even when it is longer. When neither is a secret kind, neither is replaced there.
+      `abcdef`): since G9 the sweep reads the text back with the map's placeholders put back and replaces the
+      readable rest by the EXISTING placeholder of a value that covers it, a secret's where one does, else the
+      identifier's (`<SECRET_1><SECRET_2>`); the map is not written. A held-back value is not in this sweep's
+      map: its rest stays here and the net (`held_value_left`) refuses the call.
     - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
       on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the
       text it is not replaced (the `>` belongs to that placeholder) and its tail stays readable.
@@ -939,7 +940,10 @@ def held_value_left(text: str, snap: MapSnapshot) -> bool:
     exact KEY of the map; any other `<NAME_1>` (a forged `<AKIAEXAMPLE123_1>`) is opened up first, because the
     sweep itself sets every placeholder-shaped token aside. One pass of the same finder the sweep uses, under the
     call's deadline. Never returns or logs the value. A value that spans two chunks the gate enforced one by one
-    (a fixed framing word between) is not seen here: a stated limit of the gate."""
+    (a fixed framing word between) is not seen here: a stated limit of the gate. Since G9 the checker's sweep reads
+    the text back: a secret value spelled across a placeholder is found; that sweep can raise `InputTooLarge` (its
+    work count, the deadline, `SpelledNotSettled`), which `_chunk` does not catch: `_enforced` reports it as
+    `mask_budget_exceeded`."""
     if not snap.secret_values:
         return False
     opened = _NOT_RAW.sub(

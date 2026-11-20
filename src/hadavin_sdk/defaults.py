@@ -109,9 +109,9 @@ REDACT_BUDGET_S = 6.0
 # the measured cost is 0.09 to 0.21 microseconds per unit (0.13 on the hostile text), so the limit costs 0.4 to 0.9 s at most. WHAT THIS DOES NOT
 # BOUND: with no deadline the scan is 4 million units per sweep per string per round, no total bound (stated); the deadline (`REDACT_BUDGET_S`) bounds
 # the time on a slower machine whatever this says. A hostile author can therefore FORCE A REFUSAL of the whole document (`SpelledWorkTooMuch` is an
-# `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost (SECURITY wording). Two OPEN limits (E10, pinned by
-# tests): an overlap of forms completed in a LATER round (registered after the earlier form's text was swept) leaves the swallowed literal prefix or
-# tail readable, and two compound values that overlap as RAW text leave the tail of one readable in the literal sweep.
+# `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost (SECURITY wording). G9 (E10): the count is per
+# `_Redactor.sweep` CALL, shared by its passes: the spelled scans, the read-backs (one unit per character put back, one per occurrence),
+# the anchored check of rules longer than the reach, and the value of every union, counted before it is built.
 SPELLED_MAX_WORK = 4_000_000
 # MEMORY of the registry (round 7): the tries hold one dict per character of every registered written form that is not already a node (prefix and
 # suffix; about 185 bytes each, measured: 37.2 MB per 200,000 characters, 49 MB per 260,000, tracemalloc, evidence g7r6_units.py `memory()` and
@@ -123,6 +123,16 @@ SPELLED_MAX_WORK = 4_000_000
 # 330 times the largest (1,000,000 / 3,017). The hostile case above is refused after about 4 strings (186 MB peak). A SINGLE string is not refused for 260,000 characters
 # (49 MB of registry); its other costs (the sweep's finder for a 260,000-character value) are not this limit's.
 SPELLED_MAX_CHARS = 1_000_000
+# G9 (ORDER 023, E10): the most passes of one `_Redactor.sweep` call (a body, then the read-back of every key of the map); a sweep
+# that has not settled after them is refused (`InputTooLarge("SpelledNotSettled")`). A fail-closed margin of 2 over the measured need.
+SPELLED_MAX_PASSES = 4
+# G9: how far into a run of placeholders the read-back puts the values back on each side that touches readable text; a rule longer than
+# this is looked for deeper by the anchored check (`_Redactor._deep_hits`), so the reach bounds the cost of a read-back, not what is found.
+SPELLED_READBACK_REACH = 1024
+# G9: the characters of the unions of overlaps (`_Redactor._place_union(..., derived=False)`) one call may register; past it the call is
+# refused (`InputTooLarge("SpelledUnionTooMuch")`, nothing shown). Each union's value is also counted in the sweep's work before it is
+# built. A planted 130,000-character secret beside many short overlaps made ~130,000 characters of map per overlap before this limit.
+SPELLED_MAX_UNION_CHARS = 1_000_000
 
 
 def cut_margin(length: int) -> int:

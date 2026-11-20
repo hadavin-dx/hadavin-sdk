@@ -563,14 +563,54 @@ def test_b1_a_placeholder_inserted_in_this_pass_is_not_rewritten_by_a_later_shor
     assert sent["docs"] == [b"<SECRET_2> <SECRET_1>"]
 
 
-def test_b1_stated_limit_a_partial_overlap_leaves_a_tail_in_what_is_sent():
-    """`abcd` and `cdef` known, `abcdef` in the text: `<SECRET_1>ef` is sent. A stated limit, pinned."""
+def test_b1_a_partial_overlap_is_masked_with_both_placeholders_in_what_is_sent():
+    """`abcd` and `cdef` known, `abcdef` in the text: `<SECRET_1><SECRET_2>` is sent (G9; before it `<SECRET_1>ef` was sent, a stated limit)."""
     bound, client, _, sink = build(
         mapping=runmap.RunMap({"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"})
     )
     bound.chat([{"role": "user", "content": "abcdef"}], system="s", route="main")
-    assert client.sent[0]["messages"][0]["content"] == "<SECRET_1>ef"
+    assert client.sent[0]["messages"][0]["content"] == "<SECRET_1><SECRET_2>"
     assert sink.codes() == [("ok", None)]
+
+
+def test_b1_an_overlap_of_two_identifiers_is_sent_masked_with_their_placeholders():
+    """G9, L-D1 (CHANGED in G9 v3): two identifiers that overlap in the text (`acme-prod-01`, `prod-01-eu` in `acme-prod-01-eu`): the
+    readable rest is replaced by the existing placeholder of the identifier that covers it; the call is sent, no refusal."""
+    bound, client, _, sink = build(
+        mapping=runmap.RunMap({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    )
+    bound.chat([{"role": "user", "content": "acme-prod-01-eu"}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == "<TENANT_1><TENANT_2>"
+    assert sink.codes() == [("ok", None)]
+
+
+def test_b1_a_net_sweep_that_is_refused_is_reported_as_mask_budget_exceeded(monkeypatch):
+    """G9 (readiness nit, v3): the net's checker sweep can raise `InputTooLarge` (its count, the deadline, `SpelledNotSettled`); `_chunk`
+    does not catch it, `_enforced` reports it as `mask_budget_exceeded`: nothing is sent."""
+
+    def refused(text, snap):
+        raise runmap.InputTooLarge("SpelledNotSettled")
+
+    monkeypatch.setattr(runmap, "held_value_left", refused)
+    bound, client, _, sink = build(
+        mapping=runmap.RunMap({"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"})
+    )
+    with pytest.raises(model_gate.MaskBudgetExceeded):
+        bound.chat([{"role": "user", "content": "abcdef"}], system="s", route="main")
+    assert client.sent == [] and sink.codes() == [("refused", "mask_budget_exceeded")]
+
+
+def test_b1_a_held_back_value_cut_by_an_overlap_refuses_the_call_as_held_value_left():
+    """G9: the held-back `SECRET_1` loses to `ET_1zz9` in the sweep (`SECR<SECRET_2>`); the net's checker reads the text back with every
+    secret value and finds `SECRET_1` across the placeholder: the call is refused (`held_value_left`), where `SECR<SECRET_2>` was sent."""
+    from hadavin_sdk.guard.model_gate import HeldValueLeft
+
+    bound, client, _, sink = build(
+        mapping=runmap.RunMap({"<SECRET_1>": "SECRET_1", "<SECRET_2>": "ET_1zz9"})
+    )
+    with pytest.raises(HeldValueLeft):
+        bound.chat([{"role": "user", "content": "SECRET_1zz9"}], system="s", route="main")
+    assert client.sent == [] and sink.codes() == [("refused", "held_value_left")]
 
 
 def test_b1_seed_entries_of_the_map_cause_no_refusal_and_no_change():
