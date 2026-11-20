@@ -717,6 +717,15 @@
    "evidence file": "FINDINGS-flake-pg-kill.md",
    "tries": 0,
    "reason": "batch9 mutant run in progress"
+  },
+  {
+   "item": "BLOCKED-mutant-run-19",
+   "what": "complete mutant run 19: needs tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` (G33d anchor) and a re-run of `uv run python tests/endpoint_mutants.py`",
+   "state": "BLOCKED: both actions were denied by the permission classifier for the builder; I did not do them by another route; waiting for the user's go-ahead",
+   "percent": 90,
+   "evidence file": "raw/endpoint-mutants-run-19.log (aborted: anchor 0 times)",
+   "tries": 1,
+   "reason": "permission denial, not worked around"
   }
  ],
  "agents": [
@@ -745,19 +754,6 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "lead: evidence-n8n-4"
-  },
-  {
-   "id": "final-fix",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "signed_post: a truncated 2xx = no complete ack (test client) + unit tests; 3 cosmetic nits; one test run; complete mutant run 19",
-   "started UTC": "10:55",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "flake verdict + batch9"
   }
  ],
  "tests": [
@@ -1130,6 +1126,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "BLOCKED (exact): mutant run 19 cannot finish: (1) tests/endpoint_mutants.py line 1251 must read `at - last_warned` (my cosmetic rename `now`->`at` in worker._watch moved the G33d anchor); (2) `uv run python tests/endpoint_mutants.py` re-run. A builder's attempt at both was denied by the permission classifier; I do not route around a denial: needs the owner's go-ahead. Evidence on the same code: builder run 18 109 of 109 (before the rename), BATCH9 98 lines all ok (log cut). Everything else of the final-fix is done: truncated-2xx test client fix with 4 unit tests, 3 nits, tests 1399 passed 5 skipped.",
   "Answers to evidence-n8n-4 tasks (10:55): (1) n8n-fix6 updates README and node notes: SEEN only for what your evidence shows, the rest stays UNVERIFIED. (2) 'no triggers config block' is EXPECTED on this branch, not a gap in the worker: Config.triggers and App.trigger_secret are core-b's (REQ-001, answered by core-b); worker.main needs them: on core-b's head plus my files worker.main starts for real (tests/triggers/test_t5_main_start.py passes there: BATCH9 combined tree 1377 passed 0 failed); it becomes usable the minute core-b's config merges with my branch. (3) 'receiver down, recovered later = silent' is WANTED (an outage that recovers needs no person: the event ends as a late success; the error workflow is for what a person must do); I document it in the README as a deliberate fact with its 52-minute bound; say so if you want a notice instead and I add one.",
   "Noted: I do NOT touch the contract-test helpers _rows/_older/_closed_earlier (tests/contracts/test_store_spend.py) or _rows (test_store_spend_model.py) (core-b re-points them, E14); n8n evidence-n8n-4.md from your laptop run due 11:15: I will update the template and tests the same hour. Reviews: step D fresh passes: code rounds 1-3 (E7 decided), E1 rounds 1-4, extra passes: the last pass found no Blocker/Major; step E: round 7 found none. Commit range for D and E (clean) will be posted right after batch9 and 3 cosmetic nits (about 10:55).",
   "E1 REVIEW ENDED (round 4, fresh): no Blocker, no Major; 4 rounds in all. Final independent batch (batch9) running on the final tree; after it: 3 cosmetic nits, final tested commit, REPORT.md block. Optional deletions the reviewer ranked (not needed for your verdict): _ack_wait_of 18 lines, _warn_no_audit 11, the 5-minute warning limit 10, the drop-warning throttle 8, parameter validation 7: tell me if you want any gone.",
@@ -2733,6 +2730,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "BATCH9 (head 32eae7c17, final tree, independent): lint clean (452 files), bandit 0 medium/high; whole suite 13 failed (10 strict-mode by design, dblink env, brand string in the lead's BRIEF-PREAMBLE.md, the pg-kill flake = test race) / 12305 passed / 458 skipped / 75 xfailed in 346 s; combined tree core-b d2920f552: 1377 passed 4 skipped 0 failed; mutants: 98 result lines all ok, but the log has NO summary line (cut): builder run 18 gave 109 of 109 on the same tree; a complete run 19 follows"
+  },
+  {
+   "id": "final-fix",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "signed_post: a truncated 2xx = no complete ack (test client) + unit tests; 3 cosmetic nits; one test run; complete mutant run 19",
+   "started UTC": "10:55",
+   "expected end": "25 min",
+   "percent": 90,
+   "state": "done (item 5 blocked)",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "signed_post: a truncated 2xx = no complete ack (+4 unit tests on a raw socket server), 3 cosmetic nits, tests/triggers+crash+k5 1399 passed 5 skipped; the complete mutant run 19 did NOT run: my `now`->`at` rename in worker._watch broke one anchor text (G33d, tests/endpoint_mutants.py line 1251 still says `now - last_warned`) so the script aborted before any mutant (exit 2); the builder's sed fix and re-run were DENIED by the permission classifier and it did not work around it"
   }
  ]
 }

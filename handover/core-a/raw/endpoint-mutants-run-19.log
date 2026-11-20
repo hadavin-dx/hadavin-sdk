@@ -1,0 +1,9 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+# endpoint mutants run, python 3.13.18, platform linux
+# sha256 8ff23e60491745b59f2840d04d516179300edbc8eecca18d619812ce8a2131cf  src/hadavin_sdk/triggers/__init__.py
+# sha256 fdd9ae116d6add8229daefdae674975d80582fa9528bf693c3d65b86a804651f  src/hadavin_sdk/triggers/endpoint.py
+# sha256 8cd743ed0552a4d7ef3c058cbd0634f00b5be9edd9160dbfcc368bafea883e84  src/hadavin_sdk/triggers/server.py
+# sha256 ae2ad99697fa85c0d9ad8448c3b43e396013ff40fc00ae617971409510ec4a1f  src/hadavin_sdk/triggers/worker.py
+# sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
+# sha256 b050c6629161ff65ba8dc380884b6e6040b01bf8c24605dfa9d7d5b25b943520  tests/endpoint_mutants.py
+ERROR anchor of 'G33d a degraded worker logs its re-check failure at every try, not once per 5 minutes' occurs 0 times in src/hadavin_sdk/triggers/worker.py (must be 1)
