@@ -14,9 +14,16 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "replace-with-your-path",
-        "responseMode": "responseNode"
+        "responseMode": "responseNode",
+        "authentication": "headerAuth"
       },
-      "notes": "UNVERIFIED: the responseMode value 'responseNode' (the run used 'onReceived', which answered the caller 200 at once), and the form of the webhookId value. SEEN IN n8n 2.47.7: typeVersion, httpMethod and path; a webhook node WITHOUT a webhookId was registered under <workflow id>/<node name>/<path> and /webhook/<path> answered 404; workflows whose webhook node had a webhookId answered on /webhook/<path>. The webhookId in this file is a made-up placeholder: put a fresh UUID here for every installation, before the import (see the README). Replace this node with the client's own trigger (webhook, mailbox, schedule); if the new trigger is not a webhook, delete the two 'Answer caller' nodes. A webhook call can start two executions; the key rule (a stable business id, hashed) is what keeps that to one run."
+      "notes": "UNVERIFIED: the authentication setting 'headerAuth' with a credential of type 'httpHeaderAuth' (both written from memory of the n8n documentation; the shape was never imported), what the import does with the placeholder credential id, the responseMode value 'responseNode' (the run used 'onReceived', which answered the caller 200 at once), and the form of the webhookId value. SEEN IN n8n 2.47.7: typeVersion, httpMethod and path; a webhook node WITHOUT a webhookId was registered under <workflow id>/<node name>/<path> and /webhook/<path> answered 404; workflows whose webhook node had a webhookId answered on /webhook/<path>. AUTHENTICATION IS A REQUIRED SET-UP STEP: without it anyone who can reach the address can start runs, use up keys and flood the error workflow. Create the header credential in n8n (a header name and a long random value, never saved in this file), choose it in this node, and give the caller the header. If you cannot use the setting, the path must at least be a long random value that nobody can guess (see the README). The webhookId in this file is a made-up placeholder: put a fresh UUID here for every installation, before the import (see the README). Replace this node with the client's own trigger (webhook, mailbox, schedule); if the new trigger is not a webhook, delete the node 'Answer caller: taken' and connect the guard's first output straight to 'Hash business id'. A webhook call can start two executions; the key rule (a stable business id, hashed) is what keeps that to one run.",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE-WITH-YOUR-WEBHOOK-CREDENTIAL-ID",
+          "name": "hadavin-trigger-webhook-auth"
+        }
+      }
     },
     {
       "name": "Id and text present?",
@@ -31,7 +38,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ ((typeof $json.body.record_id === 'string' && $json.body.record_id.trim() !== '') || (typeof $json.body.record_id === 'number' && Number.isFinite($json.body.record_id))) && typeof $json.body.text === 'string' && $json.body.text.trim() !== '' }}",
+              "leftValue": "={{ ((typeof $json.body.record_id === 'string' && $json.body.record_id.trim() !== '') || Number.isSafeInteger($json.body.record_id)) && typeof $json.body.text === 'string' && $json.body.text.trim() !== '' && ($json.body.event === undefined || $json.body.event === null || (typeof $json.body.event === 'string' && $json.body.event.trim() !== '')) }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -42,23 +49,7 @@
           ]
         }
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written. A missing id, a missing text, null values, an empty id and a text of spaces only all went to output 1 (false) and nothing was sent; a text id and a number id went to output 0 (true). This is the guard and it is REQUIRED: the business id must be a non-empty text or a number, and the document must be a non-empty text. With the guard taken out of the chain, the run sent a missing id as the hash of the text 'undefined' and a null id as the hash of the text 'null': every such event would share one key. $json.body.record_id and $json.body.text are placeholders for the client's fields: change them here AND in 'Hash business id' and 'Build request'."
-    },
-    {
-      "name": "Answer caller: refused",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        220,
-        200
-      ],
-      "parameters": {
-        "respondWith": "noData",
-        "options": {
-          "responseCode": 422
-        }
-      },
-      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode, and that it passes the item on to the next node). It was NOT part of the run in n8n 2.47.7 and was written from memory of the n8n documentation. Purpose: in the run, the caller of the webhook got HTTP 200 although the guard had stopped the event. This node answers the caller with 422 and an empty body instead, and then the execution fails at 'Stop: id or text missing' as before. Never put the document or the id into the answer."
+      "notes": "UNVERIFIED: this expression as it stands now. It was changed after the run: a number id now has to be a whole number that n8n can hold exactly (Number.isSafeInteger; a larger number would lose digits and two ids could share a key), and an 'event' field, if the caller sends one, has to be a non-empty text. SEEN IN n8n 2.47.7, on the earlier expression (same shape, number test Number.isFinite, no event test): a missing id, a missing text, null values, an empty id and a text of spaces only all went to output 1 (false) and nothing was sent; a text id and a number id went to output 0 (true). This is the guard and it is REQUIRED: the business id must be a non-empty text or a safe whole number, the document must be a non-empty text, and the event, if present, a non-empty text. With the guard taken out of the chain, the run sent a missing id as the hash of the text 'undefined' and a null id as the hash of the text 'null': every such event would share one key. The output 1 (false) goes straight to 'Stop: id or text missing' and to nothing else, so a refused event always fails the execution. $json.body.record_id, $json.body.text and $json.body.event are placeholders for the client's fields: change them here AND in 'Hash business id' and 'Build request'."
     },
     {
       "name": "Stop: id or text missing",
@@ -66,13 +57,13 @@
       "typeVersion": 1,
       "position": [
         220,
-        400
+        200
       ],
       "parameters": {
         "errorType": "errorMessage",
         "errorMessage": "Hadavin trigger: the business id or the document text is empty or missing. Nothing was sent."
       },
-      "notes": "UNVERIFIED: that this node still runs when it comes after 'Answer caller: refused' (in the run it came straight after the guard). SEEN IN n8n 2.47.7: the node as written failed the execution with this message, and the error workflow then ran. The message must never hold the document or the id."
+      "notes": "UNVERIFIED: what the caller of the webhook is answered when this node fails the execution and no answer node has run (the webhook node's response mode is 'responseNode'; the caller then gets n8n's own error answer, whose status and body nobody has seen; in the run, with another response mode, the caller got 200). SEEN IN n8n 2.47.7: the node as written, straight after the guard, failed the execution with this message, and the error workflow then ran. This node is the ONLY thing on the guard's false output, so a refused event always ends here and always fails the execution. The message must never hold the document or the id."
     },
     {
       "name": "Answer caller: taken",
@@ -80,7 +71,7 @@
       "typeVersion": 1,
       "position": [
         440,
-        -200
+        0
       ],
       "parameters": {
         "respondWith": "noData",
@@ -88,31 +79,31 @@
           "responseCode": 202
         }
       },
-      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode), and that n8n runs this branch BEFORE the long branch that starts at 'Hash business id' (it is placed above that branch for this reason). It was NOT part of the run in n8n 2.47.7. Purpose: with the webhook node's response mode 'responseNode' the caller waits for an answer node; without this node the caller would wait until the whole workflow ends, which can be many minutes when Hadavin is busy. The 202 answered here means only: n8n took the event and will try to send it. It does NOT mean that Hadavin accepted it, and it does NOT mean that the work is done: taken by the workflow, not done. How the run ends is found out later by the state check ('Run still going?'), and a run that ends badly reaches a person through the error workflow, never the caller. Nothing is connected after this node."
+      "notes": "UNVERIFIED: this whole node (type name, typeVersion, the parameter names respondWith and options.responseCode), that it passes its input item on unchanged to 'Hash business id' (which reads $json.body.record_id from it), and that n8n answers the caller at this point and not only when the whole execution ends. It was NOT part of the run in n8n 2.47.7 and was written from memory of the n8n documentation. It sits in series: the guard's true output leads to this node and this node leads to 'Hash business id', so the answer is always given before anything is hashed or sent and no branch order has to be relied on. Purpose: with the webhook node's response mode 'responseNode' the caller waits for an answer node; without this node the caller would wait until the whole workflow ends, which can be many minutes when Hadavin is busy. The 202 answered here means only: n8n took the event and will try to send it. It does NOT mean that Hadavin accepted it, and it does NOT mean that the work is done: taken by the workflow, not done. How the run ends is found out later by the state check ('Run still going?'), and a run that ends badly reaches a person through the error workflow, never the caller. A refused event (the guard's false output) gets no answer from this template: the caller sees n8n's own error answer (unverified)."
     },
     {
       "name": "Hash business id",
       "type": "n8n-nodes-base.crypto",
       "typeVersion": 1,
       "position": [
-        440,
+        660,
         0
       ],
       "parameters": {
         "action": "hash",
         "type": "SHA256",
-        "value": "={{ String($json.body.record_id) }}",
+        "value": "={{ String($json.body.record_id).trim() + ':' + String($json.body.event ?? 'default').trim() + ($json.body.rerun ? ':' + String($json.body.rerun).trim() : '') }}",
         "dataPropertyName": "key",
         "encoding": "hex"
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written. It added the field key (64 hex characters) and kept the other fields of the item. key = SHA-256 hex of a STABLE business id (a mail Message-ID, or record id plus event name), never the execution id. The hash is sent, not the raw id, for two reasons: a raw id such as a Message-ID holds characters the key rule refuses (allowed: A-Z a-z 0-9 . _ : - and 1 to 128 long), and the key is stored where portal users can read it, so it must not be personal data. $json.body.record_id is a placeholder for the client's field. The guard node before this one is what makes String() safe here: never connect the trigger straight to this node."
+      "notes": "UNVERIFIED: this expression as it stands now (changed after the run: the id is trimmed, the event name is added, and an optional 'rerun' value is added). SEEN IN n8n 2.47.7, on the earlier expression (String of the id only): this node added the field key (64 hex characters) and kept the other fields of the item. key = SHA-256 hex of the text: business id, a colon, the event name (the caller's 'event' field, or the word default when there is none), and, only when the caller sends a 'rerun' value, a colon and that value. So two different events on one record get two keys, and a re-send that must start a NEW run uses a new rerun value (see the README). Never use the execution id. The hash is sent, not the raw id, for two reasons: a raw id such as a Message-ID holds characters the key rule refuses (allowed: A-Z a-z 0-9 . _ : - and 1 to 128 long), and the key is stored where portal users can read it, so it must not be personal data. A Message-ID must be normalised the same way every time before it gets here (see the README). $json.body.record_id, $json.body.event and $json.body.rerun are placeholders for the client's fields. The guard node before this one is what makes String() safe here: never connect the trigger straight to this node."
     },
     {
       "name": "Build request",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        660,
+        880,
         0
       ],
       "parameters": {
@@ -132,14 +123,14 @@
         },
         "includeOtherFields": false
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends so far that were not acknowledged (answered 502, 503 or 504, or not answered at all)."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends so far that were not acknowledged (answered 502, 503, 504 or 520 to 524, or not answered at all)."
     },
     {
       "name": "Stamp time",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        880,
+        1100,
         0
       ],
       "parameters": {
@@ -161,7 +152,7 @@
       "type": "n8n-nodes-base.crypto",
       "typeVersion": 2,
       "position": [
-        1100,
+        1320,
         0
       ],
       "parameters": {
@@ -184,7 +175,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1320,
+        1540,
         0
       ],
       "retryOnFail": false,
@@ -210,17 +201,17 @@
         "rawContentType": "application/json",
         "body": "={{ $json.body }}",
         "options": {
-          "timeout": 30000
+          "timeout": 45000
         }
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. UNVERIFIED: the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); an answer 502 or 504 (the stub never sent one); no answer at all (refused connection, timeout, reset): whether the item then also leaves through the second output and what it holds; the real Hadavin endpoint. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. An answer 202 or 200 leaves through the first output to 'Run still going?', the REQUIRED state check: a 2xx is not the end, and this output must never be connected to anything else. Keep Never Error off. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
+      "notes": "UNVERIFIED: the timeout of 45000 milliseconds as it stands now and the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); an answer 502, 504 or 520 to 524 (the stub never sent one); no answer at all (refused connection, timeout, reset): whether the item then also leaves through the second output and what it holds; a 3xx answer (whether n8n follows the redirect); the real Hadavin endpoint. SEEN IN n8n 2.47.7: the node with the other settings as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. An answer 202 or 200 leaves through the first output to 'Run still going?', the REQUIRED state check: a 2xx is not the end, and this output must never be connected to anything else. Keep Never Error off. The timeout must be longer than the longest time Hadavin may hold a request before answering 503: ack_wait_s is 5 seconds unless configured otherwise and at most 30 seconds, so 45 seconds is used here. Change it if the operator sets ack_wait_s higher than 30 (the worker refuses that) or says otherwise."
     },
     {
       "name": "Busy and rounds left?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1320,
+        1540,
         200
       ],
       "parameters": {
@@ -228,7 +219,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ (['502', '503', '504'].includes(String($json.error?.status ?? '')) || !/^[1-5][0-9][0-9]$/.test(String($json.error?.status ?? ''))) && $('Stamp time').last().json.round < 30 }}",
+              "leftValue": "={{ (['502', '503', '504', '520', '521', '522', '523', '524'].includes(String($json.error?.status ?? '')) || !/^[1-5][0-9][0-9]$/.test(String($json.error?.status ?? ''))) && $('Stamp time').last().json.round < 45 }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -239,14 +230,14 @@
           ]
         }
       },
-      "notes": "UNVERIFIED: this exact expression, in three parts. (1) The list of three statuses: the run had only 503 in it; 502 and 504 were never sent by the stub. (2) The part that counts a MISSING status as busy (the test with [1-5][0-9][0-9]): what the failed item holds when there is no HTTP answer at all (refused connection, timeout, reset) is NOT known, nobody has run that case; this part assumes that error.status is then missing or is not a three-digit HTTP status. The lead runs one more n8n evidence step for it. (3) The number 30 (the run used 3 rounds). SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. What the expression is meant to do: BUSY (true, try again) = an answer 502, 503 or 504, or no HTTP status at all, while fewer than 30 rounds were used. These are what a sender sees while the worker is busy, restarting or draining, directly or behind a proxy. STOP (false) = every other status: 400, 401, 409, 413 and any other 4xx are never tried again; the execution stops and the error workflow tells a person. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README). The 30 rounds are counted over the whole execution: a busy answer to one of the later state checks uses up a round too."
+      "notes": "UNVERIFIED: this exact expression, in three parts. (1) The list of eight statuses: the run had only 503 in it; 502 and 504 were never sent by the stub, and 520 to 524 (statuses some reverse proxies and content-delivery services give when the server behind them does not answer; which ones your proxy uses is not known here) were added after the run. 500 is NOT in the list on purpose: the worker never sends 500 itself, so a 500 is a fault that a person must look at. (2) The part that counts a MISSING status as busy (the test with [1-5][0-9][0-9]): what the failed item holds when there is no HTTP answer at all (refused connection, timeout, reset) is NOT known, nobody has run that case; this part assumes that error.status is then missing or is not a three-digit HTTP status. The lead runs one more n8n evidence step for it. (3) The number 45 (the run used 3 rounds), which is the placeholder for the busy rounds. It is a floor, not a recommendation: see the README for the formula and where to find the agent's max_steps. SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. What the expression is meant to do: BUSY (true, try again) = an answer 502, 503, 504 or 520 to 524, or no HTTP status at all, while fewer than 45 rounds were used. These are what a sender sees while the worker is busy, restarting or draining, directly or behind a proxy. 45 rounds mean 46 sends (the first send and one for each round) and 45 waits. STOP (false) = every other status: 400, 401, 409, 413, 500, any other 4xx or 5xx and any 3xx are never tried again; the execution stops and the error workflow tells a person. The Retry-After header that the worker sends with a 503 (1 second) is ignored: the wait node's own wait is used. The rounds are counted over the whole execution and the same counter serves the first send and every state check: a busy answer to one of the later state checks uses up a round too."
     },
     {
       "name": "Next round",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1540,
+        1760,
         200
       ],
       "parameters": {
@@ -271,14 +262,14 @@
         },
         "includeOtherFields": false
       },
-      "notes": "UNVERIFIED: the third field, checks, which was added after the run (it carries the number of state checks made so far over a busy round, so that a busy round cannot set that count back to zero), and the '?? 0' in it for the time before the first check. SEEN IN n8n 2.47.7: the node with its first two fields, body and round, with typeVersion 3.4: in every round the receiver got the same body with a new timestamp and a new signature, and the loop ended after the set number of rounds. Keep typeVersion 3.4. Takes the SAME body as the first send (never a rebuilt one, so the key and the document cannot change between rounds) and adds one to round. The old ts and signature are dropped here; 'Stamp time' and the sign node make new ones."
+      "notes": "UNVERIFIED: the third field, checks, which was added after the run (it carries the number of state checks made so far over a busy round, so that a busy round cannot set that count back to zero), and the '?? 0' in it for the time before the first check. SEEN IN n8n 2.47.7: the node with its first two fields, body and round, with typeVersion 3.4: in every round the receiver got the same body with a new timestamp and a new signature, and the loop ended after the set number of rounds. Keep typeVersion 3.4. Takes the SAME body as the first send (never a rebuilt one, so the key and the document cannot change between rounds) and adds one to round. The round counter is shared with the state checks (see 'Busy and rounds left?'). The old ts and signature are dropped here; 'Stamp time' and the sign node make new ones."
     },
     {
       "name": "Wait before next round",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        1760,
+        1980,
         200
       ],
       "parameters": {
@@ -286,28 +277,28 @@
         "amount": 60,
         "unit": "seconds"
       },
-      "notes": "UNVERIFIED: a wait of 60 seconds (the run used 2 seconds, and the requests came about 2.0 to 2.1 seconds apart), and any wait above 65 seconds, which n8n is said to handle in another way (saved to its database). SEEN IN n8n 2.47.7: typeVersion, the parameter names resume, amount and unit; the item passed through after the wait; the connection back to 'Stamp time' ran as a loop. 60 seconds is a placeholder. This ONE wait node serves both loops: it is entered from 'Next round' (the request was not acknowledged) and from 'Next check' (the run is still going), and the second entry was NOT run in n8n. After the wait the flow goes back to 'Stamp time', so the request is signed again with a new timestamp. The number of checks in 'Checks left?' times this wait must be LONGER than the worker's stuck limit plus one tick gap (see the README, 'A 202 is not the end')."
+      "notes": "UNVERIFIED: a wait of 60 seconds (the run used 2 seconds, and the requests came about 2.0 to 2.1 seconds apart), and any wait above 65 seconds, which n8n is said to handle in another way (saved to its database; whether such an execution survives a restart of n8n is NOT known). Also not known: what happens to an execution that is waiting when n8n stops or restarts (it may be lost, and the caller was already answered 202, see the README's stated limit 15). SEEN IN n8n 2.47.7: typeVersion, the parameter names resume, amount and unit; the item passed through after the wait; the connection back to 'Stamp time' ran as a loop. 60 seconds is a placeholder; keep it at or under 60 seconds until a longer wait has been run. This ONE wait node serves both loops: it is entered from 'Next round' (the request was not acknowledged) and from 'Next check' (the run is still going), and the second entry was NOT run in n8n. After the wait the flow goes back to 'Stamp time', so the request is signed again with a new timestamp. The busy rounds in 'Busy and rounds left?' times this wait, and the checks in 'Checks left?' times this wait, must each be LONGER than the worker's stuck limit plus one tick gap (see the README, 'The numbers')."
     },
     {
       "name": "Stop: refused or gave up",
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        1540,
+        1760,
         400
       ],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "Hadavin trigger: the request was refused (400, 401, 409, 413 or another status that is not tried again), or no round was acknowledged (502, 503, 504 or no answer in every round). In the second case: not acknowledged; send again with the same key; it may already be running."
+        "errorMessage": "Hadavin trigger: a request was refused (400, 401, 409, 413, 500, a redirect or another status that is not tried again), or the busy rounds were used up (502, 503, 504, 520 to 524 or no answer in every round). If this happened at the FIRST send: not acknowledged; send again with the same key; it may already be running. If it happened while asking about a run that Hadavin had ALREADY acknowledged (a state check): that run exists; look at it in Hadavin and do not send the event with a new key before its state is known."
       },
-      "notes": "UNVERIFIED: the message text as it stands now (it was reworded after the run; nothing else in the node changed), and that this node is reached after rounds of 502, 504 or no answer. SEEN IN n8n 2.47.7: the node with the earlier message text failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. The message must never hold the body, a header value or the signing value."
+      "notes": "UNVERIFIED: the message text as it stands now (reworded twice after the run), and that this node is reached after rounds of 502, 504, 520 to 524 or no answer. SEEN IN n8n 2.47.7: the node with the earliest message text failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. This node is reached from two places: a failed FIRST send, and a failed state check (the same failure branch serves both). The message says what to do in each case. The message must never hold the body, a header value or the signing value."
     },
     {
       "name": "Run still going?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1540,
+        1760,
         0
       ],
       "parameters": {
@@ -333,7 +324,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1540,
+        1760,
         -200
       ],
       "parameters": {
@@ -359,7 +350,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1760,
+        1980,
         -200
       ],
       "parameters": {
@@ -391,7 +382,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1760,
+        1980,
         0
       ],
       "parameters": {
@@ -417,7 +408,7 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1980,
+        2200,
         0
       ],
       "parameters": {},
@@ -428,7 +419,7 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        1980,
+        2200,
         200
       ],
       "parameters": {
@@ -442,7 +433,7 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        1540,
+        1760,
         -400
       ],
       "parameters": {
@@ -468,27 +459,11 @@
       "main": [
         [
           {
-            "node": "Hash business id",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Answer caller: taken",
             "type": "main",
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Answer caller: refused",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Answer caller: refused": {
-      "main": [
         [
           {
             "node": "Stop: id or text missing",
@@ -664,11 +639,22 @@
           }
         ]
       ]
+    },
+    "Answer caller: taken": {
+      "main": [
+        [
+          {
+            "node": "Hash business id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "errorWorkflow": "REPLACE-WITH-THE-ID-OF-hadavin-trigger-error"
   },
-  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run and has not been imported into any n8n since. SEEN IN n8n 2.47.7, on the version before the changes: the import by command line accepted the top-level shape (name, active, nodes, connections, settings) and the settings keys, changed no node, parameter or connection, added an id to every node, and dropped this top-level notes key; a connection back to an earlier node ran as a loop; settings.errorWorkflow set to the id of the imported error workflow started that workflow. The state check after a 2xx answer (the seven nodes from 'Run still going?' on, and the field checks) was added after the run and was never run. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
+  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run, twice (once for the state check and the answer nodes, once after the first review: the key now holds the event name, the webhook has authentication, the busy rounds are 45, 520 to 524 are busy, the refusal answer node was removed), and has not been imported into any n8n since. SEEN IN n8n 2.47.7, on the version before the changes: the import by command line accepted the top-level shape (name, active, nodes, connections, settings) and the settings keys, changed no node, parameter or connection, added an id to every node, and dropped this top-level notes key; a connection back to an earlier node ran as a loop; settings.errorWorkflow set to the id of the imported error workflow started that workflow. The state check after a 2xx answer (the seven nodes from 'Run still going?' on, and the field checks) was added after the run and was never run. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
 }
