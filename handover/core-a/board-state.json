@@ -748,17 +748,17 @@
  ],
  "agents": [
   {
-   "id": "rev-wipci2",
-   "role": "fresh independent reviewer (codebase-details), read-only",
+   "id": "wipci-fix2",
+   "role": "builder in /home/user/wt/for-ci",
    "model": "sonnet",
-   "what exactly it is doing": "review round 2 of tests/test_ci_python_matrix.py (false positives on the real repo, silent false negatives, proportion)",
-   "started UTC": "13:44",
-   "expected end": "10 min",
+   "what exactly it is doing": "CI test: raw-text safety net over .github (below-floor python tokens), honest docstring, loud-false-positive nits, de-brittle planted tests",
+   "started UTC": "13:46",
+   "expected end": "15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "2",
+   "review round n of cap": "2 of 3",
    "retries so far": 0,
-   "reason": "after wipci-fix"
+   "reason": "rev-wipci2 findings"
   }
  ],
  "tests": [
@@ -3456,6 +3456,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "CI agreement test: 20 assertions each with a planted test (red when deleted), parser sees env/uv --python/python-version-file/include/images/.python-version/composite actions/all workflows, float 3.10 trap, upper bound; 212 passed with the 2 CI guards; pushed to wip/core-a-for-ci"
+  },
+  {
+   "id": "rev-wipci2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review round 2 of tests/test_ci_python_matrix.py (false positives on the real repo, silent false negatives, proportion)",
+   "started UTC": "13:44",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "2",
+   "retries so far": 0,
+   "reason": "CI test review round 2: no false positives on the real repo; 2 Majors = silent false negatives (images like cimg/python:3.11, uv:python3.11-bookworm; run text uv run -p, inline UV_PYTHON, docker run python:3.11, pyenv, conda, pipx, python3.11); planted tests sound; brittleness nits -> round 3 fix with a raw-text safety net instead of more parsers"
   }
  ]
 }
