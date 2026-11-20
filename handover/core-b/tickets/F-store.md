@@ -443,5 +443,9 @@ from `reply()`/FakeLLM, which are now valid by construction.
   trigger `hadavin_money_guard()` (SECURITY INVOKER, search path pinned by migrate) on spend, spend_month,
   spend_reservations; only the owner of the release function may lower. Design correction found by test: settle of an
   OPEN hold below its reserved amount lowers the counters legitimately, so the counters may fall by the holds settled
-  in the same transaction and never below the booked holds. Known limit: non-hold charges can be lowered by that
-  amount. Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.
+  in the same transaction and never below the booked holds. Known limit (review round 2, E13, corrected): the guard is a TRIPWIRE. It stops a plain lowering UPDATE and a naive plant;
+  it does NOT stop a runtime login that composes a settle with repeated lowering UPDATEs in one transaction (H1), forges a settled
+  hold by INSERT or by raising reserved_usd (H2), or shares a login with the migration owner (L2); all reproduced, pinned as
+  xfail(strict) in tests/test_migrations_0009_0010_round2.py. The real fix is the queued redesign: the runtime without UPDATE/INSERT
+  on the money tables, reserve/settle/expire as SECURITY DEFINER (definer) functions. Index on spend_reservations (agent_id, day) added (M3).
+  Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.
