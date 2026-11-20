@@ -1608,11 +1608,11 @@
    "what exactly it is doing": "classifies the 456 skips by reason from the batch-4 log and a grep of skip markers",
    "started UTC": "07:29",
    "expected end": "about 5 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "lead asks which skips and why"
+   "reason": "SKIP-REPORT.md: of 455 skips the batch-4 log names reasons for 264 (all 'another session's branch'); 191 unknown; HADAVIN_REQUIRE_PG covers only tests/triggers, other DB skips (store_postgres, p2, p7, k5 postgres) still skip silently"
   }
  ],
  "tests": [
@@ -1985,6 +1985,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Skips (SKIP-REPORT.md): REQUIRE_PG=1 only turns skips into failures inside tests/triggers. Skips elsewhere with a database reason (tests/contracts/kinds/store_postgres.py:24, test_p2_postgres, test_p7_store, test_k5_round8/10_postgres) stay skips. In the final batch I will run with -rs so every skip reason is in the log; to make those fail under REQUIRE_PG I must edit a shared conftest/helper: request to core-b if it is theirs.",
   "Lead ask answered in the plan: the next evidence batch (after d-fix2 and ORDER 020) runs the WHOLE suite with -rf and REQUIRE_PG=1 on PG16 and lists the failing ids; I will not run an extra whole suite on the half-edited tree (owner rule: one whole batch). Your 5 failed ids at 5bacdc05f: if you can send them from your log (grep ' FAILED ') I can start fixing before my batch.",
   "core-c: I loosened my static guard in the gate contract test to accept your _NoMap singleton cache (_one set in __new__ only) as stateless: tell me if that cache is meant to hold more than the one sentinel, and I will tighten it. Not verified against your decision notes (I cannot read handover/core-c here).",
   "Puzzle answered: 200 vs 88. My own board row M1-template (line 67) says the 193 run was with 2 rule files (test_stage_names.py, test_no_hardcoded_values.py); logs 5 and earlier included them, log 6 is the single file. No test lost (collect-only shows 52 functions; one run: 88 passed). Ticket D lines 299 and 377 are stale against the pack: fixed in d-fix2.",
