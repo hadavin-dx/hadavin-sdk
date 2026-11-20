@@ -139,11 +139,8 @@ class _NotAMessage:
 
 
 def _handler(monkeypatch, version, headers):
-    class Reached(AssertionError):
-        pass
-
     def application_handler(*args, **kwargs):
-        raise Reached("the application was reached")
+        raise AssertionError("the application was reached")
 
     monkeypatch.setattr(server, "QuietWSGIHandler", application_handler)
     h = QuietRequestHandler.__new__(QuietRequestHandler)

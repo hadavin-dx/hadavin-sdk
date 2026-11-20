@@ -1352,7 +1352,7 @@ M = [
         "",
         T18,
         "test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer",
-        "Reached: the application was reached",
+        "AssertionError: the application was reached",
     ),
     mutant(
         "G36h a header block that is not a Message no longer closes quietly (G16b second half)",
@@ -1361,7 +1361,7 @@ M = [
         "",
         T18,
         "test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer",
-        "Reached: the application was reached",
+        "AssertionError: the application was reached",
     ),
 ]
 
