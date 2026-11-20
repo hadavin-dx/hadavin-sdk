@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:46:26Z
+UPDATED_UTC: 2026-11-20T13:47:37Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.56 of 4 cores, mem 1/15 GB, disk 44G free, 38% used, agents light 4 heavy 2
+CAPACITY: load 3.88 of 4 cores, mem 1/15 GB, disk 44G free, 38% used, agents light 4 heavy 2
 DISK: / 44G free, 38% used; worktrees /tmp/core-b-wt 4.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T13:45:14Z (previous push; this board is pushed right after writing)
-IST: 19:16 IST
+PUSHED_UTC: 2026-11-20T13:46:41Z (previous push; this board is pushed right after writing)
+IST: 19:17 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -305,3 +305,5 @@ B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the m
 13:58Z THE FOUR ORDERED AGENTS ALL RAN AND ARE DONE: (1) step 4 reviewer R9 -> tickets/F-money-definer-step4-review-1.md; (2) H1/B3 reviewer R10 -> F-money-definer-h1-review-1.md; (3) B2 failing tests TB2 -> tests/test_live_path_reserve_settle.py merged (3347b7d76; 16 strict xfails + 2 baseline); (4) docs builder merged (45d266d8a). AGENTS LIVE NOW (4, sonnet): I1 idempotent reserve then M2/parity (MI1; files 0011, postgres.py, memory.py, protocol.py, limits.py, contract tests) | B2 builder (MB2; file agent_loop.py model-call sites + the B2 test file xfail marks; started 13:55Z) | M6 fix round (MM6; migrate.py ledger region, docs/migration-checksums.md, package hash data) | A3 fix round (MA3; models.py, audit/chain.py _TS_SHAPE, agent_loop.py _note fallback). Conflict note: B2 and A3 both touch agent_loop.py (different functions); B2 and I1 both touch the settle call (one helper in B2).
 
 14:10Z MERGED since 13:58Z: A3 fix round (23aaddb6b: ASCII audit patterns, leap-year ts regex, _note fallback keeps fields), price guard from the laptop (wip/lead-b-price-guard, ledger row FIXED-UNVERIFIED), M6 fix round (repeating warning, --accept-changed-draft/--reset-draft, packaged released hashes), limits-test fix, I1 (db9cd8c58: reserve idempotent retry = core-a M5; settle requires agent_id everywhere = lead M2; memory add_spend/reserve parity = core-a M6; ~130 test call sites). Lead items status: B1 DONE (G), B2 IN PROGRESS (builder MB2), B3 DONE, M1 DONE, M2 DONE, M3 DONE, M4 laptop, M5 DONE, M6 DONE (fixed after review), M7 DONE except column grants (laptop), N1 DONE, N2/N3 laptop (lead-b-ts-watermark), N8 DECISIONS. ABC: M1 DONE, M2 DONE, M3 DONE + allowlist, nit 2/3 DONE, nit 7 merged. AGENTS LIVE (sonnet, 4): B2 builder (MB2) | F7 regression fixer for the 16 PG failures I1 found on the base (MF7; tests only; own database hadavin_test_mf7) | R13 reviewer of I1 diff (read-only; own database) | none else. Known open: laptop evidence PG15/17 pending; evidence batch 11 on the merged head to start after F7 and B2 land (cap 2 heavy).
+
+13:52Z MODEL CHECK (get_session on core-b): configured_model=claude-sonnet-5-5, session_context.model=claude-sonnet-5-5, external_metadata.model=claude-sonnet-5-5, last_served_model=claude-sonnet-5-5. NOT FABLE-SERVED. Running agents (B2 builder, F7 fixer, R13 reviewer): model sonnet set explicitly, none inherited.
