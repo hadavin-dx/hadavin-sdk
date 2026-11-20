@@ -122,6 +122,8 @@ RESET_ROWS = {
     "kill_switch_clears": "SELECT, INSERT",
     "audit_entries": "SELECT, INSERT",
     "audit_checkpoints": "SELECT",
+    "kill_switch_resets": "SELECT, INSERT",  # 0009: the reset's own append-only record
+    "kill_switch_watermark": "SELECT, INSERT, UPDATE",  # 0009: written by the reset only
 }
 
 
@@ -138,7 +140,7 @@ def test_u4_the_real_migrations_and_the_grant_map_agree():
     ]
 
 
-def test_u4_only_the_five_rows_of_the_ticket_give_the_reset_role_anything():
+def test_u4_only_the_seven_rows_of_the_ticket_give_the_reset_role_anything():
     held = {name: _privileges(g.reset) for name, g in GRANTS.items() if g.reset}
     assert held == {name: _privileges(text) for name, text in RESET_ROWS.items()}
     assert all(g.reset == "" for g in GRANTS.values() if g.kind == "sequence")
