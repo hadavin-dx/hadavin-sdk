@@ -190,7 +190,7 @@ def test_fix3_a_conflict_event_that_cannot_be_built_does_not_stick_the_flag(
 
     monkeypatch.setattr(worker, "_conflict_event", flaky)
     with (
-        Runner(rt, rt.store, audit=rt.audit) as runner,
+        Runner(rt, rt.store, max_running=1, audit=rt.audit) as runner,
         caplog.at_level("WARNING", logger="hadavin_sdk.triggers"),
     ):
         assert runner.start(first)[0] in (200, 202)

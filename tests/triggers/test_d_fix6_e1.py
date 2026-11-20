@@ -149,7 +149,7 @@ def test_e1_a_409_writes_one_audit_event_with_exactly_ids_and_both_hashes(rt):
 def test_e1_the_11th_conflict_in_a_minute_writes_no_event_but_is_still_409_and_counted(rt, caplog):
     clock = [1000.0]
     first, other = _req(DOCUMENT), _req(OTHER_DOCUMENT)
-    with Runner(rt, rt.store, audit=rt.audit, rate_clock=lambda: clock[0]) as runner:
+    with Runner(rt, rt.store, max_running=1, audit=rt.audit, rate_clock=lambda: clock[0]) as runner:
         assert runner.start(first)[0] in (200, 202)
         _settle(rt.store, first.run_id)
         _free(runner)
@@ -179,7 +179,9 @@ def test_e1_the_11th_conflict_in_a_minute_writes_no_event_but_is_still_409_and_c
 
 def test_e1_the_cap_is_per_sender_and_a_constructor_parameter(rt):
     assert worker.CONFLICT_EVENTS_PER_MINUTE == 10
-    with Runner(rt, rt.store, audit=rt.audit, conflict_events_per_minute=2) as runner:
+    with Runner(
+        rt, rt.store, max_running=1, audit=rt.audit, conflict_events_per_minute=2
+    ) as runner:
         first, other = _req(DOCUMENT), _req(OTHER_DOCUMENT)
         assert runner.start(first)[0] in (200, 202)
         _settle(rt.store, first.run_id)
@@ -189,7 +191,7 @@ def test_e1_the_cap_is_per_sender_and_a_constructor_parameter(rt):
         assert len(_conflicts(rt)) == 2 and runner.conflict_events_dropped == 3
     for bad in (0, -1, True, 1.5):
         with pytest.raises(ValueError, match="conflict_events_per_minute"):
-            Runner(rt, rt.store, conflict_events_per_minute=bad)
+            Runner(rt, rt.store, max_running=1, conflict_events_per_minute=bad)
 
 
 def test_e1_a_failing_audit_never_changes_the_409(rt):
@@ -197,7 +199,7 @@ def test_e1_a_failing_audit_never_changes_the_409(rt):
         def write_outcome(self, event):
             raise RuntimeError("audit down")
 
-    with Runner(rt, rt.store, audit=Broken()) as runner:
+    with Runner(rt, rt.store, max_running=1, audit=Broken()) as runner:
         first = _req(DOCUMENT)
         assert runner.start(first)[0] in (200, 202)
         _settle(rt.store, first.run_id)

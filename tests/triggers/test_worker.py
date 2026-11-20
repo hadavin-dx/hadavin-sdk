@@ -153,7 +153,7 @@ def _insert(store, *, agent_id, principal_id, trigger_kind, trigger_ref, run_id)
 
 def test_new_request_is_acked_only_with_a_matching_row(rt):
     req = _req()
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         status, body = runner.start(req)
         assert status in OK
         assert set(body) == {"run_id", "state"} and body["run_id"] == req.run_id
@@ -173,7 +173,7 @@ def test_new_request_is_acked_only_with_a_matching_row(rt):
 
 def test_repeat_with_the_same_document_returns_the_stored_run(rt):
     req = _req()
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         assert runner.start(req)[0] in OK
         ended = _settle(rt.store, req.run_id)
         _free(runner)
@@ -186,7 +186,7 @@ def test_repeat_with_the_same_document_returns_the_stored_run(rt):
 def test_same_key_with_another_document_is_409_and_writes_nothing(rt):
     first, other = _req(), _req(document=OTHER_DOCUMENT)
     assert first.run_id == other.run_id and first.trigger_ref != other.trigger_ref
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         assert runner.start(first)[0] in OK
         before = _settle(rt.store, first.run_id)
         _free(runner)
@@ -217,7 +217,7 @@ def test_50_parallel_requests_with_one_key_make_one_run(rt, max_running):
 def test_one_slot_still_answers_every_parallel_request_for_one_key(rt):
     """The default of one running loop must not turn a duplicate delivery into a 503."""
     req = _req()
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         answers = _parallel(runner, [req] * 12)
         assert [a for a in answers if not isinstance(a, tuple) or a[0] not in OK] == []
         _settle(rt.store, req.run_id)
@@ -254,7 +254,10 @@ def test_no_slot_here_while_another_worker_writes_the_row(rt, document, expected
 
     hold, ours = threading.Event(), _req(1, document or DOCUMENT)
     busy = FakeRuntime(rt.store, holds_its_slot)
-    with Runner(rt, rt.store) as other, Runner(busy, rt.store, ack_wait_s=0.6, poll_s=0.02) as here:
+    with (
+        Runner(rt, rt.store, max_running=1) as other,
+        Runner(busy, rt.store, max_running=1, ack_wait_s=0.6, poll_s=0.02) as here,
+    ):
         try:
             assert here.start(_req(9))[0] in OK
             assert not here._slots.acquire(blocking=False)  # the one slot is taken
@@ -349,7 +352,7 @@ def test_store_down_is_503_and_nothing_starts():
 
     store = Down()
     fake = FakeRuntime(store, lambda *a, **kw: None)
-    with Runner(fake, store) as runner:
+    with Runner(fake, store, max_running=1) as runner:
         assert runner.start(_req()) == (503, {})
     assert fake.calls == 0 and store._runs == {}
 
@@ -366,7 +369,7 @@ def test_store_failing_while_waiting_for_the_row_is_503():
 
     store, hold = Flaky(), threading.Event()
     fake = FakeRuntime(store, lambda *a, **kw: hold.wait(30))
-    with Runner(fake, store) as runner:
+    with Runner(fake, store, max_running=1) as runner:
         try:
             assert runner.start(_req()) == (503, {})
         finally:
@@ -424,7 +427,7 @@ def test_the_row_decides_not_the_exception():
         raise StaleState("state changed")
 
     store = MemoryStore()
-    with Runner(FakeRuntime(store, lost_a_state_race), store) as runner:
+    with Runner(FakeRuntime(store, lost_a_state_race), store, max_running=1) as runner:
         assert runner.start(_req(1)) == (202, {"run_id": _req(1).run_id, "state": "RECEIVED"})
 
     def raced_by_another_document(store, **kw):
@@ -432,7 +435,7 @@ def test_the_row_decides_not_the_exception():
         raise StaleState("run exists")
 
     store = MemoryStore()
-    with Runner(FakeRuntime(store, raced_by_another_document), store) as runner:
+    with Runner(FakeRuntime(store, raced_by_another_document), store, max_running=1) as runner:
         assert runner.start(_req(1)) == (409, {})
 
 
@@ -444,7 +447,7 @@ def test_handle_raising_after_the_row_is_logged_by_class_name_only(caplog):
     store = MemoryStore()
     with (
         caplog.at_level("WARNING", logger="hadavin_sdk.triggers"),
-        Runner(FakeRuntime(store, fails_late), store) as runner,
+        Runner(FakeRuntime(store, fails_late), store, max_running=1) as runner,
     ):
         assert runner.start(_req())[0] in OK  # the row exists: acked, the tick ends the run later
         _free(runner)
@@ -476,7 +479,7 @@ def test_close_lets_a_running_loop_end_and_refuses_new_keys(rt):
 
 
 def test_closed_runner_takes_no_new_work(rt):
-    runner = Runner(rt, rt.store)
+    runner = Runner(rt, rt.store, max_running=1)
     runner.close()
     assert runner.start(_req()) == (503, {})
     assert rt.store._runs == {} and rt.llm.calls == 0
@@ -487,7 +490,7 @@ def test_bad_arguments_are_refused(rt):
         with pytest.raises(ValueError) as refused:
             Runner(rt, rt.store, **kw)
         assert "above zero" in str(refused.value), f"bound {kw} refused with another text"
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         assert (
             runner._slots._value == 1
         )  # the default is one loop at a time (spend, see the module text)
@@ -500,7 +503,7 @@ def test_crash_after_the_row_then_tick_ends_with_a_person(rt):
     from hadavin_sdk.testing import crash
 
     req, plain = _req(), rt.store
-    with crash.CrashPoints() as cp, Runner(rt, plain) as runner:
+    with crash.CrashPoints() as cp, Runner(rt, plain, max_running=1) as runner:
         rt.store = cp.wrap(plain, "store", ["create_run"])  # after the build, as ticket E says
         cp.arm("store.create_run:after")
         status, body = runner.start(req)
@@ -650,7 +653,7 @@ def test_served_over_loopback_a_signed_request_is_acked(rt):
 
 def test_409_writes_one_log_line_with_status_sender_and_run_id_only(rt, caplog):
     first, other = _req(), _req(document=OTHER_DOCUMENT)
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         assert runner.start(first)[0] in OK
         _settle(rt.store, first.run_id)
         _free(runner)
@@ -733,7 +736,9 @@ def test_a_refused_request_reads_the_store_a_few_times_not_a_hundred():
         hold.wait(30)
 
     store, hold = Counting(), threading.Event()
-    with Runner(FakeRuntime(store, holds_its_slot), store) as runner:  # the defaults: one slot, 5 s
+    with Runner(
+        FakeRuntime(store, holds_its_slot), store, max_running=1
+    ) as runner:  # the defaults: one slot, 5 s
         try:
             assert runner.start(_req(1))[0] in OK
             before, began = Counting.reads, time.monotonic()
@@ -932,7 +937,7 @@ def test_m2_a_hung_store_cannot_pile_up_request_threads(caplog):
 
     store, release = Hung(), threading.Event()
     fake = FakeRuntime(store, lambda *a, **kw: None)
-    with Runner(fake, store, max_waiting=2) as runner, caplog.at_level("WARNING"):
+    with Runner(fake, store, max_running=1, max_waiting=2) as runner, caplog.at_level("WARNING"):
         inside = [
             threading.Thread(target=runner.start, args=(_req(n),), daemon=True) for n in (1, 2)
         ]
@@ -961,7 +966,7 @@ def test_m2_a_hung_store_cannot_pile_up_request_threads(caplog):
 
 
 def test_m2_a_place_is_given_back_after_every_answer(rt):
-    with Runner(rt, rt.store, max_waiting=1) as runner:
+    with Runner(rt, rt.store, max_running=1, max_waiting=1) as runner:
         for n in range(1, 4):
             assert runner.start(_req(n))[0] in OK
             _settle(rt.store, _req(n).run_id)
@@ -970,7 +975,7 @@ def test_m2_a_place_is_given_back_after_every_answer(rt):
 
 def test_m2_fifty_parallel_requests_of_one_key_stay_under_the_default_cap(rt):
     assert worker.MAX_WAITING >= 50
-    with Runner(rt, rt.store) as runner:
+    with Runner(rt, rt.store, max_running=1) as runner:
         answers = _parallel(runner, [_req(1)] * 50)
         _free(runner)
     assert all(a[0] in OK for a in answers if isinstance(a, tuple)), answers
@@ -979,7 +984,7 @@ def test_m2_fifty_parallel_requests_of_one_key_stay_under_the_default_cap(rt):
 
 def test_m3_close_warns_once_when_a_loop_is_still_going(rt, caplog):
     rt.llm.gate.clear()
-    runner = Runner(rt, rt.store)
+    runner = Runner(rt, rt.store, max_running=1)
     try:
         assert runner.start(_req())[0] in OK
         with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
@@ -993,7 +998,7 @@ def test_m3_close_warns_once_when_a_loop_is_still_going(rt, caplog):
 
 def test_m3_close_with_nothing_running_is_quiet(rt, caplog):
     with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
-        Runner(rt, rt.store).close()
+        Runner(rt, rt.store, max_running=1).close()
     assert _log_lines(caplog, "WARNING") == []
 
 
@@ -1017,7 +1022,7 @@ def test_n3_a_waiter_gets_503_at_once_when_the_runner_is_closed(rt):
     (Before the fix it kept polling for the whole 5 s.)"""
     hold = threading.Event()
     fake = FakeRuntime(rt.store, lambda store, **kw: (_insert(store, **kw), hold.wait(30)))
-    with Runner(fake, rt.store, ack_wait_s=5.0, poll_s=0.02) as runner:
+    with Runner(fake, rt.store, max_running=1, ack_wait_s=5.0, poll_s=0.02) as runner:
         try:
             assert runner.start(_req(1))[0] in OK
             answer: list = []
@@ -1053,7 +1058,7 @@ def test_n5_a_store_error_is_a_warning_and_a_bug_is_an_error_both_503(caplog):
         caplog.clear()
         with (
             caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"),
-            Runner(fake, Broken(exc)) as runner,
+            Runner(fake, Broken(exc), max_running=1) as runner,
         ):
             assert runner.start(_req()) == (503, {})
         assert any(type(exc).__name__ in line for line in _log_lines(caplog, level)), exc
@@ -1073,7 +1078,9 @@ def test_n7_a_base_exception_of_a_run_thread_is_logged_by_class_name_and_frees_t
     store = MemoryStore()
     with (
         caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"),
-        Runner(FakeRuntime(store, stops), store, ack_wait_s=0.3, poll_s=0.02) as runner,
+        Runner(
+            FakeRuntime(store, stops), store, max_running=1, ack_wait_s=0.3, poll_s=0.02
+        ) as runner,
     ):
         assert runner.start(_req()) == (503, {})  # no row was written
         _free(runner)
@@ -1144,7 +1151,7 @@ def test_ack_wait_nan_is_refused_and_a_non_int_max_running_is_a_config_error_in_
     """DC1-7. NaN passed both comparisons of the old bound; a string or a float as max_running was a TypeError
     (or a float limit) and not a config error."""
     with pytest.raises(ValueError, match="at most 30"):
-        Runner(rt, rt.store, ack_wait_s=float("nan"))
+        Runner(rt, rt.store, max_running=1, ack_wait_s=float("nan"))
     for bad in ("2", 2.0, True, None):
         with pytest.raises(ValueError, match="whole number"):
             Runner(rt, rt.store, max_running=bad)
@@ -1192,7 +1199,7 @@ def test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_pool_is
     been shut down; the pool raises, the answer is still 503, but an ERROR line is logged. The spy on the
     pool's `submit` and the ERROR check kill that mutant."""
     submitted: list[object] = []
-    runner = Runner(rt, rt.store)
+    runner = Runner(rt, rt.store, max_running=1)
     real = runner._pool.submit
 
     def spy(*args, **kwargs):
@@ -1237,7 +1244,7 @@ def test_max_running_that_is_not_a_whole_number_is_refused_in_runner_and_make_ap
 )
 def test_ack_wait_s_that_is_not_a_usable_number_is_refused_in_runner_and_make_app(rt, bad, words):
     with pytest.raises(ValueError, match=words):
-        Runner(rt, rt.store, ack_wait_s=bad)
+        Runner(rt, rt.store, max_running=1, ack_wait_s=bad)
     with pytest.raises(ConfigError, match=words):
         worker.make_app(_app(rt, _settings(ack_wait_s=bad)))
 
@@ -1245,7 +1252,7 @@ def test_ack_wait_s_that_is_not_a_usable_number_is_refused_in_runner_and_make_ap
 @pytest.mark.parametrize("bad", ["0.05", None, True, [0.05]])
 def test_a_poll_s_that_is_not_a_number_is_a_value_error_not_a_type_error(rt, bad):
     with pytest.raises(ValueError, match="poll_s must be a number"):
-        Runner(rt, rt.store, poll_s=bad)
+        Runner(rt, rt.store, max_running=1, poll_s=bad)
     with pytest.raises(ConfigError, match="poll_s must be a number"):
         worker.make_app(_app(rt, _settings()), poll_s=bad)
 
@@ -1268,7 +1275,7 @@ def test_same_key_and_ref_but_another_agent_or_principal_is_409(other):
         },
     )
     fake = FakeRuntime(store, lambda store, **kw: None)
-    with Runner(fake, store) as runner:
+    with Runner(fake, store, max_running=1) as runner:
         assert runner.start(req) == (409, {})
     assert len(store._runs) == 1
 
@@ -1342,7 +1349,7 @@ def test_d3_main_exits_2_for_a_missing_core_b_field(monkeypatch, capsys):
 
 
 def test_d3_runner_has_a_read_only_ack_wait(rt):
-    with Runner(rt, rt.store, ack_wait_s=7) as runner:
+    with Runner(rt, rt.store, max_running=1, ack_wait_s=7) as runner:
         assert runner.ack_wait_s == 7.0
         with pytest.raises(AttributeError):
             runner.ack_wait_s = 1.0  # type: ignore[misc]

@@ -186,7 +186,7 @@ def test_fix2_a_blocked_audit_write_costs_the_409_at_most_2_s_and_one_write_is_p
     audit = BlockingAudit()
     first, other = _req(DOCUMENT), _req(OTHER_DOCUMENT)
     assert worker.AUDIT_WRITE_TIMEOUT_S == 2.0
-    with Runner(rt, rt.store, audit=audit) as runner:
+    with Runner(rt, rt.store, max_running=1, audit=audit) as runner:
         assert runner.start(first)[0] in (200, 202)
         _settle(rt.store, first.run_id)
         _free(runner)
@@ -407,7 +407,9 @@ def _req_of(sender: str, document: bytes) -> Accepted:
 
 
 def test_fix2_the_cap_is_per_sender_and_the_window_dict_is_bounded_by_the_senders(rt):  # noqa: F811
-    with Runner(rt, rt.store, audit=rt.audit, conflict_events_per_minute=2) as runner:
+    with Runner(
+        rt, rt.store, max_running=1, audit=rt.audit, conflict_events_per_minute=2
+    ) as runner:
         for sender in ("door-a", "door-b"):
             first = _req_of(sender, DOCUMENT)
             assert runner.start(first)[0] in (200, 202)
