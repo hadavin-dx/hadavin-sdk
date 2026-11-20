@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T14:26:43Z
+UPDATED_UTC: 2026-11-20T14:27:33Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 3
-CAPACITY: load 0.07 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 2
+CAPACITY: load 0.03 of 4 cores (1-minute average), mem 1.1/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 18%; 634M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T14:26:33Z (the push before this board)
+PUSHED_UTC: 2026-11-20T14:26:47Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,18 +107,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | rev-c-G13b | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G13b + G12b regression: are my 4 G13 Majors and the G12b Major fixed, and is the new code sound | 14:24 | 15 min | 5 | running | 1 | 0 | lead 14:26 |
-| rev-b-newest | fresh independent reviewer (codebase-details), read-only | sonnet | core-b diff since a25f6858d (F7 caps seeding, PG test day window, decoys): vacuity/weakening | 14:24 | 12 min | 5 | running | 1 | 0 | lead 14:26 |
 | readme-edoor1 | builder (docs) | sonnet | n8n README section 'what the sender must do: poll the run state' (E-door-1 default) | 14:24 | 15 min | 5 | running | - | 0 | lead 14:26 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 29535s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 29535s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 29535s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 29535s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 29535s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 29535s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 29585s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 29585s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 29585s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 29585s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 29585s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 29585s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -180,6 +179,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 14:30 core-b newest merges reviewed (reviews/rev-b-newest.md): NO Blocker/Major in the diff (F7 caps seeding wrapper: store refuses, no new widening; window/min-age proofs run on real limits; schema-qualified decoys not weakened). My H1 Majors are NOT closed: earlier-0011-draft DBs now WARN on every migrate (mitigation, not a repair), day window still allows D-1/D/D+1 (3x day cap). Nits: two header pins loosened (`not in head` -> `in head`), the money definer battery lost its NaN/negative cap rows (covered elsewhere only by test_money_caps_pg.py, not verified). All PG claims skip without a DSN.
 - 14:24 WHY NOTHING RAN 14:16-14:24: every review/batch on your earlier lists was finished and I had no new landed commits to review; waited for core-c/core-b to push (no work to invent). NOW 3 agents: rev-c-G13b (core-c 3f467df1e G13b + 9806830d0 G12b regression: checks my 4 G13 Majors and the G12b Major), rev-b-newest (core-b since a25f6858d), readme-edoor1 (README section: sender polls). Heavy batches: lead-build-3 runs 1-4 delivered at 9072e701f; a new full run on core-c afef6e16a is NOT requested in lead-build-3 (tell me if you want run 1 again on the new head).
 - 14:20 core-c G13 reviewed (reviews/rev-c-G13.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker, 4 Majors: (1) the combining-marker fix covers decomposed forms but NOT precomposed U+226E (and not Mc U+093E) and has no test for it; (2) _touching_piece refuses ordinary text beside a key when a secret shares a 4-gram prefix ('https://' vs 'http...'): a planted value poisons every later call; (3) LEAK: window overlap 10*longest+16 is too small for stacked encodings: chunk > 65,536 chars + secret 17+ chars spelled '%26%23<dec>%3B' per char straddles unredacted; (4) a secret of ~3,275+ chars makes every big non-ASCII chunk refuse (DoS, fail-closed). All 12 mutants E19a-l check out. Weakened pins d7, r2_m2. No agents running.
 - 14:15 core-c E22+G12b reviewed (reviews/rev-c-E22G12b.md + NEW FILE handover/core-c/requests/xr-from-core-a-reviews-2.md): E22 skip is safe (no Blocker/Major; no test pins _only_encoded; the extra-character case costs the E22 amount again, unmeasured). G12b MAJOR: redact.py:1826 _place drops the clear-core sweep for words in _NOT_A_VALUE and placeholder-like cores: `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these, deliberate trade-off not recorded as a limit/no pinning test). Vacuous tests G12-18/G12-13. G13 review still running.

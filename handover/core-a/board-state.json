@@ -761,19 +761,6 @@
    "reason": "lead 14:26"
   },
   {
-   "id": "rev-b-newest",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-b diff since a25f6858d (F7 caps seeding, PG test day window, decoys): vacuity/weakening",
-   "started UTC": "14:24",
-   "expected end": "12 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 14:26"
-  },
-  {
    "id": "readme-edoor1",
    "role": "builder (docs)",
    "model": "sonnet",
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:30 core-b newest merges reviewed (reviews/rev-b-newest.md): NO Blocker/Major in the diff (F7 caps seeding wrapper: store refuses, no new widening; window/min-age proofs run on real limits; schema-qualified decoys not weakened). My H1 Majors are NOT closed: earlier-0011-draft DBs now WARN on every migrate (mitigation, not a repair), day window still allows D-1/D/D+1 (3x day cap). Nits: two header pins loosened (`not in head` -> `in head`), the money definer battery lost its NaN/negative cap rows (covered elsewhere only by test_money_caps_pg.py, not verified). All PG claims skip without a DSN.",
   "14:24 WHY NOTHING RAN 14:16-14:24: every review/batch on your earlier lists was finished and I had no new landed commits to review; waited for core-c/core-b to push (no work to invent). NOW 3 agents: rev-c-G13b (core-c 3f467df1e G13b + 9806830d0 G12b regression: checks my 4 G13 Majors and the G12b Major), rev-b-newest (core-b since a25f6858d), readme-edoor1 (README section: sender polls). Heavy batches: lead-build-3 runs 1-4 delivered at 9072e701f; a new full run on core-c afef6e16a is NOT requested in lead-build-3 (tell me if you want run 1 again on the new head).",
   "14:20 core-c G13 reviewed (reviews/rev-c-G13.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker, 4 Majors: (1) the combining-marker fix covers decomposed forms but NOT precomposed U+226E (and not Mc U+093E) and has no test for it; (2) _touching_piece refuses ordinary text beside a key when a secret shares a 4-gram prefix ('https://' vs 'http...'): a planted value poisons every later call; (3) LEAK: window overlap 10*longest+16 is too small for stacked encodings: chunk > 65,536 chars + secret 17+ chars spelled '%26%23<dec>%3B' per char straddles unredacted; (4) a secret of ~3,275+ chars makes every big non-ASCII chunk refuse (DoS, fail-closed). All 12 mutants E19a-l check out. Weakened pins d7, r2_m2. No agents running.",
   "14:15 core-c E22+G12b reviewed (reviews/rev-c-E22G12b.md + NEW FILE handover/core-c/requests/xr-from-core-a-reviews-2.md): E22 skip is safe (no Blocker/Major; no test pins _only_encoded; the extra-character case costs the E22 amount again, unmeasured). G12b MAJOR: redact.py:1826 _place drops the clear-core sweep for words in _NOT_A_VALUE and placeholder-like cores: `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these, deliberate trade-off not recorded as a limit/no pinning test). Vacuous tests G12-18/G12-13. G13 review still running.",
@@ -3709,6 +3697,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-c G13: NO Blocker; 4 Majors: precomposed U+226E marker spoof NOT neutralised (decomposed forms fixed), _touching_piece false refusal/poisoning, window overlap 10*longest+16 too small for stacked encodings (LEAK: %26%23<dec>%3B secret 17+ chars at VIEW_WINDOW-217), secret >=3,275 chars makes all big non-ASCII chunks refuse (DoS); all 12 mutants check out; 2 weakened pins; reviews/rev-c-G13.md"
+  },
+  {
+   "id": "rev-b-newest",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b diff since a25f6858d (F7 caps seeding, PG test day window, decoys): vacuity/weakening",
+   "started UTC": "14:24",
+   "expected end": "12 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-b since a25f6858d: NO Blocker/Major; seeding wrapper correct (store refuses), no new widening, window/min-age proven on real limits (no_cap_seed), decoys not weakened; my H1 Majors NOT closed (earlier-0011 DBs only warned, day window 3x); nits: two loosened header pins, definer battery lost NaN/negative cap rows; reviews/rev-b-newest.md"
   }
  ]
 }
