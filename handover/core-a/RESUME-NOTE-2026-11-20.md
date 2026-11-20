@@ -11,3 +11,6 @@ cloud/core-a (door D+E, all d-fix up to d-fix28, tests, handover): e5ad95390 at 
 6. Owner decisions waiting: E-door-1 (cut-off acknowledged request becomes NEEDS_PERSON with no notification: default 'sender polls'); store CA retry-forever limit and ca_file temp leak (handover/core-b/requests/from-core-a-ca-file-leak.md); 4 trigger functions keep PUBLIC EXECUTE (core-b request); core-b 0011 edited in place (needs 0012 or reset rule).
 7. At the end: stop PostgreSQL on :55433 (mine), final REPORT.md update.
 Rules still in force: sonnet/haiku only for agents (explicit model), EGM fresh reviewers, max 2 heavy runs, never skip/weaken tests, push only own branches.
+
+## Addendum 17:37: A10 finished
+A10 DONE: branch wip/core-a-fuzz-pg 0f3ded594 (tests/triggers/test_fuzz_pg_store.py + evidence/fuzz-pg-store.md): 3 seeds, 4 passed + 1 strict xfail each on PG16; finding A10-1 (PostgresStore never reconnects after a lost backend: 503 until restart; owner core-b, routed in handover/core-b/requests/xr-from-core-a-3.md); 256 global connection slots and the listen queue of 5 are limits for the reverse proxy. No agents are running now.
