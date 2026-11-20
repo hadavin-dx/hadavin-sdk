@@ -3049,3 +3049,20 @@ def test_r15_the_sweep_is_given_the_calls_deadline_so_a_deadline_that_passes_aft
     snap.budget.cpu_deadline = -1.0  # any thread_time() value is later than this
     with pytest.raises(runmap.InputTooLarge):
         runmap.enforce_map(f"host {IP} and more text", snap)
+
+
+def test_g13c_3_a_dense_head_beside_a_key_is_refused_as_mask_budget_exceeded():
+    """G13c-3: a run of one head (`aaaa...ab`) beside a key reads more than `runmap._KEY_HITS_MAX` head hits: the call is
+    refused as `mask_budget_exceeded` and nothing is sent (fail closed); a short run is sent."""
+    bound, client, _, sink = build(
+        mapping=runmap.RunMap({"<SECRET_1>": "aaaa" + "c" * 5_000, "<HOST_1>": "d1.example.org"})
+    )
+    with pytest.raises(model_gate.MaskBudgetExceeded):
+        bound.chat(
+            [{"role": "user", "content": "x " + "a" * 4_200 + "b<HOST_1>"}],
+            system="s",
+            route="main",
+        )
+    assert client.sent == [] and sink.codes() == [("refused", "mask_budget_exceeded")]
+    bound.chat([{"role": "user", "content": "x aaab<HOST_1>"}], system="s", route="main")
+    assert client.sent, "G13c-3 a short run was refused"
