@@ -1238,7 +1238,7 @@ M = [
     mutant(
         "G33d a degraded worker logs its re-check failure at every try, not once per 5 minutes",
         WORKER,
-        "                if name != last or now - last_warned >= DEGRADED_WARN_EVERY_S:\n",
+        "                if name != last or at - last_warned >= DEGRADED_WARN_EVERY_S:\n",
         "                if True:\n",
         T9,
         "test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the_class_changes",

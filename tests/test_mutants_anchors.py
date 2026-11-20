@@ -12,9 +12,7 @@ from tests import endpoint_mutants as em
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# G33d: its anchor (`now - last_warned`, endpoints_mutants line ~1255) is stale since a rename in worker.py
-# (`at - last_warned`); fixing that line is pending the owner. strict: the day it is fixed this xpasses and fails.
-PENDING = {"G33d"}
+PENDING = set()
 
 
 def _case(m):
