@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T17:26:06Z
+UPDATED_UTC: 2026-11-20T17:30:54Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 1726Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b builders) + whole-tree mutant run. Load (/proc/loadavg) 1.48 1.39 1.90. Lead decisions E25=(a), P8 item 3 fail closed, G15 YES applied; ANSWERS-1726Z.md has the Q1-Q4 rows. 17:30Z REAL RUNNING: P7b builder + one heavy process (whole-tree mutants g12/gate/redact on the merged head, log /tmp/core-c-mut-final.log). Load (/proc/loadavg) 0.83 1.33 1.91. MERGED onto cloud/core
+STATE: 1730Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b), heavy processes 6, load (/proc/loadavg) 3.63 2.59 2.25, head bf0701d67. ANSWERS-1730Z.md. No long command in the turn (mutant run in background). 1726Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b builders) + whole-tree mutant run. Load (/proc/loadavg) 1.48 1.39 1.90. Lead decisions E25=(a), P8 item 3 fail closed, G15 YES applied; ANSWERS-1726Z.md ha
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 1.6 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
-DISK: / 53G free, 24% used; git worktrees 68; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 68; 2.8G	/tmp/claude-0;310M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T17:26:04+00:00
+PUSHED_UTC: 2026-11-20T17:30:52+00:00
 
-(22:56 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(23:00 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
