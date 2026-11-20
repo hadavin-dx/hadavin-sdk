@@ -1346,6 +1346,7 @@ def test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_not_list
 def test_s2_a_noinherit_member_of_the_reset_role_that_can_set_role_is_listed(w):
     member = w.new_role("n9", "LOGIN NOINHERIT")
     w.grant("GRANT {} TO {}", w.reset, member)
+    w.grant("GRANT USAGE ON SCHEMA {} TO {}", w.schema, member)  # it sees the tables, holds no right
     _stop(w)
     with w.as_(member) as db:  # no right of its own, and the path is real
         with pytest.raises(DENIED):

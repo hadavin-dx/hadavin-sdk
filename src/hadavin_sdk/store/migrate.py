@@ -323,11 +323,12 @@ def who_else_can_clear(db, reset_role: str | None) -> list[str]:
     of the server). Whoever hands out those memberships owns that risk; `effective_problems` still refuses the
     NAMED roles for them."""
     # pg_auth_members has the two option columns from PostgreSQL 16; before that every membership can SET ROLE.
-    new = db.execute("SELECT pg_catalog.current_setting('server_version_num')::int >= 160000").fetchone()[0]
+    new = db.execute(
+        "SELECT pg_catalog.current_setting('server_version_num')::int >= 160000"
+    ).fetchone()[0]
     usable = "(m.inherit_option OR m.set_option)" if new else "TRUE"
     return [
-        r[0]
-        for r in db.execute(_CAN_CLEAR.format(usable=usable), {"reset": reset_role}).fetchall()
+        r[0] for r in db.execute(_CAN_CLEAR.format(usable=usable), {"reset": reset_role}).fetchall()
     ]
 
 
