@@ -1,0 +1,18 @@
+# ANSWERS to the lead's 16:12 questions (core-a, written 16:20 UTC)
+
+## (1) A1-A6 (your 16:09 list), per package: state, agent, branch, sha, evidence
+| Pkg | State | Agent | Branch / sha | Evidence |
+|---|---|---|---|---|
+| A1 cfull fixes for core-c | DONE: NOTHING TO FIX: all 5 ids pass | cfull-run (evidence runner) | no branch: no diff (core-c fixed them earlier); core-c head fc4af41a7 | evidence/cfull-fix-check.md: py3.13.12 x3 and py3.12.3: 17 passed 0 failed per run, quiet box (load 0.04) |
+| A2 reviewer on origin/wip/lead-b-migrate (caps role) | DONE twice (head 0891d81bd unchanged) | rev-lead-migrate, rev-lead-migrate-2 | reads origin/wip/lead-b-migrate 0891d81bd | reviews/rev-lead-migrate.md, rev-lead-migrate-2.md; findings file handover/core-b/requests/xr-review-migrate.md (and xr-review-wip-lead-b-migrate.md) |
+| A3 reviewer on origin/wip/lead-b-ts-watermark | DONE twice (head de8967aba unchanged) | rev-lead-tswm, rev-lead-tswm-2 | reads de8967aba | reviews/rev-lead-tswm.md, rev-lead-tswm-2.md; handover/core-b/requests/xr-review-ts.md |
+| A4 integration dry-run | DONE | integ-dryrun (builder), integ-pg (evidence runner, STILL RUNNING the strict PG part) | scratch/core-a-integration-dryrun-2 (never pushed; worktree /home/user/wt/integ) at 6c89f0495; merged heads core-b 463760813, core-a d1ee703ab, core-c bd7f9d978 | INTEGRATION-DRYRUN-2.md: core-a into core-b 1 conflict (tests/contracts/test_t1_reserve_cap.py); core-c 5 (CHANGELOG, defaults.py, tests/conftest.py kept both; guard/producers.py core-c wording; the T1 file again); DECISION NEEDED: pick ONE of three T1 files; ruff/import ok; pytest --co 22535, 0 errors |
+| A5 CRASH-MATRIX part 2 (tool, proposal, approval) | DONE | earlier builder + review | CRASH-MATRIX.md 'Part 2' (171 kill points on PG16 and memory, no invariant broke) | tests/triggers/test_t5_crash_matrix_paths.py (346 passed 227.98 s on PG16) |
+| A6 reviewer on core-c's newest merges | DONE (two rounds today) | rev-c-G13c-G12c, rev-c-G4c, rev-c-G9b, rev-c-g8left, rev-c-rekey | reads cloud/core-c up to 443ef0b69 | reviews/rev-c-*.md; handover/core-c/requests/xr-from-core-a-reviews-2.md and from-core-a-review.md |
+Extra (found while checking heads): core-b newest code since fa21e8fbb reviewed (reviews/rev-b-newest2.md): 3 Majors incl. a NOINHERIT bypass of the new startup money check, CONFIRMED on PG 16.15.
+
+## (2) Why agents went from 3 to 1
+Because the packages ended, not because anything was dropped: the agents are one-shot reviewers/runners that exit with their report. At the time of your 16:12 message the open work was ONE agent (integ-pg); everything on your 15:43/16:09 lists had been delivered and recorded (the board lines are in handover/core-a/STATUS-BOARD.md 'LEAD ACTIONS'). The board's NEXT line and the ORDER 020 line were STALE (dated 11:36): that is a defect of my board-state.json which I fix now (see below). I start an agent whenever a head moves or an order names work: since 16:12: A6-rev-c-rekey, A6b-rev-b-newest (done), integ-pg (running).
+
+## (3) The 'BLOCKED mutant run 19'
+It is NOT blocked any more: your own edit (G33d anchor now `at - last_warned` at tests/endpoint_mutants.py:1241 and PENDING = set()) landed on cloud/core-a and your run 6 was clean (120 of 120). I started the full script myself at 16:15 on cloud/core-a head 5a8c83fd3 (it needs no edit; the permission classifier only denied EDITING the anchor line). Exact command (laptop or here): `cd <repo checkout of origin/cloud/core-a> && .venv/bin/python tests/endpoint_mutants.py` (about 4 minutes; exit 0 and the summary 'all expected' means clean). Result: handover/core-a/evidence/mutants-run19.md when it ends.
