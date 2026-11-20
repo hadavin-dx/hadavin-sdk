@@ -1125,7 +1125,8 @@ value: nothing of either stays readable. The check reads the text with every pla
 add values to the run's map, the readable rest is covered by the existing placeholders of the secret values (`<SECRET_1><SECRET_2>`); where
 only an identifier covers it, the call is refused (`mask_refused`), and so is every later call that carries that text. Someone who can plant
 two overlapping identifier values (two host names, two tenant ids) can therefore make the gate refuse every call that holds the overlap as
-written; someone who can plant a document can force a refusal of the whole document (fail closed). Not covered: an overlap visible only in a
+written; someone who can plant a document can force a refusal of the whole document (fail closed). Not covered: two values that overlap by more than
+1,024 characters inside a placeholder; an overlap visible only in a
 decoded form of the text (an HTML entity, an escape, a full-width letter), a value split across two strings of one batch or by a framing word,
 and a text returned by an earlier call before the second value was known (it is masked when the gate reads it again)."
 
