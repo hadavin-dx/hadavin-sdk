@@ -6,3 +6,4 @@ NO Blocker. FIXED: my Major 1 (NOINHERIT bypass: recursive closure over pg_auth_
 
 ## Docs finding (grantfix2, 17:08)
 handover/core-b/interfaces/README.md:33 still says "runtime SELECT, INSERT, UPDATE; purge DELETE plus SELECT on status and closed_at": contradicts 0011 and migrate.GRANTS (no login has a table right on spend_reservations; EXECUTE only). Tests on this are fixed on wip/core-a-grant-fix2 (dc2dd9a81, 31 passed on PG16 strict).
+Nit (grantfix3, 17:20): of the 5 trigger functions only hadavin_money_guard() is closed to PUBLIC (0010 revokes it); audit_seq_guard, audit_checkpoint_guard, audit_append_only, watermark_guard keep the default PUBLIC EXECUTE (proacl NULL). Trigger functions cannot be called directly so the effect is small; pinned in tests/test_grants_negative_0007.py (wip/core-a-grant-fix2 bdf8a9f8d). Close them in a migration if you want the set uniform.

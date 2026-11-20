@@ -802,15 +802,15 @@
    "reason": "EGM"
   },
   {
-   "id": "grantfix3",
-   "role": "builder (tests)",
+   "id": "rev-grantfix2-r4",
+   "role": "reviewer",
    "model": "sonnet",
-   "what exactly it is doing": "fix 2 Majors of grant-test round 3 (REQUIRE_PG strict, positive control)",
-   "started UTC": "17:30",
-   "expected end": "15 min",
-   "percent": 5,
+   "what exactly it is doing": "fresh result review round 4 of grant-test fix bdf8a9f8d",
+   "started UTC": "17:36",
+   "expected end": "10 min",
+   "percent": 10,
    "state": "running",
-   "review round n of cap": "fix of round 3",
+   "review round n of cap": "4 of 5",
    "retries so far": 0,
    "reason": "EGM"
   }
@@ -1597,6 +1597,19 @@
    "review round n of cap": "3 of 3",
    "retries so far": 0,
    "reason": "round 3: 2 Major (REQUIRE_PG not honoured: silent skip; empty HELD sets: positive branch vacuous), 3 nits; reviews/rev-grantfix2-r3.md; fix round 3 started"
+  },
+  {
+   "id": "grantfix3",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix 2 Majors of grant-test round 3 (REQUIRE_PG strict, positive control)",
+   "started UTC": "17:30",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix of round 3",
+   "retries so far": 0,
+   "reason": "fix round 3 done: wip/core-a-grant-fix2 bdf8a9f8d, 45 passed PG16 (strict and not), 3 mutants killed; finding: 4 trigger functions keep PUBLIC EXECUTE (core-b nit)"
   }
  ]
 }

@@ -1318,7 +1318,7 @@ def _missing(name, base):
 @pytest.mark.parametrize("field", ["max_running", "ack_wait_s"])
 def test_d3_a_settings_object_without_a_field_is_a_config_error_naming_it(rt, field):
     words = (
-        "triggers.max_running missing" if field == "max_running" else f"triggers.{field} is missing"
+        "triggers.max_running missing" if field == "max_running" else f"triggers.{field} missing: core-b TriggerSettings required"
     )
     with pytest.raises(ConfigError, match=words) as refused:
         worker.make_app(_app(rt, _missing(field, _settings())))

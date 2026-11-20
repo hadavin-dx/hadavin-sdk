@@ -938,13 +938,14 @@ def _build_app(args: argparse.Namespace) -> tuple[Any, Runner, Any]:
     config = load_config(args.config_dir)
     settings = trigger_settings(config)
     check_fields(settings)  # before anything is built: no secret read, no connection
-    registry = load_registry(config)
-    check_senders(sender_list(settings), qualified_agents(registry), registry.principals)
     host = args.host  # an empty --host is refused by `check_bind`, never turned into loopback
     port = args.port if args.port is not None else PORT
     check_port(port)
     check_bind(host, args.allow_non_loopback)
-    app = build(args.config_dir, qualified_agents(registry))
+    registry = load_registry(config)
+    qualified = qualified_agents(registry)
+    check_senders(sender_list(settings), qualified, registry.principals)  # agent and principal: no store needed
+    app = build(args.config_dir, qualified)
     runner = None
     try:
         wsgi, runner = make_app(app)
