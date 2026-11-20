@@ -1,0 +1,106 @@
+# E2 AFTER: worker.make_server with triggers/server.py (QuietRequestHandler, QuietWSGIHandler, QuietServer). 2026-11-20T05:47:54Z
+=== 1 signed request
+end=closed seconds=0.001 start_calls=1
+status line: b'HTTP/1.0 202 Accepted'
+head: b'HTTP/1.0 202 Accepted\r\nDate: Fri, 20 Nov 2026 05:47:55 GMT\r\nContent-Length: 71\r\nContent-Type: application/json'
+body (71 bytes): b'{"run_id": "run-ae1b6d84b55c54d0ac9ab47c9c8b62ee", "state": "RECEIVED"}'
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=202 sender=sender-a
+
+=== 2 Content-Length larger than sent, client half-closes
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nDate: Fri, 20 Nov 2026 05:47:55 GMT\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=-
+
+=== 3 Content-Length larger than sent, client stalls (timeout 0.5 s)
+end=closed seconds=0.503 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nDate: Fri, 20 Nov 2026 05:47:55 GMT\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=-
+
+=== 3b headers not ended, client stalls
+end=closed seconds=0.501 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nContent-Length: 0\r\nConnection: close'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=- (refused before the endpoint)
+
+=== 3c client sends nothing, stalls
+end=closed seconds=0.501 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nContent-Length: 0\r\nConnection: close'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=- (refused before the endpoint)
+
+=== 4 garbage instead of a request line
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nContent-Length: 0\r\nConnection: close'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=- (refused before the endpoint)
+
+=== 5 request line of 65537 bytes
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 414 URI Too Long'
+head: b'HTTP/1.0 414 URI Too Long\r\nContent-Length: 0\r\nConnection: close'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=414 sender=- (refused before the endpoint)
+
+=== 6 no Content-Length (body sent)
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 400 Bad Request'
+head: b'HTTP/1.0 400 Bad Request\r\nDate: Fri, 20 Nov 2026 05:47:56 GMT\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=400 sender=-
+
+=== 7 client drops the connection before the answer
+end=client gone seconds=0.001 start_calls=2
+status line: b''
+head: b''
+body (0 bytes): b''
+next request on the same server: b'HTTP/1.0 202 Accepted'
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger status=202 sender=sender-a
+trigger status=202 sender=sender-a
+
+=== 8 (extra) the WSGI app raises
+end=closed seconds=0.001 start_calls=0
+status line: b'HTTP/1.0 503 Service Unavailable'
+head: b'HTTP/1.0 503 Service Unavailable\r\nDate: Fri, 20 Nov 2026 05:47:56 GMT\r\nContent-Length: 0'
+body (0 bytes): b''
+stderr (0 chars):
+
+log hadavin_sdk.triggers:
+trigger server: application error: RuntimeError
+
+
+# pytest: see E2-tests.log
+55 passed in 15.10s
