@@ -355,11 +355,15 @@ def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[
 
 def _sender_secrets(secrets: SecretProvider, names: set[str]) -> Callable[[str], str]:
     """A secret reader limited to the trigger senders' `secret_names` (the same shape as `_own_secrets`): the
-    trigger worker is never handed the global provider. The refusal does not show the name that was asked for."""
+    trigger worker is never handed the global provider. The refusal does not show the name that was asked for.
+    Only a real `str` is served: a subclass with its own `__eq__`/`__hash__` could pass `in`, and an unhashable
+    argument is a PermissionError, not a TypeError. Stated limit: the reader is a closure, so Python code that
+    holds the App can reach the provider through `read.__closure__`; the guarantee is the worker's API, not
+    isolation from in-process code (the same as `_own_secrets`)."""
     allowed = frozenset(names)
 
     def read(name: str) -> str:
-        if name not in allowed:
+        if type(name) is not str or name not in allowed:
             raise PermissionError("not one of the secret names under triggers.senders")
         failed = False
         value = ""

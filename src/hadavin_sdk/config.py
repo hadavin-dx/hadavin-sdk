@@ -398,7 +398,7 @@ class TriggerSettings(_Strict):
     # Strict: `true` is not 1 and "4" is not 4 (a whole number is still accepted for `ack_wait_s`).
     max_body_bytes: int = Field(
         default=defaults.TRIGGER_MAX_BODY_BYTES,
-        gt=0,
+        ge=defaults.TRIGGER_MAX_BODY_BYTES_FLOOR,
         le=defaults.TRIGGER_MAX_BODY_BYTES_CEILING,
         strict=True,
     )
@@ -410,7 +410,7 @@ class TriggerSettings(_Strict):
     )
     ack_wait_s: float = Field(
         default=defaults.TRIGGER_ACK_WAIT_S,
-        gt=0,
+        ge=defaults.TRIGGER_ACK_WAIT_S_FLOOR,
         le=defaults.TRIGGER_ACK_WAIT_S_CEILING,
         strict=True,
     )
@@ -683,6 +683,7 @@ def _validation_text(exc: ValidationError) -> str:
 
 def load_config(config_dir: Path | None = None) -> Config:
     """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+    trigger_text = ""
     try:
         root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
         raw = _read_yaml(root / "config.yaml")
@@ -699,7 +700,13 @@ def load_config(config_dir: Path | None = None) -> Config:
     except ConfigError:
         raise
     except ValidationError as exc:
-        raise ConfigError(_validation_text(exc)) from exc
+        text = _validation_text(exc)
+        # A trigger section may hold a mistyped secret name: the cause's `.errors()` carries the typed value, so
+        # it is not chained (raised after the handler, so `__context__` does not keep it either). The location
+        # text can still show a bad KEY (a sender id or an extra key), never a value: accepted.
+        if not any(e["loc"][:1] == ("triggers",) for e in exc.errors()):
+            raise ConfigError(text) from exc
+        trigger_text = text
     except (
         ArithmeticError
     ) as exc:  # a decimal error is not a ValueError: never let it out as a traceback
@@ -708,3 +715,4 @@ def load_config(config_dir: Path | None = None) -> Config:
         ) from exc
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(str(exc)) from exc
+    raise ConfigError(trigger_text) from None

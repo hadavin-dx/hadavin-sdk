@@ -140,6 +140,9 @@ TRIGGER_MAX_BODY_BYTES_CEILING = 2 * MAX_DOCUMENT_BYTES
 # The largest request body the endpoint reads when the config names none: the ceiling (524288). The document cap
 # itself would be too small, because the JSON around a full-size document adds bytes.
 TRIGGER_MAX_BODY_BYTES = TRIGGER_MAX_BODY_BYTES_CEILING
+# Floors: a typo (`max_body_bytes: 1`, `ack_wait_s: 0.0005`) must not load and then refuse or 503 every request.
+TRIGGER_MAX_BODY_BYTES_FLOOR = 1024
+TRIGGER_ACK_WAIT_S_FLOOR = 0.1
 TRIGGER_MAX_RUNNING = 4  # runs the worker's pool handles at once
 TRIGGER_MAX_RUNNING_CEILING = 64
 TRIGGER_ACK_WAIT_S = 5.0  # how long a request waits for its run row before it answers 503
