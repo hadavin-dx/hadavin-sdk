@@ -933,6 +933,7 @@ def test_k5_evals_gate_ignores_evidence_and_redacts_like_the_runtime(live_cfg_di
             self.docs.append(documents[0])
             exp = self.cases.pop(0)["expected"]
             return Reply(
+                cost_usd=Decimal(0),
                 tool_calls=[
                     ToolCall(name=exp["action"], input={**exp["inputs"], "evidence": ["x"]})
                 ],
@@ -1100,6 +1101,7 @@ def test_k5_a_float_in_a_tool_argument_does_not_strand_the_run(tmp_path):
             if not self.sent:
                 self.sent.append({})
                 return Reply(
+                    cost_usd=Decimal(0),
                     tool_calls=[ToolCall(name="read_logs", input={"name": "app", "limit": 1.5})],
                     model_id="fake-model",
                 )

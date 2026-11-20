@@ -13,10 +13,14 @@ from decimal import Decimal
 from hadavin_sdk import defaults
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard import judge, runmap
+from hadavin_sdk.guard.model_gate import BoundGate, ModelGate
+from hadavin_sdk.limits import Budget
+from hadavin_sdk.llm.common import worst_case_for
 from hadavin_sdk.llm.protocol import LLM
-from hadavin_sdk.models import GateRun
+from hadavin_sdk.models import GateRun, new_id
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.runtime.evidence import with_evidence
+from hadavin_sdk.stages import is_live
 from hadavin_sdk.stats import upper_error_bound
 
 _ASK = "Process the attached request document."
@@ -32,11 +36,35 @@ def matches(got: dict, expected: dict) -> bool:
     return all(k in got["inputs"] and got["inputs"][k] == v for k, v in want.items())
 
 
-def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
+def gate(
+    registry: Registry, llm: LLM, agent_id: str, *, k: int = 1, max_usd: Decimal | None = None
+) -> GateRun:
+    """`max_usd` caps what this call may spend on model calls (the agent's and an llm_judge's): each call is
+    reserved at its worst case on an in-memory budget before it is sent and settled after. Without it the cap is
+    the agent's daily budget in demo; in pilot and prod a missing cap is a ConfigError. When the cap would be
+    passed, ``limits.SpendRefused`` is raised (``model_gate.GateRefused`` when the gate made no call for another
+    reason) and nothing is appended to the qualified log. The calls are not audited one by one."""
     if k < 1:
         raise ConfigError(f"gate k must be at least 1, got {k}")
     cfg = registry.config
     agent = registry.agents[agent_id]
+    if max_usd is None:
+        if is_live(cfg.environment):
+            raise ConfigError("gate needs a cost cap in pilot and prod: pass --max-usd")
+        max_usd = agent.budget_usd.daily
+    elif type(max_usd) is not Decimal or not max_usd.is_finite() or max_usd <= 0:
+        raise ConfigError("gate --max-usd must be a finite number above zero")
+    if isinstance(llm, BoundGate):
+        raise ConfigError(
+            "gate needs the model client or an unbound model gate, not a bound gate client"
+        )
+    if not isinstance(llm, ModelGate):
+        llm = ModelGate(
+            llm, meter=Budget(max_usd), audit=None, worst_case=worst_case_for(cfg.routes, llm)
+        )
+    # One payer for the whole call; the judge below gets this bound client too. No run map: every document is
+    # redacted with its own fresh map just before it is sent.
+    llm = llm.bind(f"eval:{agent_id}", new_id("eval"))
     # The golden set, its documents and judge.jsonl, hashed before the run and again after it: a file that
     # changed while the run read it was not the set it qualifies on, so the run is never green.
     golden_before = registry.golden_sha256(agent_id)
@@ -77,6 +105,12 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
                 tools=tools,
                 documents=[doc],
             )
+            if reply.cost_usd is None:  # unknown, never added as 0: the eval's total would be a lie
+                raise ConfigError(
+                    f"golden case {case.get('id', case['input_ref'])!r}: the model reported no usage, so "
+                    "the cost of the call is unknown and the eval cannot account for its spend; use a "
+                    "provider that reports usage"
+                )
             cost += reply.cost_usd
             abstains += not reply.tool_calls
             # `evidence` (K5) is a citation the runtime strips before the plan exists: never graded.

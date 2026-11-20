@@ -302,6 +302,10 @@ def _live_by_site(tmp_path, stage):
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(app_mod, "load_config", lambda _d: copy)
         mp.setattr(app_mod, "load_registry", lambda _c: reg)
+        # The pinned-Unicode guard of app.build (pilot and prod) is not what this test asks about, and on an interpreter with other Unicode
+        # data it would stop the build first. tests/conftest.py switches it off for the same reason, but the mutation runner runs with
+        # --noconftest, so it is switched off here, in the test. The guard itself is tested in tests/test_textnorm_app.py.
+        mp.setattr(app_mod.textnorm, "require_pinned_unidata", lambda *a, **k: None)
         try:
             app_mod.build(
                 cfg_dir,

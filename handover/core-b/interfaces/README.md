@@ -33,7 +33,7 @@ Stated limits: no run cap inside the store; no read method for a reservation; a 
 Table: spend_reservations (migration 0007). Grants: runtime SELECT, INSERT, UPDATE; purge DELETE plus SELECT on status and closed_at; portal and reset none.
 
 ## 2. Interface (ii): the Meter the gate calls
-The ONLY text and the ONLY numbering of the contract is interfaces/ii-meter.md (ten points, final after the review and the lead's ORDER 010). The list that stood here until version 2.1 is withdrawn because its numbers differed from that file.
+The ONLY text and the ONLY numbering of the contract is interfaces/ii-meter.md (eleven points, final after the review and the lead's ORDER 010). The list that stood here until version 2.1 is withdrawn because its numbers differed from that file.
 ```python
 rid = meter.reserve(agent_id, worst_usd, run_id=run_id)   # raises: do NOT call the model
 reply = inner.chat(...)
@@ -42,6 +42,6 @@ meter.settle(rid, reply.cost_usd)                          # returns the oversho
 Two implementers, one shape: Limits (store-backed, for the runtime, the judge and the shadow-card judge) and k1b Budget (in memory with a lock, for the eval and replay command lines; it does not read the stop state). The gate takes the meter as a constructor argument and must not test which one it got.
 
 ## 3. Tests other sessions may write now (new files only; different agent than the builder)
-- tests/contracts/test_meter.py: the ten points of ii-meter.md against both implementers (file owner: the F-install test writer, since the Budget meter lands with F-install) with a fake inner client that counts calls; hostile amounts (negative, NaN, Infinity, float, bool); settle twice with different amounts; settle after expiry (lower: the row is settled and the run gets the real cost, the day and month counters do not move; higher: the counters rise to the real cost); reserve raising every listed reason.
+- tests/contracts/test_meter.py: the eleven points of ii-meter.md against both implementers (file owner: the F-install test writer, since the Budget meter lands with F-install) with a fake inner client that counts calls; hostile amounts (negative, NaN, Infinity, float, bool); settle twice with different amounts; settle after expiry (lower: the row is settled and the run gets the real cost, the day and month counters do not move; higher: the counters rise to the real cost); reserve raising every listed reason.
 - tests/contracts/test_t1_reserve_cap.py (PostgreSQL only, skips without HADAVIN_TEST_PG_DSN): 50 PostgresStore objects, one per thread, 50 distinct pg_backend_pid(); cap 3.00 and worst 1.00 gives exactly 3 granted and 47 SpendCapExceeded; control case with check-then-add_spend admits more than 3.
 - Store contract additions, crash cases C1 to C5, midnight cases, per-role negative tests and the 20 mutants: listed in tickets/F-store.md.

@@ -16,7 +16,7 @@ PRODUCERS: tuple[tuple[str, str, str, frozenset[str]], ...] = (
     ("tool result, redaction step", "tools.py", "redact_layered", frozenset({"redact_untrusted"})),
     ("tool error reason", "tools.py", "error_reason", frozenset({"redact_bounded"})),
     ("k1b case bundle", "k1b/redaction.py", "redact_bundle", frozenset({"redact_untrusted"})),
-    ("k1b stored raw model output", "k1b/loop.py", "run_case", frozenset({"safe_head"})),
+    ("k1b stored raw model output", "k1b/loop.py", "_steps", frozenset({"safe_head"})),
     ("evidence grounding", "runtime/evidence.py", "grounded", frozenset({"redact_text"})),
     ("evidence proposal inputs", "runtime/evidence.py", "validate", frozenset({"redact_value"})),
     (

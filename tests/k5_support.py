@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+from decimal import Decimal
 from pathlib import Path
 
 import yaml
@@ -142,6 +143,7 @@ class ScriptLLM:
         ids = re.findall(r"call_id=(\S+?)[ >]", json.dumps(messages))
         if "tool" in step:
             return Reply(
+                cost_usd=Decimal(0),
                 text="reading",
                 tool_calls=[ToolCall(name=self.tool_name, input={"name": step["tool"]})],
                 model_id="fake-model",
@@ -152,11 +154,12 @@ class ScriptLLM:
             if "reason" in step:
                 inputs["reason"] = step["reason"]
             return Reply(
+                cost_usd=Decimal(0),
                 text="The rollout is the cause.",
                 tool_calls=[ToolCall(name="rollout_undo", input=inputs)],
                 model_id="fake-model",
             )
-        return Reply(text="Nothing to do.", model_id="fake-model")
+        return Reply(cost_usd=Decimal(0), text="Nothing to do.", model_id="fake-model")
 
     def everything_sent(self) -> str:
         return json.dumps(self.sent, default=lambda b: b.decode("utf-8", "replace"))

@@ -58,8 +58,8 @@ def pinned(
 
 
 def estimate_tokens(text: str) -> int:
-    """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
-    zeros never fires."""
+    """A display figure for ``Reply.input_tokens`` / ``output_tokens`` when the provider reported no usage (3
+    chars a token, never 0). It is NOT a bound and never prices a call: a reply without usage has cost None."""
     return max(1, len(text) // 3)
 
 
@@ -257,15 +257,24 @@ def reply(
     stop: str | None,
     started: float,
     sent: str,
+    attempts: int = 1,
+    prior_known: bool = True,
 ) -> Reply:
-    """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
-    answer keeps its cost but loses its tool calls: their input may be incomplete."""
+    """The Reply, priced from the route. ``cost_usd`` is None (the true cost is not known; the model gate then
+    does not settle) when the provider reported no usage for the answer, or when an earlier attempt of the call
+    may have been billed (``prior_known`` False: a timeout, reset or 5xx; an attempt refused before any
+    response costs 0 and keeps it True). Token counts missing from the usage are estimated for display only.
+    ``attempts`` is the number of requests the call took (audit). A cut-off answer keeps its cost but loses its
+    tool calls: their input may be incomplete."""
+    measured = tokens[0] is not None and tokens[1] is not None
     tokens_in = tokens[0] or estimate_tokens(sent)
     tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
-    cost = (
-        Decimal(tokens_in) * route.input_usd_per_mtok
-        + Decimal(tokens_out) * route.output_usd_per_mtok
-    ) / Decimal(1_000_000)
+    cost: Decimal | None = None
+    if measured and prior_known:
+        cost = (
+            Decimal(tokens_in) * route.input_usd_per_mtok
+            + Decimal(tokens_out) * route.output_usd_per_mtok
+        ) / Decimal(1_000_000)
     stop = stop_reason(stop, calls)
     return Reply(
         text=text,
@@ -273,6 +282,7 @@ def reply(
         input_tokens=tokens_in,
         output_tokens=tokens_out,
         cost_usd=cost,
+        attempts=attempts,
         model_id=route.model_id,
         stop_reason=stop,
         latency_ms=int((time.monotonic() - started) * 1000),
@@ -287,6 +297,9 @@ class Answer:
     calls: list[ToolCall]
     tokens: tuple[int | None, int | None]
     stop: str | None
+    # Filled by ``NetworkLLM._retry``: requests the call took, and whether every earlier attempt was known free.
+    attempts: int = 1
+    prior_known: bool = True
 
 
 class NetworkLLM:
@@ -330,8 +343,10 @@ class NetworkLLM:
         raise NotImplementedError
 
     def _retry(self, call: Callable[[], Answer]) -> Answer:
-        return with_retry(
+        record: list[bool] = []
+        got = with_retry(
             call,
+            record=record,
             label=self.label,
             max_attempts=self.max_attempts,
             sleep=self._sleep,
@@ -340,6 +355,8 @@ class NetworkLLM:
             http_status=self.http_status,
             refused_statuses=self.refused_statuses,
         )
+        got.attempts, got.prior_known = len(record) + 1, all(record)
+        return got
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None

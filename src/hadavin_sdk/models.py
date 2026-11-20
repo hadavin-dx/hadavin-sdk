@@ -296,7 +296,10 @@ class Reply(Shape):
     tool_calls: list[ToolCall] = []
     input_tokens: int = 0
     output_tokens: int = 0
-    cost_usd: Decimal = Decimal(0)
+    # None: the true cost of the call is not known (no usage reported, or an earlier attempt may have been billed).
+    # The model gate then returns the reply and does not settle: the worst case stays booked.
+    cost_usd: Decimal | None = None
+    attempts: int = 1  # requests the call took (audit only)
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0
@@ -307,9 +310,9 @@ class Verdict(Shape):
     score: float = Field(ge=0.0, le=1.0)
     backend: str
     reason_code: str | None = None
-    cost_usd: Decimal = Decimal(
-        0
-    )  # a model-backed detector's call (llm_judge), charged by the caller
+    # What a model-backed detector's call (llm_judge) cost. Information only: the model gate client the detector
+    # is bound to has already booked it, and nobody charges this field.
+    cost_usd: Decimal = Decimal(0)
 
 
 class RunResult(Shape):

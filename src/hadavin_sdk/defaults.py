@@ -154,6 +154,83 @@ RESERVATION_EXPIRE_S = 3600
 # provider (UNVERIFIED); a lead may raise it.
 WORST_CASE_OVERHEAD_BYTES = 4096
 
+# --- text folding (guard/textnorm.py) ---
+# The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
+# one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
+TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
+# The Unicode data version the fold's keys were made with; require_pinned_unidata compares the interpreter with it.
+TEXTNORM_PINNED_UNIDATA = "15.1.0"
+# The Python minor version that carries that Unicode data; require_pinned_unidata names it in its message (the only other place that said it was a
+# second copy inside guard.textnorm). guard.textnorm refuses a value that is not a non-empty str when it is imported.
+TEXTNORM_PINNED_PYTHON = "3.13"
+# Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call). A whole number
+# of at least 1 (guard.textnorm refuses another value when it is imported and every time a scan key is made).
+TEXTNORM_MAX_PASSES = 3
+# The most scan keys one text may make (scan_keyset): 2 variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16 by
+# construction; 13 is the most a real text reaches. More than this is refused (TextTooLong), never cut off.
+TEXTNORM_SCAN_KEY_CAP = 16
+# The most texts a scan_cache() scope keeps at once (the views of the last texts scanned; the scope empties them when it ends).
+TEXTNORM_SCAN_CACHE_TEXTS = 2
+# The floor of every minimum below: a needle of one character is found in nearly every text of its script, so no minimum under this is accepted.
+TEXTNORM_MINIMUM_FLOOR = 2
+
+
+# The shortest view of a protected value that a scan may use (guard.textnorm.scan_needles), one number per KIND of view; a shorter view (an
+# empty one above all) is found in nearly every text. Each must be an int of at least 2, the floor (guard.textnorm refuses another value when it
+# is imported and every time a scan takes its needles): a single character is found in nearly every text of its script.
+# SPELLING: a view that keeps separators and punctuation (fold_views, without the script views); it is a needle but never the only one.
+TEXTNORM_MIN_SPELLING_CHARS = 2
+# SQUEEZE: a view of ASCII letters and digits only (squeeze_views): an inserted separator cannot hide it, so it must be long enough not to
+# be found in ordinary text (a 3-letter name is found in many English words).
+TEXTNORM_MIN_SQUEEZE_CHARS = 4
+# SCRIPT: a view of the non-ASCII letters of the value's own scripts (fold_views with the scripts of the value). Letters of an alphabet or a
+# syllabary repeat in every text, so the minimum is the squeeze one.
+TEXTNORM_MIN_SCRIPT_CHARS = 4
+# IDEOGRAPH: the script minimum for a value that is only Han ideographs (no ASCII letter or digit): one ideograph is a word, two are a name.
+TEXTNORM_MIN_IDEOGRAPH_CHARS = 2
+# DIGITS: the squeeze minimum for a view of ASCII digits only (a PIN, an account number): a short digit string is found in almost every table of
+# numbers (a 4-digit needle is found in 99 of 100 random 50,000-digit tables), so it must be longer than a view that holds a letter.
+TEXTNORM_MIN_DIGIT_CHARS = 6
+
+# ONE INSERTED LETTER (guard.textnorm.scan_holds): a script needle (see SCRIPT above) is also looked for in the text with ONE extra letter of the value's own
+# scripts inserted anywhere inside it, so "密码测试" is found in "密的码测试". INSERTION_MIN: the fewest characters such a needle may have, per script group (the first
+# word of the Unicode name, Han and kana grouped; see guard.textnorm); a shorter needle is matched exactly only, because "a?b" matches too many ordinary words.
+# The numbers come from a measurement on running text (CHANGELOG, "ONE INSERTED LETTER"): for each script, the shortest needle for which the
+# extra matches the insertion adds stay near 1% or lower per 10,000 characters of text; a needle holding several groups takes the largest minimum, except a needle of Han and kana only (a Japanese word), which takes the Han
+# minimum (measured on its own, CHANGELOG order 137 D3). A
+# script not in the table (Armenian, Georgian, ... : not measured) takes the default, 12: the LARGEST minimum measured for any script (Greek, 12; Cyrillic 10), the safe side for a script nobody measured. INSERTION_MAX: the longest needle
+# the matcher takes (its work grows with the needle length for each hit); a longer needle is matched exactly only.
+TEXTNORM_INSERTION_MIN_CHARS = 12
+TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
+    ("HAN", 4),
+    ("KANA", 7),
+    ("HANGUL", 5),
+    ("THAI", 8),
+    ("ARABIC", 7),
+    ("HEBREW", 7),
+    ("DEVANAGARI", 7),
+    ("CYRILLIC", 10),
+    ("GREEK", 12),
+)
+TEXTNORM_INSERTION_MAX_CHARS = 64
+# register_value (guard.textnorm): when True, a protected value that a scan finds only in part (its ASCII part has no needle of its own) or that is
+# a script value alone with every script needle outside the one-inserted-letter band is REFUSED with CoverageRefused instead of being registered.
+# An ordinary ASCII value (a password, an API key) has an exact view and is registered even when True (lead ruling, order 165 M3). True is the
+# default of the client profile: a value we cannot cover loudly is acceptable, one we cannot cover silently is not. A bool.
+TEXTNORM_STRICT_COVERAGE = True
+
+# The injection check (guard.injection) reads a text over TEXTNORM_MAX_CHARS in overlapping pieces instead of refusing it whole. CHUNK: the
+# characters of one piece (a piece whose weight is still over the cap is halved until it fits). OVERLAP: the characters two neighbouring pieces
+# share at least (a new piece also starts far enough back to hold enough letters, see OVERLAP_MAX), so a steering phrase cut by a boundary is whole
+# in one piece. MAX: the longest text read in pieces (a case bundle's cap); a text
+# longer than that is still flagged as guard_unavailable. The time is in tests/test_textnorm_round2.py (printed with -s) and the CHANGELOG.
+TEXTNORM_INJECTION_CHUNK_CHARS = 32_768
+TEXTNORM_INJECTION_OVERLAP_CHARS = 1_024
+# OVERLAP_MAX: the farthest back a new piece may start to find enough letters (see guard.injection._start_of_next); a boundary with too few letters
+# within it is refused (fail closed). PHRASE: the characters the longest steering-phrase pattern reads (about 120).
+TEXTNORM_INJECTION_OVERLAP_MAX_CHARS = 8_192
+TEXTNORM_INJECTION_PHRASE_CHARS = 120
+TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS
 
 # Milliseconds a store call may wait for a row lock (store/postgres.py `build`, the runtime connection only; the migrate
 # connection sets none). A call that waits longer fails loudly instead of holding the process-wide store lock for ever;

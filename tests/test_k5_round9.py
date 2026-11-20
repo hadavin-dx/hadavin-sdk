@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import re
+from decimal import Decimal
 
 import pytest
 
@@ -143,6 +144,7 @@ def _gate(s, rq):
             docs.append(documents[0].decode())
             exp = case["expected"]
             return Reply(
+                cost_usd=Decimal(0),
                 tool_calls=[
                     ToolCall(name=exp["action"], input={**exp["inputs"], "evidence": ["x"]})
                 ],
@@ -214,7 +216,7 @@ def test_evidence_grounding_leaks_no_clear_identifier_for_an_encoded_one(encoded
 # ---- A: what happens to a card text AFTER the first redaction ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("filler", ["<b></b>", "\u200b", "⁠", "<!-- x -->", "<span></span>"])
+@pytest.mark.parametrize("filler", ["<b></b>", "\u200b", "\u2060", "<!-- x -->", "<span></span>"])
 @pytest.mark.parametrize("spelling", sorted(SPELLINGS))
 def test_clean_redacts_again_what_sanitising_joined(filler, spelling):
     """`%41KIA<b></b>IOS...`: pass one cannot read it; sanitising removes the tag and JOINS the pieces into a layered

@@ -12,6 +12,18 @@ Rules:
 - The core never imports anything from `demos/` (a test enforces it), so a client delivery can take the core alone.
 - Demo data is synthetic only. No client data, secrets, account ids or personal details are ever committed.
 
+## Python version
+
+**Production and pilot must run Python 3.13.x (Unicode 15.1.0). Python 3.12 (Unicode 15.0.0) is for demos only.** The text fold in
+`guard/textnorm.py` depends on the interpreter's Unicode data, and its look-alike table is the Unicode 15.1.0 table. On another Python the
+fold still runs, but every check name starts with a tag and never equals one made on 3.13. `require_pinned_unidata()` raises on the wrong
+Python; `app.build` calls it when the stage is pilot or prod, so a start on other Unicode data is refused. Moving the pin to a later Python (for example
+3.14) is a data migration, not a version bump: see the CHANGELOG.
+
+Requirement since the text fold (ticket G, part G1): pilot and prod need a Python whose Unicode data is 15.1.0 (3.13). `app.build` now calls
+the start-up check `textnorm.require_pinned_unidata` for pilot and prod, and on any other Unicode data (Python 3.12.3 carries 15.0.0) the
+check refuses to start: it raises `UnidataMismatch` and nothing runs. The check is not loosened; a demo may still run on 3.12.
+
 ## K1b-lite: replay check (report only)
 
 `hadavin-sdk replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]` runs a client's recorded
@@ -40,6 +52,12 @@ What this release does and does not promise, in one place.
 - A hold on a run is not retroactive, and no hold outlives 400 days. The purge step is due 60 s early by design (`TICK_SLACK_S`).
 - Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
+
+## Capped spend and masked model input
+
+- **Capped spend.** Every model call the runtime makes goes through one model gate: before the call the most it could cost (system prompt, messages, documents, tool definitions and output schema at one token per byte, the route's full output, times the client's retry attempts) is booked against the agent's day and month budget, and the call is not made when it does not fit; after the call the booking is replaced by the real cost. This holds for model calls made through the gate on PostgreSQL with the grants applied. Its limits: the `gate` (eval) and `replay` command lines are capped per process in memory (`--max-usd`; `gate` without it uses the agent's daily budget in demo and is refused in pilot and prod) and their calls are not audited one by one; the Bedrock guardrail detector's call is not metered; a stale price table is not refused yet. **A failed call can hold budget without real spend:** when a provider call fails and the provider did not clearly refuse it before doing any work (today that is an HTTP 400, 401, 403, 404, 413 or 422 as the only answer; a call that used up its retries is never treated as refused), the most that call could have cost stays counted against the day and month budget for about an hour (until the tick's expiry step closes it), so a wrong API key or throttling can use up a small daily budget although nothing was spent. The run's own cost moves only when a call is settled.
+- **Masked model input.** Every value the run has identified (a value in the run's redaction map) is replaced by its placeholder in everything sent to a model: each message and each document, on every call, including text added before the value was identified. This is not "nothing secret can reach a model": a value the redactor did not identify is sent as written, only the spelling the map holds is replaced, the system prompt and tool definitions are operator text and are not touched, and the `gate` and `replay` command lines and the judge have no run map (they redact their own input before sending).
+- **How a refused call ends a run.** Kill switch: `STOPPED` `kill_switch`. Day or month budget: `NEEDS_PERSON` `limits.daily_budget` / `limits.monthly_budget`. Limits store unreachable or an amount the meter cannot book: `NEEDS_PERSON` `limits_unavailable`. Run map could not be enforced: `NEEDS_PERSON` `redaction_error`. No provider is contacted in any of these, and a refusal inside the `llm_judge` detector ends the run the same way instead of being read as an injection flag.
 
 ## Running the tests
 

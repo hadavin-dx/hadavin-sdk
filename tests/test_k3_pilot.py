@@ -61,7 +61,7 @@ class ScriptedLLM:
 
 
 def reply(*calls: ToolCall, text: str = "Checkout is failing health checks.") -> Reply:
-    return Reply(text=text, tool_calls=list(calls), model_id="fake-model")
+    return Reply(cost_usd=Decimal(0), text=text, tool_calls=list(calls), model_id="fake-model")
 
 
 def _edit(path: Path, fn) -> None:

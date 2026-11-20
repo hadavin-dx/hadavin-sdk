@@ -89,14 +89,16 @@ def test_openai_adapter_maps_text_and_usage():
 
 
 def test_openai_adapter_estimates_when_the_provider_reports_no_usage():
-    """Some OpenAI-compatible servers (Ollama among them) omit usage. Zeros would disarm the budget."""
+    """Some OpenAI-compatible servers (Ollama among them) omit usage. Zeros would disarm the budget: the cost is None (unknown), so the gate keeps the worst case booked."""
     wire = OpenAICompatWire()
     try:
         fx = wire.scenario("text")
         del fx["body"]["usage"]
         reply = wire.serve(fx).chat(**CALL)
         assert reply.input_tokens > 0, "no usage reported and no estimate - budget would never fire"
-        assert reply.output_tokens > 0 and reply.cost_usd > 0
+        assert (
+            reply.output_tokens > 0 and reply.cost_usd is None
+        )  # an estimate is no bound: cost unknown
     finally:
         wire.close()
 

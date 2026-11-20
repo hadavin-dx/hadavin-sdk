@@ -1,6 +1,7 @@
 """The replay agent loop: one incident, one model, six read-only data tools and ``submit_diagnosis``.
 
-Own loop (not ``Runtime.handle``): it calls ``llm.chat`` directly, as ``evals.gate`` does. It does not run the
+Own loop (not ``Runtime.handle``): it calls the model through a model gate client bound to the case, as
+``evals.gate`` does (every call is reserved on the invocation's USD cap and settled). It does not run the
 production approval and limits path, so a replay pass is not proof of live behaviour. The case ends when a reply
 holds a ``submit_diagnosis`` call, or when a reply has no tool call (its text is then parsed as the diagnosis).
 The bundle given here is already masked (``k1b.redaction``) unless the operator acknowledged otherwise.
@@ -16,16 +17,16 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from decimal import Decimal
+from typing import Any
 
-from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import Detector, injection_check
+from hadavin_sdk.guard.injection import bind as bind_detector
+from hadavin_sdk.guard.model_gate import GateRefused, ModelGate
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
-from hadavin_sdk.limits import Budget
-from hadavin_sdk.llm.common import estimate_tokens
+from hadavin_sdk.limits import Budget, SpendRefused
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import Reply
 
@@ -70,7 +71,7 @@ MIN_WAIT_S = 1.0  # floor on the wait for one call, so a case at its deadline st
 def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -> Reply:
     """``llm.chat`` with a wall-clock bound that holds for every llm kind (a socket timeout is per socket
     operation and cannot stop a slow trickle). The call runs in a daemon thread; on expiry the thread is
-    abandoned (its late reply is dropped and its cost is unknown), so the run never hangs. Raises
+    abandoned (its late reply is dropped and its cost is unknown: the hold stays at the worst case), so the run never hangs. Raises
     ``CallTimeout``; any exception from the call is re-raised here."""
     box: dict[str, object] = {}
     abandoned = threading.Event()
@@ -98,22 +99,14 @@ def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -
     return box["reply"]  # type: ignore[return-value]
 
 
-def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
-    """Upper estimate for one abandoned call (one attempt, a full reply): the pessimistic input estimate plus
-    ``max_tokens`` of output. Charged when a call times out, because its real cost is unknown."""
-    tokens_in = estimate_tokens(system + _dumps(messages))
-    return (
-        Decimal(tokens_in) * route.input_usd_per_mtok
-        + Decimal(route.max_tokens) * route.output_usd_per_mtok
-    ) / Decimal(1_000_000)
-
-
 def run_case(
-    llm: LLM,
+    gate: ModelGate,
     *,
+    wrap: Callable[[Any], ModelGate],
+    agent_id: str,
+    run_id: str,
     system: str,
     route: str,
-    route_prices: Route | None = None,
     bundle: Bundle,
     detector: Detector,
     budget: Budget,
@@ -122,9 +115,60 @@ def run_case(
     timeout_s: int,
     clock: Callable[[], float] = time.monotonic,
 ) -> CaseOutcome:
-    """Never raises for a model or provider problem: every end is a status on the outcome. ``halt`` is set when
-    the whole run must stop (USD cap, non-transient provider error); the outcome keeps what the case gathered."""
+    """Never raises for a model, provider, meter or gate problem: every end is a status on the outcome. ``halt``
+    is set when the whole run must stop (USD cap, non-transient provider error, a refusal that is not the cap);
+    the outcome keeps what the case gathered.
+
+    `gate` is the UNBOUND model gate of the replay (its meter is `budget`); `wrap` makes such a gate for another
+    client (a model-backed detector's own). The case gets its own payer run id,
+    `run_id` plus the case id: the model client and a model-backed detector are bound to it here, and when the
+    case ends ``budget.forfeit`` closes that id, so a call still open (its cost is unknown: a timeout, used-up
+    retries, a provider error) stays booked at its worst case and a thread the case abandoned books nothing more."""
     out = CaseOutcome(status="ok")
+    case_run_id = f"{run_id}:{bundle.case_id}"
+    try:
+        llm = gate.bind(agent_id, case_run_id)
+        bound = bind_detector(detector, wrap, agent_id, case_run_id)
+        _steps(
+            out,
+            llm,
+            system=system,
+            route=route,
+            bundle=bundle,
+            detector=bound,
+            budget=budget,
+            max_steps=max_steps,
+            max_tool_calls=max_tool_calls,
+            timeout_s=timeout_s,
+            clock=clock,
+        )
+    except SpendRefused as exc:  # no call was made
+        if exc.reason == "usd_cap":
+            out.status, out.stop_reason, out.halt = "capped", "usd_cap", "capped"
+        else:
+            out.status, out.stop_reason, out.halt = "error", exc.reason, "aborted"
+    except GateRefused as exc:  # no call was made
+        out.status, out.stop_reason, out.halt = "error", exc.code, "aborted"
+    finally:
+        budget.forfeit(case_run_id)
+    return out
+
+
+def _steps(
+    out: CaseOutcome,
+    llm: LLM,
+    *,
+    system: str,
+    route: str,
+    bundle: Bundle,
+    detector: Detector,
+    budget: Budget,
+    max_steps: int,
+    max_tool_calls: int,
+    timeout_s: int,
+    clock: Callable[[], float],
+) -> None:
+    """The steps of one case; every end is written on `out`. A meter or gate refusal is raised to `run_case`."""
     snap = Snapshot(bundle)
     started = clock()
     messages: list[dict[str, str]] = [
@@ -136,10 +180,10 @@ def run_case(
     for _ in range(max_steps):
         if clock() - started > timeout_s:
             out.status = "timeout"
-            return out
+            return
         if budget.exhausted:
             out.status, out.stop_reason, out.halt = "capped", "usd_cap", "capped"
-            return out
+            return
         try:
             reply = _chat_bounded(
                 llm,
@@ -150,38 +194,35 @@ def run_case(
                 tools=TOOL_SPECS,
             )
         except CallTimeout:
-            # The abandoned call may still be running and billed (a retry layer can re-send), so charge the
-            # worst case and stop the run: at most one such call per invocation, and the cap still holds.
-            if route_prices is not None:
-                budget.charge(worst_case_usd(route_prices, system, messages))
+            # The abandoned call may still be running and billed (a retry layer can re-send): its hold stays
+            # booked at the worst case (`budget.forfeit` in run_case) and the run stops, so the cap still holds.
             out.status, out.stop_reason, out.halt = "timeout", "call_timeout", "aborted"
-            return out
+            return
         except ProviderExhausted:
             out.status, out.stop_reason = "error", "provider_exhausted"
-            return out
+            return
         except ProviderError:
             out.status, out.stop_reason, out.halt = "error", "aborted", "aborted"
-            return out
-        budget.charge(reply.cost_usd)
+            return
         if reply.stop_reason in ("max_tokens", "refusal"):
             out.status, out.stop_reason = "error", reply.stop_reason
-            return out
+            return
         if not reply.tool_calls:
             out.via = "text"
             out.diagnosis = parse_diagnosis_text(reply.text)
             if out.diagnosis is None:
                 out.raw = safe_head(reply.text, RAW_LIMIT)
-            return out
+            return
         for call in reply.tool_calls:
             if call.name == SUBMIT:
                 out.via = "tool"
                 out.diagnosis = parse_diagnosis(call.input)
                 if out.diagnosis is None:
                     out.raw = safe_head(_dumps(call.input), RAW_LIMIT)
-                return out
+                return
             if out.tool_calls >= max_tool_calls:
                 out.status, out.stop_reason = "capped", "max_tool_calls"
-                return out
+                return
             out.tool_calls += 1
             if call.name not in ALLOWED_TOOLS:
                 out.hard_check_a.append(call.name)
@@ -189,7 +230,6 @@ def run_case(
             else:
                 shown, ids = render(snap.call(call.name, call.input))
                 verdict = injection_check(detector, shown, "k1b-tool-result")
-                budget.charge(verdict.cost_usd)
                 if verdict.flagged:
                     out.injection_flagged += 1
                     shown, ids = _dumps(NO_DATA), set()
@@ -199,4 +239,3 @@ def run_case(
             )
             messages.append({"role": "user", "content": f"tool result {call.name}: {shown}"})
     out.status, out.stop_reason = "capped", "max_steps"
-    return out

@@ -23,7 +23,8 @@ attempt of the call got any other answer, timed out, was cut off or failed to pa
 Everything else leaves the mark False: 408, 409 and 5xx on any attempt, a 429 followed by an error that is not
 retried (a 400 after a 429 stays unmarked), and a 429 that a kind chose not to retry. A parse failure of an
 answer is wrapped here into a new ``ProviderError`` like any other failure and gets the normal rule (unmarked
-unless never sent or status-refused); no adapter raises ``ProviderError`` from its own call.
+unless never sent or status-refused). A ``ProviderError`` raised by the call itself passes through as it is
+(unmarked unless its raiser marked it); no adapter does that today.
 A cause chain longer than the walk limit counts as NOT never sent.
 Stated limit (UNVERIFIED for every network kind): the list follows the HTTP meaning of
 the codes (the request was rejected before any model work). Whether a given provider bills a 400, 401, 403 or
@@ -135,11 +136,15 @@ def with_retry[T](
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
     http_status: Callable[[BaseException], int | None] | None = None,
+    record: list[bool] | None = None,
     refused_statuses: frozenset[int] = REFUSED_STATUSES,
 ) -> T:
-    """``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
-    ``status`` finds none; it only feeds the mark, never the retry decision. ``refused_statuses`` is the
-    kind's list of statuses that mean refused before any response (default ``REFUSED_STATUSES``)."""
+    """``record``, when given, receives one entry per failed attempt that was retried: True when that attempt
+    certainly never reached the provider (cost 0), False when it may have been billed with an unknown cost
+    (timeout, reset, 5xx, 429). ``common.reply()`` prices a retried call from it (Y3). ``http_status(exc)`` is
+    the kind's way to the HTTP status of its SDK's errors when the generic ``status`` finds none; it only feeds
+    the mark, never the retry decision. ``refused_statuses`` is the kind's list of statuses that mean refused
+    before any response (default ``REFUSED_STATUSES``)."""
     unsent = True  # every attempt so far failed before any request was sent
     unbilled = True  # every attempt so far was never sent or was answered 429 (throttled)
     for attempt in range(1, max_attempts + 1):
@@ -157,6 +162,8 @@ def with_retry[T](
                 error.refused_before_response = unsent and (this_unsent or code in refused_statuses)
                 raise error from exc
             unsent = unsent and this_unsent
+            if record is not None:
+                record.append(this_unsent)
             unbilled = unbilled and (this_unsent or code == THROTTLED_STATUS)
             if attempt == max_attempts:
                 exhausted = ProviderExhausted(

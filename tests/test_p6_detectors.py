@@ -118,7 +118,11 @@ def test_the_judge_asks_with_its_fixed_prompt_and_a_forced_verdict():
 def test_an_off_schema_judge_answer_is_a_flag(answer):
     class Odd:
         def chat(self, *a, **k):
-            return Reply(tool_calls=[ToolCall(name=ANSWER_TOOL, input=answer)], model_id="m")
+            return Reply(
+                cost_usd=Decimal(0),
+                tool_calls=[ToolCall(name=ANSWER_TOOL, input=answer)],
+                model_id="m",
+            )
 
     v = injection_check(JudgeDetector(Odd(), "screen", 0.7), CLEAN, "document")
     assert (v.flagged, v.reason_code) == (True, "guard_unavailable")
@@ -153,7 +157,11 @@ def test_a_failed_members_flag_names_it():
 def test_a_confident_clean_answer_scores_zero():
     class Clean:
         def chat(self, *a, **k):
-            return Reply(text=json.dumps({"injection": False, "confidence": 1}), model_id="m")
+            return Reply(
+                cost_usd=Decimal(0),
+                text=json.dumps({"injection": False, "confidence": 1}),
+                model_id="m",
+            )
 
     v = JudgeDetector(Clean(), "screen", 0.7).check(CLEAN, "document")
     assert (v.flagged, v.score) == (False, 0.0)

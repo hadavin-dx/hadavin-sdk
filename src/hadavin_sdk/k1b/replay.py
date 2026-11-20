@@ -21,6 +21,7 @@ from typing import Any
 from hadavin_sdk import __version__
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import Detector
+from hadavin_sdk.guard.model_gate import BoundGate, ModelGate
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b import loop
 from hadavin_sdk.k1b.atomic import atomic_write
@@ -30,9 +31,11 @@ from hadavin_sdk.k1b.causelist import load_cause_list
 from hadavin_sdk.k1b.diagnosis import Diagnosis
 from hadavin_sdk.k1b.redaction import SCHEME, redact_bundle
 from hadavin_sdk.k1b.report import DISCLAIMER, render_replay_report
+from hadavin_sdk.llm.common import worst_case_for
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import Registry
+from hadavin_sdk.stages import is_live
 
 _COUNT_KEYS = (
     "ok",
@@ -116,6 +119,12 @@ def _replay(
     if agent_id not in registry.agents:
         raise ConfigError(f"unknown agent {agent_id!r}")
     _refuse_zero_price(registry, agent_id, llm_kind or cfg.backends.llm.kind)
+    if acknowledge_masked and is_live(cfg.environment):
+        raise ConfigError("--i-know-data-is-already-masked is accepted in demo only")
+    if isinstance(llm, BoundGate):
+        raise ConfigError(
+            "replay needs the model client or an unbound model gate, not a bound gate client"
+        )
     if not cfg.k1b.redact and not acknowledge_masked:
         raise ConfigError(
             "k1b.redact is false: client data would go to the model unmasked. Pass "
@@ -134,6 +143,19 @@ def _replay(
 
     run_id = new_id("k1b")
     budget = loop.Budget(max_usd)
+    # Every model call of this invocation (the agent's and a model-backed detector's) goes through one gate on
+    # the in-memory budget: reserved before, settled after. No audit sink: the replay log holds replay events
+    # only, so calls are metered but not audited one by one. No run map: the bundle's map is dropped inside
+    # `redact_bundle`, so the gate has nothing to enforce (the bundles are masked before, or acknowledged).
+
+    def wrap(client: Any) -> ModelGate:
+        if isinstance(client, ModelGate):
+            return client
+        return ModelGate(
+            client, meter=budget, audit=None, worst_case=worst_case_for(cfg.routes, client)
+        )
+
+    gate = wrap(llm)
     stop: str | None = None  # None | "capped" | "aborted"
     runs: list[dict[str, Any]] = []
     extra = {"clock": clock} if clock else {}
@@ -160,10 +182,12 @@ def _replay(
                     masked += counts_by_kind
                     masked_cases += bool(counts_by_kind)
                 o = loop.run_case(
-                    llm,
+                    gate,
+                    wrap=wrap,
+                    agent_id=agent_id,
+                    run_id=f"{run_id}:run{run_index}",
                     system=system,
                     route=agent.model_route,
-                    route_prices=cfg.routes[agent.model_route],
                     bundle=shown,
                     detector=detector,
                     budget=budget,

@@ -3,8 +3,9 @@
 The only cloud-agnostic model detector: it runs on any configured llm route and kind (Claude, Bedrock, Gemini,
 or a local open-weights model on `openai_compat`), so regex + llm_judge is a production detector set with no
 single vendor. Minimal on purpose: one fixed, versioned
-prompt (``judge_prompt.md``, its hash is in ``config_hash``), a forced JSON verdict, metered (the cost rides on the
-Verdict and the caller charges it), qualified by its own golden set (``golden_dir/judge.jsonl``, run by the evals
+prompt (``judge_prompt.md``, its hash is in ``config_hash``), a forced JSON verdict, metered when its caller binds
+it to a payer (``bind``: the client becomes a model gate client for one agent and run, which reserves and settles
+the call; ``Verdict.cost_usd`` is information only and nobody charges it; it is Decimal(0) when the reply's cost was None, i.e. unknown), qualified by its own golden set (``golden_dir/judge.jsonl``, run by the evals
 gate). A tripwire OR-ed with at least one other detector (config refuses a judge alone), never the default: the
 judge reads attacker text, so it can itself be steered, and a "clean" from it never clears anything.
 
@@ -15,6 +16,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +68,11 @@ class JudgeDetector:
     def __init__(self, llm: Any, route: str, threshold: float) -> None:
         self.llm, self.route, self.threshold = llm, route, threshold
 
+    def bind(self, wrap: Callable[[Any], Any], agent_id: str, run_id: str) -> JudgeDetector:
+        """The same judge on a metered client: `wrap` turns the raw client into a model gate, which is bound to
+        the payer. No run map is passed: the judge redacts its input with its own fresh map in ``check``."""
+        return JudgeDetector(wrap(self.llm).bind(agent_id, run_id), self.route, self.threshold)
+
     def check(self, text: str, source: str) -> Verdict:
         # defence in depth: the judge is a model, so its input goes through the choke point even when the caller
         # already redacted (placeholders pass unchanged); a refusal raises and `injection_check` flags (fail closed)
@@ -77,13 +85,15 @@ class JudgeDetector:
             output_schema=SCHEMA,
         )
         answer = _answer(reply)
-        if answer is None:  # off schema (perhaps steered): a flag, and the call is still charged
+        if (
+            answer is None
+        ):  # off schema (perhaps steered): a flag; the bound client has settled the call
             return Verdict(
                 flagged=True,
                 score=1.0,
                 backend=self.backend,
                 reason_code="guard_unavailable",
-                cost_usd=reply.cost_usd,
+                cost_usd=reply.cost_usd if reply.cost_usd is not None else Decimal(0),
             )
         injection, confidence = answer
         score = float(confidence) if injection else 0.0
@@ -93,7 +103,7 @@ class JudgeDetector:
             score=score,
             backend=self.backend,
             reason_code="injection_suspected" if flagged else None,
-            cost_usd=reply.cost_usd,
+            cost_usd=reply.cost_usd if reply.cost_usd is not None else Decimal(0),
         )
 
 
