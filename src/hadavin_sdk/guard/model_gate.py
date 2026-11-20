@@ -840,7 +840,7 @@ class BoundGate:
         each tool call's `input`), by the same enforce step and net as the request (`_chunk`). Returns (the reply,
         changed). Nothing changed, no map, an empty map or a reply with no text: the SAME object comes back. A changed
         reply is a copy that keeps every other field (cost, tokens, model id). Any raise is the caller's failure
-        path (`reply_mask_failed`). The map is read afresh, so a value registered during the call is covered."""
+        path (`reply_mask_failed`). The reply is masked against the request's snapshot: a value registered during the call is NOT covered (see the module docstring)."""
         if mapping is None or not len(mapping):
             return reply, False
         if isinstance(mapping, runmap.MapSnapshot):
