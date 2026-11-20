@@ -981,11 +981,13 @@ class _Degraded:
                     self.failures += 1
                 name = type(exc).__name__
                 now = _monotonic()
-                if name != last:
+                if name != last or now - last_warned >= DEGRADED_WARN_EVERY_S:
                     _LOG.warning(
                         "trigger worker: store re-check failed (%s): still degraded", name
                     )
                     last, last_warned = name, now
+                if self.failures > 6:
+                    return
                 continue
             with self._lock:
                 if not self._stopped.is_set():
