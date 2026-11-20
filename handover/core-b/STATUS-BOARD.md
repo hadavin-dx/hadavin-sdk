@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:45:49Z
+UPDATED_UTC: 2026-11-20T09:49:49Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.23 of 4 cores, mem 2/15 GB, disk 51G free, 28% used, agents light 4 heavy 2
-DISK: / 51G free, 28% used; worktrees /tmp/core-b-wt 3.1G
+CAPACITY: load 2.41 of 4 cores, mem 2/15 GB, disk 50G free, 28% used, agents light 4 heavy 2
+DISK: / 50G free, 28% used; worktrees /tmp/core-b-wt 3.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T09:45:46Z (previous push; this board is pushed right after writing)
-IST: 15:15 IST
+PUSHED_UTC: 2026-11-20T09:49:47Z (previous push; this board is pushed right after writing)
+IST: 15:19 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -193,3 +193,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 09:29Z VERDICTS E9, E10, E11, E12 STARTED (deadlines 09:50Z E9, 09:55Z the rest). LIVE AGENTS (sonnet unless noted): A10 audit drain gaps (b retries+backoff, c LIMIT from config, d N-tick quarantine, mutants; since 09:32Z) | F7 purge keeps expired holds + money guard trigger migration 0010 (E11 M3+M4; since 09:35Z) | B6a reset compare-and-clear + start-up rights self-check (E12 Major 1+2; since 09:27Z) | B6b session pins default_transaction_read_only=off / synchronous_commit=on (E12 Low-Medium 5; since 09:35Z) | F6 negative/NaN cost + PG settle context (since 09:25Z) | stop-state mutants refresh (since 09:15Z). QUEUED: B7 migration 0009 (reset table + seq CHECK + ts CHECK + watermark, E12 Medium 3/4/Low 6) behind B6a (same reset code). DONE: core-a told C1 reversed (003.answer.md). E10: P4b2 doc-only: ii-meter table TODO.
 
 09:38Z PUSH (late: long test run blocked me; I now push before long runs). who_else round 4 (6e0630cc8, 7465b61c2) CHERRY-PICKED on cloud/core-b (conflicts with my E5 code resolved keeping both; migrate-touching test modules -n 3: 573 passed, 4 skipped, 0 failed). E9 BUILD (A10): DONE and tested (795 passed, 16 fail-first tests, 4 mutants killed), review next. LIVE AGENTS: F7 E11 M3+M4 purge-keeps-expired + guard trigger 0010 (since 09:35Z) | B6a E12 Major 1+2 compare-and-clear reset + rights self-check (since 09:27Z) | B6b E12 session pins (since 09:35Z) | F6 negative/NaN cost + PG settle context (since 09:25Z) | stop-state mutants refresh (since 09:15Z) | A10 reviewer starting now. QUEUED: B7 migration 0009 behind B6a.
+
+09:49Z DUE NOW: E9 BUILD (A10+A11): BUILT, TESTED (795 / 154 passed, fail-first, 4 mutants killed), FRESH REVIEWS DONE: review 8 found the in-memory tick counter never reaches N (one tick per process), fixed in A11 (age-based quarantine), review 9 CLEAN. MERGED on cloud/core-b (7675ad5da). E11 (F7: purge keeps expired holds + guard trigger migration 0010): BUILDING (since 09:35Z), E12 (B6a compare-and-clear reset + rights self-check since 09:27Z; B6b session pins since 09:35Z; F6 negative/NaN cost since 09:25Z): BUILDING, none reported yet; B7 (migration 0009) QUEUED behind B6a. Each lands: merge, evidence, fresh result review. LIVE AGENTS (sonnet): F7, B6a, B6b, F6, stop-state mutants refresh (since 09:15Z).
