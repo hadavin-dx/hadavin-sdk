@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-20T05:58:11Z
+UPDATED_UTC: 2026-11-20T05:58:34Z
 SESSION: core-a
 ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
-STATE: WAITING-LEAD
+STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 20
-ITEMS_OPEN: 1
-PERCENT: 100
-AGENTS_RUNNING: 0
-CAPACITY: load 0.43 of 4 cores (1-minute average), mem 0.7/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_TOTAL: 21
+ITEMS_OPEN: 2
+PERCENT: 95
+AGENTS_RUNNING: 1
+CAPACITY: load 0.31 of 4 cores (1-minute average), mem 0.7/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.8G 60G 15%; 348M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: all queue items and ORDER 012 items are done or handed to the lead; waiting for: lead verdicts (below), core-b's Config.triggers and App.trigger_resolve, round 2 of the lead's code review if any
-PUSHED_UTC: 2026-11-20T05:57:34Z (the push before this board)
-NOTE: no agent runs now because every open item waits on the lead or on core-b; the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
+NEXT: mutant script extension lands: record; then wait for lead verdicts or round 2 review
+PUSHED_UTC: 2026-11-20T05:58:13Z (the push before this board)
+NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
 | item | what | state | percent | evidence file | tries | reason |
@@ -40,6 +40,7 @@ NOTE: no agent runs now because every open item waits on the lead or on core-b; 
 | R12-endpoint | lead review fixes in endpoint.py: minors 1, 5, parse edges | DONE (its own tests pass; final batch re-run still open) | 100 | raw/D-endpoint-tests-2.log, raw/D-endpoint-mutants.log | 1 | minors 1 and 5 applied, 409 line left to the worker only; 265 tests pass, 2 skipped; 2 new hand mutants caught. NOT applied: minor 6 (literals stay until core-b's defaults exist), minor 12 (a NUL byte inside the document is still accepted and not checked downstream). Stated side effect: a request up to 300.999 s old by a real clock is accepted |
 | R12-n8n | n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY | DONE as an OUTLINE (NOT run in n8n; the lead verifies on a real n8n) | 100 | n8n/ (3 files), tests/triggers/test_n8n_template.py, requests/002-readme-security-text.md | 1 | empty-field guard before hashing, outer loop for 503 with re-sign (60 s x 30 rounds as placeholders), README limits; 24 checks pass that need no n8n (re-run by me on the final code); 19 node parameters are guesses marked UNVERIFIED; stated in the README: the answer carries no reason, so a client cannot tell 'interrupted' from other NEEDS_PERSON cases, and the tick posts no card for an interrupted run |
 | R12-tests | missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders | DONE | 100 | raw/D-tests-pg16.log (13 database and kill tests with test ids), raw/D-E-all-tests-pg16.log (all my files: 578 passed, 4 skipped at that time) | 1 | 13 of 13 on PostgreSQL 16.15 at the first real run: one row per key, 409 on another document, 50 parallel, oversize, 4 child-process kill cases, 2 two-process cases; plus 19 no-database cases (start refusal through main, start checks, SIGTERM drain). The agent could not start the database (folder permission), I started it from /var/lib/postgresql/core-a-test and ran the file myself. NOT run: PostgreSQL 17 |
+| MUTANTS-2 | extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM) | RUNNING | 5 | raw/endpoint-mutants-run-3.log (not yet) | 1 | ORDER 008: a guarantee with no mutant script counts as not done; this was my own open point 5 in REPORT.md; no order needed, so I do it while waiting for the lead |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -61,6 +62,7 @@ NOTE: no agent runs now because every open item waits on the lead or on core-b; 
 | r12-n8n | builder (templates and text) | fable | n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished, 182k tokens |
 | r12-tests | evidence runner and test writer | fable | writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop) | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished, 176k tokens; could not start the database (permission on the scratch folder), did not work around it: correct |
 | t4-contract | builder (tests) | fable | contract tests for core-b's spend reservation store methods and the 50-connection cap test file | 05:46 | ended | 100 | done | n/a | 0 | finished, 155k tokens |
+| mutants-2 | builder (test tooling) | fable | adds mutant groups G8 to G12 to the script and runs it once | 05:58 | about 20 min after start | 5 | running | n/a | 0 | only 1 agent runs: every other open item waits on the lead or on core-b (see LEAD ACTIONS) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
