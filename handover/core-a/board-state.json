@@ -2,7 +2,9 @@
  "order": "ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)",
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
- "next": "17:45 rev-b-9b76 + docs-for-c + integ3 + door-money running; then: fresh review of docs-for-c's changes, push core/integration-dryrun from integ3, apply door-merged-support-2.patch after review",
+ "next": [
+  "ledger NEEDS REVIEW queue (15): d-fix17, d-fix18, crash matrix 1+2, support patches 1+2, contract-fix, grant tests, T1 merge, CI matrix test, docs for core-c, PR package, README text; max 2 reviewers at a time"
+ ],
  "note": "models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -761,19 +763,6 @@
    "reason": "lead 17:02 order A7-A10"
   },
   {
-   "id": "A8-egm-ledger",
-   "role": "builder/reviewer",
-   "model": "sonnet",
-   "what exactly it is doing": "EGM-LEDGER.md: every built item, its fresh review, resolve and repeat state; items lacking review listed",
-   "started UTC": "17:08",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 17:02 order A7-A10"
-  },
-  {
    "id": "A9-rev-c-G9c",
    "role": "builder/reviewer",
    "model": "sonnet",
@@ -811,6 +800,19 @@
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "reason": "EGM"
+  },
+  {
+   "id": "rev-dfix22-24",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh result review of d-fix22 + d-fix24 (worker settings)",
+   "started UTC": "17:12",
+   "expected end": "10 min",
+   "percent": 10,
+   "state": "running",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "reason": "A8 ledger item"
   }
  ],
  "tests": [
@@ -1491,6 +1493,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "test_grants_negative_0007 fixed for core-b 0011 model: wip/core-a-grant-fix2 dc2dd9a81, 31 passed PG16 strict (was 11 failed), 2 mutants killed; fresh review rev-grantfix2 running"
+  },
+  {
+   "id": "A8-egm-ledger",
+   "role": "builder/reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "EGM-LEDGER.md: every built item, its fresh review, resolve and repeat state; items lacking review listed",
+   "started UTC": "17:08",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "EGM-LEDGER.md: 27 items, 8 converged, 4 open (D tests, mutants script, crash.py round 7 file missing, n8n template), 15 NEEDS REVIEW (listed at top); reviews started in sequence, max 2 at a time"
   }
  ]
 }
