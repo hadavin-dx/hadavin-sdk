@@ -208,3 +208,55 @@ def test_a_masked_value_nested_deeper_than_the_cap_refuses_the_text_instead_of_s
         deep = up.quote(deep, safe="")
     with pytest.raises(runmap.RedactionError):
         runmap.redact_text(f"password={deep} and %41KIA" + "IOSFODNN7EXAMPLE", {})
+
+
+def test_a_fold_on_hit_line_stays_note_only_through_every_producer_and_view():
+    # a key hidden behind Cyrillic look-alikes (with or without a tag split) next to full-width live syntax: the redactor's fold-on-hit
+    # rewrite must emit the fixed note and placeholders only, never folded text, so no mention, link, command or fence goes live
+    import importlib
+
+    from hadavin_sdk.guard import textnorm
+
+    FOLD_NOTE = getattr(
+        importlib.import_module("hadavin_sdk.guard.redact"),
+        "FOLD_NOTE",
+        "<no FOLD_NOTE on this head>",
+    )
+
+    fw = str.maketrans({c: chr(ord(c) + 0xFEE0) for c in "<>!@:/`abcdefghijklmnopqrstuvwxyz"})
+    payloads = [
+        "<!channel>", "<!here>", "@here", "@channel", "kubectl delete pods", "https://evil.example/x", "```", "[x](http://e.example)",
+    ]  # fmt: skip
+    live = ("<!", "@here", "@channel", "://", "kubectl delete", "](")
+    alike = {"A": chr(0x410), "I": chr(0x406), "O": chr(0x41E), "S": chr(0x405), "E": chr(0x415)}
+    key = "AKIA" + "IOSFODNN7EXAMPLE"
+    rng = random.Random(SEED + 1)  # noqa: S311 - a seeded test generator
+    names = sorted(PRODUCERS)
+    for _ in range(300):
+        text = "".join(alike[c] if c in alike and rng.random() < 0.5 else c for c in key)
+        if rng.random() < 0.5:  # a tag inside the key: no hit until the tag is gone
+            at = rng.randrange(1, len(text) - 1)
+            text = text[:at] + "<b>" + text[at:]
+        pay = rng.choice(payloads)
+        pay = pay.translate(fw) if rng.random() < 0.7 else pay
+        line = rng.choice([f"the key {text} {pay} end", f"{pay} {text}", f"{text} {pay}"])
+        tagged = "<b>" in text
+        # producers that neutralise text a person reads (clean, slack) get every case; the others only the untagged ones
+        pool = [n for n in names if n in {"clean", "slack"}] if tagged else names
+        for name in rng.sample(pool, 1) + ["clean"]:
+            try:
+                out = PRODUCERS[name](line)
+            except runmap.RedactionError:
+                continue  # refused: nothing shown (fail closed)
+            low, folded = out.lower(), textnorm.fold(out).lower()
+            assert key not in textnorm.fold(out), (name, line, out)
+            if name in {"clean", "slack"}:
+                assert [p for p in live if p in low or p in folded] == [], (name, line, out)
+            if (
+                FOLD_NOTE in out
+            ):  # from the note to the end of its line: only the note and placeholders
+                tail = next(ln for ln in out.splitlines() if FOLD_NOTE in ln)
+                tail = tail[tail.index(FOLD_NOTE) :]
+                assert re.fullmatch(
+                    re.escape(FOLD_NOTE) + r"(?: <[A-Z0-9]+_\d+>)*", tail.strip()
+                ), (name, out)
