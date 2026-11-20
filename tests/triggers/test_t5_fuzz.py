@@ -53,7 +53,7 @@ if os.environ.get("HADAVIN_TEST_PG_DSN"):  # set: the driver must be there, neve
     import psycopg
 
 SEED_INPROC, SEED_WIRE, SEED_PG = 20261120_1, 20261120_2, 20261120_3
-N_INPROC, N_WIRE, N_PG = 2000, 300, 300
+N_INPROC, N_WIRE, N_PG = 2000, 304, 300  # 304 made: the cases of the FINDING are not sent
 INPROC, WIRE = "inproc", "wire"
 
 # ---- the wire contract, written out (not imported from the endpoint) ----
@@ -77,8 +77,8 @@ STRANGER = "fz" * 4 + "d" * 16 + "4" * 16  # a well-formed secret no sender has
 SECRETS = {SENDER_A: (A_OLD, A_NEW), SENDER_B: (B_ONLY,)}
 OWNER = {A_OLD: SENDER_A, A_NEW: SENDER_A, B_ONLY: SENDER_B}
 ALL_SECRETS = (A_OLD, A_NEW, B_ONLY, STRANGER)
-TOKEN = "".join(("Zq7", "fuzz", "Tok", "x41c9"))  # planted in every body
-KEY_MARK = "".join(("kq7", "m", "-"))  # the start of every key of the pool
+TOKEN = "Zq7" + "fuzz" + "Tok" + "x41c9"  # planted in every body
+KEY_MARK = "kq7" + "m" + "-"  # the start of every key of the pool
 KEY_POOL = tuple(f"{KEY_MARK}{i:02d}" for i in range(24))
 DOC_POOL = tuple(f"checkout 5xx {TOKEN} from 10.0.0.{i}, revision {i}" for i in (5, 6, 7))
 KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:-"
@@ -219,7 +219,9 @@ def _invalid_body(rng: random.Random, key: str, doc: str) -> tuple[bytes, str]:
         "dup-key-first-bad": lambda: b'{"key":1,' + good[1:],
         "dup-document": lambda: good[:-1] + b',"document":' + d + b"}",
         # deep nesting
-        "deep-document": lambda: b'{"key":' + k + b',"document":' + _nested(9000, b"[", b"]") + b"}",
+        "deep-document": lambda: (
+            b'{"key":' + k + b',"document":' + _nested(9000, b"[", b"]") + b"}"
+        ),
         "deep-arrays": lambda: _nested(rng.choice([1500, 20000]), b"[", b"]"),
         "deep-objects": lambda: _nested(8000, b'{"a":', b"}"),
         "deep-unclosed": lambda: b"[" * 30000 + json.dumps(TOKEN).encode(),
@@ -251,9 +253,11 @@ def _invalid_body(rng: random.Random, key: str, doc: str) -> tuple[bytes, str]:
         "utf16": lambda: good.decode().encode("utf-16"),
         "utf16-le": lambda: good.decode().encode("utf-16-le"),
         "utf32": lambda: good.decode().encode("utf-32"),
-        "random-bytes": lambda: rng.randbytes(rng.randrange(1, 400))
-        + TOKEN.encode()
-        + rng.randbytes(rng.randrange(0, 400)),
+        "random-bytes": lambda: (
+            rng.randbytes(rng.randrange(1, 400))
+            + TOKEN.encode()
+            + rng.randbytes(rng.randrange(0, 400))
+        ),
         # nearly JSON
         "cut-one": lambda: good[:-1],
         "cut-two": lambda: good[:-2],
@@ -543,11 +547,7 @@ def make_case(rng: random.Random, index: int, layer: str, force: str | None = No
     short = reads and declared > len(sent)  # type: ignore[operator]
     read_ok = reads and not short and stream == "bytes"
     signed = (
-        read_ok
-        and ts_ok
-        and sig_ok
-        and secret in OWNER
-        and signed_bytes == sent[:declared]  # type: ignore[misc]
+        read_ok and ts_ok and sig_ok and secret in OWNER and signed_bytes == sent[:declared]  # type: ignore[misc]
     )
     if route is not None:
         refusal: int | None = route
@@ -799,7 +799,9 @@ def check_answer(case: Case, status: int, body: bytes, model: Model, where: str)
         try:
             answer = json.loads(body)
         except ValueError:
-            raise AssertionError(f"{where} a {status} body that is not JSON: {body[:80]!r}") from None
+            raise AssertionError(
+                f"{where} a {status} body that is not JSON: {body[:80]!r}"
+            ) from None
         assert isinstance(answer, dict) and set(answer) == {"run_id", "state"}, f"{where} {answer}"
         assert answer["run_id"] == run_id_of(case.sender, case.key), f"{where} {answer}"  # type: ignore[arg-type]
         assert answer["state"] in {state.value for state in RunState}, f"{where} {answer}"
@@ -816,7 +818,7 @@ def fuzz_inproc(seed: int, count: int, wsgi, rows, layer: str, checkpoint: int) 
             signatures.add(case.made_sig)
             try:
                 status_line, headers, body, errors = call_inproc(wsgi, case)
-            except Exception as exc:  # noqa: BLE001 - nothing may escape the callable
+            except Exception as exc:  # nothing may escape the callable
                 raise AssertionError(f"{where} the callable raised {exc!r}") from exc
             status = int(status_line.split(" ", 1)[0])
             assert status in ENDPOINT_STATUSES, f"{where} unknown status {status_line!r}"
@@ -984,7 +986,7 @@ def make_wire(rng: random.Random, index: int) -> WireCase:
         + ["line-too-long", "header-too-long", "too-many-headers", "chunked", "absolute-uri"]
         + ["no-colon-first", "folded-signature", "length-twice-first-wrong", "no-end-half-close"]
         + ["no-end-stall", "silent", "empty-first-line", "http-0.9-get", "early-close", "cut"]
-        + ["stranger"]
+        + ["stranger", "version-2-up", "pipelined"]
     )
     n = len(base.sent)
     # --- the framing differs, the request is the same: it must be accepted ---
@@ -1015,18 +1017,24 @@ def make_wire(rng: random.Random, index: int) -> WireCase:
     # --- refused by the server or the endpoint with one known status ---
     if kind == "broken-line":
         line = rng.choice(BROKEN_LINES)
-        return WireCase(index, kind, base, render(base, rng, line=line), expect="status", status=400)
+        return WireCase(
+            index, kind, base, render(base, rng, line=line), expect="status", status=400
+        )
     if kind == "line-too-long":
         line = b"POST /" + TOKEN.encode() + b"a" * rng.randint(65536, 70000)
         return WireCase(index, kind, base, line, tail="half", expect="status", status=414)
     if kind == "header-too-long":
         more = (b"X-Long: " + TOKEN.encode() + b"a" * rng.randint(65536, 70000),)
         base.unread = True
-        return WireCase(index, kind, base, render(base, rng, more=more), expect="status", status=431)
+        return WireCase(
+            index, kind, base, render(base, rng, more=more), expect="status", status=431
+        )
     if kind == "too-many-headers":
         more = tuple(b"X-N%d: %d" % (i, i) for i in range(rng.randint(101, 140)))
         base.unread = True
-        return WireCase(index, kind, base, render(base, rng, more=more), expect="status", status=431)
+        return WireCase(
+            index, kind, base, render(base, rng, more=more), expect="status", status=431
+        )
     if kind == "chunked":
         base.length, body = None, b"%x\r\n" % n + base.sent + b"\r\n0\r\n\r\n"
         data = render(base, rng, more=(b"Transfer-Encoding: chunked",), end=False) + b"\r\n" + body
@@ -1035,19 +1043,27 @@ def make_wire(rng: random.Random, index: int) -> WireCase:
     if kind == "absolute-uri":
         line = b"POST http://127.0.0.1/v1/trigger HTTP/1.1"
         base.unread = True
-        return WireCase(index, kind, base, render(base, rng, line=line), expect="status", status=404)
+        return WireCase(
+            index, kind, base, render(base, rng, line=line), expect="status", status=404
+        )
     if kind == "no-colon-first":  # the header block ends at a line that is no header
         first = (TOKEN.encode() + b" is no header",)
         base.unread = True
-        return WireCase(index, kind, base, render(base, rng, first=first), expect="status", status=400)
+        return WireCase(
+            index, kind, base, render(base, rng, first=first), expect="status", status=400
+        )
     if kind == "folded-signature":
         sig, base.sig = base.sig, None
         more = (f"{SIG_HEADER}: {sig[:30]}".encode(), b" " + sig[30:].encode())  # type: ignore[index]
-        return WireCase(index, kind, base, render(base, rng, more=more), expect="status", status=401)
+        return WireCase(
+            index, kind, base, render(base, rng, more=more), expect="status", status=401
+        )
     if kind == "length-twice-first-wrong":  # the first length counts: fewer bytes than were signed
         first = (b"Content-Length: %d" % (n - 1),)
         base.unread = True
-        return WireCase(index, kind, base, render(base, rng, first=first), expect="status", status=401)
+        return WireCase(
+            index, kind, base, render(base, rng, first=first), expect="status", status=401
+        )
     if kind == "no-end-half-close":
         data = render(base, rng, end=False)
         return WireCase(index, kind, base, data, tail="half", expect="status", status=400)
@@ -1142,7 +1158,9 @@ def check_wire(case: WireCase, seen: Seen, model: Model, where: str) -> None:
     assert seen.end != "client timeout", f"{where} the server kept the connection open"
     lowered = raw.lower()
     for name, needle in (("the body token", TOKEN), ("python", "python"), ("a traceback", "trace")):
-        assert needle.lower().encode() not in lowered, f"{where} {name} in the answer: {raw[:300]!r}"
+        assert needle.lower().encode() not in lowered, (
+            f"{where} {name} in the answer: {raw[:300]!r}"
+        )
     for i, value in enumerate(ALL_SECRETS):
         assert value.encode() not in raw, f"{where} secret number {i} in the answer"
     if base is not None:
@@ -1204,14 +1222,16 @@ def fuzz_wire(seed: int, count: int, wsgi, rows) -> Stats:
             # the server still answers a valid request after all of that
             last = WireCase(count, "afterwards", after, render(after, random.Random(seed + 2)))  # noqa: S311
             seen = exchange(server.server_port, last)
-            assert seen.status in OK, f"{last.where(seed)} not served afterwards: {seen.raw[:120]!r}"
+            assert seen.status in OK, (
+                f"{last.where(seed)} not served afterwards: {seen.raw[:120]!r}"
+            )
             check_wire(last, seen, model, last.where(seed))
             model.accept(after)
             signatures.add(after.made_sig)
         end = f"[layer 2 seed={seed} at the end]"
         model.check_store(rows(), end)  # the server is closed: every connection thread has ended
         check_log(lines, signatures, end)
-    assert stats.sent + stats.skipped == count
+    assert stats.sent + stats.skipped == count and stats.sent >= 300, f"{end} {stats.line()}"
     share = stats.valid / count
     assert 0.20 <= share <= 0.45, f"{end} {share:.0%} of the cases reached start: {stats.line()}"
     for code in (400, 401, 404, 405, 413, 414, 431):
@@ -1235,7 +1255,7 @@ def test_fuzz_layer_2_raw_socket_300_requests_against_the_quiet_server(tmp_path,
 
 # ---- FINDING ------------------------------------------------------------------------------------
 
-FINDING_CASE = -1  # set below: the first "version-2-up" case of SEED_WIRE
+FINDING_CASE = 144  # the first "version-2-up" case of SEED_WIRE (the others: 164, 201)
 
 
 @pytest.mark.xfail(
