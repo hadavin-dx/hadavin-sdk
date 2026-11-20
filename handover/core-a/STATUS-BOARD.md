@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:26:17Z
+UPDATED_UTC: 2026-11-20T12:27:23Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 4
-CAPACITY: load 2.88 of 4 cores (1-minute average), mem 1.5/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.72 of 4 cores (1-minute average), mem 1.1/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 18%; 606M /home/user/hadavin-sdk; 1.1G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T12:26:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T12:26:21Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -109,21 +109,21 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | nits16 | builder | sonnet | G15d survivor: its guard (hasattr request_version in _refuse_stalled) is DEAD since d-fix16: remove the dead guard, delete mutant G15d (equivalent); the 4 d-fix16 review nits (431/unknown-code/close_connection test rows, docstring, long line); pure anchor check; matrix on 3.12.3 and 3.13.12; one run | 12:22 | 30 min | 5 | running | fix after the d-fix16 review | 0 | lead run 5 |
 | xr-fstore | fresh independent reviewer (codebase-details), read-only | sonnet | cross review of core-b 785871401: F-store spend functions + migrations 0007-0011 (money correctness, concurrency, SECURITY DEFINER, memory vs postgres parity) | 12:24 | 15 min | 5 | running | 1 (cross review) | 0 | lead order 12:23 (owner: use all capacity) |
 | xr-dconfig | fresh independent reviewer (codebase-details), read-only | sonnet | cross review of core-b 785871401: D-config fix (TriggerSettings, secrets out of errors/logs, defaults) + the provider mark | 12:24 | 15 min | 5 | running | 1 (cross review) | 0 | lead order 12:23 (owner: use all capacity) |
-| xr-gate-g7 | fresh independent reviewer (codebase-details), read-only | sonnet | cross review of core-c 7c31dbc97: the G7 redactor change (secret survival, ReDoS, idempotence) + the model gate (code-only failures, reservation released/settled exactly once) | 12:24 | 15 min | 5 | running | 1 (cross review) | 0 | lead order 12:23 (owner: use all capacity) |
+| maint-gate | builder (test maintenance) | sonnet | my tests/contracts/test_model_gate_contract.py against core-c 7c31dbc97: _bind wraps a dict as runmap.RunMap; verify on a scratch copy of core-c's head (never on my tree) | 12:27 | 20 min | 5 | running | n/a | 0 | cross review finding 3 (mine) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 3038 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 180s ago | running | matched by name in ps |
-| 3219 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 144s ago | running | matched by name in ps |
-| 3222 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 144s ago | running | matched by name in ps |
-| 9570 | postgres: postgres postgres 127.0.0.1(60910) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 22309s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 22309s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 22309s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 22309s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 22309s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 22309s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 22374s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 22374s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 22374s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 22374s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 22374s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 22374s ago | running | matched by name in ps |
+| 15039 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 38s ago | running | matched by name in ps |
+| 15538 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 20s ago | running | matched by name in ps |
+| 15542 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 20s ago | running | matched by name in ps |
+| 15595 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -185,6 +185,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 12:30 xreview core-c 7c31dbc97 (G7 redactor + gate) DONE: report handover/core-a/reviews/xreview-gate-g7.md + handover/core-c/requests/xr-gate-g7.md (files in MY branch: copy them to cloud/core-c): no Blocker; for core-c: G7-F3 still open (a phone number before a full stop leaks: redact.py:531 and :539, fix `(?!\w|\.\w)`), G7-F4 no change found, an unbounded single regex scan (about 7 s per 256 KB hostile document), nits on Decimal(0) worst case and BaseException in _settle. MY side: my gate contract test is stale against bind(mapping=RunMap): maint-gate fixes it (12:30).
 - 12:26 TAKEN: cross reviews started 12:26 (3 fresh read-only reviewers, branches unpacked at core-b 785871401 and core-c 7c31dbc97): xr-fstore (core-b F-store spend functions + migrations 0007-0011), xr-dconfig (core-b D-config fix + provider mark), xr-gate-g7 (core-c G7 redactor + model gate). Next batch when these return: core-c G1 fold + G2 P1d-a. Reports go to handover/core-a/reviews/xreview-<item>.md and a request line to handover/core-b/requests/xr-<item>.md / handover/core-c/requests/xr-<item>.md (new files in MY branch under their folder names: I cannot push their branches: copy them over). (1) G33d STILL not applied by me, see 12:24: the owner has not allowed it; nits16 (G15d dead-guard removal + 3 nits) runs: 4 agents now, 0 heavy test batches.
 - 12:24 TAKEN, run 5 read (thank you: 110 of 111, 4 minutes). (1) G15d: I do NOT write a test for it: the guarded line is DEAD CODE since d-fix16 (the `hasattr(self, 'request_version')` guard in _refuse_stalled: send_error no longer reads request_version: the fresh reviewer's nit S-1 at 12:06 said so): a mutant of a line that no longer matters cannot be killed by any test: right fix = remove the dead guard and DELETE mutant G15d as equivalent (nits16 does it, 12:24, with the other 3 review nits; the G34/G35/G8c/G16a/G16b anchors must stay unique: the pure anchor check re-runs). (2) G33d / the xfail: STILL NOT done by me: I do not apply an edit that was denied to my builder because a peer orders it, and the lead's order is not the owner's: the strict xfail stays and tells the truth (1 xfailed in tests/test_mutants_anchors.py); you drop it in your copy together with your line patch. Every change you validate is then: my head + your one line + the xfail marker removal. (3) I tell you the head when nits16 is pushed (about 12:55) and you re-run (4 min). I do not close D/E before the owner has decided about the line-1255 edit or your run is green with your two-line patch.
 - 12:14 PUSHED for your full mutant script: head a8e864606 (the board's next push moves it by a snapshot of board files only: use `git log origin/cloud/core-a -- tests/endpoint_mutants.py` to see the last change to the script). G8c, G16a, G16b re-anchored; the pure anchor check (tests/test_mutants_anchors.py) found NO other stale anchor: every mutant's old text occurs exactly once in its source EXCEPT G33d (line 1255 `now - last_warned`: you patch it in your copy; here it is a strict xfail so the head says so). Real-subprocess exit tests for anchor error (exit 2, no traceback), failing baseline (exit 1), runner exception (exit 1): tests/test_mutation_runner_exit.py. 196 passed 1 xfailed. The 4 cosmetic d-fix16 nits stay queued until your run reports.
