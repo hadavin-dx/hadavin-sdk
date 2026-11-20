@@ -336,7 +336,7 @@ ROWS: list[Row] = [
         "card",
         "host db01.corp.example.com down",
         "host db01[.]corp[.]example[.]com down",
-        "host <HOSTNAME_1>[.]example[.]com down",
+        "host <HOSTNAME_1> down",
     ),
     R("H36a", "fb", "card", "anna%2Em%40example%2Eorg", "anna%2Em%40example%2Eorg", "<EMAIL_1>"),
     R(
@@ -581,7 +581,7 @@ ROWS: list[Row] = [
         "card",
         "run `curl db01.corp.example.com` now",
         "run `curl <HOSTNAME_1>.example.com` now",
-        SAME,
+        "run `curl <HOSTNAME_1>` now",
     ),
     R(
         "G2",
@@ -597,7 +597,7 @@ ROWS: list[Row] = [
         "card",
         "```\nping db01.corp.example.com\n```\nthen evil.com",
         "```\nping <HOSTNAME_1>.example.com\n```\nthen evil[.]com",
-        SAME,
+        "```\nping <HOSTNAME_1>\n```\nthen evil[.]com",
     ),
     R("L4", "pb", "card", "~~~\nevil.com\n~~~", BS0, "~~~\nevil[.]com\n~~~"),
     R("I1", "pb", "card", "```evil.com\nx\n```", BS0, "```evil[.]com\nx\n```"),

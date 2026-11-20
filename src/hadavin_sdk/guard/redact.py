@@ -33,6 +33,13 @@ A contiguous digit run glued to a letter is not read as a phone number (hashes a
 word (`tel4155550132`) and beside `_`, and a letter or digit glued before an IBAN, or a digit before an IPv4 address, is not
 read as one.
 A copy of a known phone number is swept where a letter or `_` touches it (not a digit).
+
+A bare number with no label or context (for example `ref 55556666 paid`) is not masked, by decision (order 64 item 4). Masked by
+shape: 10 to 16 contiguous digits (PHONE; exactly 12 as ACCOUNTID) and 16 digits in four groups of four joined by spaces or hyphens
+(CREDITCARD). Other groupings are masked in part or not at all: 16 digits joined by dots lose their first 12 to MAC and keep the last
+group; 15 digits in 4-6-5 groups lose the first 10 to PHONE and keep the last 5.
+
+A value only written in base64 is found by the decoded view of `runmap.redact_text` and masked whole as ENCODED; `redact()` itself does not decode.
 """
 
 from __future__ import annotations
@@ -187,6 +194,29 @@ ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
 # the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
 _KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
 ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
+# The private suffixes of an internal host name (a company's own `.corp`, `.lan`, ...; `defaults.PRIVATE_SUFFIX_LABELS` is a different list
+# with a different job and is not used here). `_HOST_BARE` suffixes (`.internal`, `.local`) are code when a label or a call follows
+# (`jdk.internal.reflect`, `threading.local()`).
+_HOST_LABEL = r"[A-Za-z0-9_-]+"
+_HOST_DOT = r"(?:\.|\[\.\])"
+_HOST_BARE = "internal|local"
+_HOST_TAIL = "corp|lan|intranet|intra|localdomain|home" + _HOST_DOT + "arpa"
+HOSTNAME = (
+    r"(?i)(?<![\w-])(?<![\w-]\.)(?<![\w-]\[\.\])(?:" + _HOST_LABEL + _HOST_DOT + r")+(?:"
+    r"(?:" + _HOST_BARE + r")(?:-[A-Za-z0-9_-]*+(?![\w-])(?:" + _HOST_DOT + _HOST_LABEL + r")*"
+    r"|(?![\w-])(?!" + _HOST_DOT + r"\w|\())"
+    r"|(?:" + _HOST_TAIL + r")(?:-[A-Za-z0-9_-]*+)?(?![\w-])(?:" + _HOST_DOT + _HOST_LABEL + r")*)"
+)
+# CPU and platform names a build log writes after `host` (a CLOSED list: another label of that shape is masked like any host label).
+_HOST_ARCH = (
+    r"(?:x86(?:[-_]64)?|x64|i[3-6]86|amd64|arm(?:32|64)|aarch(?:32|64)|ppc(?:32|64)|riscv(?:32|64)|mips(?:32|64)"
+    r"|sparc(?:32|64)|ia(?:32|64)|s390|loongarch(?:32|64)|wasm(?:32|64)|win(?:32|64))"
+)
+HOSTKEY = (
+    r"(?i)(?<![\w-])(?:--)?host(?:name)?(?:[\"']?[ \t]*[:=][ \t]*[\"']?|[ \t]+)"
+    r"(?!" + _HOST_ARCH + r"(?![\w-]))"
+    r"([A-Za-z][A-Za-z0-9_-]{0,60}(?:-[0-9]|[0-9]{2}))(?![\w\-/@])(?!\.\w)"
+)
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # PuTTY FIRST (hadavin-sdk edit): its value runs to the end of the text, so a PuTTY block that starts inside a PEM block must be cut before the PEM
     # pattern shortens the text; the PEM pattern then masks the rest (its unterminated form runs to the end). The other order left the lines after the PEM END in clear.
@@ -437,13 +467,10 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # `.internal` and `.local` only when the name does not go on into another dotted label or a call:
     # `jdk.internal.reflect`, `kotlin.internal.X` and `threading.local()` are code in a stack trace, the evidence
     # itself. Every other private suffix is a host whatever follows: `billing-db.prod.corp.example` (review, PR 130).
-    (
-        "HOSTNAME",
-        re.compile(
-            r"(?i)\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){1,8}"
-            r"(?:(?:internal|local)\b(?!\.\w|\()|(?:corp|lan|intranet|intra|localdomain|home\.arpa)\b)"
-        ),
-    ),
+    ("HOSTNAME", re.compile(HOSTNAME)),
+    # `host db01`, `hostname=db02`, `--host web-1`: a label after the word `host` that ends in two digits or in a hyphen and a digit
+    # and is not a CPU or platform name. Group 1 is the value. The same masking of every later standalone copy follows.
+    ("HOSTNAME", re.compile(HOSTKEY)),
     # tenant_id=..., org_id: ..., "customer_id": "..."  — the identifiers that make logs re-identifiable
     (
         "TENANT",
