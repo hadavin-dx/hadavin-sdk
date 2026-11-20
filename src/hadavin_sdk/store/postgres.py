@@ -12,6 +12,7 @@ from __future__ import annotations
 import ipaddress
 import logging
 import os
+import re
 import tempfile
 import threading
 from collections.abc import Callable
@@ -169,6 +170,67 @@ def connect(
     return conn
 
 
+_PIN = re.compile(r"search_path[=\s]+(\S+)")
+_STOP_TABLES = ("kill_switch", "kill_switch_stops", "kill_switch_clears")
+
+
+def _names(text: str) -> list[str]:
+    """The schema names of a search_path value, unquoted, without the implicit pg_catalog and pg_temp."""
+    out = [p.strip().strip('"').strip("'") for p in text.split(",")]
+    return [n for n in out if n and n != "pg_catalog" and not n.startswith("pg_temp")]
+
+
+def expected_schemas(dsn: str, schema: str | None) -> list[str]:
+    """The schemas this store is configured for: `settings.db_schema`, else what the DSN pins, else `public`. A
+    setting that disagrees with the DSN's pin is a configuration error."""
+    pinned: list[str] = []
+    if m := _PIN.search(conninfo_to_dict(dsn).get("options") or ""):
+        pinned = _names(m.group(1))
+    if schema and pinned and pinned != [schema]:
+        raise ConfigError(
+            f"store postgres: backends.store.db_schema is {schema!r} but the DSN pins search_path to "
+            f"{', '.join(pinned)}; make them the same"
+        )
+    return [schema] if schema else pinned or ["public"]
+
+
+def verify_schema(conn: psycopg.Connection, expected: list[str]) -> str:
+    """Refuse to start unless the connection's effective search_path is exactly `expected` and the stop tables are
+    in `current_schema()`. A role may change its OWN default path (`ALTER ROLE r SET search_path`); without this
+    a changed default would make the process read a decoy stop table. Returns current_schema()."""
+    schema, effective = conn.execute(
+        "SELECT pg_catalog.current_schema(), pg_catalog.current_schemas(false)"
+    ).fetchone()
+    if not schema:
+        raise ConfigError(
+            "store postgres: the search_path names no schema that exists (effective search_path of this login: "
+            f"empty; the store is configured for {', '.join(expected)})"
+        )
+    effective = [n for n in effective if n != "pg_catalog" and not n.startswith("pg_temp")]
+    if effective != expected or schema != expected[0]:
+        raise ConfigError(
+            f"store postgres: the effective search_path of this login is {', '.join(effective) or 'empty'} "
+            f"(current_schema() is {schema!r}) but the store is configured for {', '.join(expected)}. Pin it "
+            "in the DSN (options=-c search_path=<schema>), set backends.store.db_schema, and run "
+            "hadavin-sdk migrate: it resets a search_path default set on the role or the database"
+        )
+    found = {
+        r[0]
+        for r in conn.execute(
+            "SELECT c.relname FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+            "WHERE n.nspname = %s AND c.relkind IN ('r','p') AND c.relname = ANY(%s)",
+            (schema, list(_STOP_TABLES)),
+        ).fetchall()
+    }
+    if missing := [t for t in _STOP_TABLES if t not in found]:
+        raise ConfigError(
+            f"store postgres: kill_switch not found in current_schema() = {schema!r} (missing relations: "
+            f"{', '.join(missing)}): the stop state is not in the schema this store reads. Run hadavin-sdk migrate for that schema, or fix the "
+            "search_path of the login"
+        )
+    return schema
+
+
 def build(settings, deps) -> PostgresStore:
     """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
     password_source(
@@ -192,6 +254,11 @@ def build(settings, deps) -> PostgresStore:
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
+    try:
+        verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+    except BaseException:
+        conn.close()
+        raise
     # A store call that waits on a row lock for longer than this fails loudly instead of holding the process-wide
     # store lock. Set here, not in `connect()`: the migrate path shares `connect()` and its statements may run long.
     conn.execute(

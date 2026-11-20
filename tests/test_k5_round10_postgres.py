@@ -99,7 +99,7 @@ def _prepared():
         for role in (rt, pu):
             db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
-    migrate(scoped)
+    migrate(scoped, no_roles=True)
     try:
         yield dsn, schema, rt, pu, lambda: migrate(scoped, runtime_role=rt, purge_role=pu)
     finally:

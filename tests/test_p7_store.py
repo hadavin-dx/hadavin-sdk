@@ -237,7 +237,7 @@ def test_the_stop_tables_are_append_only_for_the_owner_too(store):
 
 
 def test_month_spend_is_exact_under_concurrent_writers(fresh_dsn):
-    migrate(fresh_dsn)
+    migrate(fresh_dsn, no_roles=True)
     settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
     stores = [make("store", settings, FakeSecretProvider({"pg-dsn": fresh_dsn})) for _ in range(4)]
     days = [date(2026, 3, d) for d in (1, 2, 3, 4)]

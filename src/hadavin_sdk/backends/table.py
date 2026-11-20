@@ -115,6 +115,10 @@ SslMode = Literal["disable", "allow", "prefer", "require", "verify-ca", "verify-
 
 class PostgresSettings(KindSettings):
     dsn_secret_name: str
+    # The schema the store lives in. At start-up the store refuses to run unless the effective search_path of its
+    # connection is exactly this schema, so a role-level `ALTER ROLE ... SET search_path` cannot send it to a decoy.
+    # None: the schema the DSN pins with `options=-c search_path=...`, else `public`.
+    db_schema: str | None = None
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None

@@ -321,7 +321,9 @@ def test_connect_signs_in_through_the_iam_helper_for_store_and_migrate(monkeypat
 
     seen.clear()
     with pytest.raises(Stop):
-        migrate_mod.migrate(dsn, iam_auth=True, region="region-x", sslrootcert=str(ca))
+        migrate_mod.migrate(
+            dsn, no_roles=True, iam_auth=True, region="region-x", sslrootcert=str(ca)
+        )
     assert seen["password"] == "tok:region-x:rt"  # noqa: S105 - the fake helper's output
 
 

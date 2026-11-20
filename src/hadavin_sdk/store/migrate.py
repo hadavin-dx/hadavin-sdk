@@ -388,6 +388,105 @@ def who_else_can_clear(db, reset_role: str | None) -> list[str]:
     return [r[0] for r in db.execute(query, {"reset": reset_role}).fetchall()]
 
 
+def _paths(config_value: str) -> list[str]:
+    return [
+        n
+        for n in (p.strip().strip('"').strip("'") for p in config_value.split(","))
+        if n and n != "pg_catalog" and not n.startswith("pg_temp")
+    ]
+
+
+def _path_rows(db, named: list[str], schema: str):
+    """(role oid, role name, database name or None, setting) of every search_path default that reaches the named
+    roles and is not the schema."""
+    rows = db.execute(
+        "SELECT s.setrole, pg_catalog.pg_get_userbyid(s.setrole), d.datname, c "
+        "FROM pg_catalog.pg_db_role_setting s CROSS JOIN LATERAL unnest(s.setconfig) c "
+        "LEFT JOIN pg_catalog.pg_database d ON d.oid = s.setdatabase "
+        "WHERE c LIKE 'search\\_path=%%' AND (s.setdatabase = 0 OR d.datname = current_database()) "
+        "AND (s.setrole = 0 OR s.setrole IN (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = ANY(%s)))",
+        (named,),
+    ).fetchall()
+    return [r for r in rows if _paths(r[3].split("=", 1)[1]) != [schema]]
+
+
+def check_role_settings(db, named: list[str]) -> list[str]:
+    """Per-role and per-database `search_path` defaults that reach the named logins (`pg_db_role_setting`). A role
+    may change its OWN default (`ALTER ROLE r SET search_path`), so a login could be sent to a decoy schema it owns
+    and read a decoy stop table. A role row (with or without `IN DATABASE`) whose path is not the migrated schema is
+    reset (the repair) and the reset is read back; a database-wide or server-wide row that is not the schema cannot
+    be repaired for one role and is refused. Returns what was reset."""
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    reset = []
+    for setrole, role, dbname, config in _path_rows(db, named, schema):
+        if setrole == 0:
+            raise ConfigError(
+                f"a {'database-wide' if dbname else 'server-wide'} search_path default ({config}) reaches the "
+                f"named roles and is not the schema {schema!r}: a login would read the stop state of another "
+                "schema. Run ALTER DATABASE ... RESET search_path (or ALTER ROLE ALL ... RESET search_path) as a "
+                "role that may"
+            )
+        stmt = sql.SQL("ALTER ROLE {}").format(sql.Identifier(role))
+        if dbname:
+            stmt += sql.SQL(" IN DATABASE {}").format(sql.Identifier(dbname))
+        db.execute(stmt + sql.SQL(" RESET search_path"))
+        reset.append(f"{role}: {config}")
+    if left := _path_rows(db, named, schema):
+        raise ConfigError(
+            "a search_path default of a named role could not be reset: "
+            + ", ".join(f"{r[1]}: {r[3]}" for r in left)
+        )
+    return reset
+
+
+def _maintainers(db, schema: str):
+    """(stop table, grantee) for every MAINTAIN grant on a stop table other than the owner's own (PUBLIC as 'PUBLIC')."""
+    return db.execute(
+        "SELECT c.relname, CASE WHEN a.grantee = 0 THEN 'PUBLIC' ELSE pg_catalog.pg_get_userbyid(a.grantee) END "
+        "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace, "
+        "pg_catalog.aclexplode(c.relacl) a WHERE n.nspname = %s AND c.relname = ANY(%s) "
+        "AND a.privilege_type = 'MAINTAIN' AND a.grantee <> c.relowner ORDER BY 1, 2",
+        (schema, list(_STOP_TABLES)),
+    ).fetchall()
+
+
+def check_maintain(db, named: list[str]) -> None:
+    """PostgreSQL 17 added MAINTAIN, which also lets its holder LOCK a table in any mode: a runtime role that held it
+    (a grant, PUBLIC, or membership in pg_maintain) could take ACCESS EXCLUSIVE on a stop table and block every read
+    of the stop. Every MAINTAIN grant on the three stop tables other than the owner's is revoked, and a named role
+    that can still maintain them (PUBLIC cannot be revoked per role; pg_maintain is a membership) is refused. Before
+    17 the privilege does not exist and is not named."""
+    if (
+        db.execute("SELECT pg_catalog.current_setting('server_version_num')::int").fetchone()[0]
+        < 170000
+    ):
+        return
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    for table, grantee in _maintainers(db, schema):
+        who = sql.SQL("PUBLIC") if grantee == "PUBLIC" else sql.Identifier(grantee)
+        db.execute(
+            sql.SQL("REVOKE MAINTAIN ON TABLE {}.{} FROM {}").format(
+                sql.Identifier(schema), sql.Identifier(table), who
+            )
+        )
+    if left := _maintainers(db, schema):
+        raise ConfigError(
+            "MAINTAIN (which can LOCK a table) is still held on the stop tables by "
+            + ", ".join(f"{g} on {t}" for t, g in left)
+            + ": REVOKE it as the owner of the tables"
+        )
+    for role in named:
+        for table in _STOP_TABLES:
+            if db.execute(
+                "SELECT pg_catalog.has_table_privilege(%s, %s::regclass, 'MAINTAIN')",
+                (role, f"{schema}.{table}"),
+            ).fetchone()[0]:
+                raise ConfigError(
+                    f"{role} holds MAINTAIN on {table} (through pg_maintain or a role it is a member of), so it "
+                    "could LOCK the stop tables and block every read of the stop: remove that membership"
+                )
+
+
 def _excess_privileges(db, role: str) -> list[str]:
     """Effective privileges (inherited ones too) the role holds beyond SELECT on the `portal` relations."""
     extra = []
@@ -452,6 +551,7 @@ def migrate(
     purge_role: str | None = None,
     reset_role: str | None = None,
     release_role: str | None = None,
+    no_roles: bool = False,
     iam_auth: bool = False,
     region: str | None = None,
     sslmode: str | None = None,
@@ -461,7 +561,9 @@ def migrate(
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
     old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
-    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
+    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
+    role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
+    clear a stop, and exit 0."""
     roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
@@ -471,9 +573,17 @@ def migrate(
         raise ConfigError(
             "the runtime, portal, purge, reset and release roles must be different roles"
         )
+    if no_roles and named:
+        raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+    if not named and not no_roles:
+        raise ConfigError(
+            "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
+            "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+            "schema without checking any role (the first install, before the roles exist)"
+        )
     applied = []
     with (
         connect(
@@ -540,6 +650,9 @@ def migrate(
                 raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
+        if named:
+            check_role_settings(db, named)
+            check_maintain(db, named)
         if named and (others := who_else_can_clear(db, reset_role)):
             raise ConfigError(
                 "roles other than the reset role could clear a stop (a right on kill_switch or "

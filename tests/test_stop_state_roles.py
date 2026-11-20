@@ -466,7 +466,7 @@ def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
             k for k in GRANTS if k.startswith("kill_switch_") or k == "spend_reservations"
         ]:
             m.delitem(GRANTS, name)
-        assert migrate(old)[-1].startswith("0005_")
+        assert migrate(old, no_roles=True)[-1].startswith("0005_")
     with psycopg.connect(old, autocommit=True) as db:
         assert db.execute("SELECT to_regclass('kill_switch_stops')").fetchone()[0] is None
         db.execute('UPDATE kill_switch SET "on" = TRUE, "by" = \'user:before\'')
@@ -1347,8 +1347,8 @@ def test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_listed(w
         db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(made)))
     fresh = w.new_schema("cr")
     assert "0006_stop_state" in migrate(
-        fresh
-    )  # a plain migrate runs no check (and a refusal rolls back)
+        fresh, no_roles=True
+    )  # a --no-roles migrate runs no check (and a refusal rolls back)
     with pytest.raises(
         ConfigError, match="roles other than the reset role could clear a stop"
     ) as e:
