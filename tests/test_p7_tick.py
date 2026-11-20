@@ -88,6 +88,7 @@ def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
         "reprobe_sources",
         "audit_drain",
         "expire_reservations",
+        "check_caps",
     ]
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0

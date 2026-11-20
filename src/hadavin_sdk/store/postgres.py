@@ -1027,6 +1027,44 @@ class PostgresStore:
         )
         return replace(done, outcome_audited=audited)
 
+    def set_cap(self, agent_id: str, day_cap: Decimal, month_cap: Decimal, by: str) -> None:
+        """Write the day and month cap of one agent through `hadavin_set_cap` (migration 0011). Runs only under
+        the reset login: any other login gets InsufficientPrivilege. The audit lines are the CLI's (intent first,
+        outcome after), not this method's. Arguments are checked before any SQL."""
+        check_store_id(agent_id, "agent_id")
+        check_store_id(by, "by")
+        check_spend_cap(day_cap)
+        check_spend_cap(month_cap)
+        try:
+            with self._lock, self._db.transaction():
+                self._exec(
+                    self._money_call(
+                        "hadavin_set_cap", "%s::text, %s::numeric, %s::numeric, %s::text"
+                    ),
+                    (agent_id, day_cap, month_cap, by),
+                )
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc) from None
+
+    def cap_matches(self, agent_id: str, day_cap: Decimal, month_cap: Decimal) -> str:
+        """'same', 'differs' or 'missing': whether the table holds exactly this pair for the agent (read-only;
+        the runtime login and the reset login may call it)."""
+        check_store_id(agent_id, "agent_id")
+        check_spend_cap(day_cap)
+        check_spend_cap(month_cap)
+        try:
+            with self._lock, self._db.transaction():
+                row = self._exec(
+                    self._money_call("hadavin_cap_matches", "%s::text, %s::numeric, %s::numeric"),
+                    (agent_id, day_cap, month_cap),
+                ).fetchone()
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc) from None
+        state = row["hadavin_cap_matches"]
+        if state not in ("same", "differs", "missing"):
+            raise RuntimeError("the cap table answered with an unknown state")
+        return state
+
 
 def _release_event(actor: str, ref: str, result: str, error: str | None = None) -> AuditEvent:
     return AuditEvent(

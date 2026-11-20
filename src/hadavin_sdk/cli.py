@@ -53,11 +53,11 @@ from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
-from hadavin_sdk.models import new_id
+from hadavin_sdk.models import AuditEvent, new_id
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.secret_name import collides, path_form_problem
 from hadavin_sdk.stages import is_live
-from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
+from hadavin_sdk.store.protocol import StoreUnavailable, check_spend_cap, is_connectivity_error
 
 
 def _num(x: float | None, places: int = 2) -> str:
@@ -76,6 +76,18 @@ def _positive(text: str) -> int:
     if k < 1:
         raise argparse.ArgumentTypeError("must be at least 1")
     return k
+
+
+def _cap(text: str) -> Decimal:
+    """A spend cap: a finite number, 0 or more (the caps table accepts zero; a zero cap refuses every run)."""
+    try:
+        d = Decimal(text)
+    except InvalidOperation:
+        raise argparse.ArgumentTypeError("must be a decimal number") from None
+    try:
+        return check_spend_cap(d)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from None
 
 
 def _money(text: str) -> Decimal:
@@ -111,9 +123,34 @@ def _main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("gate", help="run an agent's golden set")
     g.add_argument("agent")
     g.add_argument("--k", type=_positive, default=1, help="runs per golden item (pass^k)")
-    lim = sub.add_parser("limits", help="kill switch")
-    lim.add_argument("action", choices=["stop", "reset"])
-    lim.add_argument("--by", required=True)
+    lim = sub.add_parser("limits", help="kill switch and per-agent spend caps")
+    lim_sub = lim.add_subparsers(dest="action", required=True)
+    for action in ("stop", "reset"):  # unchanged: `limits stop|reset --by WHO`
+        lim_sub.add_parser(action, help=f"kill switch: {action}").add_argument(
+            "--by", required=True
+        )
+    sc_p = lim_sub.add_parser(
+        "set-cap", help="write the day and month spend cap of one agent (reset login, audited)"
+    )
+    sc_p.add_argument("agent")
+    sc_p.add_argument("--day", required=True, type=_cap, help="the daily cap in USD, 0 or more")
+    sc_p.add_argument("--month", required=True, type=_cap, help="the monthly cap in USD, 0 or more")
+    sc_p.add_argument("--by", required=True)
+    sc_p.add_argument(
+        "--yes", action="store_true", help="skip the confirmation (needed when not interactive)"
+    )
+    sy_p = lim_sub.add_parser(
+        "sync-caps",
+        help="write the registry caps of every live and draft agent into the caps table (reset login, audited)",
+    )
+    sy_p.add_argument("--by", required=True)
+    sy_p.add_argument(
+        "--yes", action="store_true", help="skip the confirmation (needed when not interactive)"
+    )
+    lim_sub.add_parser(
+        "check-caps",
+        help="exit 1 when a registry cap differs from the caps table or a row is missing",
+    )
     rel = sub.add_parser(
         "release-expired", help="lower the expired spend holds of one agent and day (release role)"
     )
@@ -194,6 +231,10 @@ def _main(argv: list[str] | None = None) -> int:
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
+    if (
+        args.cmd == "limits" and args.action in _CAP_ACTIONS
+    ):  # reset login only, never the kill switch
+        return caps_cmd(cfg, args)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -668,6 +709,264 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
             file=sys.stderr,
         )
         return 5
+    return 0
+
+
+_CAP_ACTIONS = ("set-cap", "sync-caps", "check-caps")
+
+
+def _caps_refusals(cfg, what: str) -> int | None:
+    """The refusals of the three cap commands that need no connection (nothing was changed): the postgres store,
+    a `reset_credential_ref` (in every environment: the runtime login cannot write a cap, so there is no fallback
+    to it), a plain name that is not the runtime, purge or release secret. 2 when refused, else None."""
+    b = cfg.backends
+    if b.store.kind != "postgres":
+        print(
+            f"refused: {what} needs the postgres store: this store has no cap table (the memory store compares "
+            "the caps a caller passes). Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    ref = getattr(b.store, "reset_credential_ref", None)
+    if not ref:
+        print(
+            f"refused: {what} needs the reset role's login, in every environment. Create the reset role, run "
+            "hadavin-sdk migrate --reset-role <role>, then set backends.store.reset_credential_ref to the name "
+            "of the secret that holds its DSN. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    others_names = [
+        n
+        for n in (
+            getattr(b.store, "dsn_secret_name", None),
+            getattr(b.store, "purge_dsn_secret_name", None),
+            getattr(b.store, "release_credential_ref", None),
+        )
+        if n
+    ]
+    if path_form_problem(ref, _file_backed(b)):
+        print(
+            "refused: backends.store.reset_credential_ref is a path-shaped name (a '.' or '..' segment, or for a "
+            "mounted_file folder a leading or trailing '/'), which cannot be compared with the other logins. "
+            "Write a plain secret name. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    if collides(ref, others_names, file_backed=_file_backed(b)):
+        print(
+            "refused: backends.store.reset_credential_ref names the same secret as the runtime, purge or release "
+            "login. Point it at the secret that holds the reset role's own DSN. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    return None
+
+
+def _caps_login(cfg, what: str):
+    """The store and the audit of the RESET login for the three cap commands, or the exit code (an int) when the
+    command is refused (`_caps_refusals` ran before). Returns `(store, audit_or_None)`."""
+    b = cfg.backends
+    ref = b.store.reset_credential_ref
+    others_names = [
+        n
+        for n in (
+            getattr(b.store, "dsn_secret_name", None),
+            getattr(b.store, "purge_dsn_secret_name", None),
+            getattr(b.store, "release_credential_ref", None),
+        )
+        if n
+    ]
+    try:
+        secrets = make("secrets", b.secrets)
+        if _same_login(secrets, ref, others_names):
+            print(
+                "refused: backends.store.reset_credential_ref holds the same login as the runtime, purge or "
+                "release secret (two names, one DSN). Point it at the secret that holds the reset role's own "
+                "DSN. Nothing was changed.",
+                file=sys.stderr,
+            )
+            return 2
+        as_reset = b.store.model_copy(
+            update={"dsn_secret_name": ref, "purge_dsn_secret_name": None}
+        )
+        platform_secrets.check(secrets, [as_reset, b.audit], set())
+        as_reset._login_role = (
+            "reset"  # the reset login is not held to the runtime's rights at start
+        )
+        store = make("store", as_reset, secrets)
+        audit = (
+            None
+            if what == "limits check-caps"  # read-only: no audit line
+            else make("audit", b.audit, secrets, store=store, signer=None, anchor=None)
+        )
+    except StoreUnavailable:
+        print(f"{what} NOT run: the store is unreachable. Nothing was changed.", file=sys.stderr)
+        return 4
+    except ConfigError as exc:
+        print(f"refused: {exc}. Nothing was changed.", file=sys.stderr)
+        return 2
+    if getattr(store, "cap_matches", None) is None or getattr(store, "set_cap", None) is None:
+        print(
+            f"refused: {what}: this store has no cap table. Nothing was changed.", file=sys.stderr
+        )
+        return 2
+    return store, audit
+
+
+def _cap_event(by: str, agent: str, result: str, error: str | None = None) -> AuditEvent:
+    return AuditEvent(
+        run_id="-",
+        domain="limits",
+        operation="set_cap",
+        principal=by,
+        source="cli",
+        object_ref=agent,
+        result=result,
+        error_code=error,
+    )
+
+
+def _set_one_cap(store, audit, agent: str, day: Decimal, month: Decimal, by: str) -> int:
+    """One agent, the way `release_expired_spend` runs: the intent row first (if the audit is unavailable nothing
+    changed: exit 3), then the write, then the outcome (a failed write gets a `set_cap_failed` outcome). 0 done,
+    2 refused by the store, 3 audit unavailable, 4 store unreachable, 5 written but the outcome could not be
+    audited (the table is changed; the intent row stands alone)."""
+    try:
+        audit.write_intent(_cap_event(by, agent, f"intent day_cap={day} month_cap={month}"))
+    except AuditUnavailable:
+        print(
+            "refused: the audit store is unavailable, so the cap change cannot be recorded. Nothing was changed "
+            f"(agent {agent}).",
+            file=sys.stderr,
+        )
+        return 3
+    try:
+        store.set_cap(agent, day, month, by)
+    except Exception as exc:  # noqa: BLE001 - the class name only
+        try:
+            audit.write_outcome(_cap_event(by, agent, "set_cap_failed", type(exc).__name__))
+        except Exception:  # noqa: BLE001, S110 - the outcome contract is "never raises"; the exit code says it
+            pass
+        if is_connectivity_error(exc):
+            print(f"cap of {agent} NOT set: the store is unreachable.", file=sys.stderr)
+            return 4
+        print(
+            f"cap of {agent} NOT set ({type(exc).__name__}). Is this the reset role's login "
+            "(hadavin-sdk migrate --reset-role)? Nothing was changed for this agent.",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        key = audit.write_outcome(_cap_event(by, agent, f"set day_cap={day} month_cap={month}"))
+    except Exception:  # noqa: BLE001
+        key = None
+    print(f"cap of {agent} set: day {day}, month {month} (by {by})")
+    if key is None:
+        print(
+            f"set, but the outcome of {agent} could NOT be audited: the audit holds only the intent row. "
+            "Record it by hand (see the runbook).",
+            file=sys.stderr,
+        )
+        return 5
+    return 0
+
+
+def _confirm(args, what: str) -> bool:
+    """`--yes`, or an interactive yes. A run that is neither is refused (the caller returns 2)."""
+    if args.yes:
+        return True
+    if not sys.stdin.isatty():
+        return False
+    return input(f"{what} [y/N] ").strip().lower() in ("y", "yes")
+
+
+def caps_cmd(cfg, args) -> int:
+    """`limits set-cap`, `limits sync-caps`, `limits check-caps`: the spend caps live in a table the runtime login
+    cannot write (migration 0011); these commands run under the reset login. Own function, own exit codes,
+    nothing shared with `kill_switch`: 0 done (check-caps: every cap matches); 1 check-caps found a difference or a
+    missing row; 2 refused; 3 the audit store is unavailable (nothing changed); 4 the store is unreachable; 5 set,
+    but an outcome row could not be audited. Refusals come before any connection."""
+    what = f"limits {args.action}"
+    check = args.action == "check-caps"
+    if not check and not args.yes and not sys.stdin.isatty():
+        print(
+            f"refused: {what} changes caps; pass --yes when it is not run interactively. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    refused = _caps_refusals(cfg, what)
+    if refused is not None:
+        return refused
+    reg = load_registry(cfg)
+    wanted = {a.id: a for a in reg.agents.values() if a.status != "retired"}
+    if args.action == "set-cap":
+        agent = reg.agents.get(args.agent)
+        if agent is None or agent.status == "retired":
+            print(
+                f"refused: {args.agent!r} is not a live or draft agent of the registry. Nothing was changed.",
+                file=sys.stderr,
+            )
+            return 2
+    got = _caps_login(cfg, what)
+    if isinstance(got, int):
+        return got
+    store, audit = got
+    by = getattr(args, "by", None)
+    if args.action == "set-cap":
+        if not _confirm(
+            args, f"set the caps of {args.agent} to day {args.day}, month {args.month}?"
+        ):
+            print("refused: not confirmed. Nothing was changed.", file=sys.stderr)
+            return 2
+        code = _set_one_cap(store, audit, args.agent, args.day, args.month, by)
+        if code in (0, 5):
+            rec = wanted[args.agent].budget_usd
+            if (rec.daily, rec.monthly) != (args.day, args.month):
+                print(
+                    f"note: the registry holds other caps for {args.agent}; limits check-caps and the tick will "
+                    "report the difference until the registry and the table agree."
+                )
+        return code
+    states: dict[str, str] = {}
+    try:
+        for agent_id in sorted(wanted):
+            rec = wanted[agent_id].budget_usd
+            states[agent_id] = store.cap_matches(agent_id, rec.daily, rec.monthly)
+    except Exception as exc:  # noqa: BLE001 - the class name only
+        if is_connectivity_error(exc):
+            print(f"{what}: the store is unreachable. Nothing was changed.", file=sys.stderr)
+            return 4
+        print(
+            f"{what}: the store answered with an error ({type(exc).__name__}); run hadavin-sdk migrate and check "
+            "the reset role's grants. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    for agent_id, state in states.items():
+        print(f"{agent_id}: {state}")
+    off = sorted(a for a, st in states.items() if st != "same")
+    if check:
+        if off:
+            print(f"{len(off)} agent(s) differ from the caps table: run limits sync-caps")
+        return 1 if off else 0
+    if not off:
+        print("nothing to change: every live and draft agent already has its registry caps")
+        return 0
+    if not _confirm(args, f"write the caps of {len(off)} agent(s)?"):
+        print("refused: not confirmed. Nothing was changed.", file=sys.stderr)
+        return 2
+    for agent_id in off:  # one intent and one outcome per agent; stop at the first failure
+        rec = wanted[agent_id].budget_usd
+        code = _set_one_cap(store, audit, agent_id, rec.daily, rec.monthly, by)
+        if code != 0:
+            print(
+                f"stopped at {agent_id}: the caps after it were not written. Fix the cause and run the same "
+                "command again (it skips what is already equal).",
+                file=sys.stderr,
+            )
+            return code
+    print(f"synced {len(off)} agent(s), {len(states) - len(off)} already equal")
     return 0
 
 

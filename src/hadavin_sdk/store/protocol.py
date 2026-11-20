@@ -175,6 +175,17 @@ class SpendReleaser(Protocol):
     ) -> SpendRelease: ...
 
 
+class CapAdmin(Protocol):
+    """Optional, like `SpendReleaser`: the per-agent spend caps live in a table the runtime login cannot write
+    (migration 0011). Only the Postgres store has it. `set_cap` runs under the reset login only; `cap_matches`
+    (read-only, answers 'same', 'differs' or 'missing') under the runtime login (the tick step) or the reset login
+    (`limits check-caps`). The memory store has no cap table: it compares the caps a caller passes."""
+
+    def set_cap(self, agent_id: str, day_cap: Decimal, month_cap: Decimal, by: str) -> None: ...
+
+    def cap_matches(self, agent_id: str, day_cap: Decimal, month_cap: Decimal) -> str: ...
+
+
 class Store(Protocol):
     def create_run(self, run: Run) -> None: ...
     def get_run(self, run_id: str) -> Run: ...

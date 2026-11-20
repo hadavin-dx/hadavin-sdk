@@ -2,7 +2,7 @@
 
 Contract (design v5 kernel, section 4):
 * ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily),
-  reprobe_sources, audit_drain, expire_reservations. Later PRs only **append** a ``TickStep``.
+  reprobe_sources, audit_drain, expire_reservations, check_caps. Later PRs only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -283,6 +283,35 @@ def expire_reservations(ctx: TickContext) -> None:
         _LOG.warning("expire_reservations expired=%d older_than_s=%d", expired, age)
 
 
+class CapsDrift(RuntimeError):
+    """The caps of the registry and the caps table differ for at least one agent. The message names agent ids and
+    states ('differs' or 'missing') and never a cap value."""
+
+
+def check_caps(ctx: TickContext) -> None:
+    """Compare the registry caps of every live and draft agent with the caps table (`cap_matches`, read-only,
+    the runtime login). `Limits` shows the registry cap but the database enforces the table, so a cap lowered in
+    the registry and not synced would stay high in the table: that is made loud here (the step fails, the tick
+    exits 1) for any difference and any missing row. Retired agents are not checked. A store without a cap table
+    (memory) has nothing to check. The fix is `hadavin-sdk limits sync-caps` under the reset login."""
+    matches = getattr(ctx.app.store, "cap_matches", None)
+    if matches is None:
+        return
+    bad: list[str] = []
+    for agent in sorted(ctx.app.registry.agents.values(), key=lambda a: a.id):
+        if agent.status == "retired":
+            continue
+        state = matches(agent.id, agent.budget_usd.daily, agent.budget_usd.monthly)
+        if state != "same":
+            bad.append(f"{agent.id}:{state}")
+    if bad:
+        raise CapsDrift(
+            "the caps table differs from the registry for "
+            + ", ".join(bad)
+            + ": run hadavin-sdk limits sync-caps under the reset login (until then the table caps apply)"
+        )
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -308,6 +337,7 @@ STEPS: list[TickStep] = [
     ),
     TickStep("audit_drain", 0, audit_drain),
     TickStep("expire_reservations", 0, expire_reservations),
+    TickStep("check_caps", 0, check_caps),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (
