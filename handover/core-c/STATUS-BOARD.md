@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:45:08Z
+UPDATED_UTC: 2026-11-20T07:47:13Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 76
-AGENTS_RUNNING: 7
-CAPACITY: load 1.7 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 7, heavy agents 0
-DISK: / 59G free, 15% used; git worktrees 6; 81M	/tmp/claude-0;398M	/root/.cache/uv;
+AGENTS_RUNNING: 9
+CAPACITY: load 1.2 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 9, heavy agents 0
+DISK: / 59G free, 15% used; git worktrees 6; 90M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:44:30+00:00
+PUSHED_UTC: 2026-11-20T07:45:08+00:00
 
-(13:15 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:17 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -84,6 +84,8 @@ PUSHED_UTC: 2026-11-20T07:44:30+00:00
 | a997db3c | reviewer | (retired tier, run ended 06:36 UTC) | ORDER 001 dry run, comprehension review of the 3-line paragraph | 04:11 | 04:12 | 100 | done | 1 of 1 | 0 | proof only, finished |
 | (new) g7D | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-design) | 07:50 | 08:05 | 2 | running | 2 | 0 | fresh reviewer after fixes |
 | (new) g7C | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-codebase-details): callers, tests, deadline clock | 07:50 | 08:05 | 2 | running | 2 | 0 | fresh reviewer after fixes |
+| (new) g4R | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: implementation readiness | 07:55 | 08:10 | 2 | running | 2 | 0 | build P1c only after clean plan review |
+| (new) g4C | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: codebase details | 07:55 | 08:10 | 2 | running | 2 | 0 | same |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
