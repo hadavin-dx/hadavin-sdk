@@ -736,6 +736,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "after e1-fix4"
+  },
+  {
+   "id": "flake2",
+   "role": "investigator",
+   "model": "sonnet",
+   "what exactly it is doing": "BATCH9 failure test_pg_kill_at_point[read31-audit.write_outcome-4-after]: 2xx status with an EMPTY body (JSONDecodeError): truncated response of a killed worker, or a real bug? (read + 2 runs)",
+   "started UTC": "10:47",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "1 failure in the final suite"
   }
  ],
  "tests": [
@@ -1159,7 +1172,7 @@
   "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
- "failed": "10:30 UTC: BATCH8 (independent, after E1 fixes, whole suite): 12 failed = 10 strict-mode by design in the checkout (pass on the combined tree: 1376 passed 0 failed) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the DEFAULT socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md; my evidence logs redacted). None in my own code.",
+ "failed": "10:48 UTC, BATCH9 (final tree, whole suite, REQUIRE_PG=1 -n 3): 13 failed: 10 strict-mode by design (pass on the combined tree) + dblink (needs PG default socket) + brand string (the lead's BRIEF-PREAMBLE.md) + ONE NEW: tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after]: a 2xx status with an EMPTY body (JSONDecodeError at line ~822), passed in BATCH7/BATCH8 and all builder runs: agent flake2 investigates (hypothesis: worker killed mid-answer = truncated response; NOT assumed, NOT skipped, NOT weakened).",
  "interrupted": "Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md",
  "agents_done": [
   {
