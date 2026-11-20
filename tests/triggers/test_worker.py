@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import http.client
 import json
+import os
+import signal
+import subprocess
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -18,10 +22,10 @@ import pytest
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.models import Reply, Run, RunState, now
+from hadavin_sdk.models import Reply, Run, RunState, TickState, now
 from hadavin_sdk.runtime import tick
 from hadavin_sdk.store import MemoryStore
-from hadavin_sdk.store.protocol import NotFound, StaleState
+from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
 from hadavin_sdk.triggers import endpoint, worker
 from hadavin_sdk.triggers.endpoint import Accepted
 from hadavin_sdk.triggers.worker import Runner
@@ -586,13 +590,12 @@ def test_make_app_refuses_bad_secrets_without_printing_them(rt):
 
 def test_non_loopback_host_needs_the_switch():
     worker.check_bind("127.0.0.1", False)
-    worker.check_bind("::1", False)
     worker.check_bind("localhost", False)
     for host in ("", " ", "door-host", "127.0.0.1:80", "localhost.", "999.1.1.1"):
         for allow in (False, True):
             with pytest.raises(ConfigError, match="IP address or localhost"):
                 worker.check_bind(host, allow)
-    for host in ("0.0.0.0", "10.1.2.3", "::"):  # noqa: S104 - the refusal under test
+    for host in ("0.0.0.0", "10.1.2.3"):  # noqa: S104 - the refusal under test
         with pytest.raises(ConfigError, match="not loopback"):
             worker.check_bind(host, False)
         with pytest.raises(ConfigError):
@@ -705,3 +708,163 @@ def test_a_waiting_request_is_503_when_the_slot_stays_taken_past_ack_wait(rt):
     finally:
         rt.llm.gate.set()
     assert len(rt.store._runs) == 1 and rt.llm.calls == 1
+
+
+def test_a_refused_request_reads_the_store_a_few_times_not_a_hundred():
+    """No free slot and no row for the whole default `ack_wait_s`: the waits double up to the cap."""
+
+    class Counting(MemoryStore):
+        reads = 0
+
+        def get_run(self, run_id):
+            type(self).reads += 1
+            return super().get_run(run_id)
+
+    def holds_its_slot(store, **kw):
+        _insert(store, **kw)
+        hold.wait(30)
+
+    store, hold = Counting(), threading.Event()
+    with Runner(FakeRuntime(store, holds_its_slot), store) as runner:  # the defaults: one slot, 5 s
+        try:
+            assert runner.start(_req(1))[0] in OK
+            before, began = Counting.reads, time.monotonic()
+            assert runner.start(_req(2)) == (503, {})
+            waited, reads = time.monotonic() - began, Counting.reads - before
+        finally:
+            hold.set()
+        _free(runner)
+    assert worker.ACK_WAIT_S <= waited < worker.ACK_WAIT_S + 3.0
+    assert 5 <= reads <= 12, reads
+
+
+# --- ORDER 012: stop on SIGTERM, start-up texts, the tick warning, IPv6 ------------------------------------
+
+_CHILD = """
+import sys
+from hadavin_sdk.triggers import worker
+
+class Closes:
+    def close(self):
+        print("runner closed", flush=True)
+
+def app(environ, start_response):
+    start_response("200 OK", [("Content-Length", "0")])
+    return [b""]
+
+server = worker.make_server(worker.LOOPBACK, 0, app, 5.0)
+print(server.server_port, flush=True)
+code = worker.serve(server, Closes())
+print("served", code, flush=True)
+raise SystemExit(code)
+"""
+
+
+def test_sigterm_stops_a_serving_process_cleanly_with_exit_0():
+    """`main` cannot pass its config check yet (no `triggers` block exists), so the child runs `serve`, the
+    part of `main` after the start-up checks, on a real server on a free loopback port."""
+    child = subprocess.Popen(  # noqa: S603 - this interpreter, a fixed script
+        [sys.executable, "-c", _CHILD], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    try:
+        port = int(child.stdout.readline())
+        conn = http.client.HTTPConnection(worker.LOOPBACK, port, timeout=15)
+        try:
+            conn.request("GET", "/")
+            assert conn.getresponse().status == 200  # it serves
+        finally:
+            conn.close()
+        child.send_signal(signal.SIGTERM)
+        out, err = child.communicate(timeout=20)
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.communicate(timeout=20)
+    assert child.returncode == 0, (child.returncode, err)
+    assert "runner closed" in out and "served 0" in out
+    assert "Traceback" not in err
+
+
+def test_serve_gives_the_previous_sigterm_handler_back():
+    if threading.current_thread() is not threading.main_thread():
+        pytest.skip("signal handlers can be set in the main thread only")
+
+    class Closes:
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    runner, before = Closes(), signal.getsignal(signal.SIGTERM)
+    server = worker.make_server(worker.LOOPBACK, 0, lambda e, s: [], 5.0)
+    kill = threading.Timer(0.2, os.kill, args=(os.getpid(), signal.SIGTERM))
+    try:
+        kill.start()
+        assert worker.serve(server, runner) == 0  # returns only because the signal stopped it
+    finally:
+        kill.cancel()
+        kill.join(30)
+        server.server_close()
+        signal.signal(signal.SIGTERM, before)
+    assert runner.closed and signal.getsignal(signal.SIGTERM) is before
+    assert server.socket.fileno() == -1
+
+
+@pytest.mark.parametrize(
+    ("error", "code"),
+    [(ConfigError, 2), (StoreUnavailable, 4), (RuntimeError, 3), (ConnectionRefusedError, 4)],
+)
+def test_main_prints_a_foreign_start_error_by_class_name_only(monkeypatch, capsys, error, code):
+    fake_secret = "pg" + "-pass-" + "Zq7" * 6
+
+    def fails(args):
+        raise error(f"cannot connect to postgresql://app:{fake_secret}@db-host/hadavin")
+
+    monkeypatch.setattr(worker, "_prepare", fails)
+    assert worker.main([]) == code
+    err = capsys.readouterr().err
+    assert error.__name__ in err and err.startswith("trigger worker: ")
+    for private in (fake_secret, "postgresql", "db-host", "Traceback"):
+        assert private not in err
+
+
+def test_main_prints_the_text_of_a_refusal_written_in_the_worker(monkeypatch, capsys):
+    def fails(args):
+        worker.check_bind("10.1.2.3", False)
+
+    monkeypatch.setattr(worker, "_prepare", fails)
+    assert worker.main([]) == 2
+    assert "is not loopback" in capsys.readouterr().err
+
+
+def test_ipv6_hosts_are_refused_the_loopback_one_too():
+    for host in ("::1", "::", "fe80::1", "::ffff:127.0.0.1"):
+        for allow in (False, True):
+            with pytest.raises(ConfigError, match="IPv4 only"):
+                worker.check_bind(host, allow)
+
+
+def test_start_warns_once_when_no_recent_stuck_tick_is_recorded(caplog):
+    def warnings():
+        return [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+
+    class Down(MemoryStore):
+        def get_tick_state(self, step):
+            raise OSError("private text of the store failure")
+
+    def tick_at(age_s, ok=True):
+        at = now() - timedelta(seconds=age_s)
+        store = MemoryStore()
+        store.save_tick_state(
+            TickState(step="stuck", last_run_at=at, last_ok_at=at if ok else None, last_error=None)
+        )
+        return store
+
+    with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
+        assert worker.check_tick(tick_at(30)) is True
+        assert warnings() == []
+        cases = (MemoryStore(), tick_at(worker.TICK_MAX_AGE_S + 60), tick_at(30, ok=False), Down())
+        for n, store in enumerate(cases, start=1):
+            assert worker.check_tick(store) is False  # a warning, never an error
+            assert len(warnings()) == n and "stuck tick" in warnings()[-1]
+    assert "OSError" in caplog.text and "private text" not in caplog.text

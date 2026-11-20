@@ -140,7 +140,7 @@ class Runner:
                 left = deadline - time.monotonic()
                 if ended or left <= 0:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
-                if job is None:  # no slot so far: take one once it is free, else look less and less often
+                if job is None:  # no slot so far: take a free one, else look less often
                     job = self._submit(req)[0]
                     pause = self._poll_s if job is not None else min(pause * 2, pause_cap)
                 time.sleep(min(pause, left))
@@ -275,7 +275,7 @@ def check_bind(host: str, allow_non_loopback: bool) -> None:
     except ValueError:
         raise ConfigError("--host must be an IP address or localhost") from None
     if address.version != 4:
-        raise ConfigError("--host is an IPv6 address: the server listens on IPv4 only") from None
+        raise ConfigError("--host is an IPv6 address: the server listens on IPv4 only")
     loopback = address.is_loopback
     if not loopback and allow_non_loopback is not True:
         raise ConfigError(
