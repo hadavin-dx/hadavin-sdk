@@ -160,7 +160,7 @@ DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %(before)s
 9. **Amounts.** `worst_usd` and `actual_usd` are finite Decimals >= 0. The table CHECK also refuses NaN and Infinity (upper bound). Nothing is rounded.
 10. **Expiry clock.** Expiry age uses the database clock only; `created_at` is never passed by the store method.
 11. **Stated limit.** The runtime login can UPDATE its own counters (as today, `migrate.py:53-54`). Reservations protect against races and crashes, not against a hostile runtime login. The memory store guarantees nothing across processes.
-12. **Purge.** Purge deletes closed rows only. If the purge role deletes an open row, the worst case stays booked (the safe direction).
+12. **Purge.** (E11 M3, 2026-11-20: purge deletes SETTLED rows only, a row released by 0008 included; an expired unsettled hold is KEPT so a late settle still counts.) Purge deletes closed rows only. If the purge role deletes an open row, the worst case stays booked (the safe direction).
 
 ## Migration `0007_spend_reservations.sql`
 ```sql
@@ -415,3 +415,15 @@ T1-T2-tests with edits:
 - A `local_dir` audit with a PostgreSQL store (unusual pairing): None means the event sits in its outbox and the tick writes it later, so exit 5 can precede a row that does arrive; the runbook now says to check the chain first.
 - A lost `release_failed` outcome row is only logged; the money tables are untouched in that case.
 - The m-2 behavioural test covers the restored-hash secret source only; the refs are not checked against the runtime's backend secret names.
+
+
+## E11 M3/M4 (2026-11-20, builder F7)
+- M3 (a): `purge_spend_reservations` deletes `status = 'settled' AND closed_at < bound` in both stores; expired holds stay.
+  Tests: tests/test_purge_keeps_expired.py.
+- M4: migration `0010_money_guard.sql` (0009 is reserved for another builder; on this base 0009 does not exist, so a
+  local untracked placeholder was used for the tests and the ledger refuses a tree with 0010 and no 0009). BEFORE UPDATE
+  trigger `hadavin_money_guard()` (SECURITY INVOKER, search path pinned by migrate) on spend, spend_month,
+  spend_reservations; only the owner of the release function may lower. Design correction found by test: settle of an
+  OPEN hold below its reserved amount lowers the counters legitimately, so the counters may fall by the holds settled
+  in the same transaction and never below the booked holds. Known limit: non-hold charges can be lowered by that
+  amount. Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.

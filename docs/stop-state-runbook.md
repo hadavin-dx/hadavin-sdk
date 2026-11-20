@@ -156,6 +156,15 @@ runtime and not the reset login):
    `applied_usd` (what the day counter really fell by); applied lower than requested is drift to look into.
    The function runs as the migration owner with its search path pinned to `pg_catalog, <schema>, pg_temp` by
    `migrate` (so a temp table of the release login cannot stand in for a money table). Consider
+   Money guard (migration 0010, E11 M4): a BEFORE UPDATE trigger on `spend`, `spend_month` and `spend_reservations`
+   refuses, for every login but the function's owner, an UPDATE that lowers a booked amount. A runtime login can
+   still raise amounts and settle an open hold below its reserved amount (the counters fall by exactly that
+   difference in the same transaction, never below the booked holds). Inside the release function `current_user` is
+   its owner, which no login can imitate (a setting is not used: a login can set it itself). Known limit: charges
+   that are no hold (add_spend) can be lowered by a runtime login by the amount of a real settle in the same
+   transaction and no more. A superuser owner is not stopped. `migrate` pins the trigger function's search path too.
+   Purge (E11 M3): the purge deletes only settled rows (also the rows a release settled at 0); an expired hold
+   nobody settled stays, so a late settle still counts its real cost.
    A hand-run `CREATE OR REPLACE` of the function (for example the 0008 file) resets the pin to the placeholder
    `pg_catalog, pg_temp`: the function then cannot find the money tables and fails closed (it is not hijackable). Run
    `migrate` afterwards; it re-pins on every run. `migrate` must run as the function's owner: any other login gets an
