@@ -14,18 +14,24 @@ import functools
 import os
 
 GATE = 7311
-_exclusive_here = False  # this process holds the exclusive lock: its own migrate calls must not wait for it
+_exclusive_here = (
+    False  # this process holds the exclusive lock: its own migrate calls must not wait for it
+)
+
+
+try:  # bound now: a test that replaces psycopg.connect with a fake must not reroute the gate
+    from psycopg import connect as _real_connect
+except ImportError:  # no psycopg: nothing to gate
+    _real_connect = None
 
 
 def _connect():
-    import psycopg
-
-    return psycopg.connect(os.environ["HADAVIN_TEST_PG_DSN"], autocommit=True)
+    return _real_connect(os.environ["HADAVIN_TEST_PG_DSN"], autocommit=True)
 
 
 @contextlib.contextmanager
 def shared():
-    if not os.environ.get("HADAVIN_TEST_PG_DSN") or _exclusive_here:
+    if not os.environ.get("HADAVIN_TEST_PG_DSN") or _real_connect is None or _exclusive_here:
         yield
         return
     with _connect() as db:  # closing the session releases the lock

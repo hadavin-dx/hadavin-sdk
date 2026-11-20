@@ -1397,7 +1397,9 @@ def test_s2_below_16_a_createrole_login_that_is_not_a_superuser_is_listed(w):
         )
     with _server_wide_createrole(w) as (creator,):
         assert _who(w.scoped, w.reset) == [creator]
-        with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop") as e:
+        with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
             w.migrate()
         assert "accepted_admin_roles" in str(e.value) and "--accept-admin-role" in str(e.value)
         w.grant("ALTER ROLE {} NOCREATEROLE", creator)
@@ -1410,7 +1412,9 @@ def test_s2_below_16_an_accepted_createrole_role_is_not_listed_and_another_one_s
     with _server_wide_createrole(w, 2) as (vouched, other):
         assert _who(w.scoped, w.reset) == sorted([vouched, other])
         assert _who(w.scoped, w.reset, (vouched,)) == [other]
-        with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop") as e:
+        with pytest.raises(
+            ConfigError, match="roles other than the reset role could clear a stop"
+        ) as e:
             w.migrate(accepted_admin_roles=(vouched,))
         names = str(e.value).split("could clear a stop", 1)[1].split(". Name the runtime")[0]
         assert other in names and vouched not in names
@@ -1430,9 +1434,9 @@ def test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_li
         w.grant("GRANT {} TO {}", w.reset, creator)
         assert _who(w.scoped, w.reset, (creator,)) == [creator]
         w.grant("REVOKE {} FROM {}", w.reset, creator)
-        w.grant("GRANT DELETE ON kill_switch_stops TO {}", creator)
+        w.grant("GRANT TRIGGER ON kill_switch_stops TO {}", creator)
         assert _who(w.scoped, w.reset, (creator,)) == [creator]
-        w.grant("REVOKE DELETE ON kill_switch_stops FROM {}", creator)
+        w.grant("REVOKE TRIGGER ON kill_switch_stops FROM {}", creator)
         assert _who(w.scoped, w.reset, (creator,)) == []
 
 
@@ -1456,21 +1460,37 @@ def test_s2_accepted_roles_without_named_roles_are_refused():
 
 def test_s2_an_accepted_role_that_is_also_a_named_role_is_refused():
     with pytest.raises(ConfigError, match="must not name a role this command grants: sb_x"):
-        migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=("sb_x",))
+        migrate(
+            "postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=("sb_x",)
+        )
 
 
-def test_cli_migrate_prints_and_logs_every_accepted_admin_role(w, cfg_dir, monkeypatch, capsys, caplog):
+def test_cli_migrate_prints_and_logs_every_accepted_admin_role(
+    w, cfg_dir, monkeypatch, capsys, caplog
+):
     fresh = w.new_schema("ac")
     _demo(cfg_dir)
     monkeypatch.setenv("HADAVIN_MIGRATE_DSN", fresh)
     one, two = f"sb_ac1_{w.sfx}", f"sb_ac2_{w.sfx}"
-    base = ["--config", str(cfg_dir), "migrate", "--runtime-role", w.runtime, "--reset-role", w.reset]
+    base = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        w.runtime,
+        "--reset-role",
+        w.reset,
+    ]
     assert cli.main(base) == 0
     assert "accepted administrator roles" not in capsys.readouterr().out
     argv = [*base, "--accept-admin-role", one, "--accept-admin-role", two]
     with caplog.at_level(logging.WARNING, logger="hadavin_sdk.store"):
         assert cli.main(argv) == 0
-    line = [x for x in capsys.readouterr().out.splitlines() if x.startswith("accepted administrator roles")]
+    line = [
+        x
+        for x in capsys.readouterr().out.splitlines()
+        if x.startswith("accepted administrator roles")
+    ]
     assert len(line) == 1 and one in line[0] and two in line[0]
     assert one in caplog.text and two in caplog.text
 
