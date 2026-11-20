@@ -906,6 +906,11 @@ def _countable(suffix: str) -> bool:
     return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
 
 
+# `_Redactor._sub_glued`: a character no e-mail address holds, and the most characters of one token it copies.
+_NOT_ADDRESS = re.compile(r"[^A-Za-z0-9._+\-@%]")
+_GLUED_WINDOW = 4096
+
+
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
@@ -938,8 +943,42 @@ class _Redactor:
     def find(self, text: str) -> str:
         out = strip_ansi(text)
         for label, pattern in PATTERNS:
-            out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
+            if label == "EMAIL":
+                out = self._sub_glued(pattern, label, out)
+            else:
+                out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
+
+    def _sub_glued(self, pattern: re.Pattern[str], label: str, text: str) -> str:
+        """`pattern.sub`, and a match may also start exactly where the masked one before it ended.
+
+        Two addresses written without a space (`a.b@x.orga.b@x.org`): the first match takes the start of the second
+        address as the end of its domain, and the pattern's look-behind then refuses the rest (`.b@x.org`), because
+        the character before it is a name character. That rest was shown, and a second pass over the masked text
+        masked it (the character before it is then the `>` of a placeholder): one pass was no fixed point. Here
+        the rest is tried at once, as that second pass would read it: on a copy of the token that starts there
+        (the token, one character more for the pattern's `\\b`, at most `_GLUED_WINDOW` characters)."""
+        parts: list[str] = []
+        last, behind_masked = 0, False
+        while True:
+            m = None
+            if behind_masked:
+                stop = _NOT_ADDRESS.search(text, last)
+                end = min(stop.end() if stop else len(text), last + _GLUED_WINDOW)
+                m = pattern.match(text[last:end])
+            if m is not None:
+                start, end = last, last + m.end()
+            else:
+                m = pattern.search(text, last)
+                if m is None:
+                    break
+                start, end = m.start(), m.end()
+            shown = self._mask(m, label)
+            parts += (text[last:start], shown)
+            last = end
+            behind_masked = shown != m.group(0) and shown.endswith(">")
+        parts.append(text[last:])
+        return "".join(parts)
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""

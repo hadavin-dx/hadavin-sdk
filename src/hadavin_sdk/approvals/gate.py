@@ -238,13 +238,36 @@ def _defang_plain(part: str) -> str:
     return _DOMAIN.sub(_defang, _NON_ASCII_HOST.sub(_defang, _WIDE_DOTS.sub(".", part)))
 
 
+# The LAST step (`defang_text`) only. `_DOMAIN` and `_NON_ASCII_HOST` decide per match, and `_DOMAIN` needs a top-level
+# domain that ends the name, so text glued to a host left dots behind: `db01.corp.example.com_x` and
+# `db01.corp.example.com0x` matched up to `example` (`_` and `0` are name characters) and `example.com` stayed, in a
+# renderer that reads `_` as emphasis, a link. Two rules close it, whatever is glued on:
+# 1. `_` ends a top-level domain (`evil.com_x`, where `_DOMAIN` finds nothing at all);
+# 2. a dotted token that holds one `[.]` gets every dot between two name characters written `[.]`.
+_DOMAIN_LAST = re.compile(rf"(?<![\w.\[/-])((?:[\w-]+\.)+)({_TLDS})(?![^\W_]|[@-])", re.IGNORECASE)
+_DOTTED_TOKEN = re.compile(r"(?:\[\.\]|[\w.-])+")
+_NAME_DOT = re.compile(r"(?<=[\w-])\.(?=[\w-])")
+
+
+def _whole_token(m: re.Match[str]) -> str:
+    return _NAME_DOT.sub("[.]", m.group(0)) if "[.]" in m.group(0) else m.group(0)
+
+
 def _defang_prose(part: str) -> str:
     # Already-written `[.]` between name characters is read as `.` first, so defanging twice gives the text of once:
     # `_NON_ASCII_HOST` does not look behind `]`, so a second pass defanged `e[.]rg\u2039.f` further (property run).
     part = _LEGACY_DOT.sub(".", part)
     part = _WIDE_DOTS.sub(".", part)
     part = _PLACEHOLDER_DOT.sub(r"\1[.]", part)
-    return _defang_plain(part)
+    # Until nothing changes: a `[.]` written by one rule can be where the next host starts (`_NON_ASCII_HOST` and
+    # `_DOMAIN` do not start behind a `.`, they do behind a `]`). Every round only adds `[.]`, so it ends; the
+    # bound is for safety only.
+    for _ in range(6):
+        again = _DOTTED_TOKEN.sub(_whole_token, _DOMAIN_LAST.sub(_defang, _defang_plain(part)))
+        if again == part:
+            break
+        part = again
+    return part
 
 
 def _per_part(line: str, fix: Callable[[str], str]) -> str:
@@ -258,22 +281,40 @@ def _defang_outside_code(line: str) -> str:
     return _per_part(line, _defang_plain)
 
 
-def _outside_code(text: str, fix: Callable[[str], str]) -> str:
-    """`fix` on every prose part of `text`; the body lines of a closed backtick fence stay as they are."""
-    body = {i for s, e, ch in _closed_fences(text) if ch == "`" for i in range(s + 1, e)}
-    return "\n".join(
-        line if i in body else _per_part(line, fix) for i, line in enumerate(text.split("\n"))
-    )
+def _outside_code(text: str, fix: Callable[[str], str], *, certain: bool = False) -> str:
+    """`fix` on every prose part of `text`; the body lines of a closed backtick fence stay as they are.
+
+    Inline code is found line by line (`_INLINE_CODE`), but CommonMark pairs backticks across the lines of a
+    paragraph: one unpaired backtick on an earlier line shifts every later pair, and what this function took for
+    code is shown as text. With `certain`, inline code is left alone only when every backtick outside the fences
+    belongs to a pair on its own line; otherwise `fix` runs on the whole of every prose line."""
+    fences = [(s, e) for s, e, ch in _closed_fences(text) if ch == "`"]
+    body = {i for s, e in fences for i in range(s + 1, e)}
+    lines = text.split("\n")
+    if certain:
+        skip = body | {i for pair in fences for i in pair}
+        if any("`" in _INLINE_CODE.sub("", ln) for i, ln in enumerate(lines) if i not in skip):
+            return "\n".join(line if i in body else fix(line) for i, line in enumerate(lines))
+    return "\n".join(line if i in body else _per_part(line, fix) for i, line in enumerate(lines))
 
 
 def defang_text(text: str) -> str:
     """Write each dot of a domain or host as `[.]` in the FINAL text a renderer reads (after redaction)."""
-    return _outside_code(text, _defang_prose)
+    return _outside_code(text, _defang_prose, certain=True)
+
+
+_PLACEHOLDER_DEFANGED = re.compile(r"(<[A-Z][A-Z0-9]*_[0-9]+>)\[\.\](?=[\w-])")
+
+
+def _undefang_prose(part: str) -> str:
+    return _PLACEHOLDER_DEFANGED.sub(r"\1.", _LEGACY_DOT.sub(".", part))
 
 
 def undefang_text(text: str) -> str:
-    """Undo the `[.]` the old gate wrote between two name characters in prose (requests stored before P1d-a)."""
-    return _outside_code(text, lambda part: _LEGACY_DOT.sub(".", part))
+    """Undo the `[.]` a gate wrote in prose: between two name characters (requests stored before P1d-a) and behind
+    a placeholder (`defang_text`), so the redactor reads a stored card as it read the text before the defang: with
+    `<EMAIL_1>[.]08::` left as it was, `08::` no longer followed a dot and was masked as an address the second time."""
+    return _outside_code(text, _undefang_prose)
 
 
 def _clean_line(line: str, defang: bool) -> str:
