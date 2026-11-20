@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:42:45Z
+UPDATED_UTC: 2026-11-20T05:42:59Z
 SESSION: core-a
 ORDER: 009 (002 to 008 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
 AGENTS_RUNNING: 3
-CAPACITY: load 0.97 of 4 cores (1-minute average), mem 0.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.3G 60G 14%; 345M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 0.76 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.4G 60G 14%; 345M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: socket test and slot fix land: tests/triggers 5 times, then my own files once with PostgreSQL 16; mutant script re-run on the final code; ticket fix lands; then REPORT.md block
-PUSHED_UTC: 2026-11-20T05:41:16Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:42:47Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -57,7 +57,9 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| none | | | | | |
+| 19470 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 19473 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 19478 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
