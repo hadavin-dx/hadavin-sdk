@@ -44,12 +44,12 @@ kill, only against `os._exit(137)`.
 
 ## Candidate fix, one line per row (not for the campaign; the lead decides)
 
-- W01: set `SO_EXCLUSIVEADDRUSE` (Windows) / no `SO_REUSEADDR` on the server socket, and add one test that binds twice.
-- W02: document Ctrl+C as the only graceful stop on Windows, or handle `SIGBREAK`; run the drain evidence in a Linux container.
-- W03: run n8n and the worker in the same network (both in Docker, or n8n native), or give the worker an explicit non-loopback switch behind a proxy.
+- W01: done in the code (reuse option off on Windows, `SO_EXCLUSIVEADDRUSE` set, tests in test_t5_wsgiref.py:777 and :791); what is left is the run on Windows.
+- W02: done in the code (`SIGBREAK` is handled like SIGTERM); document Ctrl+C and Ctrl+Break as the graceful stops, `taskkill` and `terminate()` as hard kills; run the drain evidence in a Linux container.
+- W03: the explicit switch exists (`--allow-non-loopback`); run n8n and the worker in the same network (both in Docker, or n8n native), or use the switch behind a proxy.
 - W04: make the flag delete survive a held file longer (or fail the child loudly), and put the point name in the marker.
 - W05: run the matrix in a Linux container against the laptop's PostgreSQL if it is red only by timing.
-- W06: catch `ConnectionAbortedError` as well and accept "no status" where the body was left unread.
+- W06: done for `ConnectionAbortedError` (caught with the reset in test_t5_wsgiref.py:145, :825 and test_t5_fuzz.py:1124); still open: accept "no status" where the body was left unread, if a Windows run shows it.
 - W07: always write 127.0.0.1 in the n8n URL and in the DSN.
 - W08: narrow the module skip to the two SIGTERM tests.
 - W09: none (it is the evidence run for W02).
@@ -67,9 +67,9 @@ In the trigger and crash area (10 tests):
 
 | test | reason given | guarantee with no Windows evidence |
 |---|---|---|
-| tests/triggers/test_worker.py:765 `test_sigterm_stops_a_serving_process_cleanly_with_exit_0` | SIGTERM cannot be handled on Windows | clean stop of `serve`: exit 0, runner closed, no traceback |
-| tests/triggers/test_worker.py:791 `test_serve_gives_the_previous_sigterm_handler_back` | same | the handler is restored; the socket is closed after the stop |
-| tests/triggers/test_t5_process.py:174 `test_d3_sigterm_stops_a_serving_worker_cleanly` | same | the run in flight reaches its end after SIGTERM (drain), exit 0; killer of mutant G12d |
+| tests/triggers/test_worker.py:773 `test_sigterm_stops_a_serving_process_cleanly_with_exit_0` | SIGTERM cannot be handled on Windows | clean stop of `serve`: exit 0, runner closed, no traceback |
+| tests/triggers/test_worker.py:799 `test_serve_gives_the_previous_sigterm_handler_back` | same | the handler is restored; the socket is closed after the stop |
+| tests/triggers/test_t5_process.py:176 `test_d3_sigterm_stops_a_serving_worker_cleanly` | same | the run in flight reaches its end after SIGTERM (drain), exit 0; killer of mutant G12d |
 | tests/triggers/test_t5_main_start.py (module, 7 tests: test_1, 2a to 2e, 3) | same, applied to the whole file | start through the real `main`: signed request answered then SIGTERM exit 0; short secret, shared secret, unqualified agent, non-loopback host and port in use all refused with exit 2 and no secret printed; the worker asks only for the secret names it lists |
 
 Elsewhere in the repo (about 22 more; none is part of the trigger evidence):
@@ -89,12 +89,12 @@ Set once: `set HADAVIN_TEST_PG_DSN=postgresql://USER:PASS@127.0.0.1:5432/DB` and
 1. `python -c "import sys,socket;print(sys.platform,sys.version);print(hasattr(socket,'SO_EXCLUSIVEADDRUSE'))"` (confirms win32 and the socket option, 5 s)
 2. `python -m pytest tests/test_testing_crash.py -q -p no:cacheprovider` (W04, W10: the crash helper itself)
 3. `python -c "import os,tempfile;f=os.path.join(tempfile.mkdtemp(),'f');open(f,'w').write('x');h=open(f);os.unlink(f);print('unlink ok while open')"` (W04: does Windows refuse the delete; expect a PermissionError)
-4. the W01 probe (second bind of a port the worker listens on)
+4. the W01 probe (second bind of a port the worker listens on; the code sets `SO_EXCLUSIVEADDRUSE`, so expect a refusal and treat "SECOND BIND ALLOWED" as a finding)
 5. `python -m pytest tests/triggers -q -x -m "not perf" --durations=15 -rs` (everything in the trigger folder, skips listed: W06, W08, W11, W14)
 6. `python -m pytest tests/triggers/test_t5_main_start.py tests/triggers/test_t5_process.py tests/triggers/test_worker.py -q -p no:skipping -k "not postgres"` (W02, W08, W09: shows which skipped tests really fail)
 7. `python -m pytest tests/triggers/test_t5_crash_matrix.py -q -x -k pg_kill_at_point` (W05: the kill matrix on PostgreSQL 17)
 8. `python -m pytest tests/triggers/test_t5_crash_matrix_paths.py -q -x -k pg_kill_at_point` (W05, the second matrix)
-9. the W02(a) command, then Ctrl+C by hand on a started worker (exit codes of a stop)
-10. `docker run --rm curlimages/curl -s -m 5 -o NUL -w "%{http_code}\n" http://host.docker.internal:8081/v1/trigger` while the worker runs, plus the two `curl` lines of W07 (W03, W07: can n8n reach the worker at all)
+9. the W02(a) command (Ctrl+Break, handled by the code), then Ctrl+C by hand on a started worker (exit codes of a stop)
+10. `docker run --rm curlimages/curl -s -m 5 -o NUL -w "%{http_code}\n" http://host.docker.internal:8081/v1/trigger` while the worker runs with `--host 0.0.0.0 --allow-non-loopback` (W03), plus the two `curl` lines of W07 (W03, W07: can n8n reach the worker at all)
 
 If time is short, 3, 4, 6 and 10 answer the security and blocker questions.
