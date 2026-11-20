@@ -100,6 +100,10 @@ def lowering_attacks(w, opened, settled, role=None):
                     went_through.append(f"{name}{'+guc' if guc else ''}")
                 except errors.InsufficientPrivilege:
                     pass
+                except errors.CheckViolation:
+                    # a guard that let the first round through leaves the counters at 0, so the repeat lowers
+                    # below zero and meets the range constraint: the guard still did not refuse it
+                    went_through.append(f"{name}{'+guc' if guc else ''}(check)")
         try:
             db.execute("SET ROLE " + w.release)
             went_through.append("set_role")
