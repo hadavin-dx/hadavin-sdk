@@ -23,7 +23,7 @@ Suites at idle on 2552bcc95 (before the later merges): non-perf 16071 passed, 2 
 | wip/cloud-core-c/docs6 | 4c061cd72 |
 - q2-spend: fail-closed spend (gate side) incl. Reply.cost_verified (models.py, one line) + request for core-b; whole gate_mutants NOT RUN; needs core-b (cost_verified in adapters, usd_cap at install, attempt_costs from llm/retry.py). Merge after a fresh review and a whole gate_mutants run.
 - p7b: LimitsMeter review fixes; gate_mutants whole NOT RUN (3 new mutants unchecked).
-- q3-g15-net: G15 independent final net (guard/finalnet.py); status as of the stop in evidence/Q3-build-notes.md if present; otherwise unfinished.
+- q3-g15-net (31b44effc code, e67ab15c4 notes): G15 independent final net (guard/finalnet.py Aho-Corasick, FinalNetRefused/final_net_refused, 22 mutants Q3a-v killed, MIN_MUTANTS 181, tests/test_finalnet.py 22 tests; gate tests 413 passed); whole gate_mutants and the property corpus NOT RUN; it changes test_g13b_5 (a base64 copy of a secret is now refused); gap notes in evidence/Q3-build-notes.md.
 - grants: re-pinned grant tests for core-b's head (b55d21865): base is core-b's branch, not mergeable onto cloud/core-c; core-b/core-a take it.
 - p3-scratch: gate end-to-end with core-b's real store (18 pass, 2 strict xfail): scratch merge of core-b + core-c; findings in requests/for-core-b-p3-findings.md.
 Merging order when resumed: q1 is already merged; then p7b, q2 (both edit model_gate.py: expect small conflicts), q3. After each: ruff, tests/test_model_gate.py + test_runmap_enforce_map.py + test_gate_mutants_picked_up.py + test_gate_install_callers.py, whole gate_mutants (only R8), fresh review of the diff.
