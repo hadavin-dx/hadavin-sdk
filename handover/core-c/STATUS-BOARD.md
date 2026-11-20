@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:00:54Z
+UPDATED_UTC: 2026-11-20T09:05:33Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,23 +6,22 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 5.2 of 4 cores, mem 2/15 GB, disk 58G free, 17% used, light agents 4, heavy agents 0
-DISK: / 58G free, 17% used; git worktrees 15; 898M	/tmp/claude-0;256M	/root/.cache/uv;
+AGENTS_RUNNING: 3
+CAPACITY: load 1.5 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, light agents 3, heavy agents 0
+DISK: / 58G free, 17% used; git worktrees 15; 899M	/tmp/claude-0;259M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
-FAILED: none in the two merged-tree batches (15 files). Not run: whole suite, Python 3.12, PostgreSQL 17, mutants. Known flaky under -n 4 load: tests/test_runmap_enforce_map.py::test_m_new_1_enforce_map_has_the_redactors_time_budget (CPU deadline, passes serially).
-NEXT: LIVE only. Test rule from the lead applied to every agent: at most 2 heavy batches at once, pytest -n 3 at most, queue the rest. Box load 10.5 of 4 cores at 08:58Z. Tested commit to land by 09:05Z: G7 round 5 (waits for its builder).
-PUSHED_UTC: 2026-11-20T09:00:51+00:00
+FAILED: Only failure seen: tests/test_runmap_enforce_map.py::test_m_new_1_enforce_map_has_the_redactors_time_budget under -n load (the test patched runmap.time only); fix is in the working tree, being verified by merged-tree batch 3.
+NEXT: LIVE only. G7 round 5 cherry-picked and pushed (builder batch 2619 passed 4 xfailed 1 failed: the flaky gate test, fixed locally by patching redact.time too). Merged-tree batch 3 (15 files, -n 3) running now; then commit the test fix, fresh egm reviews of G7 round 5, wording refresh.
+PUSHED_UTC: 2026-11-20T09:05:13+00:00
 
-(14:30 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:35 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | (new) g4v4 | drafter | claude-opus-5-5 | ticket G4 v4 taking plan review round 3 | 08:40 | 09:10 | 1 | running | 4 | 0 | EGM draft step; then plan review round 4 |
-| (new) g7fix5 | builder | claude-sonnet-5-5 | G7 fix round 5 (caps vs honest cookie logs, overlap tail, time bound, test robustness) | 08:55 | 09:25 | 1 | running | 5 | 0 | from G7-result-review-4.md |
 | (new) g8v2 | drafter | claude-opus-5-5 | ticket G8 v2 taking plan review round 1 (PHONE redesign, traces run, host rows vs G4 v3) | 08:53 | 09:25 | 1 | running | 2 | 0 | EGM draft step |
 | (new) tnmut | evidence runner | claude-sonnet-5-5 | textnorm mutant list run on HEAD (238 of 240 was on an older tree) + map the 30 changed code points to killer mutants (Q9) | 08:53 | 09:35 | 1 | running | 1 | 0 | ORDER 022 Q9 |
 
