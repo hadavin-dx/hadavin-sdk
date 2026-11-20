@@ -1,1 +1,6 @@
 ## run 1: HADAVIN_REQUIRE_PG=1, no HADAVIN_TEST_PG_DSN
+      1 SKIPPED [1] tests/triggers/test_endpoint.py:728: an empty body is refused at Content-Length (own test)
+      1 SKIPPED [1] tests/triggers/test_endpoint.py:711: an empty body is refused at Content-Length (own test)
+FAILED lines: 0
+441 passed, 2 skipped, 88 errors in 14.54s
+## run 2: HADAVIN_REQUIRE_PG=1 and HADAVIN_TEST_PG_DSN set
