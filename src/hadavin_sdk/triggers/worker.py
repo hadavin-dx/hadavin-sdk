@@ -176,6 +176,40 @@ def is_store_error(exc: BaseException) -> bool:
     return any(c.__module__.split(".")[0] in STORE_ERROR_MODULES for c in type(exc).__mro__)
 
 
+def check_run_values(
+    *,
+    max_running: object,
+    ack_wait_s: object,
+    poll_s: object,
+    max_waiting: object,
+    conflict_events_per_minute: object,
+) -> None:
+    """The one set of rules for the Runner's numbers: a ValueError that names the field (never the value). Called by
+    `Runner.__init__` and, before the store is built, by `check_fields`, so the two cannot differ."""
+    if isinstance(max_running, bool) or not isinstance(max_running, int):
+        raise ValueError("max_running must be a whole number")
+    if isinstance(ack_wait_s, bool) or not isinstance(ack_wait_s, int | float):
+        raise ValueError("ack_wait_s must be a number")
+    if isinstance(poll_s, bool) or not isinstance(poll_s, int | float):
+        raise ValueError("poll_s must be a number")
+    if max_running < 1 or poll_s <= 0:
+        raise ValueError("max_running and poll_s must be above zero")
+    if max_running > MAX_RUNNING_CEILING:
+        raise ValueError(f"max_running must be at most {MAX_RUNNING_CEILING}")
+    if not (0 < ack_wait_s <= ACK_WAIT_S_CEILING):  # written so that NaN is refused too
+        raise ValueError(f"ack_wait_s must be above zero and at most {ACK_WAIT_S_CEILING:g}")
+    if not POLL_S_MIN <= poll_s <= POLL_S_MAX:
+        raise ValueError(f"poll_s must be between {POLL_S_MIN:g} and {POLL_S_MAX:g}")
+    if isinstance(max_waiting, bool) or not isinstance(max_waiting, int) or max_waiting < 1:
+        raise ValueError("max_waiting must be a whole number above zero")
+    if (
+        isinstance(conflict_events_per_minute, bool)
+        or not isinstance(conflict_events_per_minute, int)
+        or conflict_events_per_minute < 1
+    ):
+        raise ValueError("conflict_events_per_minute must be a whole number above zero")
+
+
 class Runner:
     """Starts at most `max_running` agent loops at a time and tells the endpoint what to answer.
 
@@ -197,28 +231,13 @@ class Runner:
         conflict_events_per_minute: int = CONFLICT_EVENTS_PER_MINUTE,
         rate_clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        if isinstance(max_running, bool) or not isinstance(max_running, int):
-            raise ValueError("max_running must be a whole number")  # noqa: TRY004 - `make_app` turns it into a config error
-        if isinstance(ack_wait_s, bool) or not isinstance(ack_wait_s, int | float):
-            raise ValueError("ack_wait_s must be a number")  # noqa: TRY004 - same as above
-        if isinstance(poll_s, bool) or not isinstance(poll_s, int | float):
-            raise ValueError("poll_s must be a number")  # noqa: TRY004 - same as above
-        if max_running < 1 or poll_s <= 0:
-            raise ValueError("max_running and poll_s must be above zero")
-        if max_running > MAX_RUNNING_CEILING:
-            raise ValueError(f"max_running must be at most {MAX_RUNNING_CEILING}")
-        if not (0 < ack_wait_s <= ACK_WAIT_S_CEILING):  # written so that NaN is refused too
-            raise ValueError(f"ack_wait_s must be above zero and at most {ACK_WAIT_S_CEILING:g}")
-        if not POLL_S_MIN <= poll_s <= POLL_S_MAX:
-            raise ValueError(f"poll_s must be between {POLL_S_MIN:g} and {POLL_S_MAX:g}")
-        if isinstance(max_waiting, bool) or not isinstance(max_waiting, int) or max_waiting < 1:
-            raise ValueError("max_waiting must be a whole number above zero")
-        if (
-            isinstance(conflict_events_per_minute, bool)
-            or not isinstance(conflict_events_per_minute, int)
-            or conflict_events_per_minute < 1
-        ):
-            raise ValueError("conflict_events_per_minute must be a whole number above zero")
+        check_run_values(
+            max_running=max_running,
+            ack_wait_s=ack_wait_s,
+            poll_s=poll_s,
+            max_waiting=max_waiting,
+            conflict_events_per_minute=conflict_events_per_minute,
+        )
         self._runtime, self._store = runtime, store
         self._audit, self._cap, self._rate_clock = audit, conflict_events_per_minute, rate_clock
         self._stats_lock = threading.Lock()  # guards the counters and the conflict windows
@@ -570,12 +589,40 @@ def _field(obj: Any, name: str, where: str) -> Any:
         ) from None
 
 
+def _setting(settings: Any, name: str) -> Any:
+    """`settings.name` by direct access, or the one ConfigError for a field core-b's `TriggerSettings` lacks."""
+    try:
+        return getattr(settings, name)
+    except AttributeError:
+        raise ConfigError(f"triggers.{name} missing: core-b TriggerSettings required") from None
+
+
+SETTING_FIELDS: Final[tuple[str, ...]] = (
+    "tenant",
+    "senders",
+    "max_body_bytes",
+    "max_running",
+    "conflict_events_per_minute",
+    "ack_wait_s",
+)
+
+
 def check_fields(settings: Any) -> None:
-    """The fields core-b's `TriggerSettings` must have and that are read by direct access: a ConfigError when one is
-    missing. Run by `_build_app` before the store is built, so this error never depends on the store being up."""
-    for name in ("max_running", "conflict_events_per_minute"):
-        if not hasattr(settings, name):
-            raise ConfigError(f"triggers.{name} missing: core-b TriggerSettings required")
+    """Every field of core-b's `TriggerSettings` that is read by direct access must be there, and the Runner's
+    three numbers must pass the Runner's own rules (`check_run_values`): else a ConfigError that names the field.
+    Run by `_build_app` before the store is built and before any secret is read, so a configuration error never
+    depends on the store being up."""
+    values = {name: _setting(settings, name) for name in SETTING_FIELDS}
+    try:
+        check_run_values(
+            max_running=values["max_running"],
+            ack_wait_s=values["ack_wait_s"],
+            poll_s=POLL_S,
+            max_waiting=MAX_WAITING,
+            conflict_events_per_minute=values["conflict_events_per_minute"],
+        )
+    except ValueError as exc:  # the text names the field and the bound, never a value
+        raise ConfigError(str(exc)) from None
 
 
 def trigger_settings(config: Any) -> Any:
@@ -589,7 +636,7 @@ def trigger_settings(config: Any) -> Any:
 def sender_list(settings: Any) -> list[tuple[str, Any]]:
     """(sender id, sender) pairs of `settings.senders`, through the one helper of the endpoint."""
     try:
-        return list(sender_map(settings.senders).items())
+        return list(sender_map(_setting(settings, "senders")).items())
     except ValueError as exc:  # a sender id listed twice: the text names the id
         raise ConfigError(str(exc)) from None
 
@@ -715,14 +762,14 @@ def make_app(
     """The WSGI callable and its Runner from a built App (for `main`, or for a WSGI server of the client's
     choice). The caller closes the Runner."""
     settings = trigger_settings(app.config)
+    check_fields(settings)
     resolve = secret_reader(app)
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
-    check_fields(settings)
     max_running = settings.max_running
     conflict_events_per_minute = settings.conflict_events_per_minute  # the one source (d-fix24)
-    ack_wait_s = _field(settings, "ack_wait_s", "triggers.ack_wait_s")
+    ack_wait_s = settings.ack_wait_s  # all three were checked by `check_fields`
     try:
         check_secrets(secrets)
         runner = Runner(
@@ -889,14 +936,15 @@ def _build_app(args: argparse.Namespace) -> tuple[Any, Runner, Any]:
     from hadavin_sdk.registry import load_registry
 
     config = load_config(args.config_dir)
-    check_fields(
-        trigger_settings(config)
-    )  # before anything is built: no secret read, no connection
+    settings = trigger_settings(config)
+    check_fields(settings)  # before anything is built: no secret read, no connection
+    registry = load_registry(config)
+    check_senders(sender_list(settings), qualified_agents(registry), registry.principals)
     host = args.host  # an empty --host is refused by `check_bind`, never turned into loopback
     port = args.port if args.port is not None else PORT
     check_port(port)
     check_bind(host, args.allow_non_loopback)
-    app = build(args.config_dir, qualified_agents(load_registry(config)))
+    app = build(args.config_dir, qualified_agents(registry))
     runner = None
     try:
         wsgi, runner = make_app(app)
@@ -983,6 +1031,8 @@ class _Degraded:
         self._app: Callable[..., Any] = health_only_app(self.health)
         self._runner: Runner | None = None
         self._stopped = threading.Event()
+        self.fatal: BaseException | None = None  # a configuration error found by a re-check: the worker must exit 2
+        self.on_fatal: Callable[[], None] | None = None  # set by `_serve_degraded`: stops its server
         self._thread = threading.Thread(target=self._watch, name="trigger-recover", daemon=True)
 
     def start(self) -> None:
@@ -1004,15 +1054,22 @@ class _Degraded:
         return runner.running if runner is not None else 0
 
     def _watch(self) -> None:
-        """Retry every error, forever, every `HEALTH_RECHECK_S`: the worker never exits by itself here. The
-        exception class name (never its text) is logged at WARNING at most once per `DEGRADED_WARN_EVERY_S`,
-        and once more whenever the class changes."""
+        """Retry every error, every `HEALTH_RECHECK_S`, except a configuration error: one that is not a
+        connectivity error (`is_connectivity_error`; `StoreUnavailable` is one, a plain `ConfigError` is not) is
+        kept in `fatal`, the server is stopped through `on_fatal` and the worker exits 2 (`_serve_degraded`).
+        The exception class name (never its text) of a retried error is logged at WARNING at most once per
+        `DEGRADED_WARN_EVERY_S`, and once more whenever the class changes."""
         last = ""
         last_warned = 0.0
         while not self._stopped.wait(HEALTH_RECHECK_S):
             try:
                 wsgi, runner = _recover(self._args)
             except Exception as exc:  # noqa: BLE001 - the class name only: the text could hold a value
+                if isinstance(exc, AnyConfigError) and not is_connectivity_error(exc):
+                    self.fatal = exc  # retrying cannot fix a configuration error
+                    if self.on_fatal is not None:
+                        self.on_fatal()
+                    return
                 with self._lock:
                     self.failures += 1
                 name = type(exc).__name__
@@ -1079,15 +1136,22 @@ def _serve_degraded(args: argparse.Namespace, exc: BaseException) -> int:
         check_bind(args.host, args.allow_non_loopback)
         server = make_server(args.host, port, degraded, _ack_wait_of(args) + SOCKET_SLACK_S)
     except ConfigError as err:
-        print(f"trigger worker: config error: {err}", file=sys.stderr)
+        _print_config_error(err)
         return EXIT_CONFIG
     _LOG.info(
         "trigger worker: listening on http://%s:%d (store down: /health only)",
         server.server_address[0],
         server.server_port,
     )
+    degraded.on_fatal = lambda: threading.Thread(
+        target=server.shutdown, name="trigger-stop", daemon=True
+    ).start()
     degraded.start()
-    return serve(server, degraded)
+    code = serve(server, degraded)
+    if degraded.fatal is not None:
+        _print_config_error(degraded.fatal)
+        return EXIT_CONFIG
+    return code
 
 
 def _log_to_stderr() -> logging.Handler:
@@ -1152,6 +1216,15 @@ def _fields(exc: BaseException, limit: int = 10) -> str:
     return f" (fields: {', '.join(shown)}{more})"
 
 
+def _print_config_error(exc: BaseException) -> None:
+    """The message of a start refusal on stderr: this file's `ConfigError` text is built here from ids and bounds
+    and printed whole; any other config error only by class name and field paths (its text could hold a value)."""
+    if isinstance(exc, ConfigError):
+        print(f"trigger worker: config error: {exc}", file=sys.stderr)
+    else:
+        print(f"trigger worker: config error: {type(exc).__name__}{_fields(exc)}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 3 anything else. A store that is not
     reachable at start is no exit: one WARNING, then the worker serves ``/health`` 503 only and re-checks the
@@ -1167,13 +1240,10 @@ def main(argv: list[str] | None = None) -> int:
     _log_to_stderr()
     try:
         server, runner = _prepare(args)
-    except StoreUnavailable as exc:  # a config error subclass: must come first
+    except StoreUnavailable as exc:  # subclass of the SDK ConfigError (errors.py), not of this file's: first
         return _serve_degraded(args, exc)
-    except ConfigError as exc:  # written in this file: ids and bounds only
-        print(f"trigger worker: config error: {exc}", file=sys.stderr)
-        return EXIT_CONFIG
-    except AnyConfigError as exc:  # class name and field paths only: the text could hold a value
-        print(f"trigger worker: config error: {type(exc).__name__}{_fields(exc)}", file=sys.stderr)
+    except AnyConfigError as exc:  # this file's own (ids and bounds) in full, any other by class name and fields
+        _print_config_error(exc)
         return EXIT_CONFIG
     except Exception as exc:  # noqa: BLE001 - class name only: the text could hold a value
         if is_connectivity_error(exc):
