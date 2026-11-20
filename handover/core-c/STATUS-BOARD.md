@@ -1,27 +1,27 @@
-UPDATED_UTC: 2026-11-20T05:25:46Z
+UPDATED_UTC: 2026-11-20T05:26:42Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 6
-PERCENT: 56
-AGENTS_RUNNING: 3
-CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 3, heavy agents 0
+PERCENT: 60
+AGENTS_RUNNING: 2
+CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 2, heavy agents 0
 DISK: / 60G free, 13% used; git worktrees 1; 388K	/tmp/claude-0;116M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket F findings into tickets/F-review-1.md; write ticket G when the two surveys end; then one EGM round on G
-PUSHED_UTC: 2026-11-20T05:24:32+00:00
+PUSHED_UTC: 2026-11-20T05:25:46+00:00
 
-(10:55 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(10:56 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a8830db0 | reviewer | fable | EGM plan review of tickets/F-gate-wrapper-body.md against the implementation-readiness standard (egm:egm-implementation-readiness) | 05:24 | 05:32 | 10 | running | 1 of 1 | 0 | ORDER 004 item 3: one round per ticket |
+| a8830db0 | reviewer | fable | EGM plan review of tickets/F-gate-wrapper-body.md against the implementation-readiness standard (egm:egm-implementation-readiness) | 05:24 | 05:32 | 100 | done | 1 of 1 | 0 | finished: ticket F NOT READY, 6 Blockers, 6 Majors, 5 Nits; all opened line citations accurate |
 | a112f9c8 | reviewer | fable | EGM plan review of ticket F: checks every cited file:line and code reuse (egm:egm-codebase-details) | 05:24 | 05:34 | 10 | running | 1 of 1 | 0 | ORDER 004 item 3: one round per ticket |
 | a0321052 | lookup | fable | Q2: reads repo docs and src/hadavin_sdk layout, writes LANE-MAP.md | 05:20 | 05:30 | 100 | done | n/a | 0 | finished 05:22, LANE-MAP.md written (48 lines, 16 modules); guard/textnorm* does not exist on main |
 | aa61ba5c | lookup | fable | T1: reads plan-v2, v3, v4-final and the two round-3 reviews, writes PLAN-READBACK.md | 05:20 | 05:35 | 100 | done | n/a | 0 | finished 05:24, PLAN-READBACK.md written (164 lines); one cited fact DIFFERS (Runtime built in 7 test files by literal grep, review said 17) |
@@ -51,7 +51,7 @@ PUSHED_UTC: 2026-11-20T05:24:32+00:00
 | T2 ticket G text deltas | WAIT surveys | 0 | tickets/G-text-deltas.md | 0 | needs the two head surveys (2 agents running) |
 | T2 ticket F gate wrapper body | DONE (draft) | 100 | tickets/F-gate-wrapper-body.md | 0 | written by the session itself while 3 agents run; 5 open questions inside; EGM round is next |
 | T3 EGM review of ticket G | WAIT T2 | 0 | tickets/G-review-1.md | 0 | one round only |
-| T3 EGM review of ticket F | RUNNING | 10 | tickets/F-review-1.md | 1 | round 1 of 1, two reviewers |
+| T3 EGM review of ticket F | RUNNING | 50 | tickets/F-review-1.md | 1 | readiness reviewer done (6 Blockers, 6 Majors, 5 Nits); codebase reviewer still running; resolve follows |
 | T4 test files for other steps | WAIT interfaces | 0 | none | 0 | core-b has not published reserve/settle yet; needs GO BUILD or lead word on which files |
 
 ## RESTARTS
