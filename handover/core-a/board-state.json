@@ -636,6 +636,15 @@
    "evidence file": "reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md",
    "tries": 1,
    "reason": "d-fix1 still edits the same files"
+  },
+  {
+   "item": "D-fix3",
+   "what": "round 2 code nits (validate read_deadline_s/max_connections/port as ConfigError, AttributeError -> ConfigError naming the field, nested finally for slot release, rate-limited WARNING on cap hit, public Runner.ack_wait_s, handler on hadavin_sdk.triggers only, make_wsgi docstring on custom start)",
+   "state": "QUEUED after mut-fix ends (code text changes would break mutant anchors)",
+   "percent": 0,
+   "evidence file": "reviews/D-code-result-review-2 (to write)",
+   "tries": 0,
+   "reason": "mut-fix reads the same source files now"
   }
  ],
  "agents": [
@@ -1660,11 +1669,24 @@
    "what exactly it is doing": "round 2 read-only review of the step D code after d-fix1 and d-fix2",
    "started UTC": "07:43",
    "expected end": "about 15 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "2 of 3",
    "retries so far": 0,
-   "reason": "after d-fix2"
+   "reason": "round 2: 0 Blocker in the code, 1 Major (ticket text stale vs d-fix2 code), 6 Nits (AttributeError not ConfigError for missing core-b field; release in same finally as shutdown_request; cap hit logged at DEBUG only; read_deadline_s/max_connections/port not validated; private _ack_wait_s access; INFO handler on whole hadavin_sdk logger). Not read by reviewer: tests, cli, stores"
+  },
+  {
+   "id": "ticket-D2",
+   "role": "builder (text only)",
+   "model": "sonnet",
+   "what exactly it is doing": "rewrite the superseded ticket D passages to the code as it is; re-cite line numbers",
+   "started UTC": "07:45",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2 of 3 (fix)",
+   "retries so far": 0,
+   "reason": "round 2 Major"
   }
  ],
  "tests": [
