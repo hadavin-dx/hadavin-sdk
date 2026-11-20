@@ -1,5 +1,55 @@
 # REPORT from core-b (newest on top, UTC and IST)
 
+## ORDER 002 to 006 and GO BUILD A, B, C: state at 2026-11-20 05:43 UTC / 11:13 IST
+
+**What failed, is uncertain, or was not run (first):**
+- No full-suite result yet: batch run 1 is running on 737c93c (log /tmp/core-b-wt/batch-run-1.log, will be copied to evidence/). Every "passed" below is a per-file run on this container (python 3.13, PostgreSQL 16.15), not the lead's evidence run.
+- Step B: the first build had a safety gap (a serial stop id let the runtime login block a later stop). Fixed in round 2 (random UUID). NOTHING about step B is proven yet under a real reset or runtime database login: the role tests are still being written. Its ticket review is running.
+- Ticket F-store: review round 1 was NOT clean (2 Blockers, 19 Majors). All answered in the ticket text; the answers were not re-reviewed (ESCALATIONS.md E2). Three answers change the lead's draft design and wait for the lead.
+- Ticket F-install: no review round yet; core-c's ESCALATION E2 (strict mask check would refuse normal runs) is open with the lead.
+- Ticket C: built before its review round; the round has not started (EGM stages run one at a time).
+- D-config (request 001 from core-a): built, no test file of its own yet.
+- The board cron was refused twice (ESCALATIONS.md E1); boards are pushed after each tool batch, so gaps of several minutes exist.
+- My slip: I published interface version 1 before the lead's announced draft arrived and withdrew it 5 minutes later (now version 2.1).
+- bandit was not run on any step. Mutants were run for A and C only.
+
+**Done, with evidence:**
+| item | evidence |
+|---|---|
+| Q1 capability probe | CAPABILITY.md, evidence/capability-raw.txt |
+| Q2 lane map | LANE-MAP.md |
+| T1 plan read-back | PLAN-READBACK.md |
+| Interfaces (i) and (ii), version 2.1 | interfaces/README.md, ii_meter.py, i_store_spend.py |
+| Tickets | tickets/A-audit-drain.md, B-stop-state.md, C-price-constraint.md, F-store.md, F-install.md |
+| EGM round on F-store | tickets/F-store-review-1.md |
+| Step A code, tests, docs | commits 5eb1e7e, 3394b2c, e5a64ee; evidence/A-tests-evidence.txt: 26 passed with PostgreSQL, 22 passed and 4 skipped without; mutants M1 to M9 killed |
+| Step C code, tests, changelog | commits eb775a8, 737c93c, 388c9a0; evidence/C-tests-evidence.txt: 246 passed; fail-before proven; 20 of 20 mutants killed |
+| Step B code (two commits), docs | commits 80a07ce, 6662afe, 8bb386f; builder runs with the owner login only: 449 passed on 12 files |
+| D-config for core-a | requests/001.answer.md; builder run: 577 passed, 17 skipped on the config, registry and app files |
+| Producers rows for core-c's gate module | requests/core-c-1.answer.md; 107 passed on the two producer test files |
+| Lookup notes | notes/heads-money.md, notes/heads-stop-audit-price.md, notes/builder-B-report.md |
+
+**Code commits on cloud/core-b (each touches only src/ and tests/, or only doc files):**
+```
+8bb386f code B: docs for the stop state and reset role; changelog migration numbers corrected
+737c93c code C: tests for the price constraint (different agent than the builder)
+a459525 code B: fix round 2: stop id is a random UUID, limits-unavailable stop, pins (matches ticket B)
+d22a4ec code F: producers rows for the model gate module (request 1 from core-c)
+742e113 code D-config: trigger sender settings, registry cross-check and App.secrets for the signed endpoint
+388c9a0 code C: changelog upgrade step for the price constraint and prices_as_of
+3394b2c code A: tests for the audit drain (different agent than the builder)
+80a07ce code B: stop state with a separate reset role (migration 0006)
+eb775a8 code C: refuse zero, negative and non-finite model prices at config load; prices_as_of date
+e5a64ee code A: docs for the audit drain and the not-guaranteed list (README, SECURITY, CHANGELOG)
+5eb1e7e code A: audit drain tick step and in-process flush of parked audit events
+87603d1 lead: ORDER 005 verdicts, code on own branch in separate commits, more parallel agents (core-b)
+```
+
+**Agents so far:** 21 started (7 lookups, 6 builders incl. the fix, 3 test writers, 6 reviewer runs incl. the ORDER 001 dry run), all model fable. Token use reported by the finished agents: about 2.4 million in total (UNVERIFIED sum of their own counters); the main session is extra.
+**R-numbers:** the bible is not in this container; rules used are those quoted in handover/BRIEF-PREAMBLE.md (R448 code last, R454 needed check, R455 right size, R456 work conduct, R461 lanes, R462 best first).
+**Identities and rights (masked):** no credential was created or read. Local test database: PostgreSQL 16.15 on 127.0.0.1 port 55439, trust login, test data only, started by me (pid in the board), to be stopped at the end. Test roles are created and dropped by the tests.
+**FILE-INDEX:** STATUS-BOARD.md, DECISIONS.md, ESCALATIONS.md (E1 cron, E2 F-store review), QUESTIONS.md, CAPABILITY.md, LANE-MAP.md, PLAN-READBACK.md, interfaces/, tickets/, requests/, notes/, evidence/, tools/board.sh.
+
 ## ORDER 001 proof: EGM VISIBLE (2026-11-20 04:11 UTC / 2026-11-20 09:41 IST)
 
 **Not checked or odd, first:**
