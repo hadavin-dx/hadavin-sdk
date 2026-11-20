@@ -8,7 +8,7 @@ request line, a header or the body.
 
 Answers written here, before the endpoint is reached: 400 for a request line or header block that is
 not HTTP, and for a client that sends nothing more until the socket timeout; 414 for a request line
-over the stdlib cap; 431 for too many or too long headers. A 503 is also written here when the application
+over the stdlib cap; 431 for too many or too long headers, or more than 16 KB of request line and headers together. A 503 is also written here when the application
 raised: that is a failure, not a refusal of the request. A client
 that is gone gets nothing; its connection is closed.
 
@@ -47,9 +47,11 @@ from hadavin_sdk.triggers.endpoint import STATUS_TEXT
 MAX_REQUEST_LINE: Final[int] = 65536  # the cap the stdlib handler uses
 STALLED_STATUS: Final[int] = 400  # the client sent nothing more until the socket timeout
 LONG_LINE_STATUS: Final[int] = 414
+HEADERS_TOO_LARGE_STATUS: Final[int] = 431
 MAX_CONNECTIONS: Final[int] = (
     256  # connection threads at one time; above `MAX_WAITING` of the worker
 )
+MAX_HEADER_BYTES: Final[int] = 16384  # request line and headers TOGETHER; more is 431
 READ_DEADLINE_S: Final[float] = (
     30.0  # total time to read the request line, the headers and the body
 )
@@ -85,6 +87,10 @@ class _NoStream:
         return None
 
 
+class _HeadersTooLarge(Exception):
+    """The request line and the headers together are over `MAX_HEADER_BYTES`."""
+
+
 class _DeadlineReader:
     """The read side of a connection with an absolute deadline. Each `recv` waits at most the lesser of the
     pause limit of the handler and what is left of the deadline; when nothing is left it raises TimeoutError.
@@ -96,6 +102,14 @@ class _DeadlineReader:
         self._end = time.monotonic() + deadline_s
         self._buf = bytearray()
         self.closed = False
+        self._head_left: int | None = None  # bytes of request line and headers still allowed; None = no count
+
+    def count_head(self, used: int) -> None:
+        """Start counting the lines that `readline` hands out (the request line, already read, used `used`)."""
+        self._head_left = MAX_HEADER_BYTES - used
+
+    def stop_count(self) -> None:
+        self._head_left = None
 
     def _fill(self) -> bool:
         """One `recv` into the buffer; False at the end of the stream."""
@@ -116,6 +130,17 @@ class _DeadlineReader:
         return out
 
     def readline(self, size: int | None = -1) -> bytes:
+        left = self._head_left
+        if left is not None and (size is None or size < 0 or size > max(left, 0) + 1):
+            size = max(left, 0) + 1  # never buffer a line past what is left, plus one byte
+        line = self._readline(size)
+        if left is not None:
+            self._head_left = left - len(line)
+            if self._head_left < 0:
+                raise _HeadersTooLarge
+        return line
+
+    def _readline(self, size: int | None = -1) -> bytes:
         limit = -1 if size is None else size
         start = 0
         while True:
@@ -244,11 +269,18 @@ class QuietRequestHandler(WSGIRequestHandler):
             self.requestline = self.request_version = self.command = ""
             self.send_error(LONG_LINE_STATUS)
             return
+        self.rfile.count_head(len(self.raw_requestline))  # type: ignore[attr-defined]
         try:
             parsed = self.parse_request()
         except TimeoutError:
             self._refuse_stalled()
             return
+        except _HeadersTooLarge:
+            self.requestline = self.request_version = self.command = ""
+            self.send_error(HEADERS_TOO_LARGE_STATUS)
+            return
+        finally:
+            self.rfile.stop_count()  # type: ignore[attr-defined]
         if not parsed:  # it has answered through send_error, or the client sent nothing
             return
         if (
