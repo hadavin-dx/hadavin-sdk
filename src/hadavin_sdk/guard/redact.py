@@ -26,9 +26,11 @@ gate's held-back values) and runs no pattern at all, so a value no pattern here 
 
 A value glued to a letter or `_` is masked with the glued text left outside the placeholder (`node_<IPV4_1>`, `<UUID_1>x`):
 an e-mail address, an IPv4 address, a UUID, a phone number that starts with `+`, a contiguous one beside `_` or straight
-after a phone word, and an IBAN beside `_` after a short word (`iban_DE89...`; not inside a longer token) (G8).
+after a phone word, and an IBAN beside `_` (with or without a short word: `iban_DE89...`, `DE89..._x`; not inside a longer
+token) (G8). A UUID or phone number set off by `_` inside a long opaque token is cut out and the rest of the token may stay
+readable (limit L15: tests/g8_cases.py OPAQUE_LIMITS).
 A contiguous digit run glued to a letter is not read as a phone number (hashes and identifiers), and a letter or digit
-glued before an IBAN, or a digit before an address, is not read as one.
+glued before an IBAN, or a digit before an IPv4 address, is not read as one.
 A copy of a known phone number is swept where a letter or `_` touches it (not a digit).
 """
 
@@ -2323,16 +2325,18 @@ def _sweep(placeholder: str, original: str):
 
 
 _ALNUM = frozenset(string.ascii_letters + string.digits)
-# The characters that make a touched copy part of a longer token, per kind (G8b). A PHONE value glued to a letter or `_`
-# is the number with a word beside it (the patterns read it so); a digit beside it makes another number. Every other kind:
-# `_ALNUM` (a host name, a tenant, an account id are made of letters and digits, so a letter beside one may be part of it).
+# The characters that make a touched copy part of a longer token, per kind (ticket G8, the sweep part). The patterns do NOT read
+# a contiguous phone number glued to a letter as a phone number (hashes, identifiers: limit L3); the sweep is different: once the
+# number is a known value of the run, a copy of it with a letter or `_` beside it is a copy, and a digit beside it makes another
+# number. Every other kind: `_ALNUM` (a host name, a tenant, an account id are made of letters and digits, so a letter beside
+# one may be part of it).
 _JOINS = {"PHONE": frozenset(string.digits)}
 
 
 def _joins(placeholder: str) -> frozenset[str]:
     """The characters that, touching a copy of a known value, make it part of a longer token (ticket G8): a digit for
-    a phone number (a letter or `_` beside it is a word glued on, as the patterns read it); a letter or digit for
-    every other kind."""
+    a phone number (a known number with a letter or `_` beside it is still that number; the patterns themselves do not
+    read a contiguous run glued to a letter as a phone, only this sweep does); a letter or digit for every other kind."""
     return _JOINS.get(_kind(placeholder), _ALNUM)
 
 

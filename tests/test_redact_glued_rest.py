@@ -1,6 +1,7 @@
 """Ticket G8: a value of kind IPV4, PHONE, IBAN, UUID or CREDITCARD glued to a letter, a digit or `_` is masked in the first call, the
 glued character left outside the placeholder; the shapes G8 does not take are pinned as stated limits (strict xfail, so a
-later fix shows up). Data and the leak rule: tests/g8_cases.py. Public names only, except `_has_bank_word` (one test)."""
+later fix shows up). Data and the leak rule: tests/g8_cases.py. Public names only, except `_has_bank_word` and `_Redactor` (the G9 tripwire
+reads `_Redactor._overlaps`): one test each."""
 
 from __future__ import annotations
 
@@ -154,7 +155,8 @@ def test_an_iban_never_starts_inside_an_opaque_token(k):
 def test_at_rest_rows(aid, text, now, after):
     """G8-review-2 F6: what `redact()` writes to the map and what `runmap.storable` keeps of it. AT1-AT3 pin limit L11 (a
     piece of a secret with a stored kind's shape is stored), AT5 and AT6 the IBAN start's effect on stored originals,
-    AT8 and AT9 a contiguous card number stored as PHONE (v6)."""
+    AT8 and AT9 a contiguous card number stored as PHONE (v6). AT4 and AT7 are the base-equal and over-mask rows (AT4: a piece
+    set off by `-` is registered the same way on the base; AT7: `ORD1234-5678-9012-3456` is over-masked as a card, not storable)."""
     r = redact(text)
     got = (r.text, sorted(r.mapping.items()), sorted(runmap.storable(dict(r.mapping)).items()))
     assert got == (after or now), f"AT {aid}: {got!r}"
@@ -200,7 +202,7 @@ def test_restore_round_trip_ipv4_and_phone(c):
 
 
 def test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only():
-    """G8b: a copy of a known PHONE value is replaced when a letter or `_` touches it, not when a digit does; every
+    """G8 (the sweep part): a copy of a known PHONE value is replaced when a letter or `_` touches it, not when a digit does; every
     other kind keeps the old rule (no ASCII letter or digit beside the copy)."""
     p = G.P10
     out = redact(f"phone={p} then x{p} now").text  # row 31
@@ -221,7 +223,7 @@ def test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only():
 
 
 def test_gate_enforce_map_rewrites_a_letter_glued_copy_of_a_known_phone():
-    """The gate's own sweep (`runmap.enforce_map`, the model-visible text) inherits G8b: the very shape the PHONE hash guard
+    """The gate's own sweep (`runmap.enforce_map`, the model-visible text) inherits the G8 sweep change: the very shape the PHONE hash guard
     keeps in pass 1 (`build4155550132`) is rewritten once the number is a known value of the run."""
     m = {"<PHONE_1>": G.P10}
     for text, want in (
@@ -257,13 +259,75 @@ def test_g9_read_back_follows_the_sweeps_joins():
     assert out.text == "7<TENANT_1>32 y", f"G9 read-back digit: {out.text!r}"
 
 
+@pytest.mark.parametrize("o", [pytest.param(o, id=o[0]) for o in G.OPAQUE_LIMITS])
+def test_a_value_inside_an_opaque_token_is_a_stated_limit(o):
+    """Review round 1 (design Major), limit L15: a UUID or a phone number set off by `_` or a letter inside a long opaque
+    token is cut out by its own pattern and the remainder (under HIGHENTROPY's 40 characters) stays readable; the base masked
+    the token whole. Pinned as measured (`after`, and `base` for the record)."""
+    oid, shape, text, _tail, base, after = o
+    out = redact(text)
+    assert out.text == after, f"OL {oid} ({shape}): {out.text!r}"
+    assert base != after  # the base output differed: this is a change G8 made
+
+
+@pytest.mark.parametrize(
+    "o",
+    [
+        pytest.param(
+            o,
+            id=o[0],
+            marks=pytest.mark.xfail(strict=True, reason="stated limit L15 (review round 1)"),
+        )
+        for o in G.OPAQUE_LIMITS
+        if G.leak("uuid", o[3], o[5])
+    ],
+)
+def test_opaque_token_tail_is_masked_with_it(o):
+    """The DESIRED behaviour (the base's): no 8-character run of the token's tail stays readable. Strict xfail."""
+    out = redact(o[2]).text
+    assert not G.leak("uuid", o[3], out), f"OL {o[0]} limit: {out!r}"
+
+
+@pytest.mark.parametrize(
+    "f",
+    [
+        pytest.param(
+            f,
+            id=f[0],
+            marks=pytest.mark.xfail(strict=True, reason="stated limit L7 (review round 1)"),
+        )
+        for f in G.FULL_STOP
+        if f[0] in ("F5", "F6")
+    ],
+)
+def test_phone_word_or_underscore_before_a_full_stop_is_a_limit(f):
+    """Review round 1 (design N4), L7: `tel_4155550132.` / `tel4155550132.` stay readable; the desired behaviour is pinned
+    as a strict xfail (the as-is output is pinned by test_phone_before_a_full_stop_is_a_stated_limit)."""
+    out = redact(f[1]).text
+    assert not G.leak("phone", G.P10, out), f"ROW {f[0]} full stop limit: {out!r}"
+
+
+def test_gate_sweep_of_a_held_back_phone_value_uses_the_phone_joins():
+    """Review round 1 (design N3): `runmap._sweep_held` (runmap.py, the gate's held-back values) passes `_joins(placeholder)`
+    too. A PHONE value that is a piece of another placeholder of the map is held back (here `<TENANT_4155550132>`, a made-up
+    key); a letter or `_` beside a copy of it is swept, a digit is not. Mutant G8-S7 drops the argument."""
+    m = {"<PHONE_1>": G.P10, "<TENANT_" + G.P10 + ">": "acmecorp"}
+    for text, want in (
+        ("build" + G.P10, "build<PHONE_1>"),
+        ("x" + G.P10 + "_", "x<PHONE_1>_"),
+        ("7" + G.P10, "7" + G.P10),
+    ):
+        out = runmap.enforce_map(text, m)
+        assert out == want, f"SWEEP held: {out!r}"
+
+
 def test_row_counts_are_pinned():
     from collections import Counter
 
     assert (
         len(G.CASES) == 101
         and len(G.KEEP) == 84
-        and len(G.FULL_STOP) == 4
+        and len(G.FULL_STOP) == 6
         and len(G.AT_REST) == 9
         and len(G.UNTRUSTED) == 2
     )
@@ -274,6 +338,7 @@ def test_row_counts_are_pinned():
         "changed": 3,
         "g4c": 2,
     }
+    assert len(G.OPAQUE_LIMITS) == 7
     assert sorted(LIMITS) == sorted(c["id"] for c in G.CASES if c["cls"] == "limit")
 
 
