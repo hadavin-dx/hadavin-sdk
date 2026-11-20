@@ -242,7 +242,9 @@ def _run_degraded(monkeypatch, outcomes):
 
 def test_fix2_every_error_is_retried_forever_and_the_worker_never_exits_by_itself(monkeypatch):
     down, bug = StoreUnavailable("down"), RuntimeError("bug")
-    outcomes = [bug] * 8 + [down] + [bug] * 8 + [KeyError("k")]  # none of them ever stops the worker
+    outcomes = (
+        [bug] * 8 + [down] + [bug] * 8 + [KeyError("k")]
+    )  # none of them ever stops the worker
     codes, builds, made, thread = _run_degraded(monkeypatch, outcomes)
     try:
         deadline = time.monotonic() + 15
@@ -281,7 +283,8 @@ def test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the_class
 
     def warns():
         return [
-            r for r in caplog.records
+            r
+            for r in caplog.records
             if "re-check failed" in r.getMessage() and r.levelno == logging.WARNING
         ]
 
@@ -290,7 +293,9 @@ def test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the_class
         degraded.start()
         try:
             wait_calls(20)
-            assert [r.getMessage().count("RuntimeError") for r in warns()] == [1]  # 20 failures, 1 line
+            assert [r.getMessage().count("RuntimeError") for r in warns()] == [
+                1
+            ]  # 20 failures, 1 line
             clock[0] += 299
             n = len(calls)
             wait_calls(n + 10)
@@ -299,7 +304,9 @@ def test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the_class
             n = len(calls)
             wait_calls(n + 10)
             assert len(warns()) == 2
-            outcomes[:] = [KeyError("secret-b")]  # the class changes: logged at once, inside the window
+            outcomes[:] = [
+                KeyError("secret-b")
+            ]  # the class changes: logged at once, inside the window
             calls.clear()
             wait_calls(10)
             assert len(warns()) == 3 and "KeyError" in warns()[-1].getMessage()

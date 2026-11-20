@@ -982,9 +982,7 @@ class _Degraded:
                 name = type(exc).__name__
                 now = _monotonic()
                 if name != last or now - last_warned >= DEGRADED_WARN_EVERY_S:
-                    _LOG.warning(
-                        "trigger worker: store re-check failed (%s): still degraded", name
-                    )
+                    _LOG.warning("trigger worker: store re-check failed (%s): still degraded", name)
                     last, last_warned = name, now
                 continue
             with self._lock:
