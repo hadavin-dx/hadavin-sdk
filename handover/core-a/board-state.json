@@ -469,11 +469,20 @@
   {
    "item": "E-fix-2",
    "what": "step E fix pass G1 to G4 from round 2: delete the four unused opt-ins and their tests, plain flag write with an unlink retry, trim the test file, docstring facts",
+   "state": "DONE (builder's run); evidence runner and round 3 next",
+   "percent": 100,
+   "evidence file": "raw/E-fix2-tests.log",
+   "tries": 1,
+   "reason": "G1 to G4 done by a builder who is not author or reviewer: latch, claim check, flag_taken, atomic write and the text-keyed count deleted; unlink retried 5 times in __exit__; docstring facts added. crash.py 298 to 264 lines, tests 1065 to 857 (TARGET 600 MISSED: cutting more would drop coverage); 481 passed in 38 s; ruff and bandit clean. WEAK: the test that replaced the docstring-pinning one is loose (its 'alone' branch nearly always passes): round 3 judges it"
+  },
+  {
+   "item": "E-evidence-3",
+   "what": "EVIDENCE RUNNER round 3 for step E: identity, tests with ids, guards, 16 formal mutants in a scratch copy with ALL failing test ids (no -x), hostile inputs",
    "state": "RUNNING",
    "percent": 5,
-   "evidence file": "raw/E-fix2-tests.log (not yet)",
+   "evidence file": "raw/E-evidence-3-*.log (not yet)",
    "tries": 1,
-   "reason": "EGM sequence: fix by a builder who is not author or reviewer"
+   "reason": "EGM sequence after the round 2 fix"
   }
  ],
  "agents": [
@@ -1130,15 +1139,28 @@
   {
    "model": "sonnet",
    "started UTC": "06:59",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 2 of 3 (fix pass)",
    "retries so far": 0,
    "id": "e-fix2",
    "role": "builder",
    "what exactly it is doing": "deletes the unused opt-ins, simplifies the flag write, trims tests",
-   "expected end": "about 20 min",
-   "reason": "round 2 resolve"
+   "expected end": "ended",
+   "reason": "finished"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:02",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E before round 3 of 3",
+   "retries so far": 0,
+   "id": "e-evidence3",
+   "role": "evidence runner (records, never judges)",
+   "what exactly it is doing": "runs everything on the simplified crash helper; mutants without -x so results are deterministic",
+   "expected end": "about 25 min",
+   "reason": "EGM sequence"
   }
  ],
  "tests": [
