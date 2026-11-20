@@ -90,6 +90,9 @@ GRANTS: dict[str, Grant] = {
 # The function of 0008 that lowers expired holds; only the release role may run it (EXECUTE is revoked from PUBLIC
 # in the migration and from every other named role here).
 RELEASE_FUNCTION = "hadavin_release_expired_spend(text, date)"
+# The trigger function of 0010 (SECURITY INVOKER) on spend, spend_month and spend_reservations: it refuses an UPDATE
+# that lowers a booked amount unless current_user owns the release function, which only that function's body has.
+MONEY_GUARD_FUNCTION = "hadavin_money_guard()"
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # Names PostgreSQL reads as a keyword in a GRANT (everyone, nobody, the caller), not as one role.
@@ -596,14 +599,10 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
-def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
-    """EXECUTE on the release function: the release role gets it, every other named role loses it, and a named
-    role that can still run it (through PUBLIC or a role it is a member of) is refused."""
-    if db.execute("SELECT to_regprocedure(%s)", (RELEASE_FUNCTION,)).fetchone()[0] is None:
-        return
-    fn = sql.SQL(RELEASE_FUNCTION)
-    # SECURITY DEFINER: the search path is pinned with the catalog first and the temp schema last, so neither a
-    # temp table of the caller nor a writable schema can stand in for a money table or a catalog function.
+def _pin_search_path(db, signature: str) -> None:
+    """Pin the search path of one function of ours to pg_catalog, this schema, pg_temp (temp schema LAST): the file
+    cannot know the schema, so every migrate run does it again (a hand-run CREATE OR REPLACE resets it)."""
+    fn = sql.SQL(signature)
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     try:
         db.execute(
@@ -614,12 +613,30 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
     except errors.InsufficientPrivilege as exc:
         owner = db.execute(
             "SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid = to_regprocedure(%s)",
-            (RELEASE_FUNCTION,),
+            (signature,),
         ).fetchone()[0]
         raise ConfigError(
-            f"cannot pin the search path of {RELEASE_FUNCTION}: it is owned by {owner}, and only its owner (or a "
+            f"cannot pin the search path of {signature}: it is owned by {owner}, and only its owner (or a "
             f"member of that role) may alter it. Run migrate as {owner}."
         ) from exc
+
+
+def _pin_money_guard(db) -> None:
+    """0010: the trigger function that refuses a lowered booked amount. Its search path is pinned like the release
+    function's; a database from before 0010 has none and nothing is done."""
+    if db.execute("SELECT to_regprocedure(%s)", (MONEY_GUARD_FUNCTION,)).fetchone()[0] is not None:
+        _pin_search_path(db, MONEY_GUARD_FUNCTION)
+
+
+def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
+    """EXECUTE on the release function: the release role gets it, every other named role loses it, and a named
+    role that can still run it (through PUBLIC or a role it is a member of) is refused."""
+    if db.execute("SELECT to_regprocedure(%s)", (RELEASE_FUNCTION,)).fetchone()[0] is None:
+        return
+    fn = sql.SQL(RELEASE_FUNCTION)
+    # SECURITY DEFINER: the search path is pinned with the catalog first and the temp schema last, so neither a
+    # temp table of the caller nor a writable schema can stand in for a money table or a catalog function.
+    _pin_search_path(db, RELEASE_FUNCTION)
     for role in others:
         db.execute(sql.SQL("REVOKE ALL ON FUNCTION {} FROM {}").format(fn, sql.Identifier(role)))
     if release_role:
@@ -763,6 +780,7 @@ def migrate(
                 raise ConfigError(
                     "the release role holds more than the grant map: " + "; ".join(bad[:20])
                 )
+        _pin_money_guard(db)
         _apply_release_function(db, release_role, [r for r in named if r != release_role])
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")

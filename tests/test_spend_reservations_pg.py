@@ -561,7 +561,7 @@ def test_the_purge_login_is_denied(w, relation, statement):
 
 
 @pg
-def test_the_purge_login_can_run_the_purge_delete_and_removes_closed_rows_only(w):
+def test_the_purge_login_can_run_the_purge_delete_and_removes_settled_rows_only(w):
     rt = w.store(w.runtime)
     opened, closed, expired = _reserve(rt), _reserve(rt), _reserve(rt)
     rt.settle_spend(closed, D("0.40"))
@@ -572,13 +572,15 @@ def test_the_purge_login_can_run_the_purge_delete_and_removes_closed_rows_only(w
             "SELECT status FROM spend_reservations WHERE closed_at IS NULL"
         ).fetchall()
         gone = db.execute(
-            "DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %s",
+            "DELETE FROM spend_reservations WHERE status = 'settled' AND closed_at < %s",
             (now() - timedelta(days=1),),
         ).rowcount
         assert gone == 0  # closed a moment ago: kept
     purge = w.store(w.purge)
-    assert purge.purge_spend_reservations(now() + timedelta(days=1)) == 2
-    assert _table(w) == {opened: ("open", D("1.00"), None)}
+    assert (
+        purge.purge_spend_reservations(now() + timedelta(days=1)) == 1
+    )  # the settled row; expired is kept (E11 M3)
+    assert set(_table(w)) == {opened, expired}
     assert _counters(w) == (D("2.40"), D("2.40"))  # a purge moves no counter
     assert purge.purge_spend_reservations(now() + timedelta(days=1)) == 0
 

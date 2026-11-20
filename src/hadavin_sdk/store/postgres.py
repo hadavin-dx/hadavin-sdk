@@ -868,12 +868,14 @@ class PostgresStore:
             ).rowcount
 
     def purge_spend_reservations(self, before: datetime) -> int:
-        """Closed rows only (run by the purge role, which reads `status` and `closed_at` and nothing else)."""
+        """SETTLED rows only (a settled row, or one released by 0008: settled at 0). An expired hold nobody
+        settled is KEPT: it is still booked, and a late settle must find it (E11 M3). Run by the purge role,
+        which reads `status` and `closed_at` and nothing else."""
         check_purge_bound(before)
         with self._lock:
             return self._exec(
                 self._t(
-                    "DELETE FROM {spend_reservations} WHERE status <> 'open' AND closed_at < %s"
+                    "DELETE FROM {spend_reservations} WHERE status = 'settled' AND closed_at < %s"
                 ),
                 (before,),
             ).rowcount

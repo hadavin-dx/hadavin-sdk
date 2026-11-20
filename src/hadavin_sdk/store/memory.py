@@ -403,7 +403,7 @@ class MemoryStore:
             gone = [
                 k
                 for k, r in self._reservations.items()
-                if r.status != "open" and r.closed_at is not None and r.closed_at < before
+                if r.status == "settled" and r.closed_at is not None and r.closed_at < before
             ]
             for k in gone:
                 del self._reservations[k]

@@ -1,5 +1,6 @@
 -- Release of expired spend holds (step F-store, ORDER 020 M1) and the closed_at index of the purge.
--- hadavin_release_expired_spend(agent, day) is the ONLY way the booked amount of an expired hold goes down. It is
+-- hadavin_release_expired_spend(agent, day) is the ONLY way the booked amount of an expired hold goes down (a runtime
+-- login cannot lower it with its own UPDATE: the guard trigger of 0010 refuses it, proven by tests/test_money_guard_pg.py). It is
 -- owned by the migration owner (SECURITY DEFINER), so the release login needs no right on the money tables
 -- at all: `migrate --release-role` grants it EXECUTE on this one function and the audit append path, and nothing
 -- else. Nobody else may run it: EXECUTE is taken from PUBLIC here, and `migrate` refuses a run where the
