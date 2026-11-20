@@ -2121,8 +2121,8 @@ def test_g9_the_read_back_reads_the_deadline(monkeypatch):
 
 def test_g9_the_finder_groups_read_the_deadline_between_them():
     """Design M5 (v3): a finder pass over E is not counted (a map nested past `_MAX_NESTING` splits into up to 64 groups, and counting
-    E once per group refused honest texts); the deadline is read before each group instead. Here E is too short for the count to read the
-    clock, so only that reading refuses (mutant G9-16)."""
+    the text read back once per group refused honest texts); the deadline is read before each group instead. Here the text read back is too
+    short for the count to read the clock, so only that reading refuses (mutant G9-16)."""
     comb = "".join(chr(97 + (i * 7) % 26) for i in range(260))
     nested = {f"<SECRET_{n + 10}>": comb[:n] + "Z" for n in range(4, 261)}
     r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B, **nested})
