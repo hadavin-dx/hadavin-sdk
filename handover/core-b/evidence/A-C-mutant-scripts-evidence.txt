@@ -1,0 +1,54 @@
+== uv run --all-extras --group test python tests/audit_drain_mutants.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  KILLED       M1 the STEPS row is removed  [test_n1_audit_drain_is_the_last_tick_step]
+ok  KILLED       M2 the audit_drain body is empty  [test_n2_one_tick_writes_a_parked_outcome_to_the_chain]
+ok  KILLED       M3a the flush call is removed from write_intent  [test_n3_the_next_successful_write_flushes_what_this_process_parked[write_intent]]
+ok  KILLED       M3b the flush call is removed from write_outcome  [test_n3_the_next_successful_write_flushes_what_this_process_parked[write_outcome]]
+ok  KILLED       M4 the flush does not remove a drained event  [test_n3_the_next_successful_write_flushes_what_this_process_parked[write_intent]]
+ok  KILLED       M5 the outbox row is deleted when _drain returned False  [test_an_outbox_row_that_cannot_be_written_yet_is_kept]
+ok  KILLED       M6a an unreadable body raises at once  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+ok  KILLED       M6b a body under another row's id raises at once  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+ok  KILLED       M7a an unreadable body is deleted  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+ok  KILLED       M7b a body under another row's id is deleted  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+ok  KILLED       M8a the flush runs after a failed append (write_intent)  [test_e5_a_failed_triggering_append_makes_no_flush_attempt[write_intent]]
+ok  KILLED       M8b the flush runs after a failed append (write_outcome)  [test_e5_a_failed_triggering_append_makes_no_flush_attempt[write_outcome]]
+ok  KILLED       M9 a SELECT error that is not an outage is swallowed  [test_an_outbox_that_answers_with_an_error_fails_the_step]
+by hand (--hand): M9 a SELECT error that is not an outage is swallowed (a missing grant) -> test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step
+by hand (--hand): M2 the audit_drain body is empty (two processes) -> test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+by hand (--hand): M1 the STEPS row is removed (two processes) -> test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+13 of 13 good; problems: []
+exit=0
+
+== HADAVIN_TEST_PG_DSN=<local test dsn> uv run --all-extras --group test python tests/audit_drain_mutants.py --hand
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+KILLED   | M9 a SELECT error that is not an outage is swallowed (a missing grant) | src/hadavin_sdk/audit/chain.py | test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step
+KILLED   | M2 the audit_drain body is empty (two processes) | src/hadavin_sdk/runtime/tick.py | test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+KILLED   | M1 the STEPS row is removed (two processes) | src/hadavin_sdk/runtime/tick.py | test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+3 of 3 good by hand
+exit=0
+
+== uv run --all-extras --group test python tests/price_mutants.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  KILLED       M1 the zero rule does not look at the environment  [test_e4_fake_in_pilot_with_zero_is_refused_beside_the_other_refusals]
+ok  KILLED       M2 the zero rule does not look at the llm kind  [test_e2_zero_refused_for_a_real_kind_in_demo['0'-input_usd_per_mtok]]
+ok  KILLED       M3 the zero rule compares with < 0  [test_h5_a_config_changed_by_model_copy_is_still_named_by_the_helper]
+ok  KILLED       M4 only the input field is checked for zero  [test_e3_zero_on_a_route_no_agent_uses_is_refused]
+ok  KILLED       M4b only the output field is checked for zero  [test_e3_zero_on_a_judge_route_is_refused[input_usd_per_mtok]]
+ok  KILLED       M5 the is_signed branch is removed  [test_fail_before_negative_price_with_the_fake_kind_is_refused]
+ok  KILLED       M5b is_signed becomes v < 0 (minus zero loads)  [test_h1_e7_bad_price_refused_for_fake_in_demo['-0'-'a price must not be neg-input_usd_per_]
+ok  KILLED       M6a the ceiling branch is removed  [test_h1_e7_bad_price_refused_for_fake_in_demo['1000000.000001'-'a price may be at most -in]
+ok  KILLED       M6b the decimals branch is removed  [test_h1_e7_bad_price_refused_for_fake_in_demo['0.0000001'-'a price may have at mos-input_u]
+ok  CRASH        M6c the ceiling itself is refused (> becomes >=)  [test_e7_prices_at_the_bounds_load['1000000'-input_usd_per_mtok]]
+ok  CRASH        M7 the date is required in demo too  [test_n1_demo_fake_priced_loads_without_a_date]
+ok  KILLED       M8 the required-date rule is removed  [test_e5_date_required_in_pilot_and_prod[pilot]]
+ok  CRASH        M9 a date of today counts as the future (> becomes >=)  [test_e6_today_and_old_dates_load[text-today]]
+ok  KILLED       M9b the future rule is removed  [test_e6_future_date_refused_in_every_stage[1]]
+ok  KILLED       M10 _plain_date returns the value unchecked  [test_h4_only_a_plain_date_is_read[pilot-0]]
+ok  KILLED       M10b a datetime object is allowed  [test_h4_a_datetime_object_is_refused_directly]
+ok  KILLED       M10c the date text is matched at its start only  [test_h4_only_a_plain_date_is_read[pilot-'2026-11-20T00:00:00']]
+ok  KILLED       M10d the date text may hold digits that are not ASCII  [test_h4_only_a_plain_date_is_read[pilot-'\u0662\u0660\u0662\u0666-\u0661\u0661-\u0662\u066]
+ok  KILLED       M11 the price refusals are not added to the refused list  [test_e5_zero_refused_for_a_real_kind_in_pilot_and_prod[pilot-input_usd_per_mtok]]
+ok  KILLED       M12 the routes are sorted last name first  [test_h3_all_zero_fields_in_one_error_sorted_by_route]
+hole (not run, no test kills it): M12 (plain form) the routes are not sorted: the tests write config.yaml with yaml.safe_dump, which sorts the keys, so the routes arrive sorted anyway
+20 of 20 good; problems: []
+exit=0
