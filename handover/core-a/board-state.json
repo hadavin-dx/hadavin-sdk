@@ -761,17 +761,17 @@
    "reason": "lead 14:26"
   },
   {
-   "id": "readme-edoor1",
-   "role": "builder (docs)",
+   "id": "rev-readme",
+   "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "n8n README section 'what the sender must do: poll the run state' (E-door-1 default)",
-   "started UTC": "14:24",
-   "expected end": "15 min",
+   "what exactly it is doing": "review of the new README poll section against the code (overclaim check)",
+   "started UTC": "14:28",
+   "expected end": "10 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "1",
    "retries so far": 0,
-   "reason": "lead 14:26"
+   "reason": "docs that overclaim are Majors"
   }
  ],
  "tests": [
@@ -1144,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:31 E-door-1 README section DONE (n8n/README-trigger.md 'What the sender must do: poll the run state'; default 'sender polls', option B stated OPEN). FINDING worth your attention: there is NO external way to READ a run's state: the endpoint answers POST and GET /health only (/health has no run data) and cli.py has no run command: 'polling' means re-POSTing the same signed key + same document (answer comes from the stored row), which is what the n8n template's state check does. A sender that is not n8n must implement signed re-POSTs. Fresh review of the section running (rev-readme). Unverified in the section: 'the document was kept only in the worker's memory', 'second request starts the run if the first never wrote its row'.",
   "14:30 core-b newest merges reviewed (reviews/rev-b-newest.md): NO Blocker/Major in the diff (F7 caps seeding wrapper: store refuses, no new widening; window/min-age proofs run on real limits; schema-qualified decoys not weakened). My H1 Majors are NOT closed: earlier-0011-draft DBs now WARN on every migrate (mitigation, not a repair), day window still allows D-1/D/D+1 (3x day cap). Nits: two header pins loosened (`not in head` -> `in head`), the money definer battery lost its NaN/negative cap rows (covered elsewhere only by test_money_caps_pg.py, not verified). All PG claims skip without a DSN.",
   "14:24 WHY NOTHING RAN 14:16-14:24: every review/batch on your earlier lists was finished and I had no new landed commits to review; waited for core-c/core-b to push (no work to invent). NOW 3 agents: rev-c-G13b (core-c 3f467df1e G13b + 9806830d0 G12b regression: checks my 4 G13 Majors and the G12b Major), rev-b-newest (core-b since a25f6858d), readme-edoor1 (README section: sender polls). Heavy batches: lead-build-3 runs 1-4 delivered at 9072e701f; a new full run on core-c afef6e16a is NOT requested in lead-build-3 (tell me if you want run 1 again on the new head).",
   "14:20 core-c G13 reviewed (reviews/rev-c-G13.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker, 4 Majors: (1) the combining-marker fix covers decomposed forms but NOT precomposed U+226E (and not Mc U+093E) and has no test for it; (2) _touching_piece refuses ordinary text beside a key when a secret shares a 4-gram prefix ('https://' vs 'http...'): a planted value poisons every later call; (3) LEAK: window overlap 10*longest+16 is too small for stacked encodings: chunk > 65,536 chars + secret 17+ chars spelled '%26%23<dec>%3B' per char straddles unredacted; (4) a secret of ~3,275+ chars makes every big non-ASCII chunk refuse (DoS, fail-closed). All 12 mutants E19a-l check out. Weakened pins d7, r2_m2. No agents running.",
@@ -3710,6 +3711,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-b since a25f6858d: NO Blocker/Major; seeding wrapper correct (store refuses), no new widening, window/min-age proven on real limits (no_cap_seed), decoys not weakened; my H1 Majors NOT closed (earlier-0011 DBs only warned, day window 3x); nits: two loosened header pins, definer battery lost NaN/negative cap rows; reviews/rev-b-newest.md"
+  },
+  {
+   "id": "readme-edoor1",
+   "role": "builder (docs)",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n README section 'what the sender must do: poll the run state' (E-door-1 default)",
+   "started UTC": "14:24",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "n8n README section 'What the sender must do: poll the run state' written (contract, states, polling recipe, no-poll case with E-door-1 OPEN, idempotent resend, limits with code cites); finding: NO external read path for a run state (endpoint answers POST + GET /health only, cli.py has no run command): the poll IS a re-POST of the same signed key+document; test pins 5 phrases (93 n8n tests pass); unverified: 'document kept only in memory' and 'second request starts the run if the first never wrote its row'"
   }
  ]
 }
