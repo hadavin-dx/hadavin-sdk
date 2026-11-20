@@ -104,12 +104,14 @@ def hidden_defaults(tree, name):
         elif isinstance(n, ast.IfExp):
             if (_is_int(n.body) or _is_int(n.orelse)) and _mentions(n, name):
                 found.append(n.lineno)
-        elif isinstance(n, ast.Call) and getattr(n.func, "attr", getattr(n.func, "id", "")) in (
-            "get",
-            "getattr",
-            "setdefault",
-        ):
-            if any(_is_int(a) for a in n.args[1:]) and any(_mentions(a, name) for a in n.args[:2]):
+        elif isinstance(n, ast.Call):
+            fn = getattr(n.func, "attr", getattr(n.func, "id", ""))
+            ints = any(_is_int(a) for a in n.args[1:])
+            if (
+                fn in ("get", "getattr", "setdefault")
+                and ints
+                and any(_mentions(a, name) for a in n.args[:2])
+            ):
                 found.append(n.lineno)
     return found
 

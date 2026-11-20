@@ -65,8 +65,8 @@ $ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
 |---|---|---|
 | 1 mutant script extended | 30 of 30 good; 13 new mutants for the quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM | tests/endpoint_mutants.py, raw/endpoint-mutants-run-3.log |
 | 2 tests for core-b's trigger config | 93 passed, 16 strict expected-failures (7 findings), 20 skipped on core-b's code | tests/test_trigger_config.py, raw/trigger-config-tests-on-core-b.log, FINDINGS-core-b-trigger-config.md |
-| NUL character in a document | pinned: accepted and safe today (the redactor removes it; no document text is stored); U+0001 and U+001F are not removed | tests/triggers/test_t5_nul_document.py (29), raw/D-nul-document-pg16.log, ticket D lines 241 and 293 |
-| Ticket D line on kill tests | added (why the store is wrapped, what a hook would add) | tickets/D-signed-endpoint.md line 241 |
+| NUL character in a document | pinned: accepted and safe today (the redactor removes it; no document text is stored); U+0001 and U+001F are not removed | tests/triggers/test_t5_nul_document.py (29), raw/D-nul-document-pg16.log, ticket D lines 260 and 312 |
+| Ticket D line on kill tests | added (why the store is wrapped, what a hook would add) | tickets/D-signed-endpoint.md line 260 |
 | Batch of my own files | 899 passed, 105 skipped, lint and format clean (342 files) | raw/BATCH3-own-files-pg16.log |
 | Contract test for core-c's gate | 201 passed, 0 findings, 1 skipped on core-c's code (619a3e5); 7 planted mutants caught | tests/contracts/test_model_gate_contract.py, raw/gate-contract-tests-on-core-c.log |
 
