@@ -35,11 +35,15 @@ from types import SimpleNamespace
 from typing import Self
 
 from hadavin_sdk.approvals import hmac_v0
+from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import Reply, RunState, now
 from hadavin_sdk.store import MemoryStore
 from hadavin_sdk.triggers import worker
 from tests.k5_support import ScriptLLM, build_runtime
 
+# The live loop reserves the worst case before a model call and settles after (core-b); an older loop
+# books with add_spend/add_cost after the call. The crash tables follow whichever the code under test does.
+RESERVES = hasattr(Limits, "reserve")
 AGENT, PRINCIPAL, TENANT = "test-agent", "svc:test-agent", "tenant-a"
 HOST = "127.0.0.1"
 SECRETS_ENV, DSN_ENV = "TRIGGER_CHILD_SECRETS", "CRASH_CHILD_DSN"
@@ -67,11 +71,32 @@ class CountingLLM(ScriptLLM):
         return Reply(text="Nothing to do.", model_id="fake-model")
 
 
+def install_pg_test_seeding() -> None:
+    """For a CHILD process on PostgreSQL: the same test-only wrappers that tests/conftest.py
+    (`_seed_caps_before_reserve`) puts on PostgresStore in the parent, which a child never gets.
+    Where the money-caps seed module does not exist (a checkout without it) nothing is installed."""
+    if not os.environ.get(DSN_ENV):
+        return
+    try:
+        from tests.money_caps_seed import seeding_reserve, widening_add_spend, widening_expire
+    except ImportError:
+        return
+    from hadavin_sdk.store import postgres as pg
+
+    # the seed writes with HADAVIN_TEST_PG_DSN (the owner); the child's own DSN carries the same server
+    os.environ.setdefault("HADAVIN_TEST_PG_DSN", os.environ[DSN_ENV])
+    cls = pg.PostgresStore
+    cls.reserve_spend = seeding_reserve(cls.reserve_spend)
+    cls.expire_spend_reservations = widening_expire(cls.expire_spend_reservations)
+    cls.add_spend = widening_add_spend(cls.add_spend)
+
+
 def _store(kind: str):
     if kind == "memory":
         return MemoryStore()
     from hadavin_sdk.store.postgres import PostgresStore, connect
 
+    install_pg_test_seeding()
     return PostgresStore(connect(os.environ[DSN_ENV]))
 
 

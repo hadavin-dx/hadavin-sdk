@@ -68,9 +68,11 @@ from tests.triggers.crash_launcher import (
     DSN_ENV,
     HOST,
     PRINCIPAL,
+    RESERVES,
     ROOT,
     SECRETS_ENV,
     Child,
+    install_pg_test_seeding,
     make_trigger_app,
     signed_post,
     wire_body,
@@ -104,14 +106,18 @@ STORE_WRITES = (
     "transition",
     "touch",
     "put_redaction_map",
-    "add_cost",
+    *(() if RESERVES else ("add_cost",)),  # with reserve/settle the settle books the run cost
     "add_tool_call",
     "save_plan",
     "save_gate_decision",
     "save_approval_request",
     "update_approval_request",
 )
-LIMITS_READS = ("get_kill_switch", "spend_totals", "add_spend")
+LIMITS_READS = (
+    ("get_kill_switch", "spend_totals", "reserve_spend", "settle_spend")
+    if RESERVES
+    else ("get_kill_switch", "spend_totals", "add_spend")
+)
 PURE_READS = ("store.get_kill_switch", "store.spend_totals", "loop.get_run")
 
 # --- the expectation tables (written before the first run) ------------------------------------------
@@ -129,6 +135,29 @@ PURE_READS = ("store.get_kill_switch", "store.spend_totals", "loop.get_run")
 Row = tuple[str, str, str | None, int, int, str | None, int, int]
 
 W, R = "WORKING", "RECEIVED"
+
+
+def _reserve(llm: int, tool: int) -> tuple[Row, ...]:
+    """Where the live loop reserves the worst case before a model call (core-b: limits.reserve reads
+    the stop state, then `reserve_spend`). Older loops book nothing before the call."""
+    if not RESERVES:
+        return ()
+    return (
+        ("store.get_kill_switch", "limits.reserve stop state", W, llm, tool, None, 0, 0),
+        ("store.reserve_spend", "limits.reserve the worst case", W, llm, tool, None, 0, 0),
+    )
+
+
+def _book(llm: int, tool: int) -> tuple[Row, ...]:
+    """The booking after the model call: `settle_spend` (one store call, books the run cost too) with
+    reserve/settle; `add_spend` and `add_cost` before."""
+    if RESERVES:
+        return (("store.settle_spend", "limits.settle the real cost", W, llm, tool, None, 0, 0),)
+    return (
+        ("store.add_spend", "485 via limits.py:18", W, llm, tool, None, 0, 0),
+        ("store.add_cost", "486", W, llm, tool, None, 0, 0),
+    )
+
 _COMMON: tuple[Row, ...] = (
     ("store.create_run", "389", R, 0, 0, None, 0, 0),
     ("audit.write_outcome", "394 run received", R, 0, 0, None, 0, 0),
@@ -142,9 +171,9 @@ _COMMON: tuple[Row, ...] = (
     ("store.get_kill_switch", "466 step 1", W, 0, 0, None, 0, 0),
     ("store.spend_totals", "466 step 1", W, 0, 0, None, 0, 0),
     ("store.touch", "468 heartbeat", W, 0, 0, None, 0, 0),
+    *_reserve(0, 0),
     ("llm.chat", "470 model call 1 (a read-tool call)", W, 1, 0, None, 0, 0),
-    ("store.add_spend", "485 via limits.py:18", W, 1, 0, None, 0, 0),
-    ("store.add_cost", "486", W, 1, 0, None, 0, 0),
+    *_book(1, 0),
     ("store.get_kill_switch", "505 before the tool", W, 1, 0, None, 0, 0),
     ("store.spend_totals", "505 before the tool", W, 1, 0, None, 0, 0),
     ("tool.invoke", "513 the read tool", W, 1, 1, None, 0, 0),
@@ -158,9 +187,9 @@ _COMMON: tuple[Row, ...] = (
 )
 READ_ROWS: tuple[Row, ...] = (
     *_COMMON,
+    *_reserve(1, 1),
     ("llm.chat", "470 model call 2 (nothing to do)", W, 2, 1, None, 0, 0),
-    ("store.add_spend", "485 via limits.py:18", W, 2, 1, None, 0, 0),
-    ("store.add_cost", "486", W, 2, 1, None, 0, 0),
+    *_book(2, 1),
     ("loop.get_run", "330 via 496", W, 2, 1, None, 0, 0),
     ("store.transition", "331 WORKING to NO_ACTION (final)", "NO_ACTION", 2, 1, None, 0, 0),
     ("audit.write_outcome", "332 state NO_ACTION", "NO_ACTION", 2, 1, None, 0, 0),
@@ -170,9 +199,9 @@ READ_ROWS: tuple[Row, ...] = (
 _P, _WA = "PLAN_READY", "WAITING_FOR_APPROVAL"
 PROPOSE_ROWS: tuple[Row, ...] = (
     *_COMMON,
+    *_reserve(1, 1),
     ("llm.chat", "470 model call 2 (a proposal)", W, 2, 1, None, 0, 0),
-    ("store.add_spend", "485 via limits.py:18", W, 2, 1, None, 0, 0),
-    ("store.add_cost", "486", W, 2, 1, None, 0, 0),
+    *_book(2, 1),
     ("store.put_redaction_map", "694 proposal check", W, 2, 1, None, 0, 0),
     ("audit.write_outcome", "705 cited evidence", W, 2, 1, None, 0, 0),
     ("store.save_plan", "713", W, 2, 1, None, 0, 0),
@@ -610,8 +639,10 @@ def test_the_tables_are_well_formed():
     points = [p for ps in ALL_POINTS.values() for p in ps]
     assert len({p.id for p in points}) == len(points)
     assert {name: len(ps) for name, ps in ALL_POINTS.items()} == {
-        "read": 2 * 33 - 7,
-        "propose": 2 * 45 - 10,
+        # reserve/settle: per model call two rows more (stop state, reserve_spend) and one less (settle books
+        # the run cost, so no add_cost); the two extra `get_kill_switch` rows add no `:after` point (pure read)
+        "read": 2 * 35 - 9 if RESERVES else 2 * 33 - 7,
+        "propose": 2 * 47 - 12 if RESERVES else 2 * 45 - 10,
         "approve": 2 * 18 - 4,
     }
     assert {p.point.partition(".")[0] for p in points} == {
@@ -1008,6 +1039,7 @@ def child_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", choices=("serve", "tick"), required=True)
     args = parser.parse_args(argv)
 
+    install_pg_test_seeding()
     plain = PostgresStore(connect(os.environ[DSN_ENV]))
     points = CrashPoints(mode="exit", flag_path=args.flag)
     stack = build_stack(args.config_dir, plain, Files(args.files_dir), PATHS[args.path], points)
