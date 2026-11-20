@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:14:31Z
+UPDATED_UTC: 2026-11-20T15:19:37Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:15Z load 3.8 (was 9). Heavy runs alive (2): rec pytest -n 3 batch, gm gate_mutants (fresh run; its older stopped copies are SIGSTOPped, to be killed). G9b has no heavy run now. cloud/core-c head = c5451c10d (g2/g3 mostly cherry-picked in; 4 leftover commits being reconciled by rec; wip/core-c/rec will be the one head, core-c priority over core-a merge-c). The 8 grant tests vs core-b 0006/0007: NOT STARTED, needs core-b store head from cloud/core-b; queued after rec, light edit work once rec lands. F-install blockers: NO_MAP r3 merged, usd_cap merged, mark on ProviderExhausted merged (inert until core-b retry layer sets it), K5 Q17 with lead. Timings 15:00-15:11 INVALID-LOAD, re-run idle.
+STATE: 15:22Z load 3.6. Merged onto cloud/core-c (head 875b905a8): G4c (host rows 19+6 closed; host/p1c tests 810 passed), gate mutant fixes (139/140, only R8). Agents alive: G9b (E23), rec (g2/g3 leftovers into one head). Heavy runs: max 2. Timings from 15:00-15:11 INVALID-LOAD; full merged-tree re-run at idle after G9b/rec land. F-install blockers: NO_MAP r3, usd_cap, mark merged; K5 Q17 with lead. Grant tests vs core-b 0006/0007 queued after rec.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 3.7 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+AGENTS_RUNNING: 2
+CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 2, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: Wait for load < 3.5, SIGCONT gm; collect G9b/rec/G4c/gm; light work only meanwhile.
-PUSHED_UTC: 2026-11-20T15:10:36+00:00
+NEXT: Collect G9b and rec, then idle full-suite run; docs root pass; grant tests vs core-b head.
+PUSHED_UTC: 2026-11-20T15:19:06+00:00
 
-(20:44 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(20:49 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -26,9 +26,9 @@ PUSHED_UTC: 2026-11-20T15:10:36+00:00
 | a18e6fd0 | builder | claude-sonnet-5-5 | BUILDS G13c (G13/G13b round 2: lookup-loop CPU (slice before head test, ~30 GB memcpy hostile case) and memory (`seen` full strings ~1-4 GB), per-key lookup cap, all-separator value leak m2, case-insensitive/extended auth words m1, docstrings); worktree /tmp/core-c-g13c wip-g13c | 14:43 | 15:15 | 1 | done | 1 | 0 |  |
 | ae6dab72 | reviewer | claude-sonnet-5-5 | G9 RESULT review round 2 (design) at bf7af9358 | 14:50 | 15:05 | 2 | done | 2 | 0 | EGM |
 | a447ecd1 | reviewer | claude-sonnet-5-5 | E9 RESULT review round 3 (codebase) at bf7af9358 | 14:50 | 15:05 | 3 | done | 3 | 0 | EGM |
-| a0194822 | builder | claude-sonnet-5-5 | BUILDS G4c (G4 Phase 4/5 host patterns: a start rule that closes the 19+6 open host rows and keeps the p1d property: the earlier build stopped on a STOP guard); worktree /tmp/core-c-g4c wip-g4c | 14:50 | 15:30 | 1 | running | 1 | 0 | owns HOSTNAME/HOSTKEY patterns in redact.py + host tests/mutants |
+| a0194822 | builder | claude-sonnet-5-5 | BUILDS G4c (G4 Phase 4/5 host patterns: a start rule that closes the 19+6 open host rows and keeps the p1d property: the earlier build stopped on a STOP guard); worktree /tmp/core-c-g4c wip-g4c | 14:50 | 15:30 | 1 | done | 1 | 0 | owns HOSTNAME/HOSTKEY patterns in redact.py + host tests/mutants |
 | a0385760 | builder | claude-sonnet-5-5 | BUILDS G9b (E23: _overlaps charge-as-you-go, union kind downgrade, weight calibration); /tmp/core-c-g9b | 15:00 | 15:40 | 1 | running | 1 | 0 |  |
-| aadbf6c1 | builder | claude-sonnet-5-5 | FIXES gate mutants G13d/G13e/E19g/E19i; /tmp/core-c-gm | 15:01 | 15:20 | 1 | running | 1 | 0 |  |
+| aadbf6c1 | builder | claude-sonnet-5-5 | FIXES gate mutants G13d/G13e/E19g/E19i; /tmp/core-c-gm | 15:01 | 15:20 | 1 | done | 1 | 0 |  |
 | rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | running | 1 | 0 |  |
 
 ## SHELLS AND PROCESSES
