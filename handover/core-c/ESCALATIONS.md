@@ -1,5 +1,11 @@
 # ESCALATIONS of core-c (newest on top)
 
+## E5. Redactor: a short tail of a token can stay readable for one pass (found while building G7, measured, NOT fixed) (2026-11-20T06:12Z)
+- Shape: a value V first seen as `password=V`, then `Bearer V+xy` (V followed by 2 more characters). One pass gives `Bearer <SECRET_1>xy`; a second pass gives `<BEARER_1>`. The 2-character tail is readable after one pass.
+- Cause as read by the builder: the BEARER (under 12 characters), BASIC (under 8) and `authorization:` (under 8) patterns admit `<` and `>` in the value, so they only match once the sweep has written the placeholder. These patterns do not name a placeholder in their regex, so they were outside ORDER 012 item 1 and were not touched.
+- Options (details in tickets/G7-context-after-sweep.md): (a) add these three patterns to the set that is re-run after the sweep (recommended: same mechanism as G7, the timing tests exist); (b) stated limit.
+- Evidence: evidence/G7-1.md.
+
 ## E3. Redactor gap on main, CONFIRMED BY A RUN: one redaction pass leaves a bank account number readable (2026-11-20T05:55Z)
 - Found by the ticket G code review (cb-1-3 shape B), then run by the gate builder. Pinned as a strict expected-failure test: tests/test_runmap_is_masked.py::test_shape_b_round_trip_holds_for_a_bank_code_beside_an_account. Raw output: evidence/F-G0-1.md.
 - Input shape (made-up digits): line 1 `BSB: <bank code>`, line 2 `paid <same bank code>/<account number>`.
