@@ -1,5 +1,16 @@
 # ESCALATIONS of core-b (newest on top)
 
+## E5 (2026-11-20 06:40 UTC) Step B: a hostile re-read found 1 Blocker and 5 Majors in the BUILT code; B is at its 3-try cap, so they go to the lead
+- Item: step B code (commits 80a07ce, 6662afe, 358361e). Report with file and line, how to reproduce and the smallest fix for each: tickets/ABC-hostile-review-1.md. Nothing was run by the reviewer; several rest on PostgreSQL behaviour marked UNVERIFIED.
+- Blocker 1 and Major 3: the who-else-can-clear check (already with the lead, ORDER 015): it refuses healthy set-ups on managed databases and shared servers, and a plain migrate with no role named skips it.
+- Major 2: the runtime role may be able to change its OWN default search path (ALTER ROLE ... SET search_path), after which new processes read a decoy schema it owns and the stop reads OFF. Tests always pin the path in the connection string, so none sees it.
+- Major 4: nothing stops reset_credential_ref from naming a secret the runtime reads (a tool secret, a source token); the runtime would then read the reset login at start.
+- Major 5: when a reset finds the switch still ON, the command says "Run limits reset again", which steers an operator to erase a stop a colleague has just set.
+- Major 6: on PostgreSQL 17 the MAINTAIN right may let the runtime lock the stop table and block every stop; the store connection has no lock timeout.
+- Nits 11 to 16 in the report.
+- What I did: nothing in step B code. Ticket B has an addendum with the built behaviour; docs unchanged.
+- What I recommend the lead does first: 2 and 5 (both change what an operator can rely on), then 4, then 6 on the PostgreSQL 17 run.
+
 ## E4 (2026-11-20 06:20 UTC) Step B: the who-else-can-clear check reads every role of the database SERVER; step B has used its 3 fix rounds, so I stop and hand it to the lead
 - Item: step B, check who_else_can_clear in src/hadavin_sdk/store/migrate.py (fix round 3, commit 358361e). Tries used: 3 of 3 (first build, fix 2, fix 3). I do not start a fourth.
 - What fails: when the stop-state tests run in parallel (pytest -n 3) or two sessions share one PostgreSQL server, an unrelated migrate is refused with "roles other than the reset role could clear a stop ...: sb_mo_453d4178f4" (also sb_wa_...). Those are roles ANOTHER test created at that moment: a member of the owner role, and a member of pg_write_all_data. Run alone, all 176 stop-state tests pass (1 pin fixed). In parallel: 2 failed and 1 to 2 errors, different tests each time. Raw: evidence/landed-tests-run-1.txt; the same cause explains the unexplained error in batch run 2.

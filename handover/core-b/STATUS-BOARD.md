@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:26:58Z
+UPDATED_UTC: 2026-11-20T06:28:43Z
 SESSION: core-b
 ORDER: 016
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 5
-CAPACITY: load 1.33 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 874M
+AGENTS_RUNNING: 4
+CAPACITY: load 1.75 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 1 heavy 3
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 876M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
-FAILED: step B BLOCKED-LEAD at its 3-try cap: who-else check trips over other roles on a shared server (E4); batch run 2: 13 failed, 1 error (11 mine, fixed); F-store and F-install ticket reviews not clean, answered; E1 cron refused
+FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: land F-store tests and the provider-mark tests; F-install build and its tests; resolve the hostile re-read; batch run 3 on a merged tree when F-install is coded
-PUSHED_UTC: 2026-11-20T06:24:59Z (previous push; this board is pushed right after writing)
-IST: 11:56 IST
+PUSHED_UTC: 2026-11-20T06:26:58Z (previous push; this board is pushed right after writing)
+IST: 11:58 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -29,7 +29,7 @@ IST: 11:56 IST
 | 7 | reserve_mutants.py, stop_state_mutants.py | DONE, re-run on the head RUNNING | tests/reserve_mutants.py 31 of 31 and 26 of 26 by hand; agent ae79ea4d re-runs all four scripts on the head |
 | 8 | docs for A, B, C, F | DONE for A, B, C, F-store; F-install's sentences come with its build | README.md, SECURITY.md, CHANGELOG.md, docs/stop-state-runbook.md |
 | 9 | ONE batch whole-suite run when 1 to 7 are coded | NOT YET (batch run 2 at 06:00 covered A, B, C, F-store source) | batch run 3 after F-install lands, on a tree with core-c's gate |
-| 10 | hostile re-read of A, B, C code | RUNNING | reviewer a39cf764 |
+| 10 | hostile re-read of A, B, C code | DONE; B findings with the lead (ESCALATIONS E5), A findings in A's fix round 3 (queued behind the running A agent) | tickets/ABC-hostile-review-1.md |
 Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, contracts/test_store_spend.py, contracts/test_t1_reserve_cap.py, test_spend_reservations_pg.py incl. settle racing expire); F-2 and F-3 done (caps and sweep age validated); F-4, F-5, AB-5 done (docs); AB-4 running (ae79ea4d); AB-3 is the lead's.
 
 ## AGENTS
@@ -41,7 +41,7 @@ Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, 
 | ae79ea4d | builder then tests | fable | step A fix round 2 (failure text counts events never written), M1 re-pin, all four mutant scripts re-run on the head; worktree M | 06:28 | +20 min | UNVERIFIED | running | none | 1 | lead review round 2 item AB-4; ORDER 008 mutant scripts must end good |
 | a86f0e17 | builder then tests | fable | provider mark for calls that ended only in 429 or refused connections; tests for the mark and for cap validation: landed | 06:22 | done | 100 | done | none | 0 | 425 passed, 1 skipped; narrow reading: a 429 followed by a 400 or 401 stays unmarked |
 | a51b4a37 | builder (tests) | fable | F-store tests (5 files): landed | 06:02 | done | 100 | done | none | 0 | 471 passed with PostgreSQL 16 (300 passed, 171 skipped without); mutants 31 of 31 and 26 of 26 by hand; no invariant broken |
-| a39cf764 | reviewer (egm-codebase-details) | fable | hostile re-read of the BUILT A, B, C code against their tickets (backlog item 10) | 06:22 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | STANDING ORDER 016; started directly, then put under the review-loop skill call of 06:24 |
+| a39cf764 | reviewer (egm-codebase-details) | fable | hostile re-read of the BUILT A, B, C code: 1 Blocker and 5 Majors in B, 2 Majors in A, none in C; report tickets/ABC-hostile-review-1.md | 06:22 | done | 100 | done | 1 of 1 | 0 | STANDING ORDER 016; started directly, then put under the review-loop skill call of 06:24 |
 | a0aa4523 | reviewer (egm-implementation-readiness) | fable | F-install ticket round 2 of 3: NOT clean, 2 Blockers, 5 Majors; report tickets/F-install-review-2.md; answered (W1 to W7) and sent to the builder | 06:24 | done | 100 | done | 2 of 3 | 0 | lead ORDER 014; only one reviewer this round (the codebase reviewer is on the hostile re-read): see reason in QUEUE row |
 | af123633, a7f2909e | builders (fix) | fable | F-store fix 1 (caps validated), provider mark, D-config fix 1: landed (3 commits) | 06:15 | done | 100 | done | none | 0 | 206, 323 and 1183 passed on their test lists |
 | a04243c0, a7034d35 | builders (tests) | fable | step B fix-3 tests (290 passed alone, 40 of 40 mutants) and mutant scripts repair: landed | 05:58 | done | 100 | done | none | 0 | see ESCALATIONS E4: the B role tests interfere when run in parallel |
@@ -125,6 +125,7 @@ Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, 
 - QUESTIONS.md 1 to 4 (cron fallback, which baseline test fails, step A build without extra GO, local PostgreSQL 16 for my lane run).
 - core-c ESCALATION E2 (strict mask check would refuse normal runs): needs the lead's ruling before ticket F-install can be final.
 - Lead: handover/BRIEF-PREAMBLE.md contains a vendor name that tests/test_no_reference_material.py refuses (rule 15 text). It fails the suite on every cloud branch that carries the handover folder; it is your file, I did not touch it.
+- ESCALATIONS.md E5: the hostile re-read found 1 Blocker and 5 Majors in built step B code (search path decoy, reset command steering an operator to erase a fresh stop, reset secret readable by the runtime, PostgreSQL 17 table lock). B is at its 3-try cap: the lead decides and builds.
 - ESCALATIONS.md E4: step B's who-else-can-clear check refuses healthy set-ups on a shared server and makes the role tests interfere in parallel; B is at its 3-try cap, so I stopped. Lead: decide the one-clause fix or take it over. Until then run tests/test_stop_state_roles.py with -n 1 on its own server.
 - requests/to-core-c-1-exhausted-mark.md: core-c's gate ignores the unbilled mark on errors that used up their retries (429, refused connections).
 - requests/002.answer.md: two points for the lead (default runs at a time 1 or 4; comparing the approvals secret with trigger secrets).

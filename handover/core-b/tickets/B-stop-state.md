@@ -203,3 +203,12 @@ S9. tests/test_stop_state_unit.py (U1, U2, U4, F2), the migrate warning test and
 S10. Rollback steps go into docs/stop-state-runbook.md with the full open-stop query written out.
 S11 (ir-6, ir-7). The six "from the branch" items are no longer references: they are in the tree (owner-membership check migrate.py:226-229, loop hunk agent_loop.py:250-254 and 788-791, tests/test_stop_state_loop.py, the role fixture in tests/test_stop_state_roles.py, tests/stop_state_mutants.py, docs/stop-state-runbook.md). Commit order as built: source with pins and existing-test edits together; role tests; docs. Edits to existing tests were made by the builders and are listed in notes/builder-B-report.md and the fix reports.
 S12 (nits). Code: the stop INSERT does not pass ts (the database clock sets it) and the table refuses a ts that is not finite. The "Open questions" are DECISIONS (taken by core-b, verdict column in DECISIONS.md for the lead). 0006_stop_state is the final number. notes/builder-B-report.md is stale where it says BIGSERIAL, sequence, WHERE "on" and "loop hunk not taken". Not done, stated: the PostgreSQL 17 MAINTAIN right is not checked by effective_problems (UNVERIFIED whether it matters); an ungranted reset login gets the message "the audit tables are missing".
+
+## ADDENDUM: built behaviour not stated above (2026-11-20 06:40 UTC; from fix round 3, commit 358361e, and the hostile re-read tickets/ABC-hostile-review-1.md finding 10)
+- Exit codes of limits reset are NOT unchanged: 2 also means "the reset was written but the state still reads ON"; a failed read-back after a written reset gives 4 (store unreachable) or 2.
+- limits reset refuses, before any connection, when reset_credential_ref equals dsn_secret_name. So S8's "the runtime-DSN reset case runs in pilot with the ref pointing at the runtime DSN" now needs a SECOND secret name that holds the runtime DSN.
+- app.py reads reset_credential_ref (the sender-name overlap check); "Unchanged on purpose: S/app.py" no longer holds.
+- who_else_can_clear as built: skips PostgreSQL's own pg_* roles as listed roles, counts column-level grants, and runs only when at least one role is named. The LEAD is rewriting this check (ORDER 015).
+- PostgresStore refuses to start when the search path names no existing schema.
+- Open code findings of the hostile re-read (2 to 6, 11 to 16) are with the lead: ESCALATIONS.md E5. Step B is at its 3-try cap; core-b changes no step B code.
+
