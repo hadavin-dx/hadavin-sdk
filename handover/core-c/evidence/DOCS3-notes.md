@@ -6,8 +6,7 @@ Branch wip/cloud-core-c/docs3 from origin/cloud/core-c c55dd4fbb. Not merged.
 - Label rule: no result line on file means UNVERIFIED. K12, K80a (were FIXED) and K80b, K85 (were PINNED) are now OPEN with that reason; the
   last row of 2.10 reads "UNVERIFIED ... no result line". FIXED/PINNED return when a batch is recorded. 2.7 approval-message TESTED lines were
   relabelled UNVERIFIED too (no batch for them is listed in 2.10); revert if the lead knows the batch.
-- Brand test: BANNED list is getport.io, demo.port.io, app.port.io, Port.io, Port MCP, Agent Control Center, Skills Marketplace, MCP Hub,
-  Context Lake, Golden Path. The three root files have no hit. slack, bedrock_guardrail, PuTTY, ARN, rds.amazonaws.com are not on the list.
+- Brand test: BANNED list is in tests/test_no_reference_material.py (not repeated here, the test scans this file too). The three root files have no hit. slack, bedrock_guardrail, PuTTY, ARN, rds.amazonaws.com are not on the list.
   Kept the config values slack and bedrock_guardrail (code requires them); reworded PuTTY and ARN lightly. Only hit in the repo:
   handover/BRIEF-PREAMBLE.md (lead's file).
 - Decoded views: runmap.redact_text runs the generic patterns on `undo(text)` (percent, entity, \u, \u{}, %u, \x, \U, 3-digit octal, NFKC to
