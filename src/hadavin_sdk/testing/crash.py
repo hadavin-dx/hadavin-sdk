@@ -161,7 +161,7 @@ class CrashPoints:
         return cast(T, _Proxy(target, calls))
 
     def _edge(self, target: object, name: str, method: str) -> Callable[..., Any]:
-        before, after = f"{name}.{method}:before", f"{name}.{method}:after"
+        after, before = f"{name}.{method}:before", f"{name}.{method}:after"
 
         def call(*args: Any, **kwargs: Any) -> Any:
             self.hit(before)
