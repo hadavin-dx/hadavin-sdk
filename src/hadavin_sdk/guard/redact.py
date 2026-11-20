@@ -51,6 +51,7 @@ import time
 import unicodedata
 from bisect import bisect_right
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -960,7 +961,7 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # digit, a markup tag (`<b>`, `</b>`) or an escaped `\\n` `\\r` `\\t`. The key=value value class keeps a comma that begins no `key=`
 # pair and reads `.` `)` `!` and many more as value characters, so `password=hunter22, hunter22` stored `hunter22,` and the every-copy
 # sweep of that value left the clear copy `hunter22` readable (E18 G7-F4); the same with a wrapper (`(hunter22)`, a backtick, `**x**`,
-# `<b>x</b>`, a table bar, `x...`, an escaped newline). `_place` registers the value stripped this way as an entry of its own; it does not register a core that is one of the "says no value" words (`none!`: masked whole as before, never every `none`).
+# `<b>x</b>`, a table bar, `x...`, an escaped newline). `_place` registers the value stripped this way as an entry of its own; it does not register a core that `_core_is_declined` names (a "says no value" word, a placeholder's text, a value of tokens only, a core that would pass half of the map's cap).
 # M4 (round 2): also the escapes that end a line or a quote in transit (`%0A`, `\\u000a`, `\\x0a`, `&quot;`, `&#10;`, `&nbsp;`) and a tag with a
 # slash or a space (`<br/>`, `<br />`, `<a/>`); every form is bounded (a tag name 16, spaces 3, an entity 10), so the 64-character window stays linear.
 _EDGE_FORM = r"(?:</?[A-Za-z][A-Za-z0-9]{0,15} {0,3}/?>|\\[nrt]|%[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\x[0-9A-Fa-f]{2}|&(?:#[0-9]{1,7}|[A-Za-z]{2,10});)"
@@ -971,65 +972,93 @@ _EDGE_CLOSE = re.compile(
 )
 
 
-def _bare(text: str) -> str:
-    """`text` without what is not part of a value at either end (see above). Works on indexes and looks at the last 64 characters of the
-    end only: linear, whatever the text holds."""
+def _bare_span(text: str) -> tuple[int, int]:
+    """The span of `text` without what is not part of a value at either end (see above). Works on indexes and looks at the last 64 characters of the
+    end only: linear, whatever the text holds. The close search (a known form the value class cut short) is tried only when the last character
+    can end one (`;` `>` `%` or a letter or digit): on a long run of `!` or `-` it costs nothing."""
     start, end = 0, len(text)
     while start < end:
+        last = text[end - 1]
         if (m := _EDGE_OPEN.match(text, start, end)) is not None:
             start = m.end()
-        elif (m := _EDGE_CLOSE.search(text, max(start, end - 64), end)) is not None:
+        elif (last in ";>%" or last.isalnum()) and (
+            m := _EDGE_CLOSE.search(text, max(start, end - 64), end)
+        ) is not None:
             end = m.start()
         elif not text[start].isalnum():
             start += 1
-        elif not text[end - 1].isalnum():
+        elif not last.isalnum():
             end -= 1
         else:
             break
+    return start, end
+
+
+def _bare(text: str) -> str:
+    """`text` without what is not part of a value at either end (`_bare_span`)."""
+    start, end = _bare_span(text)
     return text[start:end]
 
 
-# A large value whose core differs by a few characters (a PRIVKEY: the dashes of its header and footer are the whole difference) gets no core:
-# the copy would double its characters in the map (E14: MAX_MAP_CHARS 524,288, MAX_FINDER_CHARS 786,432; a 262,144-character key, 524,222 characters
-# without the core, 786,350 with it, ended a run that was fine before G12) and a few characters of difference is no extra protection.
-_CORE_BIG = 4096
-_CORE_DELTA = 16
+# A large value gets no core only when the core would push the run's map past half of `MAX_MAP_CHARS` (524,288): a 262,144-character key is 524,222
+# characters of the map without the core and 786,350 with it, and that ended a run that was fine before G12 (E14). The characters of the map are
+# summed only for a core of this many characters or more (a smaller one cannot matter), so the sum is no cost per value.
+_CORE_BUDGET_FROM = 4096
+_CORE_BUDGET = defaults.MAX_MAP_CHARS // 2
 
 
-_CAPS_BODY = re.compile(
-    r"[A-Z][A-Z0-9]*(?:_[A-Za-z0-9]*)?"
-)  # what stands between the brackets of an escaped look-alike: `SECRET_x`, `SECRET`
-
-
-def _cut_a_lookalike_bracket(full: str, core: str) -> bool:
-    """Did `_bare` cut the brackets of an escaped look-alike off `full`: `‹` at the start AND `›` at the end (`‹hunter2›`, `‹SECRET_x›`), or
-    a `‹` at the start of a look-alike body (`‹SECRET_1`, a cut-off one)? One stray `‹` or `›` (`hunter22!›`, `‹hunter22,`) is not that: the core is kept."""
-    i = full.find(core)
-    opened, closed = "\u2039" in full[:i], "\u203a" in full[i + len(core) :]
-    if opened and closed:
+def _core_is_declined(core: str, full: str, start: int, end: int, redactor: _Redactor) -> bool:
+    """Is `core` (the span of `full` from `start`) NOT registered as an entry of its own? (G12, G12b-d; the value itself is always registered.)
+    - a "no value" word (`none!`: its core would sweep every `none`);
+    - the text of a placeholder this run issued, or one it could have: a label of `_LABELS`, `_`, digits that the label's counter has reached or that
+      the map already holds (`EMAIL_1`); `TOKEN_2024` after `password=TOKEN_2024.` is a value (G12d);
+    - the cut-off start of a real placeholder that stood right before the core in `full` (`<EMA`, `<EMAIL_`; only that `<`, G12d);
+    - a value that is nothing but tokens (the E9 own-output shape `‹SECRET_1›<UUID_3>`), or a core that is the body of a real token that `_bare`
+      cut the `‹` off (`‹SECRET_x`); a `‹HUNTER2,`, `‹hunter2zz›` or a `‹X_1›` inside a password is a value, its core is registered;
+    - the core would push the map past half of `MAX_MAP_CHARS` (a large value: a PRIVKEY doubled)."""
+    if core.lower() in _NOT_A_VALUE or not re.search(r"[^\W_]", _ANY_TOKEN.sub("", full)):
         return True
-    return opened and _CAPS_BODY.fullmatch(core) is not None
-
-
-def _placeholder_like(core: str, full: str) -> bool:
-    """Is `core` the text of a real placeholder (`EMAIL_1`: a label of `_LABELS`, `_`, digits) or the start of one that `full` cut off
-    (`<EMA`, `<EMAIL_`: the `<` stripped from `full` stood right before it)? Registered, it would be swept out of an escaped
-    look-alike (E9). Any other core, `ADMIN_1`, `DB_PASS_2`, `SEC`, `API`, `HOST`, is a value and is registered (M2)."""
-    return _LABEL_TEXT.fullmatch(core) is not None or (
-        f"<{core}" in full and any(f"{label}_".startswith(core) for label in _LABELS)
-    )
+    if _LABEL_TEXT.fullmatch(core) is not None:
+        label, _, number = core.rpartition("_")
+        if f"<{core}>" in redactor.mapping or (
+            len(number) < 10 and int(number) <= redactor.counters.get(label, 0)
+        ):
+            return True
+    if (
+        start > 0
+        and full[start - 1] == "<"
+        and any(f"{label}_".startswith(core) for label in _LABELS)
+    ):
+        return True
+    if "\u2039" in full[:start] and _LABEL_PREFIX.fullmatch(core) is not None:
+        return True
+    # `_bare` cut the `‹` off the start of a token (`‹SECRET_1›xy`: core `SECRET_1›xy`) or the `›` off the end of one: junk a look-alike of a token would hold
+    if full[start - 1 : start] == "\u2039" and _TOKEN_BODY_START.match(core):
+        return True
+    if full[end : end + 1] == "\u203a" and _TOKEN_BODY_END.search(core):
+        return True
+    if len(core) >= _CORE_BUDGET_FROM:
+        held = sum(map(len, redactor.mapping.values()))
+        return held + len(core) > _CORE_BUDGET
+    return False
 
 
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(
     dict.fromkeys([*(label for label, _ in PATTERNS), "ENCODED"])
 )  # ENCODED: a base64 run (runmap, G4); not a pattern
-_LOOKALIKE = re.compile(
-    "\u2039[A-Z][A-Z0-9]*_[0-9]+\u203a"
-)  # an escaped placeholder, as `runmap.escape_placeholders` writes one
 _LABEL_TEXT = re.compile(
     rf"(?:{'|'.join(map(re.escape, _LABELS))})_[0-9]+"
 )  # the text of a real placeholder, `<` `>` left off
+_LABEL_PREFIX = re.compile(
+    rf"(?:{'|'.join(map(re.escape, _LABELS))})(?:_[A-Za-z0-9]*)?"
+)  # a real label with a cut-off or non-numeric tail: what stands inside the brackets of a look-alike of a real token (`SECRET_x`, `SECRET_`)
+_ANY_TOKEN = re.compile(
+    "<[A-Z][A-Z0-9]*_[0-9]+>|\u2039[A-Z][A-Z0-9]*_[0-9]+\u203a|<[A-Z][A-Z0-9]*(?:_[0-9]*)?(?![A-Za-z0-9])|[ \t;,]"
+)  # a real placeholder, an escaped look-alike, a cut-off opening of one (`<EMA`, `<EMAIL_1`), or a separator between them
+_TOKEN_BODY_START = re.compile("[A-Z][A-Z0-9]*_[0-9]+\u203a")
+_TOKEN_BODY_END = re.compile("\u2039[A-Z][A-Z0-9]*_[0-9]+\\Z")
+_LOOKALIKE_TOKEN = re.compile("\u2039([A-Z][A-Z0-9]*_[0-9]+)\u203a")
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # Own output (G7 + fix round 1; E9(2) restricted to SECRET tokens): a SECRET value made of nothing but SECRET tokens this
 # redactor wrote. One anchored shape: a token is a genuine `<SECRET_n>` or an ESCAPED look-alike as
@@ -1866,8 +1895,9 @@ class _Redactor:
         return original, placeholder
 
     def _place(self, label: str, full: str, original: str, derived: bool = True) -> str:
-        """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it and one for `full` without the
-        characters that are not letters or digits at its ends (`_bare`, G12)."""
+        """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it and one for `full` without what is not part
+        of a value at its ends (`_bare`, G12: not a letter or digit, a tag, an escape), unless `_core_is_declined` (a "no value" word, a
+        placeholder's text, a value of tokens only, a large value whose core would pass half of the map's cap)."""
         self.counters[label] += 1
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
@@ -1890,21 +1920,14 @@ class _Redactor:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
         # G12: the value without the non-alphanumeric characters at its ends, an entry of its own (as a piece), so its copies are swept as the
         # copies of a value written without it are (`_sweep` decides how: every copy from 4 characters, standalone at 3)
-        core = _bare(full) if derived and label in SECRET_KINDS else full
-        # No core (the value stays one entry) when:
-        #  - the core is a "no value" word (`none!`: its core would sweep every `none`);
-        #  - the core is a placeholder's own text or its cut-off start (`EMAIL_1`, `<EMA`);
-        #  - the value holds an escaped look-alike TOKEN `‹KIND_n›` (a junk entry the E9 pins forbid, `‹SECRET_1›<UUID_3>`), or `_bare` cut
-        #    the brackets of one (`_cut_a_lookalike_bracket`); a single stray `‹` or `›` does NOT drop the core;
-        #  - the value is large and the core differs by a few characters (`_CORE_BIG`).
-        if (
-            core.lower() in _NOT_A_VALUE
-            or _placeholder_like(core, full)
-            or _LOOKALIKE.search(full) is not None
-            or _cut_a_lookalike_bracket(full, core)
-            or (len(full) > _CORE_BIG and len(full) - len(core) <= _CORE_DELTA)
-        ):
-            core = full
+        core = full
+        if derived and label in SECRET_KINDS:
+            start, end = _bare_span(full)
+            core = full[start:end]
+            # No core (the value stays one entry) when `_core_is_declined` says so: a "no value" word, a placeholder's own text, a value of tokens
+            # only, a core that would push the map past half of its cap (a large value). Anything else is a value, its plain copies are swept (G12d).
+            if core != full and _core_is_declined(core, full, start, end, self):
+                core = full
         if core != full and len(core) >= 3 and core not in self.reverse:
             self.counters[label] += 1
             self.mapping[f"<{label}_{self.counters[label]}>"] = core
@@ -2727,6 +2750,26 @@ class _Redactor:
         # runs after `SPELLED_MAX_PASSES` is not shown to be settled (fail closed; pinned by G9-1/G9-3)
         raise InputTooLarge("SpelledNotSettled")
 
+    def _outside_lookalikes(
+        self, segment: str, original: str, replace: Callable[[str], str]
+    ) -> str:
+        """`replace` applied to `segment` except inside an escaped look-alike `‹LABEL_n›` of a real label: one the run could have issued (`n` within
+        the label's counter), or one that merely holds `original` (a value that is the tail of it, `MAIL_1` in `‹EMAIL_1›`), is left whole (G12d; no
+        `‹E<SECRET_3>›`). A look-alike that IS the value (`‹TOKEN_2024›` for the value `TOKEN_2024`, the counter below it) is swept as before."""
+        out: list[str] = []
+        at = 0
+        for m in _LOOKALIKE_TOKEN.finditer(segment):
+            inner = m.group(1)
+            label, _, number = inner.rpartition("_")
+            if label in self.counters and (
+                inner != original or (len(number) < 10 and int(number) <= self.counters[label])
+            ):
+                out.append(replace(segment[at : m.start()]))
+                out.append(m.group(0))
+                at = m.end()
+        out.append(replace(segment[at:]))
+        return "".join(out)
+
     def _sweep_once(self, out: str, deadline: float | None, work: list[int]) -> str:
         """One body of the sweep, as `sweep` was before G9: build if the map grew, the written forms, the literal sweep per free segment."""
         self._ensure_built(deadline)
@@ -2760,11 +2803,21 @@ class _Redactor:
                     continue
                 before = segment.count(placeholder)
                 if rule is _EVERY_COPY:
-                    segment = segment.replace(original, placeholder)
+
+                    def replace(text: str, original=original, placeholder=placeholder) -> str:
+                        return text.replace(original, placeholder)
+
                 else:
-                    segment = _replace_standalone(
-                        segment, original, placeholder, _joins(placeholder)
-                    )
+
+                    def replace(
+                        text: str, original=original, placeholder=placeholder, rule=rule
+                    ) -> str:
+                        return _replace_standalone(text, original, placeholder, _joins(placeholder))
+
+                if "\u2039" in segment and "\u2039" not in original and "\u203a" not in original:
+                    segment = self._outside_lookalikes(segment, original, replace)
+                else:
+                    segment = replace(segment)
                 self.actions += segment.count(placeholder) - before  # one per copy replaced
             parts[i] = segment
         return "".join(parts)

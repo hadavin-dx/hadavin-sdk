@@ -173,12 +173,19 @@ def test_only_the_exact_escaped_shape_is_left_alone():
         f"{L}SECRET_x{G}",  # not a number
         f"{L}_1{G}",  # no kind
         f"{L}SECRET_1",  # not closed
-        f"{L}{PW}{G}",  # a secret in the brackets
         f"{L}SECRET_1{G}{L}{PW}_1x{G}",
     ):
         result = R.redact(f"password={value}")
         assert result.text == "password=<SECRET_1>", value
         assert result.mapping == {"<SECRET_1>": value}
+
+
+def test_a_secret_in_look_alike_brackets_is_masked_and_its_core_swept():
+    """G12d: `‹hunter2zz›` is a value (not a token): masked whole, and its core is registered so a bare copy is swept."""
+    value = f"{L}{PW}{G}"
+    result = R.redact(f"password={value} {PW}")
+    assert result.text == "password=<SECRET_1> <SECRET_2>"
+    assert result.mapping == {"<SECRET_1>": value, "<SECRET_2>": PW}
 
 
 def test_secret_lookalikes_and_genuine_placeholders_together_are_left_alone():
