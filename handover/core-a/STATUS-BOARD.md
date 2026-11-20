@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:08:20Z
+UPDATED_UTC: 2026-11-20T12:09:06Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -14,7 +14,7 @@ FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole sui
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T12:08:09Z (the push before this board)
+PUSHED_UTC: 2026-11-20T12:08:24Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -111,12 +111,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 21231s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 21231s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 21231s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 21231s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 21231s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 21231s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 21278s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 21278s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 21278s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 21278s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 21278s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 21278s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
