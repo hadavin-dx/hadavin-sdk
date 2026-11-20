@@ -1,0 +1,30 @@
+[fuzz-pg] a: seed=424242 (random.Random(f'424242-a'))
+[fuzz-pg] a: 248 posts, ports 39759 37155
+[fuzz-pg] a: status counts {202: 179, 409: 64, 200: 5}
+[fuzz-pg] a: rows=18 model_calls=18 money={'reservations': 18, 'open': 0, 'day_totals': {datetime.date(2026, 11, 20): Decimal('0E-12')}}
+[fuzz-pg] test_a_same_key_burst_and_document_conflicts_across_two_workers: seed=424242 load1 start=0.31 peak=0.37 end=0.37 elapsed=4.1s
+[fuzz-pg] b: seed=424242 (random.Random(f'424242-b'))
+[fuzz-pg] b: llm_delay=0.03 kill_gaps=[0.538, 0.128, 0.119] victims=['w2', 'w1', 'w1']
+[fuzz-pg] b: burst status counts {202: 30, 200: 198, None: 143}
+[fuzz-pg] b: repost status counts {200: 19, 202: 1}
+[fuzz-pg] b: rows=20 left_in_progress=1 calls=20 money={'reservations': 20, 'open': 1, 'day_totals': {datetime.date(2026, 11, 20): Decimal('0.035967000000')}}
+[fuzz-pg] b: tick exit 0; states {'NO_ACTION': 19, 'NEEDS_PERSON': 1}
+[fuzz-pg] test_b_kill9_of_workers_at_random_moments_then_restart_and_repost: seed=424242 load1 start=0.37 peak=0.37 end=0.34 elapsed=5.8s
+[fuzz-pg] c: seed=424242 (random.Random(f'424242-c'))
+[fuzz-pg] c: application_name=fzc472719 cut_at=0.61s window=1.0s pace=0.117s
+[fuzz-pg] c: backends terminated=2 burst status counts {202: 7, 200: 14, 503: 829} posts=850
+[fuzz-pg] c: a worker answers k0 again without a restart within 8 s after the outage: False
+[fuzz-pg] c: repost status counts {200: 5, 202: 13}
+[fuzz-pg] c: rows=18 left_in_progress=1 calls=18 money={'reservations': 18, 'open': 1, 'day_totals': {datetime.date(2026, 11, 20): Decimal('0.035964000000')}}
+[fuzz-pg] test_c_store_outage_by_pg_terminate_backend_then_recovery: seed=424242 load1 start=0.34 peak=0.39 end=0.38 elapsed=17.7s
+[fuzz-pg] test_c_min_one_terminated_connection_is_survived_without_a_restart: seed=424242 load1 start=0.38 peak=0.38 end=0.30 elapsed=17.0s
+[fuzz-pg] d: seed=424242 (random.Random(f'424242-d'))
+[fuzz-pg] d: cap: opened 300 idle in 2.6s; closed by the server 44; alive 256; connect failures 0
+[fuzz-pg] d: all 40 lorises closed by the server after 31.26907342800405
+[fuzz-pg] d: loris first answers (s after open, bytes): [(30.3, b'HTTP/1.0 400 Bad Request'), (31.3, b'HTTP/1.0 400 Bad Request')]
+[fuzz-pg] d: drip rounds 16, round times [1.2, 3.2, 5.2, 7.2, 9.2, 11.2, 13.2, 15.2, 17.2, 19.2, 21.2, 23.2, 25.2, 27.2, 29.2, 31.2]; send errors [] (0 sockets)
+[fuzz-pg] d: stream by phase {'cap': {'ok': 59, 'bad:None': 84}, '1': {'ok': 440}, '3': {'ok': 974}}
+[fuzz-pg] d: hostile answers {'oversized-header': {431: 277}, 'huge-length': {413: 274}, 'garbage': {400: 289}, 'chunked': {400: 283}, 'oversized-body': {413: 312}, 'negative-length': {400: 275}, 'two-lengths': {400: 259}, 'giant-line': {414: 301}, 'bad-signature': {401: 292}, 'truncated-head': {None: 300}, 'truncated-body': {None: 283}}
+[fuzz-pg] d: loris age at the server's cut (s): min 30.1 max 30.3 of 40
+[fuzz-pg] d: rows=20 money={'reservations': 20, 'open': 0, 'day_totals': {datetime.date(2026, 11, 20): Decimal('0E-12')}}
+[fuzz-pg] test_d_hostile_bytes_and_connection_cap_while_a_legitimate_stream_runs: seed=424242 load1 start=0.30 peak=0.35 end=0.20 elapsed=36.6s
