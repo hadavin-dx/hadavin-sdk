@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:46:52Z
+UPDATED_UTC: 2026-11-20T05:47:08Z
 SESSION: core-a
 ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
 STATE: WORKING
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 9
-PERCENT: 65
-AGENTS_RUNNING: 7
-CAPACITY: load 0.30 of 4 cores (1-minute average), mem 0.6/15.7 GB, 7 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_OPEN: 7
+PERCENT: 70
+AGENTS_RUNNING: 5
+CAPACITY: load 0.31 of 4 cores (1-minute average), mem 0.7/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.3G 60G 14%; 346M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: agents land one by one: check each, commit; then mutant script on the final code, my files once more, REPORT.md block
-PUSHED_UTC: 2026-11-20T05:44:12Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:46:54Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -27,14 +27,14 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | T2-E | ticket step E test helpers | DONE (writer may still add lead verdicts) | 100 | tickets/E-test-helpers.md (190 lines) | 1 | written; socket guard cut, one helper kept (crash points), no request to core-b needed; nothing was run for the ticket |
 | T2-D | ticket step D signed endpoint + worker + n8n template | DONE | 100 | tickets/D-signed-endpoint.md (about 345 lines), requests/001-config-triggers.md DRAFT 2 | 1 | written; 33 draft claims checked: 26 verified, 7 wrong (listed in ticket section 3); nothing was run for the ticket |
 | T2-H | ticket step H logic, only if D proves a delta | CUT (ticket D verdict, lead draft agrees) | 100 |  | 0 | no delta over Runtime.handle once the payload hash is in trigger_ref; reopen triggers listed in ticket D section 4 |
-| T3 | one EGM review round for ticket D (and H if written) | RUNNING (review done, resolve written, ticket text being repaired) | 80 | tickets/D-review-1.md, ESCALATIONS.md (E1 to E4) | 1 | round 1 of 1: 3 Blocker, 20 Major; 33 fixes, 4 escalated, 4 nits declined, 0 contested; reviewers read the ticket, not the built code |
+| T3 | one EGM review round for ticket D (and H if written) | DONE (round 1 of 1; open items are in ESCALATIONS and ticket section 10 'TO WRITE') | 100 | tickets/D-review-1.md, tickets/D-signed-endpoint.md (419 lines, reviewed), requests/001-config-triggers.md DRAFT 3 | 1 | 33 of 33 accepted fixes applied to the text; 3 of them name tests that do not exist yet (marked TO WRITE); nothing was run for the text repair |
 | T4 | store contract test files for core-b interface | RUNNING | 5 | raw/T4-contract-tests.log (not yet) | 1 | core-b published interface (i) version 2.1 at 05:44Z; tests written before the code exists, they skip until step F lands |
 | BUILD-E | build step E on wip/cloud-core-a/E | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/E-tests.log, raw/E-tests-pg16.log, raw/E-guards.log, raw/E-mutants.log | 1 | crash.py 197 lines, test file 698 lines (ticket guessed 110 and 190); 4 mutants caught; NOT checked: wheel contents, Windows exit code, Python 3.12 run by me |
 | T5-SKEL | T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/) | DONE (n8n part is an outline, NOT run in n8n: ESCALATIONS E4) | 100 | tests/triggers/test_t5_cases.py (645 lines), n8n/ (3 files) | 1 | 65 passed, 66 skipped (64 need the database variable, 1 crash case still skip-marked, 1 other); one early run showed 3 failures while the code under it was being rewritten, not captured: a timing flake is NOT ruled out; every n8n node parameter is from memory and marked UNVERIFIED (12 notes) |
 | BUILD-D-endpoint | src/hadavin_sdk/triggers/endpoint.py + tests/triggers/test_endpoint.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-endpoint-tests.log, -guards.log, -mutants.log (not yet) | 1 | endpoint.py 300 lines (draft guessed 130), 190 tests pass, 2 skipped; 3 mutants caught; NOT run: bandit, real socket, timing of the secret comparison |
 | BUILD-D-worker | src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-worker-tests.log, -mutants.log (not yet) | 1 | worker.py 391 lines, 32 tests pass 4 times in a row (about 5.4 s), 4 mutants caught; in-process key table removed, no-slot path polls the stored row; KNOWN COST: a pool-full 503 for a new key takes the full ack wait (5 s) and holds a server thread, no cap on waiting requests; NOT run: main past its two refusal paths, PostgreSQL, two real processes |
 | BATCH | ONE batch test run when E and D are both coded | DONE with 2 failures (1 INHERITED-from-handover, 1 NEW flaky in my T5 test, fix in work) | 90 | raw/BATCH-full-suite.log, raw/BATCH-rerun-own-files.log, raw/BATCH-lint.log, raw/BATCH-bandit.log | 1 | whole suite once: 2 failed, 10723 passed, 527 skipped in 99 s (no database variable, so database tests skipped; python 3.13 only). PostgreSQL 16 run of my own files still to do after the worker change |
-| MUTANTS | tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants | RUNNING | 5 | raw/endpoint-mutants-run.log (not yet) | 1 | ORDER 008: a guarantee with no mutant script counts as not done |
+| MUTANTS | tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants | DONE on the code of 05:45Z; MUST be re-run on the final code | 80 | tests/endpoint_mutants.py (284 lines), raw/endpoint-mutants-run.log | 1 | 17 of 17 good in 7 groups; 6 mutants have a weak expect text (bare asserts); one worker test is deselected in mutant runs because the runner uses --noconftest; dropping the NUL guard SURVIVES (the field patterns already refuse NUL), left out and said so in the script |
 | E2-SOCKET | real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2) | RUNNING | 5 | raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet) | 1 | lead decision: in scope, do it without asking |
 | R12-worker | lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14 | RUNNING | 5 | raw/E2-tests.log (not yet) | 1 | ORDER 012; same agent as E2-SOCKET because one agent owns worker.py |
 | R12-endpoint | lead review fixes in endpoint.py: minors 1, 5, parse edges | RUNNING | 5 | raw/D-endpoint-tests-2.log (not yet) | 1 | ORDER 012 |
@@ -54,8 +54,8 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | build-D-wk | builder | fable | worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants | 05:30 | ended | 100 | done | review runs alongside (0 of 1 started) | 0 (1 follow-up change, not a retry of a failure) | finished, 189k tokens |
 | egm-impl-ready | reviewer | fable | egm:egm-implementation-readiness reads ticket D against its standard | 05:31 | ended | 100 | done | 1 of 1 | 0 | finished, 131k tokens: 2 Blocker, 13 Major, 8 Nit on ticket D |
 | egm-codebase | reviewer | fable | egm:egm-codebase-details checks ticket D claims against the code | 05:31 | ended | 100 | done | 1 of 1 | 0 | finished, 200k tokens: 1 Blocker, 7 Major, 10 Nit |
-| ticket-fix | builder (ticket text only) | fable | applies the 33 accepted review fixes to ticket D and writes request 001 draft 3 | 05:38 | about 12 min after start | 70 | running | 1 of 1 (resolve step) | 0 | egm-resolve output must be applied; 3 agents run (worker change, T5 skeleton, ticket fix) |
-| mutants | builder (test tooling) | fable | writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py | 05:39 | about 20 min after start | 50 | running | n/a | 0 | ORDER 008 item 1 |
+| ticket-fix | builder (ticket text only) | fable | applies the 33 accepted review fixes to ticket D and writes request 001 draft 3 | 05:38 | ended | 100 | done | 1 of 1 (resolve step) | 0 | finished, 218k tokens |
+| mutants | builder (test tooling) | fable | writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py | 05:39 | ended | 100 | done | n/a | 0 | finished, 175k tokens |
 | e2-socket | builder | fable | writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run | 05:41 | about 25 min after start | 40 | running | n/a | 0 | ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers) |
 | r12-endpoint | builder | fable | endpoint.py minors of the lead review plus boundary and parse-edge tests | 05:46 | about 15 min after start | 5 | running | lead code review round 1 of 3 | 0 | ORDER 012 |
 | r12-n8n | builder (templates and text) | fable | n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n | 05:46 | about 20 min after start | 5 | running | lead code review round 1 of 3 | 0 | ORDER 012 |
@@ -81,6 +81,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | whole suite: pytest -n 3 -m 'not live and not perf' | same | 1 of 1 | 10723 / 2 / 0, 527 skipped (99 s) | (1) tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked: handover/BRIEF-PREAMBLE.md holds a vendor brand name; (2) tests/triggers/test_t5_cases.py::test_further_pool_full_is_503_and_a_later_retry_is_accepted: assert 503 in (200, 202) | done | (1) NOT from core-a code: the lead's handover file trips a repo rule; main without handover/ does not have it. (2) NEW and mine: timing race, the slot is freed a moment after the run's final state is visible; passed in the re-run of my files, so it is FLAKY, not fixed; fix sent to the builder |
 | 8 rule test files (skeleton writer) | working tree | 1 | 446 / 1 / 0 | test_no_vendor_brand_string_is_tracked: handover/BRIEF-PREAMBLE.md contains a vendor brand name (rule 15 text) | done | FAILURE is in the lead's file handover/BRIEF-PREAMBLE.md, not in core-a files: see LEAD ACTIONS |
 | my 4 test files + 3 repo rule files (re-run to name the failures) | working tree | 1 | 431 / 1 / 0, 70 skipped | test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md) | done | the T5 failure did not repeat: flaky |
+| tests/endpoint_mutants.py (mutation runner, 17 mutants) | working tree at 05:45Z | 1 (plus 1 re-run by the same agent after worker edits) | 17 of 17 good; problems: [] | none | done, re-run pending | worker.py and endpoint.py are still being changed for ORDER 012; a mutant whose old text no longer matches would show as a problem |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
