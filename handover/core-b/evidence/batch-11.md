@@ -74,7 +74,7 @@ Failure and error entries below: test id from the log's short summary; the last 
 - FAILED `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`
 
   ```text
-  E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'", "handover/core-b/board-body.md: 'Port.io'", "handover/core-b/STATUS-BOARD.md...over/core-b/inputs/evidence-bpg.md: 'Port.io'", "handover/core-b/inputs/evidence-bpg-first-error-lines.txt: 'Port.io'"]
+  E       assert not ["handover/BRIEF-PREAMBLE.md: '[vendor string]'", "handover/core-b/board-body.md: '[vendor string]'", "handover/core-b/STATUS-BOARD.md...over/core-b/inputs/evidence-bpg.md: '[vendor string]'", "handover/core-b/inputs/evidence-bpg-first-error-lines.txt: '[vendor string]'"]
   ```
 
 - FAILED `tests/test_stop_state_roles.py::test_s2_migrate_refuses_a_member_of_the_reset_role[LOGIN]`

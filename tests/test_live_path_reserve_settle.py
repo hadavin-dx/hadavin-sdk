@@ -269,36 +269,80 @@ def test_fixture_runs_the_agent_and_books_the_cost(world, store):
 # (7) the settle fallback, the other refusals, the overshoot (review B2-1: M2, m2, m6) -------------------------
 
 
-def test_definite_settle_refusal_books_the_run_cost_directly(world):
-    from hadavin_sdk.store.protocol import NotFound
+def _definite_errors():
+    from psycopg.errors import DataError
 
+    from hadavin_sdk.errors import ConfigError
+    from hadavin_sdk.store.protocol import NotFound, StaleState
+
+    return [
+        RuntimeError("row missing"),
+        ConfigError("HD004"),
+        StaleState("x"),
+        DataError("x"),
+        NotFound("x"),
+    ]
+
+
+@pytest.mark.parametrize("error", _definite_errors(), ids=lambda e: type(e).__name__)
+def test_a_rolled_back_settle_failure_books_the_run_cost_once(world, error):
     llm = StubLLM(cost="0.20")
     rt, _spy = world(llm)
 
     def refuse(agent_id, rid, usd):
-        raise NotFound(rid)
+        raise error
 
     rt.limits.settle_for = refuse
     run = handle(rt)
-    assert (
-        run.state in (S.NO_ACTION, S.NEEDS_PERSON)
-        and run.reason_code != "limits.limits_unavailable"
-    )
-    assert rt.store.get_run(run.run_id).cost_usd == D("0.20")  # the fallback add_cost
+    assert run.reason_code != "limits.limits_unavailable"
+    assert rt.store.get_run(run.run_id).cost_usd == D("0.20")  # the direct booking, once
 
 
-def test_ambiguous_settle_failure_does_not_double_count_the_run_cost(world):
+def _ambiguous_errors():
+    from psycopg import InterfaceError, OperationalError
+
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    return [
+        OperationalError("lost"),
+        InterfaceError("closed"),
+        ConnectionError("x"),
+        TimeoutError(),
+        StoreUnavailable("x"),
+    ]
+
+
+@pytest.mark.parametrize("error", _ambiguous_errors(), ids=lambda e: type(e).__name__)
+def test_ambiguous_settle_failure_does_not_double_count_the_run_cost(world, error):
     llm = StubLLM(cost="0.20")
     rt, _spy = world(llm)
     real = rt.limits.settle_for
 
     def commit_then_lose_the_reply(agent_id, rid, usd):
         real(agent_id, rid, usd)  # the settle committed and booked the run cost
-        raise ConnectionError("reply lost")
+        raise error
 
     rt.limits.settle_for = commit_then_lose_the_reply
     run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.limits_unavailable")
     assert rt.store.get_run(run.run_id).cost_usd == D("0.20")  # not 0.40
+
+
+def test_settle_failure_with_a_store_that_is_down_never_raises(world):
+    from hadavin_sdk.runtime.agent_loop import Runtime
+
+    llm = StubLLM(cost="0.20")
+    rt, _spy = world(llm)
+
+    def down(*a, **kw):
+        raise RuntimeError("store down")
+
+    rt.limits.settle_for = down
+    rt.store = type("Down", (), {"__getattr__": lambda self, n: down})()
+    run = Runtime._settle_model_call(
+        rt, type("R", (), {"run_id": "r", "agent_id": AGENT})(), "res-1", D("0.20")
+    )
+    assert run is not None  # the run is returned, nothing was raised
 
 
 def test_a_bad_reply_cost_ends_the_run_and_never_raises(world):

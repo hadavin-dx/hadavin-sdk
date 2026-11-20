@@ -58,7 +58,7 @@ def test_end_to_end_replay_then_score(cfg_dir, export, capsys):
         and ops.count("score_run") == 1
     )
     ev = next(e for e in LocalDirSink(cfg_dir / "audit").events() if e.operation == "score_run")
-    assert ev.result == "H=2;Hne=1;M=2;S=2;ic=1;ha=0" and ev.decision == "-" and ev.domain == "k1b"
+    assert ev.result == "H=2_Hne=1_M=2_S=2_ic=1_ha=0" and ev.decision == "-" and ev.domain == "k1b"
     assert "ghost" not in text
     capsys.readouterr()
 

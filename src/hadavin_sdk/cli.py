@@ -100,6 +100,16 @@ def _money(text: str) -> Decimal:
     return d
 
 
+def _unreleased_range() -> str:
+    try:  # migrate needs the postgres extra; the help must work without it
+        from hadavin_sdk.store.migrate import UNRELEASED_MIGRATIONS
+    except ImportError:
+        return "the unreleased ones"
+
+    nums = sorted(v[:4] for v in UNRELEASED_MIGRATIONS)
+    return f"{nums[0]}-{nums[-1]}" if nums else "none now"
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
     try:
@@ -195,7 +205,7 @@ def _main(argv: list[str] | None = None) -> int:
         "--accept-changed-draft",
         action="append",
         default=[],
-        help="an UNRELEASED migration (0008-0011) whose file changed but whose database already matches it: record "
+        help=f"an UNRELEASED migration ({_unreleased_range()}) whose file changed but whose database already matches it: record "
         "the file's checksum; repeat for several",
     )
     mig.add_argument(

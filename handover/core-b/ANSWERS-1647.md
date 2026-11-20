@@ -1,0 +1,5 @@
+# core-b ANSWERS 16:47Z (head d254b6a2a, /proc/loadavg 0.99 1.53 1.62)
+B5 audit-rights: builder AB5 (sonnet) RUNNING, worktree /tmp/core-b-wt/MAB5, 6 commits on top of wip/cloud-core-b/merge-migrate 55df54150 (0012 outbox functions + checkpoint role grants 85e445dfb; checkpoint_db/--checkpoint-role 17c2e3242; tests+mutants 8cce59d66, killers 52eaf9148/5a2a87c77; docs d9fd303ca). Not pushed until its report; then fresh reviewer, then merge AFTER wip/lead-b-migrate (lead says clean).
+Merged on cloud/core-b since 16:28Z: TA expired-hold alert (dd7691e1d: hadavin_expired_holds, tick step check_expired_holds, runbook), static-test fixes (d254b6a2a). Decision for the lead: the alert text uses the real command 'hadavin-sdk release-expired' (not 'limits release-expired'); say if you want a 'limits release-expired' alias.
+core-a rev-b-newest2.md Majors: 1 FIXED 9b7610007, 2 FIXED 9b7610007, 3 PARTLY (M6 ledger; hard ConfigError queued after the migrate.py merge): see ANSWERS-1628.md.
+Waiting for the lead: clean on wip/lead-b-migrate and wip/lead-b-ts-watermark; xr-from-core-a-3.md not landed. RUNNING 1 (AB5).

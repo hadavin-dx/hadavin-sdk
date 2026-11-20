@@ -163,6 +163,12 @@ RESERVATION_EXPIRE_S = 3600
 # today changes; a runtime login that calls the function directly can no longer expire a live hold at age 0 (an expired
 # hold can be released by the operator and the real cost of a late settle would be lost, review M1).
 MIN_EXPIRY_AGE_S = RESERVATION_EXPIRE_S
+# How long an expired hold may stay booked before the tick step `check_expired_holds` fails loudly (a hold that nobody
+# released keeps its worst case in the day counter, so after a provider outage or a revoked key the agents run into
+# their daily budget without any error). Six hours: past the one hour in which a late settle can still book the real
+# cost (MIN_EXPIRY_AGE_S, after which `release-expired` is allowed at all) with room for a normal operator
+# response, short enough that the same day's budget is still worth saving. Not a hard limit: only the alert uses it.
+EXPIRED_HOLD_ALERT_AFTER_S = 3600 * 6
 # How many days the booking day of `hadavin_reserve_spend` may differ from the database's UTC date (row
 # `max_day_skew` of `hadavin_limits`). One day covers a clock a few hours off and a call made across midnight; a
 # larger window would let a runtime login start a fresh day counter and month counter by naming a far day (review B3).
