@@ -41,3 +41,43 @@ SKIPPED [2] tests/contracts/test_store_spend_reservations.py:213: core-b step F 
 SKIPPED [2] tests/contracts/test_store_spend_reservations.py:409: core-b step F not landed: Store.reserve_spend missing
 1 failed, 1 passed, 4 skipped in 1.66s
 ##### trial (96768f66d) : 15 ids
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/tests/test_grants_negative_roles.py:205: AssertionError: assert {('purge', 'r...udit_outbox')} == {('purge', 'r...udit_outbox')}
+E   AssertionError: assert {'redaction_m... 'tool_calls'} == {'redaction_m... 'tool_calls'}
+      
+      Extra items in the left set:
+      'spend_reservations'
+      Use -v to get more diff
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/tests/test_grants_negative_roles.py:223: AssertionError: assert {'redaction_m... 'tool_calls'} == {'redaction_m... 'tool_calls'}
+E   psycopg.errors.InsufficientPrivilege: permission denied for table kill_switch
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/.venv/lib/python3.13/site-packages/psycopg/connection.py:304: psycopg.errors.InsufficientPrivilege: permission denied for table kill_switch
+[XPASS(strict)] step B not built: stop and reset are one row the runtime role may UPDATE (migrate.py:55)
+[XPASS(strict)] step B not built: stop and reset a
+[XPASS(strict)] step B not built: stop and reset are one row the runtime role may UPDATE (migrate.py:55)
+[XPASS(strict)] step B not built: stop and reset a
+E   assert "(text: 'str'...actionResult'" == "(text: 'str'...actionResult'"
+      
+      Skipping 136 identical leading characters in diff, use -v to show
+      - ne' = None) -> 'RedactionResult'
+      + ne' = None, _deadline: 'float | None' = None) -> 'RedactionResult'
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/tests/test_redact_context_after_sweep.py:266: assert "(text: 'str'...actionResult'" == "(text: 'str'...actionResult'"
+E   AssertionError: the old stage word is still used as a stage:
+      tests/test_runmap_enforce_map.py:231 [quoted literal] ({"<SECRET_1>": "dev"}, "x dev y"),
+    assert not ['tests/test_runmap_enforce_map.py:231 [quoted literal] ({"<SECRET_1>": "dev"}, "x dev y"),']
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/tests/test_stage_names.py:543: AssertionError: the old stage word is still used as a stage:
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[postgres]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres]
+FAILED tests/test_grants_negative_roles.py::test_the_identities_are_the_ones_this_file_knows
+FAILED tests/test_grants_negative_roles.py::test_every_write_privilege_is_on_the_reviewed_list
+FAILED tests/test_grants_negative_roles.py::test_only_the_runtime_role_holds_anything_on_the_stop_table
+FAILED tests/test_grants_negative_roles.py::test_delete_is_held_only_on_the_outbox_and_the_purged_evidence
+FAILED tests/test_grants_negative_roles.py::test_the_purge_role_holds_delete_only_and_no_whole_table_read
+FAILED tests/test_grants_negative_roles.py::test_pg_the_runtime_role_can_switch_the_stop_on
+FAILED tests/test_grants_negative_roles.py::test_step_b_the_grant_map_gives_the_runtime_role_no_way_to_switch_the_stop_off
+FAILED tests/test_grants_negative_roles.py::test_pg_step_b_the_runtime_role_cannot_switch_the_stop_off
+FAILED tests/test_redact_context_after_sweep.py::test_public_signatures_are_unchanged
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+15 failed in 14.44s

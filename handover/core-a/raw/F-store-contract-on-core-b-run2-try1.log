@@ -1,0 +1,266 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/coreb-fstore
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 187 items
+
+tests/contracts/test_store_spend_reservations.py::test_reserve_books_the_amount_on_the_day_and_the_month[memory] PASSED [  0%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_books_the_amount_on_the_day_and_the_month[postgres] PASSED [  1%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing[memory] PASSED [  1%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing[postgres] PASSED [  2%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stays_unbooked[memory] PASSED [  2%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stays_unbooked[postgres] PASSED [  3%]
+tests/contracts/test_store_spend_reservations.py::test_when_both_caps_would_be_passed_the_day_is_named[memory] PASSED [  3%]
+tests/contracts/test_store_spend_reservations.py::test_when_both_caps_would_be_passed_the_day_is_named[postgres] PASSED [  4%]
+tests/contracts/test_store_spend_reservations.py::test_spend_already_on_the_counters_counts_towards_the_cap[memory] PASSED [  4%]
+tests/contracts/test_store_spend_reservations.py::test_spend_already_on_the_counters_counts_towards_the_cap[postgres] PASSED [  5%]
+tests/contracts/test_store_spend_reservations.py::test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice[memory] PASSED [  5%]
+tests/contracts/test_store_spend_reservations.py::test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice[postgres] PASSED [  6%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-negative] PASSED [  6%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-nan] PASSED [  7%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-signalling-nan] PASSED [  8%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-infinity] PASSED [  8%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-minus-infinity] PASSED [  9%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-float] PASSED [  9%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-float-nan] PASSED [ 10%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-bool-true] PASSED [ 10%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-bool-false] PASSED [ 11%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-str] PASSED [ 11%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-int] PASSED [ 12%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-none] PASSED [ 12%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-thirteen-decimal-places] PASSED [ 13%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-ten-to-the-ninth] PASSED [ 13%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-negative] PASSED [ 14%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-nan] PASSED [ 14%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-signalling-nan] PASSED [ 15%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-infinity] PASSED [ 16%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-minus-infinity] PASSED [ 16%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-float] PASSED [ 17%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-float-nan] PASSED [ 17%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-bool-true] PASSED [ 18%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-bool-false] PASSED [ 18%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-str] PASSED [ 19%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-int] PASSED [ 19%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-none] PASSED [ 20%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-thirteen-decimal-places] PASSED [ 20%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-ten-to-the-ninth] PASSED [ 21%]
+tests/contracts/test_store_spend_reservations.py::test_zero_is_an_allowed_amount[memory] PASSED [ 21%]
+tests/contracts/test_store_spend_reservations.py::test_zero_is_an_allowed_amount[postgres] PASSED [ 22%]
+tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[memory] PASSED [ 22%]
+tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[postgres] PASSED [ 23%]
+tests/contracts/test_store_spend_reservations.py::test_first_settle_closes_the_row_and_returns_it[memory] PASSED [ 24%]
+tests/contracts/test_store_spend_reservations.py::test_first_settle_closes_the_row_and_returns_it[postgres] PASSED [ 24%]
+tests/contracts/test_store_spend_reservations.py::test_a_lower_actual_frees_headroom[memory] PASSED [ 25%]
+tests/contracts/test_store_spend_reservations.py::test_a_lower_actual_frees_headroom[postgres] PASSED [ 25%]
+tests/contracts/test_store_spend_reservations.py::test_a_higher_actual_books_the_overshoot_in_full_even_past_the_cap[memory] PASSED [ 26%]
+tests/contracts/test_store_spend_reservations.py::test_a_higher_actual_books_the_overshoot_in_full_even_past_the_cap[postgres] PASSED [ 26%]
+tests/contracts/test_store_spend_reservations.py::test_settle_moves_the_counters_of_the_rows_own_day_not_of_today[memory] PASSED [ 27%]
+tests/contracts/test_store_spend_reservations.py::test_settle_moves_the_counters_of_the_rows_own_day_not_of_today[postgres] PASSED [ 27%]
+tests/contracts/test_store_spend_reservations.py::test_a_second_settle_returns_the_stored_row_with_false_and_changes_nothing[memory] PASSED [ 28%]
+tests/contracts/test_store_spend_reservations.py::test_a_second_settle_returns_the_stored_row_with_false_and_changes_nothing[postgres] PASSED [ 28%]
+tests/contracts/test_store_spend_reservations.py::test_settle_of_an_unknown_id_is_not_found[memory] PASSED [ 29%]
+tests/contracts/test_store_spend_reservations.py::test_settle_of_an_unknown_id_is_not_found[postgres] PASSED [ 29%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-negative] PASSED [ 30%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-nan] PASSED [ 31%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-signalling-nan] PASSED [ 31%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-infinity] PASSED [ 32%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-minus-infinity] PASSED [ 32%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-float] PASSED [ 33%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-float-nan] PASSED [ 33%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-bool-true] PASSED [ 34%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-bool-false] PASSED [ 34%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-str] PASSED [ 35%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-int] PASSED [ 35%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-none] PASSED [ 36%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-thirteen-decimal-places] PASSED [ 36%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-ten-to-the-ninth] PASSED [ 37%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-negative] PASSED [ 37%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-nan] PASSED [ 38%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-signalling-nan] PASSED [ 39%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-infinity] PASSED [ 39%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-minus-infinity] PASSED [ 40%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-float] PASSED [ 40%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-float-nan] PASSED [ 41%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-bool-true] PASSED [ 41%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-bool-false] PASSED [ 42%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-str] PASSED [ 42%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-int] PASSED [ 43%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-none] PASSED [ 43%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-thirteen-decimal-places] PASSED [ 44%]
+tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-ten-to-the-ninth] PASSED [ 44%]
+tests/contracts/test_store_spend_reservations.py::test_settle_adds_the_actual_amount_to_the_runs_cost_once[memory] PASSED [ 45%]
+tests/contracts/test_store_spend_reservations.py::test_settle_adds_the_actual_amount_to_the_runs_cost_once[postgres] PASSED [ 45%]
+tests/contracts/test_store_spend_reservations.py::test_two_threads_settling_one_row_exactly_one_applies[memory] PASSED [ 46%]
+tests/contracts/test_store_spend_reservations.py::test_two_threads_settling_one_row_exactly_one_applies[postgres] PASSED [ 47%]
+tests/contracts/test_store_spend_reservations.py::test_expire_marks_old_open_rows_and_the_counters_do_not_move[memory] PASSED [ 47%]
+tests/contracts/test_store_spend_reservations.py::test_expire_marks_old_open_rows_and_the_counters_do_not_move[postgres] PASSED [ 48%]
+tests/contracts/test_store_spend_reservations.py::test_expire_takes_only_rows_older_than_the_bound[memory] PASSED [ 48%]
+tests/contracts/test_store_spend_reservations.py::test_expire_takes_only_rows_older_than_the_bound[postgres] PASSED [ 49%]
+tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory] PASSED [ 49%]
+tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres] PASSED [ 50%]
+tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_higher_actual_books_the_difference[memory] PASSED [ 50%]
+tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_higher_actual_books_the_difference[postgres] PASSED [ 51%]
+tests/contracts/test_store_spend_reservations.py::test_an_expired_row_keeps_its_headroom_taken[memory] PASSED [ 51%]
+tests/contracts/test_store_spend_reservations.py::test_an_expired_row_keeps_its_headroom_taken[postgres] PASSED [ 52%]
+tests/contracts/test_store_spend_reservations.py::test_purge_deletes_closed_rows_only_and_returns_the_count[memory] PASSED [ 52%]
+tests/contracts/test_store_spend_reservations.py::test_purge_deletes_closed_rows_only_and_returns_the_count[postgres] PASSED [ 53%]
+tests/contracts/test_store_spend_reservations.py::test_purge_deletes_an_expired_row_nobody_settled_and_a_late_settle_is_not_found[memory] PASSED [ 54%]
+tests/contracts/test_store_spend_reservations.py::test_purge_deletes_an_expired_row_nobody_settled_and_a_late_settle_is_not_found[postgres] PASSED [ 54%]
+tests/contracts/test_store_spend_reservations.py::test_a_zero_amount_is_refused_once_the_counter_is_at_its_cap[memory] PASSED [ 55%]
+tests/contracts/test_store_spend_reservations.py::test_a_zero_amount_is_refused_once_the_counter_is_at_its_cap[postgres] PASSED [ 55%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-nan-day_cap] PASSED [ 56%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-nan-month_cap] PASSED [ 56%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-signalling-nan-day_cap] PASSED [ 57%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-signalling-nan-month_cap] PASSED [ 57%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-infinity-day_cap] PASSED [ 58%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-infinity-month_cap] PASSED [ 58%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-negative-day_cap] PASSED [ 59%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-negative-month_cap] PASSED [ 59%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-float-day_cap] PASSED [ 60%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-float-month_cap] PASSED [ 60%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-int-day_cap] PASSED [ 61%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-int-month_cap] PASSED [ 62%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-bool-day_cap] PASSED [ 62%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-bool-month_cap] PASSED [ 63%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-str-day_cap] PASSED [ 63%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-str-month_cap] PASSED [ 64%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-none-day_cap] PASSED [ 64%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-none-month_cap] PASSED [ 65%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-nan-day_cap] PASSED [ 65%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-nan-month_cap] PASSED [ 66%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-signalling-nan-day_cap] PASSED [ 66%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-signalling-nan-month_cap] PASSED [ 67%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-infinity-day_cap] PASSED [ 67%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-infinity-month_cap] PASSED [ 68%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-negative-day_cap] PASSED [ 68%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-negative-month_cap] PASSED [ 69%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-float-day_cap] PASSED [ 70%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-float-month_cap] PASSED [ 70%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-int-day_cap] PASSED [ 71%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-int-month_cap] PASSED [ 71%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-bool-day_cap] PASSED [ 72%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-bool-month_cap] PASSED [ 72%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-str-day_cap] PASSED [ 73%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-str-month_cap] PASSED [ 73%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-none-day_cap] PASSED [ 74%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-none-month_cap] PASSED [ 74%]
+tests/contracts/test_store_spend_reservations.py::test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error[memory] PASSED [ 75%]
+tests/contracts/test_store_spend_reservations.py::test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error[postgres] XFAIL [ 75%]
+tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-run-id-int] XFAIL [ 76%]
+tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-reservation-id-int] XFAIL [ 77%]
+tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-agent-none] XFAIL [ 77%]
+tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-run-id-int] FAILED [ 78%]
+tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-reservation-id-int] FAILED [ 78%]
+tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-agent-none] PASSED [ 79%]
+tests/contracts/test_store_spend_reservations.py::test_a_run_id_without_a_run_row_is_booked_and_settled_without_a_run_cost[memory] PASSED [ 79%]
+tests/contracts/test_store_spend_reservations.py::test_a_run_id_without_a_run_row_is_booked_and_settled_without_a_run_cost[postgres] PASSED [ 80%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_comparison[memory] PASSED [ 80%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_comparison[postgres] PASSED [ 81%]
+tests/contracts/test_store_spend_reservations.py::test_expire_zero_takes_a_row_made_just_now[memory] PASSED [ 81%]
+tests/contracts/test_store_spend_reservations.py::test_expire_zero_takes_a_row_made_just_now[postgres] PASSED [ 82%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-negative] PASSED [ 82%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-bool] PASSED [ 83%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-float] PASSED [ 83%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-str] PASSED [ 84%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-none] PASSED [ 85%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-decimal] PASSED [ 85%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-negative] PASSED [ 86%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-bool] PASSED [ 86%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-float] PASSED [ 87%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-str] PASSED [ 87%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-none] PASSED [ 88%]
+tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-decimal] PASSED [ 88%]
+tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[memory-day] PASSED [ 89%]
+tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[memory-month] PASSED [ 89%]
+tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[postgres-day] PASSED [ 90%]
+tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[postgres-month] PASSED [ 90%]
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-20261120] PASSED [ 91%]
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-7] PASSED [ 91%]
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-4242] PASSED [ 92%]
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-20261120] PASSED [ 93%]
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-7] PASSED [ 93%]
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-4242] PASSED [ 94%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_stores_are_fifty_backends PASSED [ 94%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] PASSED [ 95%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] PASSED [ 95%]
+tests/contracts/test_t1_reserve_cap.py::test_control_the_old_check_then_add_pattern_admits_more_than_three PASSED [ 96%]
+tests/contracts/test_t1_reserve_cap.py::test_the_cap_holds_when_the_login_defaults_to_repeatable_read PASSED [ 96%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_connections_settling_one_reservation_apply_it_once PASSED [ 97%]
+tests/contracts/test_t1_reserve_cap.py::test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows PASSED [ 97%]
+tests/contracts/test_t1_reserve_cap.py::test_the_runtime_role_may_not_delete_reservations PASSED [ 98%]
+tests/contracts/test_t1_reserve_cap.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at PASSED [ 98%]
+tests/contracts/test_t1_reserve_cap.py::test_the_portal_role_may_not_read_reservations PASSED [ 99%]
+tests/contracts/test_t1_reserve_cap.py::test_the_reset_role_may_not_read_reservations PASSED [100%]
+
+=================================== FAILURES ===================================
+_ test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-run-id-int] _
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f4b6f304ad0>
+request = <FixtureRequest for <Function test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-run-id-int]>>
+bad = {'run_id': 7}
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            pytest.param({"run_id": 7}, id="run-id-int"),
+            pytest.param({"rid": 7}, id="reservation-id-int"),
+            pytest.param({"agent": None}, id="agent-none"),
+        ],
+    )
+    def test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change(store, request, bad):
+        """Inv 2 "all or nothing: a refused or FAILED reserve leaves no reservation row and no counter change". A
+        wrongly typed argument that passes the amount and cap checks must fail without booking: afterwards the whole
+        cap is still free for the same agent and day."""
+        _finding(
+            request,
+            "memory",
+            "FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the "
+            "SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) "
+            "the exception leaves the amount booked with no row, so nothing can ever settle or expire it",
+        )
+        cap = _usd("1.00")
+        agent = bad.get("agent", "a")
+>       with pytest.raises(Exception) as caught:  # noqa: B017, PT011 - which error is not fixed by the interface
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE Exception
+
+tests/contracts/test_store_spend_reservations.py:594: Failed
+_ test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-reservation-id-int] _
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f4b6f0878f0>
+request = <FixtureRequest for <Function test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[postgres-reservation-id-int]>>
+bad = {'rid': 7}
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            pytest.param({"run_id": 7}, id="run-id-int"),
+            pytest.param({"rid": 7}, id="reservation-id-int"),
+            pytest.param({"agent": None}, id="agent-none"),
+        ],
+    )
+    def test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change(store, request, bad):
+        """Inv 2 "all or nothing: a refused or FAILED reserve leaves no reservation row and no counter change". A
+        wrongly typed argument that passes the amount and cap checks must fail without booking: afterwards the whole
+        cap is still free for the same agent and day."""
+        _finding(
+            request,
+            "memory",
+            "FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the "
+            "SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) "
+            "the exception leaves the amount booked with no row, so nothing can ever settle or expire it",
+        )
+        cap = _usd("1.00")
+        agent = bad.get("agent", "a")
+>       with pytest.raises(Exception) as caught:  # noqa: B017, PT011 - which error is not fixed by the interface
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE Exception
+
+tests/contracts/test_store_spend_reservations.py:594: Failed
+=========================== short test summary info ============================
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error[postgres] - FINDING F2: a finite cap too large for NUMERIC (1E+200000) is not refused by check_spend_cap (no upper bound) and PostgreSQL raises psycopg NumericValueOutOfRange, an error the interface does not list; the memory store grants the same call
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-run-id-int] - FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-reservation-id-int] - FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-agent-none] - FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+================== 2 failed, 181 passed, 4 xfailed in 29.74s ===================

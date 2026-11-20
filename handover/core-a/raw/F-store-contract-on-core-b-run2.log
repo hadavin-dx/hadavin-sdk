@@ -1,0 +1,42 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/coreb-fstore
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 187 items
+
+tests/contracts/test_store_spend_reservations.py::test_reserve_books_the_amount_on_the_day_and_the_month[memory] PASSED [  0%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_books_the_amount_on_the_day_and_the_month[postgres] PASSED [  1%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing[memory] PASSED [  1%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing[postgres] PASSED [  2%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stays_unbooked[memory] PASSED [  2%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stays_unbooked[postgres] PASSED [  3%]
+tests/contracts/test_store_spend_reservations.py::test_when_both_caps_would_be_passed_the_day_is_named[memory] PASSED [  3%]
+tests/contracts/test_store_spend_reservations.py::test_when_both_caps_would_be_passed_the_day_is_named[postgres] PASSED [  4%]
+tests/contracts/test_store_spend_reservations.py::test_spend_already_on_the_counters_counts_towards_the_cap[memory] PASSED [  4%]
+tests/contracts/test_store_spend_reservations.py::test_spend_already_on_the_counters_counts_towards_the_cap[postgres] PASSED [  5%]
+tests/contracts/test_store_spend_reservations.py::test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice[memory] PASSED [  5%]
+tests/contracts/test_store_spend_reservations.py::test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice[postgres] PASSED [  6%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-negative] PASSED [  6%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-nan] PASSED [  7%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-signalling-nan] PASSED [  8%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-infinity] PASSED [  8%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-minus-infinity] PASSED [  9%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-float] PASSED [  9%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-float-nan] PASSED [ 10%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-bool-true] PASSED [ 10%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-bool-false] PASSED [ 11%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-str] PASSED [ 11%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-int] PASSED [ 12%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-none] PASSED [ 12%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-thirteen-decimal-places] PASSED [ 13%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-ten-to-the-ninth] PASSED [ 13%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-negative] PASSED [ 14%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-nan] PASSED [ 14%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-signalling-nan] PASSED [ 15%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-infinity] PASSED [ 16%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-minus-infinity] PASSED [ 16%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-float] PASSED [ 17%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-float-nan] PASSED [ 17%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-bool-true] PASSED [ 18%]
+tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-bool-false] 

@@ -1,5 +1,5 @@
 {
- "order": "016 standing (backlog), 014 and 015 in work",
+ "order": "017 on top of the backlog (016 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
  "next": "first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile",
@@ -330,6 +330,51 @@
    "evidence file": "",
    "tries": 1,
    "reason": "backlog 9: one hostile design reviewer (egm:egm-design) reads endpoint.py, worker.py, server.py, crash.py; started in the same batch the n8n agent returned in"
+  },
+  {
+   "item": "O17-A",
+   "what": "lead review round 2, Major A: template cannot produce a valid request",
+   "state": "DONE, being re-checked",
+   "percent": 0,
+   "evidence file": "n8n/, raw/n8n-template-tests-2.log",
+   "tries": 0,
+   "reason": "ORDER 017: this is ORDER 015, DONE 06:20Z in the files (not re-imported); the n8n agent re-checks each point and adds the two negative tests"
+  },
+  {
+   "item": "O17-B",
+   "what": "Major B: retry loop treats 502, 503, 504 and 'no status' as busy; stops stay 400, 401, 409, 413; README answer table and stated limits (minors 1, 3, 4, 5, 9, 11)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/n8n-template-tests-3.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 017"
+  },
+  {
+   "item": "O17-code",
+   "what": "code minors 2, 6, 7, 12, 4; delete the test that proves nothing; strict switch HADAVIN_REQUIRE_PG that turns a database skip into a failure",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/R2-code-tests.log, raw/R2-strict-switch.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 017"
+  },
+  {
+   "item": "O17-mutants",
+   "what": "minor 10: ten more mutants in tests/endpoint_mutants.py",
+   "state": "QUEUED",
+   "percent": 0,
+   "evidence file": "",
+   "tries": 0,
+   "reason": "starts when O17-code ends (the script replaces exact text in the files that agent edits)"
+  },
+  {
+   "item": "O17-main",
+   "what": "start-refusal test through main with a real config",
+   "state": "WAIT core-b",
+   "percent": 0,
+   "evidence file": "",
+   "tries": 0,
+   "reason": "WAIT core-b's bound reader"
   }
  ],
  "agents": [
@@ -696,6 +741,32 @@
    "review round n of cap": "1 of 1",
    "retries so far": 0,
    "reason": "backlog 9; 6 agents run"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:22",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "lead code review round 2 of 3",
+   "retries so far": 0,
+   "id": "o17-n8n",
+   "role": "builder (templates and text)",
+   "what exactly it is doing": "busy statuses in the retry loop, README answer table and limits, template checks",
+   "expected end": "about 20 min after start",
+   "reason": "ORDER 017 Major B"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:22",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "lead code review round 2 of 3",
+   "retries so far": 0,
+   "id": "o17-code",
+   "role": "builder",
+   "what exactly it is doing": "server.py, worker.py, endpoint.py minors; strict database switch in a new tests/triggers/conftest.py; runs the mutant script once",
+   "expected end": "about 30 min after start",
+   "reason": "ORDER 017; 8 agents run now (trial, fuzz, matrix, F-store, G7, design review, n8n, code minors)"
   }
  ],
  "tests": [
@@ -942,6 +1013,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "ORDER 017 read at 06:22Z. Major A = ORDER 015, already in the files since 06:20Z (your review read the older commit); Major B and the minors are in work",
   "ORDER 015 done in the files. What your evidence file says differently from the order's summary (so you can decide): (a) the Crypto node version 2 with a credential ran only in a small test workflow, never in the full chain; (b) the secret IS in plain text in a decrypted credential export and in the import file; (c) the retry caps rest on one run; (d) import drops the top-level notes key; (e) no observed shape exists for 'answer the caller' (fix 6), mine is unverified; (f) I added a second answer node (202 to the caller when the guard passes) because without it the caller would hang for the whole 503 loop: say CHANGE to remove it. The edited files need a new import on your n8n",
   "STANDING ORDER 016 read at 06:16Z: WAITING-LEAD dropped, 6 agents running, backlog items 4, 5, 6, 7 started; 3 needs no work (core-b has both scripts); 8 is mine now; 9 queued",
   "ORDER 015: template fix in work; the fixed files need a second import on your n8n before a client sees them",

@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:21:21Z
+UPDATED_UTC: 2026-11-20T06:22:27Z
 SESSION: core-a
-ORDER: 016 standing (backlog), 014 and 015 in work
+ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 36
-ITEMS_OPEN: 10
-PERCENT: 79
-AGENTS_RUNNING: 6
-CAPACITY: load 2.70 of 4 cores (1-minute average), mem 1.1/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 10G 59G 15%; 526M /home/user/hadavin-sdk; 295M /tmp/claude-0; 131M /root/.cache
+ITEMS_TOTAL: 41
+ITEMS_OPEN: 14
+PERCENT: 69
+AGENTS_RUNNING: 8
+CAPACITY: load 3.08 of 4 cores (1-minute average), mem 1.4/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 15%; 526M /home/user/hadavin-sdk; 323M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile
-PUSHED_UTC: 2026-11-20T06:21:13Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:21:24Z (the push before this board)
 NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the trial agent, port 55433 was started by me at 06:16Z for the fuzz, crash matrix and F-store agents and I stop it when they end; data folders and scratch copies stay on disk (the safety check refuses folder deletes)
 
 ## QUEUE ITEMS
@@ -56,6 +56,11 @@ NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the 
 | B7-g7 | non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora) | RUNNING | 5 | FINDINGS-core-c-G7-redaction.md (not yet) | 1 | backlog 7 |
 | B8-text | README, SECURITY and CHANGELOG text for steps D and E as a request to core-b | READY (mine) | 0 | requests/002-readme-security-text.md exists (18 sentences); to extend after ORDER 015 facts | 0 | I do this one myself while agents run |
 | B9-review | hostile re-read of all my own code with egm:egm-design, one round, and fix | RUNNING | 5 |  | 1 | backlog 9: one hostile design reviewer (egm:egm-design) reads endpoint.py, worker.py, server.py, crash.py; started in the same batch the n8n agent returned in |
+| O17-A | lead review round 2, Major A: template cannot produce a valid request | DONE, being re-checked | 0 | n8n/, raw/n8n-template-tests-2.log | 0 | ORDER 017: this is ORDER 015, DONE 06:20Z in the files (not re-imported); the n8n agent re-checks each point and adds the two negative tests |
+| O17-B | Major B: retry loop treats 502, 503, 504 and 'no status' as busy; stops stay 400, 401, 409, 413; README answer table and stated limits (minors 1, 3, 4, 5, 9, 11) | RUNNING | 5 | raw/n8n-template-tests-3.log (not yet) | 1 | ORDER 017 |
+| O17-code | code minors 2, 6, 7, 12, 4; delete the test that proves nothing; strict switch HADAVIN_REQUIRE_PG that turns a database skip into a failure | RUNNING | 5 | raw/R2-code-tests.log, raw/R2-strict-switch.log (not yet) | 1 | ORDER 017 |
+| O17-mutants | minor 10: ten more mutants in tests/endpoint_mutants.py | QUEUED | 0 |  | 0 | starts when O17-code ends (the script replaces exact text in the files that agent edits) |
+| O17-main | start-refusal test through main with a real config | WAIT core-b | 0 |  | 0 | WAIT core-b's bound reader |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -88,31 +93,37 @@ NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the 
 | b6-fstore | evidence runner (non-builder) | fable | runs the spend contract tests on a scratch copy of core-b's tree, corrects wrong shape assumptions, writes findings | 06:16 | about 35 min after start | 5 | running | n/a | 0 | backlog 6 |
 | b7-g7 | builder (tests, non-builder of the code) | fable | writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree | 06:16 | about 35 min after start | 5 | running | n/a | 0 | backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line |
 | b9-design | reviewer | fable | egm:egm-design, hostile read of my 4 source files against the ticket invariants and the lead's earlier review | 06:20 | about 15 min after start | 5 | running | 1 of 1 | 0 | backlog 9; 6 agents run |
+| o17-n8n | builder (templates and text) | fable | busy statuses in the retry loop, README answer table and limits, template checks | 06:22 | about 20 min after start | 5 | running | lead code review round 2 of 3 | 0 | ORDER 017 Major B |
+| o17-code | builder | fable | server.py, worker.py, endpoint.py minors; strict database switch in a new tests/triggers/conftest.py; runs the mutant script once | 06:22 | about 30 min after start | 5 | running | lead code review round 2 of 3 | 0 | ORDER 017; 8 agents run now (trial, fuzz, matrix, F-store, G7, design review, n8n, code minors) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 412s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 412s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 412s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 412s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 412s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 412s ago | running | matched by name in ps |
-| 12567 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 370s ago | running | matched by name in ps |
-| 12568 | postgres: checkpointer  | core-a session or its agent | 370s ago | running | matched by name in ps |
-| 12569 | postgres: background writer  | core-a session or its agent | 370s ago | running | matched by name in ps |
-| 12571 | postgres: walwriter  | core-a session or its agent | 370s ago | running | matched by name in ps |
-| 12572 | postgres: autovacuum launcher  | core-a session or its agent | 370s ago | running | matched by name in ps |
-| 12573 | postgres: logical replication launcher  | core-a session or its agent | 370s ago | running | matched by name in ps |
-| 26232 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 40s ago | running | matched by name in ps |
-| 26260 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 40s ago | running | matched by name in ps |
-| 26266 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 40s ago | running | matched by name in ps |
-| 26368 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 32s ago | running | matched by name in ps |
-| 26861 | timeout 600 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 26869 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rfEsxX | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 26873 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 27208 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 27214 | postgres: postgres postgres 127.0.0.1(40480) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 477s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 477s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 477s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 477s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 477s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 477s ago | running | matched by name in ps |
+| 12567 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 436s ago | running | matched by name in ps |
+| 12568 | postgres: checkpointer  | core-a session or its agent | 436s ago | running | matched by name in ps |
+| 12569 | postgres: background writer  | core-a session or its agent | 436s ago | running | matched by name in ps |
+| 12571 | postgres: walwriter  | core-a session or its agent | 436s ago | running | matched by name in ps |
+| 12572 | postgres: autovacuum launcher  | core-a session or its agent | 436s ago | running | matched by name in ps |
+| 12573 | postgres: logical replication launcher  | core-a session or its agent | 436s ago | running | matched by name in ps |
+| 27787 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 44s ago | running | matched by name in ps |
+| 29483 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 20s ago | running | matched by name in ps |
+| 29510 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 20s ago | running | matched by name in ps |
+| 29517 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 20s ago | running | matched by name in ps |
+| 30563 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 30585 | timeout 900 /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 30589 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no:cacheprovid | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 30649 | timeout 600 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 30652 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rfEsxX | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 30656 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 30785 | postgres: postgres postgres 127.0.0.1(39634) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 30786 | postgres: postgres postgres 127.0.0.1(53904) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 30789 | postgres: postgres postgres 127.0.0.1(53922) DROP ROLE | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -160,6 +171,7 @@ NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the 
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- ORDER 017 read at 06:22Z. Major A = ORDER 015, already in the files since 06:20Z (your review read the older commit); Major B and the minors are in work
 - ORDER 015 done in the files. What your evidence file says differently from the order's summary (so you can decide): (a) the Crypto node version 2 with a credential ran only in a small test workflow, never in the full chain; (b) the secret IS in plain text in a decrypted credential export and in the import file; (c) the retry caps rest on one run; (d) import drops the top-level notes key; (e) no observed shape exists for 'answer the caller' (fix 6), mine is unverified; (f) I added a second answer node (202 to the caller when the guard passes) because without it the caller would hang for the whole 503 loop: say CHANGE to remove it. The edited files need a new import on your n8n
 - STANDING ORDER 016 read at 06:16Z: WAITING-LEAD dropped, 6 agents running, backlog items 4, 5, 6, 7 started; 3 needs no work (core-b has both scripts); 8 is mine now; 9 queued
 - ORDER 015: template fix in work; the fixed files need a second import on your n8n before a client sees them

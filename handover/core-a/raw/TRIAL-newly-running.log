@@ -1,0 +1,169 @@
+##### trial-core-a (7129afc9b) tests/test_trigger_config.py
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_trigger_config.py:28: core-b trigger config not on this branch yet
+1 skipped in 0.21s
+##### trial-core-a (7129afc9b) tests/contracts/test_model_gate_contract.py
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:44: the model gate (step F) is not on this branch yet: hadavin_sdk.guard.model_gate is missing
+1 skipped in 0.24s
+##### trial-core-a (7129afc9b) tests/contracts/test_store_spend_reservations.py
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 76%]
+ssssssssssssssssssssss                                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:106: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:118: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:136: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:154: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:163: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:173: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [20] tests/contracts/test_store_spend_reservations.py:187: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:200: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:213: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:232: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:248: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:260: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:272: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:289: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:304: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [20] tests/contracts/test_store_spend_reservations.py:312: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:326: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:347: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:378: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:395: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:409: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:427: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:443: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:457: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [4] tests/contracts/test_store_spend_reservations.py:482: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:524: core-b step F not landed: Store.reserve_spend missing
+94 skipped in 0.08s
+##### trial-core-a (7129afc9b) tests/contracts/test_t1_reserve_cap.py
+ssssssss                                                                 [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:98: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_t1_reserve_cap.py:106: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:148: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:188: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:209: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:241: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:277: core-b step F not landed: Store.reserve_spend missing
+8 skipped in 0.18s
+##### trial (96768f66d) tests/test_trigger_config.py
+s...ss...ss...ss....sxxxssssssss............xxx.xs.......                [100%]
+=========================== short test summary info ============================
+SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.poll_s
+SKIPPED [7] tests/test_trigger_config.py:83: field not built on this branch: triggers.port
+SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.allow_non_loopback
+SKIPPED [1] tests/test_trigger_config.py:626: field not built on this branch: App.trigger_resolve
+XFAIL tests/test_trigger_config.py::test_default_body_cap_leaves_room_for_a_full_size_document - FINDING: the default body cap (TRIGGER_MAX_BODY_BYTES) equals MAX_DOCUMENT_BYTES, so a full-size document cannot fit once it is wrapped and escaped as JSON (review finding 7; request 001 asked for 2 x)
+XFAIL tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused[' '] - FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+XFAIL tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['\\t'] - FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+XFAIL tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['   '] - FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+XFAIL tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['key-one\\n'] - FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+XFAIL tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['key\\none'] - FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+XFAIL tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused[' key-one'] - FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+XFAIL tests/test_trigger_config.py::test_blank_agent_or_principal_refused_by_the_model[agent_id] - FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value passes the config model and is refused only later, by the registry, as an unknown id (review finding 
+XFAIL tests/test_trigger_config.py::test_blank_agent_or_principal_refused_by_the_model[principal_id] - FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value passes the config model and is refused only later, by the registry, as an unknown id (review find
+XFAIL tests/test_trigger_config.py::test_true_is_not_a_number[max_running] - FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+XFAIL tests/test_trigger_config.py::test_true_is_not_a_number[max_body_bytes] - FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+XFAIL tests/test_trigger_config.py::test_true_is_not_a_number[ack_wait_s] - FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+XFAIL tests/test_trigger_config.py::test_shared_action_secret_refusal_names_the_sender - FINDING: a sender secret name shared with an action secret is refused with the backend sentence ('used by both a backend and an action executor ... give the backend its own secret'); the text does not name the s
+XFAIL tests/test_trigger_config.py::test_start_refusal_does_not_echo_what_was_typed_as_a_secret_name - FINDING: text typed into secret_names is echoed by the start-up check (secret '<text>' cannot be read at start-up), although config.py says a mistyped config may hold the secret itself there and na
+XFAIL tests/test_trigger_config.py::test_a_sender_secret_name_that_is_another_platform_secret_fails_the_start - FINDING: a sender secret name may equal another platform secret name (here the restored-hash key; the same holds for a tool secret or a source token): the names are put into one set and ne
+XFAIL tests/test_trigger_config.py::test_reader_refuses_a_name_that_no_sender_lists - FINDING: the only way to a sender secret is App.secrets, the WHOLE secret provider; there is no reader limited to the sender names (no App.trigger_resolve), so the worker can read every secret of the app (review fi
+93 passed, 20 skipped, 16 xfailed in 2.69s
+##### trial (96768f66d) tests/contracts/test_model_gate_contract.py
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:883: contract point 10: no worst-case formula on this branch (neither llm.common.worst_case_usd nor one in the gate); the tests above use the formula of the interface text, not shipped code
+201 passed, 1 skipped in 0.42s
+##### trial (96768f66d) tests/contracts/test_store_spend_reservations.py
+=================================== FAILURES ===================================
+E   ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/src/hadavin_sdk/store/protocol.py:77: ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+E   ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/src/hadavin_sdk/store/protocol.py:77: ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+E   AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+      
+      At index 1 diff: Decimal('1.00') != Decimal('0.40')
+      Use -v to get more diff
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/tests/contracts/test_store_spend_reservations.py:418: AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+E   AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+      
+      At index 1 diff: Decimal('1.00') != Decimal('0.40')
+      Use -v to get more diff
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial/tests/contracts/test_store_spend_reservations.py:418: AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+=========================== short test summary info ============================
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[postgres]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres]
+4 failed, 90 passed in 18.25s
+##### trial (96768f66d) tests/contracts/test_t1_reserve_cap.py
+8 passed in 2.83s
+##### trial-newb (e443a3c3b) tests/test_trigger_config.py
+s...ss...ss...ss....sFFFssssssss...........FFFF.Fs.......                [100%]
+=================================== FAILURES ===================================
+[XPASS(strict)] FINDING: the default body cap (TRIGGER_MAX_BODY_BYTES) equals MAX_DOCUMENT_BYTES, so a full-size document cannot fit once it is wrapped and escaped as JSON (review finding 7; request 001 asked for 2 x)
+[XPASS(strict)] FINDING: the default body cap (TRI
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+[XPASS(strict)] FINDING: a secret name is only che
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+[XPASS(strict)] FINDING: a secret name is only che
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+[XPASS(strict)] FINDING: a secret name is only che
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+[XPASS(strict)] FINDING: a secret name is only che
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+[XPASS(strict)] FINDING: a secret name is only che
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+[XPASS(strict)] FINDING: a secret name is only che
+[XPASS(strict)] FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value passes the config model and is refused only later, by the registry, as an unknown id (review finding 5)
+[XPASS(strict)] FINDING: agent_id and principal_id
+[XPASS(strict)] FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value passes the config model and is refused only later, by the registry, as an unknown id (review finding 5)
+[XPASS(strict)] FINDING: agent_id and principal_id
+[XPASS(strict)] FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+[XPASS(strict)] FINDING: `true` loads as the numbe
+[XPASS(strict)] FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+[XPASS(strict)] FINDING: `true` loads as the numbe
+[XPASS(strict)] FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+[XPASS(strict)] FINDING: `true` loads as the numbe
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'secret names used by both'
+      Actual message: 'triggers.senders.s1.secret_names: a name is also used by another part of the config (a backend, an action, a read tool, a source or the restored-hash key); give the sender its own secret'
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-newb/tests/test_trigger_config.py:535: AssertionError: Regex pattern did not match.
+[XPASS(strict)] FINDING: a sender secret name shared with an action secret is refused with the backend sentence ('used by both a backend and an action executor ... give the backend its own secret'); the text does not name the sender or the triggers block (review finding 4, request 001 R1c)
+[XPASS(strict)] FINDING: a sender secret name shar
+[XPASS(strict)] FINDING: text typed into secret_names is echoed by the start-up check (secret '<text>' cannot be read at start-up), although config.py says a mistyped config may hold the secret itself there and names only the sender (review finding 4)
+[XPASS(strict)] FINDING: text typed into secret_na
+[XPASS(strict)] FINDING: a sender secret name may equal another platform secret name (here the restored-hash key; the same holds for a tool secret or a source token): the names are put into one set and never compared, so the signing secret held by the sender could be an internal credential (review f
+[XPASS(strict)] FINDING: a sender secret name may 
+[XPASS(strict)] FINDING: the only way to a sender secret is App.secrets, the WHOLE secret provider; there is no reader limited to the sender names (no App.trigger_resolve), so the worker can read every secret of the app (review finding 3, request 001 R1d)
+[XPASS(strict)] FINDING: the only way to a sender 
+=========================== short test summary info ============================
+FAILED tests/test_trigger_config.py::test_default_body_cap_leaves_room_for_a_full_size_document
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused[' ']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['\\t']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['   ']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['key-one\\n']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['key\\none']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused[' key-one']
+FAILED tests/test_trigger_config.py::test_blank_agent_or_principal_refused_by_the_model[agent_id]
+FAILED tests/test_trigger_config.py::test_blank_agent_or_principal_refused_by_the_model[principal_id]
+FAILED tests/test_trigger_config.py::test_true_is_not_a_number[max_running]
+FAILED tests/test_trigger_config.py::test_true_is_not_a_number[max_body_bytes]
+FAILED tests/test_trigger_config.py::test_true_is_not_a_number[ack_wait_s] - ...
+FAILED tests/test_trigger_config.py::test_a_sender_secret_name_that_is_an_action_secret_fails_the_start
+FAILED tests/test_trigger_config.py::test_shared_action_secret_refusal_names_the_sender
+FAILED tests/test_trigger_config.py::test_start_refusal_does_not_echo_what_was_typed_as_a_secret_name
+FAILED tests/test_trigger_config.py::test_a_sender_secret_name_that_is_another_platform_secret_fails_the_start
+FAILED tests/test_trigger_config.py::test_reader_refuses_a_name_that_no_sender_lists
+SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.poll_s
+SKIPPED [7] tests/test_trigger_config.py:83: field not built on this branch: triggers.port
+SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.allow_non_loopback
+SKIPPED [1] tests/test_trigger_config.py:626: field not built on this branch: App.trigger_resolve
+17 failed, 92 passed, 20 skipped in 3.02s
+##### trial-newb (e443a3c3b) tests/contracts/test_model_gate_contract.py
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:44: the model gate (step F) is not on this branch yet: hadavin_sdk.guard.model_gate is missing
+1 skipped in 0.23s
+##### trial-newb (e443a3c3b) tests/contracts/test_store_spend_reservations.py
