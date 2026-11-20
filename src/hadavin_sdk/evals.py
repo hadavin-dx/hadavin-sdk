@@ -105,6 +105,12 @@ def gate(
                 tools=tools,
                 documents=[doc],
             )
+            if reply.cost_usd is None:  # unknown, never added as 0: the eval's total would be a lie
+                raise ConfigError(
+                    f"golden case {case.get('id', case['input_ref'])!r}: the model reported no usage, so "
+                    "the cost of the call is unknown and the eval cannot account for its spend; use a "
+                    "provider that reports usage"
+                )
             cost += reply.cost_usd
             abstains += not reply.tool_calls
             # `evidence` (K5) is a citation the runtime strips before the plan exists: never graded.

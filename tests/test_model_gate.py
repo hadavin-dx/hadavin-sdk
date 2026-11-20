@@ -887,9 +887,7 @@ def test_m5_a_reply_object_without_a_cost_attribute_is_returned_and_not_settled(
 
 def test_m5_a_zero_cost_reply_is_settled_at_zero():
     client = Client()
-    client.reply = Reply(
-        model_id="fake-model"
-    )  # cost_usd defaults to Decimal(0): a real, known cost
+    client.reply = Reply(cost_usd=Decimal(0), model_id="fake-model")  # a measured, known cost of 0
     bound, _, meter, sink = build(client)
     bound.chat(CLEAN, system="s", route="main")
     assert meter.settles == [("res_1", Decimal(0))] and sink.codes() == [("ok", None)]

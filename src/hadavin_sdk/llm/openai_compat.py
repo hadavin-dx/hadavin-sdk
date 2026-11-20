@@ -116,6 +116,7 @@ class OpenAICompatLLM(NetworkLLM):
         if forced:
             body["tool_choice"] = {"type": "function", "function": {"name": forced}}
         started, used = time.monotonic(), [0, 0]
+        attempts, known, measured = 0, True, True  # over every request of the call
         for nth in range(2):  # the forced answer missing: one more request (design 4.3)
             try:
                 got = self._retry(
@@ -127,6 +128,9 @@ class OpenAICompatLLM(NetworkLLM):
                 ):  # the first request was answered (and billed): this call is not "refused before"
                     exc.refused_before_response = False
                 raise
+            attempts += got.attempts
+            known = known and got.prior_known
+            measured = measured and None not in got.tokens
             used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
             # Done when answered, or when asking again would end the same way (cut off, refused).
             done = stop_reason(got.stop, got.calls) in ("max_tokens", "refusal")
@@ -136,7 +140,8 @@ class OpenAICompatLLM(NetworkLLM):
                 got.calls = [ToolCall(name=forced, input=found)]
                 break
         # Some servers (Ollama among them) omit usage: None is estimated in reply().
-        got.tokens = (used[0] or None, used[1] or None)
+        got.tokens = (used[0] or None, used[1] or None) if measured else (None, None)
+        got.attempts, got.prior_known = attempts, known
         return reply(route, **vars(got), started=started, sent=json.dumps(body["messages"]))
 
     @staticmethod

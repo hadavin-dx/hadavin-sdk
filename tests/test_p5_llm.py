@@ -3,6 +3,7 @@
 import json
 import ssl
 import urllib.error
+from decimal import Decimal
 from email.message import Message
 from urllib.request import ProxyHandler
 
@@ -166,7 +167,7 @@ def test_every_providers_stop_reason_is_folded(raw, want):
 @pytest.mark.parametrize("stop", ["max_tokens", "refusal"])
 def test_a_cut_off_or_declined_answer_needs_a_person(cfg_dir, stop):
     rt, cfg = build(cfg_dir)
-    rt.llm.chat = lambda *a, **k: Reply(model_id="m", stop_reason=stop)
+    rt.llm.chat = lambda *a, **k: Reply(cost_usd=Decimal(0), model_id="m", stop_reason=stop)
     run = rt.handle("test-agent", "svc:test-agent", (cfg.inputs_dir / "create.txt").read_bytes())
     assert (run.state, run.reason_code) == (RunState.NEEDS_PERSON, f"llm_{stop}")
 

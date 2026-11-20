@@ -9,6 +9,7 @@ import sys
 import types
 import urllib.error
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 from urllib.parse import quote
 
@@ -800,7 +801,7 @@ def test_evals_matches_by_subset_and_offers_the_evidence_field(live_cfg_dir):
 
         def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
             self.tools.append(tools)
-            return Reply(model_id="fake-model")
+            return Reply(cost_usd=Decimal(0), model_id="fake-model")
 
     cfg = load_config(live_cfg_dir)
     reg = load_registry(cfg)
@@ -827,7 +828,7 @@ def test_evals_gate_offers_evidence_to_a_tooled_agent(tmp_path):
 
         def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
             Spy.tools = tools
-            return Reply(model_id="fake-model")
+            return Reply(cost_usd=Decimal(0), model_id="fake-model")
 
     evals.gate(reg, Spy(), "test-agent")
     undo = next(t for t in Spy.tools if t["name"] == "rollout_undo")

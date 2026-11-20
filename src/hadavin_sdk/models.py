@@ -296,7 +296,10 @@ class Reply(Shape):
     tool_calls: list[ToolCall] = []
     input_tokens: int = 0
     output_tokens: int = 0
-    cost_usd: Decimal = Decimal(0)
+    # None: the true cost of the call is not known (no usage reported, or an earlier attempt may have been billed).
+    # The model gate then returns the reply and does not settle: the worst case stays booked.
+    cost_usd: Decimal | None = None
+    attempts: int = 1  # requests the call took (audit only)
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0

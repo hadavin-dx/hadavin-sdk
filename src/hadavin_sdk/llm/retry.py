@@ -115,8 +115,11 @@ def with_retry[T](
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
     http_status: Callable[[BaseException], int | None] | None = None,
+    record: list[bool] | None = None,
 ) -> T:
-    """``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
+    """``record``, when given, receives one entry per failed attempt that was retried: True when that attempt
+    certainly never reached the provider (cost 0), False when it may have been billed with an unknown cost
+    (timeout, reset, 5xx, 429). ``common.reply()`` prices a retried call from it (Y3). ``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
     ``status`` finds none; it only feeds the mark, never the retry decision."""
     unsent = True  # every attempt so far failed before any request was sent
     for attempt in range(1, max_attempts + 1):
@@ -134,6 +137,8 @@ def with_retry[T](
                 error.refused_before_response = unsent and (this_unsent or code in REFUSED_STATUSES)
                 raise error from exc
             unsent = unsent and this_unsent
+            if record is not None:
+                record.append(this_unsent)
             if attempt == max_attempts:
                 exhausted = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"

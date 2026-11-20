@@ -5,7 +5,7 @@ or a local open-weights model on `openai_compat`), so regex + llm_judge is a pro
 single vendor. Minimal on purpose: one fixed, versioned
 prompt (``judge_prompt.md``, its hash is in ``config_hash``), a forced JSON verdict, metered when its caller binds
 it to a payer (``bind``: the client becomes a model gate client for one agent and run, which reserves and settles
-the call; ``Verdict.cost_usd`` is information only and nobody charges it), qualified by its own golden set (``golden_dir/judge.jsonl``, run by the evals
+the call; ``Verdict.cost_usd`` is information only and nobody charges it; it is Decimal(0) when the reply's cost was None, i.e. unknown), qualified by its own golden set (``golden_dir/judge.jsonl``, run by the evals
 gate). A tripwire OR-ed with at least one other detector (config refuses a judge alone), never the default: the
 judge reads attacker text, so it can itself be steered, and a "clean" from it never clears anything.
 
@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Callable
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -92,7 +93,7 @@ class JudgeDetector:
                 score=1.0,
                 backend=self.backend,
                 reason_code="guard_unavailable",
-                cost_usd=reply.cost_usd,
+                cost_usd=reply.cost_usd if reply.cost_usd is not None else Decimal(0),
             )
         injection, confidence = answer
         score = float(confidence) if injection else 0.0
@@ -102,7 +103,7 @@ class JudgeDetector:
             score=score,
             backend=self.backend,
             reason_code="injection_suspected" if flagged else None,
-            cost_usd=reply.cost_usd,
+            cost_usd=reply.cost_usd if reply.cost_usd is not None else Decimal(0),
         )
 
 

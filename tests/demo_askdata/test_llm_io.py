@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal
 
 import pytest
 from askdata import llm_io, policy, prompt
@@ -17,7 +18,7 @@ SYSTEM_SHA256 = "1304bfac9c38c5742cc7ffac46562c77dc1b9101311ba49185b11db7431930f
 
 
 def reply(**kw) -> Reply:
-    return Reply(model_id="m", **kw)
+    return Reply(model_id="m", **({"cost_usd": Decimal(0)} | kw))
 
 
 def test_system_prompt_is_the_reviewed_constant():

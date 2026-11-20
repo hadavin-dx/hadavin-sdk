@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import re
+from decimal import Decimal
 
 import pytest
 
@@ -143,6 +144,7 @@ def _gate(s, rq):
             docs.append(documents[0].decode())
             exp = case["expected"]
             return Reply(
+                cost_usd=Decimal(0),
                 tool_calls=[
                     ToolCall(name=exp["action"], input={**exp["inputs"], "evidence": ["x"]})
                 ],

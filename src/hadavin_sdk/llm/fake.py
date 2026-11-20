@@ -47,6 +47,7 @@ class FakeLLM:
             raise UnknownRecording(path.name)
         data = json.loads(path.read_text(encoding="utf-8"))
         r = self.routes[route]
+        # A recording is a measured usage (its token counts, 0 when absent), so its cost is always known.
         cost = (
             Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
             + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
