@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:42:59Z
+UPDATED_UTC: 2026-11-20T16:43:38Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:56Z agents 2 (G9c, DOCS4 builders), load 3.5. G12d MERGED (label-core decline only when issued/within counter; budget-based large-value rule 262,144; look-alike bracket cores registered; sweep leaves escaped look-alikes; _bare 0.90 s -> 0.10 s on 500k '!'; g12 mutants 41/41; redact_mutants 130/130 per builder; own-output/context/host tests 162 passed). Next: whole-tree redact_mutants + full idle suite after G9c lands, then fresh reviews of the G13d/G12d/G9c/G4d fix diffs. 16:52Z agents 3 (G12d, G9c, DOCS4 builders), load 3.8. G4d MERGED (trailing glue and HOSTKEY now ASCII-set; db01.corp例 etc. masked; TB-4.14 strict xfail for a CJK letter inside a label; b64 mutants 62/62, g8 43/43, p1d_a 50/51 A15; host tests 812 passed). Note for worktree builders: run pytest with 
+STATE: 17:00Z agents 2 (G9c builder, docs style reviewer round 4), load 2.8. DOCS4 MERGED (9 Majors of round 3); DOCS3 notes scrubbed of vendor strings: vendor-brand test now red ONLY on the lead's handover/BRIEF-PREAMBLE.md (tracked scope). 16:56Z agents 2 (G9c, DOCS4 builders), load 3.5. G12d MERGED (label-core decline only when issued/within counter; budget-based large-value rule 262,144; look-alike bracket cores registered; sweep leaves escaped look-alikes; _bare 0.90 s -> 0.10 s on 500k '!'; g12 mutants 41/41; redact_mutants 130/13
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 2
-CAPACITY: load 3.5 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
+CAPACITY: load 2.8 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 58; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:41:43+00:00
+PUSHED_UTC: 2026-11-20T16:43:22+00:00
 
-(22:12 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:13 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -45,7 +45,8 @@ PUSHED_UTC: 2026-11-20T16:41:43+00:00
 | g4d | builder | claude-sonnet-5-5 | BUILDS G4d: G4c review fixes (trailing glue, HOSTKEY, label-internal non-ASCII limit, TB-4.13); /tmp/core-c-g4d | 16:43 | 17:10 | 1 | done | 1 | 0 |  |
 | a3142375 | builder | claude-sonnet-5-5 | BUILDS DOCS3: root docs style review round 2 fixes (2 Blocker, 7 Major); /tmp/core-c-docs3 | 16:30 | 17:00 | 1 | done | 1 | 0 | docs only |
 | docs-rev3 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 3 of root docs after DOCS3 | 16:41 | 16:55 | 1 | done | 1 | 0 | EGM style |
-| docs4 | builder | claude-sonnet-5-5 | BUILDS DOCS4: style review round 3 fixes (8 Major); /tmp/core-c-docs4 | 16:47 | 17:15 | 1 | running | 1 | 0 | docs only |
+| docs4 | builder | claude-sonnet-5-5 | BUILDS DOCS4: style review round 3 fixes (8 Major); /tmp/core-c-docs4 | 16:47 | 17:15 | 1 | done | 1 | 0 | docs only |
+| docs-rev4 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 4 of root docs after DOCS4 | 17:00 | 17:12 | 1 | running | 1 | 0 | EGM style |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
