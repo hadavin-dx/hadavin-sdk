@@ -1,0 +1,10 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  KILLED       E14-1 the first trie has no limit  [test_t1_a_build_over_the_cap_is_refused]
+ok  KILLED       E14-2 the cap refuses at equality  [test_t2_the_boundary_is_the_constant]
+ok  KILLED       E14-3 characters counted, not nodes  [test_t3_nodes_not_characters]
+ok  KILLED       E14-4 the document check reads entries only  [test_t6_document_path_boundary]
+ok  KILLED       E14-5 the tool check reads entries only  [test_t7_tool_path_boundary]
+ok  KILLED       E14-6 the map is counted in entries  [test_t6_document_path_boundary]
+ok  KILLED       E14-7 the config has no upper bound  [test_t8_config]
+ok  KILLED       E14-8 the defaults drift  [test_t9_derivation_pin]
+8 of 8 good; problems: []

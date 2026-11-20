@@ -1,0 +1,16 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Traceback (most recent call last):
+  File "/tmp/ca-c-run/tests/gate_mutants.py", line 457, in <module>
+    res = run_mutants(
+        ROOT,
+    ...<5 lines>...
+        first_lines=first_lines,
+    )
+  File "/tmp/ca-c-run/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines,
+    )  # fmt: skip
+  File "/tmp/ca-c-run/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests

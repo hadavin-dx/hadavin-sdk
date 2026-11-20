@@ -1,0 +1,17 @@
+START redact_mutants 13:12:58  13:12:58 up  7:54,  0 user,  load average: 1.40, 0.94, 0.68
+END redact_mutants 13:19:46 rc=0 wall=408s  13:19:46 up  8:00,  0 user,  load average: 2.58, 3.00, 1.82
+START gate_mutants 13:19:46  13:19:46 up  8:00,  0 user,  load average: 2.58, 3.00, 1.82
+END gate_mutants 13:19:52 rc=1 wall=6s  13:19:52 up  8:01,  0 user,  load average: 2.42, 2.95, 1.82
+START stage_mutants 13:19:52  13:19:52 up  8:01,  0 user,  load average: 2.42, 2.95, 1.82
+END stage_mutants 13:21:08 rc=0 wall=76s  13:21:08 up  8:02,  0 user,  load average: 4.03, 3.32, 2.04
+START textnorm_mutants 13:21:08  13:21:08 up  8:02,  0 user,  load average: 4.03, 3.32, 2.04
+END textnorm_mutants 13:31:00 rc=0 wall=592s  13:31:00 up  8:12,  0 user,  load average: 1.54, 2.63, 2.49
+START g8_mutants 13:31:00  13:31:00 up  8:12,  0 user,  load average: 1.54, 2.63, 2.49
+END g8_mutants 13:32:15 rc=0 wall=74s  13:32:15 up  8:13,  0 user,  load average: 1.25, 2.30, 2.38
+START e14_mutants 13:32:15  13:32:15 up  8:13,  0 user,  load average: 1.25, 2.30, 2.38
+END e14_mutants 13:32:32 rc=0 wall=17s  13:32:32 up  8:13,  0 user,  load average: 1.20, 2.23, 2.36
+START b64_mutants 13:32:32  13:32:32 up  8:13,  0 user,  load average: 1.20, 2.23, 2.36
+END b64_mutants 13:32:35 rc=1 wall=3s  13:32:35 up  8:13,  0 user,  load average: 1.18, 2.21, 2.35
+START p1d_a_mutants 13:32:35  13:32:35 up  8:13,  0 user,  load average: 1.18, 2.21, 2.35
+END p1d_a_mutants 13:36:10 rc=1 wall=215s  13:36:10 up  8:17,  0 user,  load average: 1.07, 1.62, 2.08
+ALLDONE
