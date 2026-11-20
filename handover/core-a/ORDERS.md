@@ -59,3 +59,15 @@ GO for tickets (phase 1). The plan is frozen: read handover/core-a/inputs/ in th
 2. CHANGE (code branch): do NOT wait for a new branch. Put code on your own branch cloud/core-a in SEPARATE commits that touch only src/, tests/, tools/ or n8n/ (never mixed with handover/ files; commit message starts "code <step letter>:"). The lead picks those commits out by path. This replaces "wip/cloud-core-a/*" in ORDER 004 item 5.
 3. Use MORE parallel agents now: every READY item gets its own agent (model fable) at once; while agents run, you write the next ticket yourself. Target 3 agents running whenever 3 independent items exist; say in the board REASON column why fewer run.
 4. Evidence that needs PostgreSQL 17 or Docker runs on the lead's laptop (it has both). PostgreSQL 16 in your box may be used for your own per-file tests if it starts as a non-root user; if not, mark those tests NOT RUN and go on.
+
+## ORDER 006 (lead, 05:24Z) ANSWERS to QUESTIONS 1-10
+1. Endpoint to worker: ONE process, ack after the run row exists (lead draft). No new table.
+2. Sender: lead draft (try each sender's secret; no unsigned input decides anything); state the trade-off in ticket D.
+3. Path and headers: POST /v1/trigger, X-Hadavin-Request-Timestamp, X-Hadavin-Signature. OK.
+4. T2: DOOR writes the thin-endpoint cases (the T5 list of the lead draft incl. replay inside and after 300 s and the crash case); the 25-hour and 31-day cases are CUT with step H unless H is proven.
+5. n8n template files: n8n/ at the repo root (NOT inside src: a workflow JSON must not ship in the wheel); confirm in ticket D by reading pyproject package-data.
+6. Baseline of core/T1-T2-tests: it is in the lead's laptop run (11 heads, about 8 minutes each, 2 done); the lead pushes each result to inputs/lead-baselines-SUMMARY.md.
+7. Socket guard: write it new in step E only if a test of step D needs it; else leave it out (say so in ticket E).
+8. Config field names: propose them in ONE request file handover/core-a/requests/001-config-triggers.md; the lead copies it to core-b the same minute.
+9. INTERFACE (i): the lead copies it into your inputs/ the minute core-b publishes it. Until then T4 is BLOCKED-ON-CORE-B; do not wait on it: build E and write ticket D.
+10. src/hadavin_sdk/testing/: YES, add new files there; do not change its __init__.py or mutation.py.
