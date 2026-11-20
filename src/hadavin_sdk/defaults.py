@@ -9,6 +9,8 @@ keeps host names, account ids, ARNs and key-shaped strings out of `src/`.
 
 from __future__ import annotations
 
+import decimal
+
 # --- tools (manifest and Config.evidence) ---------------------------------------------------------------------------
 MAX_TOOL_ERRORS = 3  # tool errors in one run before it ends NEEDS_PERSON tool_error
 MAX_OUTPUT_BYTES = (
@@ -176,3 +178,22 @@ AUDIT_QUARANTINE_PREFIX = "poison:"
 
 # Decimal digits used for money sums and price checks, set locally so a host's own Decimal context cannot round money.
 MONEY_DECIMAL_PRECISION = 60
+# Exponent range of the money context (the traps and rounding are pinned in `money_context`, too).
+MONEY_DECIMAL_EXPONENT_LIMIT = 999_999
+
+
+def money_context() -> decimal.Context:
+    """The ONE Decimal context every money sum, product and price check runs in (`with
+    decimal.localcontext(defaults.money_context())`). Built from nothing, not from `decimal.DefaultContext`: a host's
+    precision, rounding mode, traps or exponent range cannot change a cost. Exact up to
+    `MONEY_DECIMAL_PRECISION` digits; an overflow of that raises (InvalidOperation) and the caller fails closed."""
+    return decimal.Context(
+        prec=MONEY_DECIMAL_PRECISION,
+        rounding=decimal.ROUND_HALF_EVEN,
+        Emin=-MONEY_DECIMAL_EXPONENT_LIMIT,
+        Emax=MONEY_DECIMAL_EXPONENT_LIMIT,
+        capitals=1,
+        clamp=0,
+        flags=[],
+        traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow],
+    )

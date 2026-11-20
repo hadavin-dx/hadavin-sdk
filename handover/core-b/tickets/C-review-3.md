@@ -34,3 +34,9 @@ registry.py:364: `f"agent {a.id}: unknown model_route {a.model_route}"` is the s
 
 ## Held (no finding)
 Round-3 tests pass; the new `ArithmeticError -> ConfigError` mapping and the low-precision route test hold; error texts for bad price text name the field and never the value ("sk-SECRET_1" case, test_h3_error_names_field_not_value); `+5`, "5." and ".5" are harmless; float still refused; "-0" still refused.
+
+## Disposition (builder, round 4)
+- M1 fixed: `defaults.money_context()` is the one Decimal context. Used by llm/common.py, llm/fake.py, config.py, k1b/loop.py (worst_case_usd), k1b/report.py, evals.py (cost sum and per-task division), limits.py (Budget sums, reserve cap check, settle overshoot, Limits._settle) and store/memory.py (add_spend, spend_totals, _month_total, reserve_spend caps, settle_spend). Tests: tests/test_money_context_everywhere.py (caller precision 4, one test per site), each seen failing first.
+- m1 fixed: the context pins prec, rounding (half-even), Emin/Emax and traps (InvalidOperation, DivisionByZero, Overflow); it no longer inherits `decimal.DefaultContext`.
+- m2 fixed: registry.py unknown model_route uses `!r`.
+- m3: no change (as the review says).

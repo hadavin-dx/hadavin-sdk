@@ -361,7 +361,7 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
     out = []
     for a in agents.values():
         if a.model_route not in config.routes:
-            out.append(f"agent {a.id}: unknown model_route {a.model_route}")
+            out.append(f"agent {a.id}: unknown model_route {a.model_route!r}")
         out += [f"agent {a.id}: no contract for {x}" for x in a.scope_allowed if x not in contracts]
         try:
             if not confined(config.root, a.prompt_file).is_file():

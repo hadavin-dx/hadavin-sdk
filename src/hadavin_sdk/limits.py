@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 import threading
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from typing import Protocol
 
+from hadavin_sdk import defaults
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.models import AuditEvent, KillSwitch, new_id, now
 from hadavin_sdk.registry import Registry
@@ -66,7 +67,8 @@ class Budget:
             return self._spent()
 
     def _spent(self) -> Decimal:
-        return sum((row[1] for row in self._rows.values()), Decimal(0))
+        with localcontext(defaults.money_context()):
+            return sum((row[1] for row in self._rows.values()), Decimal(0))
 
     @property
     def exhausted(self) -> bool:
@@ -88,9 +90,9 @@ class Budget:
         with self._lock:
             # the same rule as the store: a counter AT the cap refuses even a zero amount (usd < cap)
             spent = self._spent()
-            if run_id in self._closed or not (
-                spent < self.limit and spent + worst_usd <= self.limit
-            ):
+            with localcontext(defaults.money_context()):
+                over_cap = not (spent < self.limit and spent + worst_usd <= self.limit)
+            if run_id in self._closed or over_cap:
                 raise SpendRefused("usd_cap")
             rid = new_id("res")
             self._rows[rid] = [worst_usd, worst_usd, "open", Decimal(0), run_id, agent_id]
@@ -112,7 +114,8 @@ class Budget:
             reserved, booked, state = row[0], row[1], row[2]
             if state != "settled":
                 row[1] = actual_usd if state == "open" else max(booked, actual_usd)
-                row[2], row[3] = "settled", max(Decimal(0), actual_usd - reserved)
+                with localcontext(defaults.money_context()):
+                    row[2], row[3] = "settled", max(Decimal(0), actual_usd - reserved)
             return row[3]
 
     def forfeit(self, run_id: str) -> None:
@@ -201,7 +204,8 @@ class Limits:
             row, applied = self.store.settle_spend(reservation_id, actual_usd)
         else:
             row, applied = self.store.settle_spend(reservation_id, actual_usd, agent_id=agent_id)
-        over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
+        with localcontext(defaults.money_context()):
+            over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
         if applied and over > 0:
             try:
                 self.audit.write_outcome(

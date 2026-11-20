@@ -5,8 +5,9 @@ from __future__ import annotations
 import threading
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
+from hadavin_sdk import defaults
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -208,24 +209,14 @@ class MemoryStore:
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
         with self._lock:
-            self._spend[(agent_id, day)] += usd
-            month = sum(
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            )
-            return self._spend[(agent_id, day)], Decimal(month)
+            with localcontext(defaults.money_context()):
+                self._spend[(agent_id, day)] += usd
+                month = self._month_total(agent_id, day)
+            return self._spend[(agent_id, day)], month
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:
-            month = sum(
-                (
-                    v
-                    for (a, d), v in self._spend.items()
-                    if a == agent_id and (d.year, d.month) == (day.year, day.month)
-                ),
-                Decimal(0),
-            )
+            month = self._month_total(agent_id, day)
             return self._spend.get((agent_id, day), Decimal(0)), month
 
     def get_kill_switch(self) -> KillSwitch:
@@ -297,14 +288,15 @@ class MemoryStore:
     # --- spend reservations: the same rules as the Postgres store, under the one lock (one process only) ------
 
     def _month_total(self, agent_id: str, day: date) -> Decimal:
-        return sum(
-            (
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            ),
-            Decimal(0),
-        )
+        with localcontext(defaults.money_context()):
+            return sum(
+                (
+                    v
+                    for (a, d), v in self._spend.items()
+                    if a == agent_id and (d.year, d.month) == (day.year, day.month)
+                ),
+                Decimal(0),
+            )
 
     def reserve_spend(
         self,
@@ -329,10 +321,14 @@ class MemoryStore:
             if reservation_id in self._reservations:
                 raise StaleState(f"spend reservation exists: {reservation_id}")
             booked = self._spend.get((agent_id, day), Decimal(0))
-            if not (booked < day_cap and booked + usd <= day_cap):
+            with localcontext(defaults.money_context()):
+                day_ok = booked < day_cap and booked + usd <= day_cap
+            if not day_ok:
                 raise SpendCapExceeded("day")
             month = self._month_total(agent_id, day)
-            if not (month < month_cap and month + usd <= month_cap):
+            with localcontext(defaults.money_context()):
+                month_ok = month < month_cap and month + usd <= month_cap
+            if not month_ok:
                 raise SpendCapExceeded("month")
             # the row is built first: a model that refuses its input must leave the counter alone
             row = SpendReservation(
@@ -364,15 +360,17 @@ class MemoryStore:
             if (row.agent_id, row.day) not in self._spend:
                 raise RuntimeError("spend counter row missing")
             run = self._runs.get(row.run_id) if row.run_id is not None else None
-            new_run = (  # a missing run row moves only the counters
-                run.model_copy(update={"cost_usd": run.cost_usd + actual_usd})
-                if run is not None
-                else None
-            )
+            with localcontext(defaults.money_context()):
+                new_run = (  # a missing run row moves only the counters
+                    run.model_copy(update={"cost_usd": run.cost_usd + actual_usd})
+                    if run is not None
+                    else None
+                )
             row = row.model_copy(
                 update={"status": "settled", "settled_usd": booked, "closed_at": now()}
             )
-            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
+            with localcontext(defaults.money_context()):
+                self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
             if new_run is not None:
                 self._runs[new_run.run_id] = new_run
             self._reservations[reservation_id] = row

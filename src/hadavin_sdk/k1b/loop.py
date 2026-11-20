@@ -16,8 +16,9 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
+from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.guard.runmap import safe_head
@@ -102,10 +103,11 @@ def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) ->
     """Upper estimate for one abandoned call (one attempt, a full reply): the pessimistic input estimate plus
     ``max_tokens`` of output. Charged when a call times out, because its real cost is unknown."""
     tokens_in = estimate_tokens(system + _dumps(messages))
-    return (
-        Decimal(tokens_in) * route.input_usd_per_mtok
-        + Decimal(route.max_tokens) * route.output_usd_per_mtok
-    ) / Decimal(1_000_000)
+    with localcontext(defaults.money_context()):
+        return (
+            Decimal(tokens_in) * route.input_usd_per_mtok
+            + Decimal(route.max_tokens) * route.output_usd_per_mtok
+        ) / Decimal(1_000_000)
 
 
 def run_case(

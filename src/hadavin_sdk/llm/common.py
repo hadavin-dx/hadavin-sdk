@@ -11,7 +11,7 @@ import time
 import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from decimal import ROUND_CEILING, Context, Decimal, localcontext
+from decimal import ROUND_CEILING, Decimal, localcontext
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -66,11 +66,6 @@ def estimate_tokens(text: str) -> int:
 _WORST_PLACES = Decimal(1).scaleb(-12)  # 12 decimal places, the most a spend amount may carry
 
 
-def _money_context() -> Context:
-    """Our own Decimal context for money: a host's low global precision must not round a cost."""
-    return Context(prec=defaults.MONEY_DECIMAL_PRECISION)
-
-
 def _json_bytes(value: Any) -> int:
     text = json.dumps(value, sort_keys=True, ensure_ascii=False, default=str)
     return len(text.encode("utf-8", "surrogatepass"))
@@ -99,7 +94,7 @@ def worst_case_usd(
     if output_schema is not None:
         size += 2 * _json_bytes(output_schema)
     size += defaults.WORST_CASE_OVERHEAD_BYTES
-    with localcontext(_money_context()):
+    with localcontext(defaults.money_context()):
         one = (
             Decimal(size) * route.input_usd_per_mtok
             + Decimal(route.max_tokens) * route.output_usd_per_mtok
@@ -268,7 +263,7 @@ def reply(
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
     tokens_in = tokens[0] or estimate_tokens(sent)
     tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
-    with localcontext(_money_context()):
+    with localcontext(defaults.money_context()):
         cost = (
             Decimal(tokens_in) * route.input_usd_per_mtok
             + Decimal(tokens_out) * route.output_usd_per_mtok
