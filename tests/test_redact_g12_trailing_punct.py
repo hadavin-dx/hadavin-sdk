@@ -376,7 +376,7 @@ def test_g12_a_label_shaped_value_beyond_the_counter_keeps_its_core(text):
 def test_g12_a_value_of_tokens_alone_gets_no_core():
     from types import SimpleNamespace
 
-    run = SimpleNamespace(mapping={}, counters={})
+    run = SimpleNamespace(mapping={}, counters={}, _map_chars=0)
     assert R._core_is_declined("UUID_3> <IPV4_1", "<UUID_3> <IPV4_1>", 1, 16, run), "G12-35 tokens"
     assert not R._core_is_declined("hunter22", "<UUID_3> hunter22,", 9, 17, run), "G12-35 control"
 
@@ -427,7 +427,7 @@ def test_g12_the_edge_rule_is_linear_on_every_new_form():
 def test_g12_a_large_value_gets_a_core_unless_it_would_push_the_map_past_half_its_cap():
     """A PRIVKEY (the dashes are the whole difference) near the cap gets no core: a copy would double its characters in the map; the run is not refused."""
     key = "-----BEGIN PRIVATE KEY-----\n" + "Qw9z" * 65_520 + "\n-----END PRIVATE KEY-----"
-    assert len(key) == 262_138 + 6 or abs(len(key) - 262_144) < 16
+    assert len(key) == 262_134
     r = R.redact(key)
     assert not any(len(key) - 16 < len(v) < len(key) for v in r.mapping.values()), (
         f"G12-26 {[len(v) for v in r.mapping.values()]}"
@@ -487,7 +487,7 @@ def test_g12_the_open_bracket_is_a_cut_off_form_only_right_before_the_core():
     """`<EMA` as the core of a value that holds `<` elsewhere is a value: only a `<` directly before the core declines it."""
     from types import SimpleNamespace
 
-    run = SimpleNamespace(mapping={}, counters={})
+    run = SimpleNamespace(mapping={}, counters={}, _map_chars=0)
     assert R._core_is_declined("EMA", "<EMA!", 1, 4, run), "G12-34 right before"
     assert not R._core_is_declined("EMA", "<x EMA!<", 3, 6, run), "G12-34 a `<` elsewhere"
     assert R.redact("password=<EMA, EMA").text == "password=<SECRET_1> EMA", "G12-34 whole"
@@ -508,3 +508,105 @@ def test_g12_one_stray_lookalike_bracket_keeps_the_core(value):
     r = R.redact(f"password={value} hunter22")
     assert "hunter22" in r.mapping.values(), f"G12-28 {r.mapping}"
     assert "hunter22" not in R._PLACEHOLDER.sub("", r.text), f"G12-28 {r.text}"
+
+
+# ---- G12e: result review 1 of G12d ----
+
+
+@pytest.mark.parametrize(
+    "text, copy",
+    [
+        ("password=<HUNTER2, HUNTER2", "HUNTER2"),
+        ("password=‹ADMIN_1› then ADMIN_1", "ADMIN_1"),
+        ("password=<ABCD1234! and ABCD1234", "ABCD1234"),
+        ("password=SECRET_001, SECRET_001", "SECRET_001"),
+    ],
+)
+def test_g12e_a_cut_off_opener_of_a_caps_word_or_leading_zeros_keep_the_core(text, copy):
+    """G12e M1/M3: only a real label's opener (or `SECRET_` + a canonical counter) declines a core; the bare second copy is swept."""
+    r = R.redact(text)
+    assert copy not in R._PLACEHOLDER.sub("", r.text), f"G12e-1 {r.text}"
+    assert R.redact(r.text).text == r.text, "G12e-1 not idempotent"
+
+
+def test_g12e_the_any_token_alternatives_are_the_real_labels():
+    sub = R._ANY_TOKEN.sub
+    assert sub("", "<HUNTER2") == "<HUNTER2" and sub("", "‹ADMIN_1›") != "", "G12e-3 caps"
+    assert sub("", "<EMA") == "" and sub("", "<EMAIL_1") == "", "G12e-3 cut-off real"
+    assert sub("", "<SECRET_ ,") == "", "G12e-3 cut-off then separator"
+    assert sub("", "<EMAx") != "" and sub("", "<EMAIL_1x") != "", "G12e-3 an opener needs an end"
+    assert sub("", "‹EMAIL_1›<UUID_3>") == "", "G12e-3 real tokens"
+
+
+def test_g12e_the_running_map_count_follows_every_add_and_rollback():
+    r = R._Redactor({})
+    counters = r._open_journal()
+    r._place("SECRET", "hunter22,", "hunter22,")
+    assert r._map_chars == sum(map(len, r.mapping.values())) > len("hunter22,"), "G12e-5 add"
+    r._rollback(counters)
+    assert r._map_chars == 0 == sum(map(len, r.mapping.values())), "G12e-5 rollback"
+    assert R._Redactor({"<SECRET_1>": "abcdef"})._map_chars == 6, "G12e-5 seed"
+
+
+def test_g12e_many_values_just_under_the_old_floor_cannot_double_the_map():
+    """128 values of 4,095 characters with a trailing comma: the head registered every core (a map of ~1M characters); the budget bounds all entries."""
+    r = R._Redactor({})
+    for i in range(128):
+        value = (chr(97 + i // 26) + chr(97 + i % 26) + "qwxz" * 1024)[
+            :4095
+        ] + ","  # no digit: no `_PIECE` entry
+        r._place("SECRET", value, value)
+    chars = sum(map(len, r.mapping.values()))
+    assert chars == r._map_chars, "G12e-2 count"
+    fulls = 128 * 4096
+    cores = chars - fulls
+    assert cores <= R._CORE_BUDGET, f"G12e-2 cores {cores} map {chars}"
+    assert chars <= R.defaults.MAX_FINDER_CHARS, f"G12e-2 map {chars}"
+    assert 0 < cores, "G12e-2 the early values keep their cores"
+
+
+def test_g12e_a_core_over_the_budget_is_skipped_and_a_core_within_it_is_kept():
+    r = R._Redactor({})
+    big = "qwxz" * 20_000  # 80,000: 80,001 + 80,000 = 160,001 <= 262,144
+    r._place("SECRET", big + ",", big + ",")
+    assert big in r.reverse, "G12e-2 within budget"
+    r2 = R._Redactor({})
+    huge = "qwxz" * 50_000  # 200,000: full 200,001, core would reach 400,001 > 262,144
+    r2._place("SECRET", huge + ",", huge + ",")
+    assert huge not in r2.reverse and r2._map_chars == len(huge) + 1, "G12e-2 over budget"
+
+
+def test_g12e_lookalikes_without_the_original_cost_one_replace_call():
+    r = R._Redactor({})
+    r.counters["EMAIL"] = 5
+    seg = "x " + " ".join(f"‹EMAIL_{i}›" for i in range(1, 6)) * 40 + " hunter22"
+    calls = []
+
+    def replace(text):
+        calls.append(text)
+        return text.replace("hunter22", "<SECRET_1>")
+
+    out = r._outside_lookalikes(seg, "hunter22", replace)
+    assert len(calls) == 1 and out.endswith("<SECRET_1>"), f"G12e-4 {len(calls)}"
+    # a look-alike that does hold the original is still kept whole
+    calls.clear()
+    out = r._outside_lookalikes(
+        "a ‹EMAIL_1› MAIL_1", "MAIL_1", lambda t: calls.append(t) or t.replace("MAIL_1", "<X>")
+    )
+    assert "‹EMAIL_1›" in out and out.endswith("<X>") and len(calls) == 2, "G12e-4 kept"
+
+
+def test_g12e_a_leading_zero_lookalike_is_not_a_counter_value():
+    r = R._Redactor({})
+    r.counters["SECRET"] = 7
+    assert not R._issued("SECRET", "007", r.counters), "G12e-3 zeros"
+    assert R._issued("SECRET", "7", r.counters), "G12e-3 canonical"
+    assert not R._issued("SECRET", "8", r.counters), "G12e-3 beyond"
+
+
+@pytest.mark.parametrize("text", ["password=EMAIL_2024. EMAIL_2024"])
+def test_g12e_a_real_label_beyond_the_counter_keeps_its_core(text):
+    """EMAIL IS in `_LABELS`: this parametrisation fails if a label beyond the counter were declined (TOKEN is not a label)."""
+    assert "EMAIL" in R._LABELS and "TOKEN" not in R._LABELS
+    r = R.redact(text)
+    assert "EMAIL_2024" not in R._PLACEHOLDER.sub("", r.text), f"G12e-6 {r.text}"

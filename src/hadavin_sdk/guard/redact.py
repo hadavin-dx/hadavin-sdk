@@ -1019,10 +1019,20 @@ def _bare(text: str) -> str:
 
 
 # A large value gets no core only when the core would push the run's map past half of `MAX_MAP_CHARS` (524,288): a 262,144-character key is 524,222
-# characters of the map without the core and 786,350 with it, and that ended a run that was fine before G12 (E14). The characters of the map are
-# summed only for a core of this many characters or more (a smaller one cannot matter), so the sum is no cost per value.
-_CORE_BUDGET_FROM = 4096
+# characters of the map without the core and 786,350 with it, and that ended a run that was fine before G12 (E14). G12e: the rule bounds ALL entries
+# (fulls, pieces and cores: `_Redactor._map_chars`, a running count, no sum per core) against this budget, at any core size (no 4,096 floor: many
+# values just under it doubled the map in aggregate). A core over the budget is skipped (the value itself stays registered); the run's own
+# `max_map_chars` check (`document_too_complex`) is what stops a map of fulls that is too large.
 _CORE_BUDGET = defaults.MAX_MAP_CHARS // 2
+
+
+def _issued(label: str, number: str, counters: dict[str, int]) -> bool:
+    """Is `LABEL_number` (digits as written) a placeholder this run could have issued? Only the canonical spelling is: `SECRET_001` never is (G12e)."""
+    return (
+        len(number) < 10
+        and f"{label}_{int(number)}" == f"{label}_{number}"
+        and int(number) <= counters.get(label, 0)
+    )
 
 
 def _core_is_declined(core: str, full: str, start: int, end: int, redactor: _Redactor) -> bool:
@@ -1033,14 +1043,15 @@ def _core_is_declined(core: str, full: str, start: int, end: int, redactor: _Red
     - the cut-off start of a real placeholder that stood right before the core in `full` (`<EMA`, `<EMAIL_`; only that `<`, G12d);
     - a value that is nothing but tokens (the E9 own-output shape `‹SECRET_1›<UUID_3>`), or a core that is the body of a real token that `_bare`
       cut the `‹` off (`‹SECRET_x`); a `‹HUNTER2,`, `‹hunter2zz›` or a `‹X_1›` inside a password is a value, its core is registered;
-    - the core would push the map past half of `MAX_MAP_CHARS` (a large value: a PRIVKEY doubled)."""
+    - the core would push the map (all entries) past half of `MAX_MAP_CHARS` (a large value: a PRIVKEY doubled).
+
+    Residual (stated, G12e): a core is skipped silently over that budget, so the bare copy of a value that follows a stored value with trailing marks stays
+    readable once the map holds half of `MAX_MAP_CHARS`; the full value is always registered."""
     if core.lower() in _NOT_A_VALUE or not re.search(r"[^\W_]", _ANY_TOKEN.sub("", full)):
         return True
     if _LABEL_TEXT.fullmatch(core) is not None:
         label, _, number = core.rpartition("_")
-        if f"<{core}>" in redactor.mapping or (
-            len(number) < 10 and int(number) <= redactor.counters.get(label, 0)
-        ):
+        if f"<{core}>" in redactor.mapping or _issued(label, number, redactor.counters):
             return True
     if (
         start > 0
@@ -1055,10 +1066,7 @@ def _core_is_declined(core: str, full: str, start: int, end: int, redactor: _Red
         return True
     if full[end : end + 1] == "\u203a" and _TOKEN_BODY_END.search(core):
         return True
-    if len(core) >= _CORE_BUDGET_FROM:
-        held = sum(map(len, redactor.mapping.values()))
-        return held + len(core) > _CORE_BUDGET
-    return False
+    return redactor._map_chars + len(core) > _CORE_BUDGET
 
 
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
@@ -1071,9 +1079,17 @@ _LABEL_TEXT = re.compile(
 _LABEL_PREFIX = re.compile(
     rf"(?:{'|'.join(map(re.escape, _LABELS))})(?:_[A-Za-z0-9]*)?"
 )  # a real label with a cut-off or non-numeric tail: what stands inside the brackets of a look-alike of a real token (`SECRET_x`, `SECRET_`)
+_LABEL_ALT = "|".join(map(re.escape, sorted(_LABELS, key=len, reverse=True)))
+_LABEL_CUTS = "|".join(
+    map(
+        re.escape,
+        sorted({lab[:i] for lab in _LABELS for i in range(1, len(lab) + 1)}, key=len, reverse=True),
+    )
+)  # every start of a real label: `E`, `EMA`, `EMAIL`
 _ANY_TOKEN = re.compile(
-    "<[A-Z][A-Z0-9]*_[0-9]+>|\u2039[A-Z][A-Z0-9]*_[0-9]+\u203a|<[A-Z][A-Z0-9]*(?:_[0-9]*)?(?![A-Za-z0-9])|[ \t;,]"
-)  # a real placeholder, an escaped look-alike, a cut-off opening of one (`<EMA`, `<EMAIL_1`), or a separator between them
+    f"<(?:{_LABEL_ALT})_[0-9]+>|\u2039(?:{_LABEL_ALT})_[0-9]+\u203a"
+    f"|<(?:(?:{_LABEL_ALT})(?:_[0-9]*)?|{_LABEL_CUTS})(?=[ \t;,]|\\Z)|[ \t;,]"
+)  # a real placeholder, an escaped look-alike of one, a cut-off opening of a REAL label right before a separator or the end (`<EMA`, `<EMAIL_1`; not `<HUNTER2`), or a separator (G12e)
 _TOKEN_BODY_START = re.compile("[A-Z][A-Z0-9]*_[0-9]+\u203a")
 _TOKEN_BODY_END = re.compile("\u2039[A-Z][A-Z0-9]*_[0-9]+\\Z")
 _LOOKALIKE_TOKEN = re.compile("\u2039([A-Z][A-Z0-9]*_[0-9]+)\u203a")
@@ -1322,6 +1338,9 @@ class _Redactor:
         )
         self.mapping = dict(mapping or {})
         self.reverse = {v: k for k, v in self.mapping.items()}
+        self._map_chars = sum(
+            map(len, self.mapping.values())
+        )  # running: every entry added or rolled back updates it (G12e)
         self.counters: dict[str, int] = dict.fromkeys(_LABELS, 0)
         for k in self.mapping:
             kind = _kind(k)
@@ -1836,7 +1855,7 @@ class _Redactor:
             if kind == "alias":
                 self.alias.pop(a, None)
             else:
-                self.mapping.pop(a, None)
+                self._map_chars -= len(self.mapping.pop(a, ""))
                 if self.reverse.get(b) == a:
                     del self.reverse[b]
                 self._unspell(
@@ -1924,6 +1943,7 @@ class _Redactor:
         self.counters[label] += 1
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
+        self._map_chars += len(full)
         self.reverse[full] = placeholder
         first = _PLACEHOLDER.search(original) if derived and label in SECRET_KINDS else None
         if first is not None and original != full and len(full) >= 4:
@@ -1938,6 +1958,7 @@ class _Redactor:
             if piece != full and piece not in self.reverse and _secret_shaped(piece):
                 self.counters[label] += 1
                 self.mapping[f"<{label}_{self.counters[label]}>"] = piece
+                self._map_chars += len(piece)
                 self.reverse[piece] = f"<{label}_{self.counters[label]}>"
                 if self._journal is not None:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
@@ -1954,6 +1975,7 @@ class _Redactor:
         if core != full and len(core) >= 3 and core not in self.reverse:
             self.counters[label] += 1
             self.mapping[f"<{label}_{self.counters[label]}>"] = core
+            self._map_chars += len(core)
             self.reverse[core] = f"<{label}_{self.counters[label]}>"
             if self._journal is not None:
                 self._journal.append(("map", f"<{label}_{self.counters[label]}>", core))
@@ -2791,20 +2813,32 @@ class _Redactor:
     def _outside_lookalikes(
         self, segment: str, original: str, replace: Callable[[str], str]
     ) -> str:
-        """`replace` applied to `segment` except inside an escaped look-alike `‹LABEL_n›` of a real label: one the run could have issued (`n` within
-        the label's counter), or one that merely holds `original` (a value that is the tail of it, `MAIL_1` in `‹EMAIL_1›`), is left whole (G12d; no
-        `‹E<SECRET_3>›`). A look-alike that IS the value (`‹TOKEN_2024›` for the value `TOKEN_2024`, the counter below it) is swept as before."""
-        out: list[str] = []
-        at = 0
+        """`replace` applied to `segment` except inside an escaped look-alike `\u2039LABEL_n\u203a` of a real label that holds `original`: one the run could
+        have issued (`n` within the label's counter, canonical digits), or one that merely holds `original` (a value that is the tail of it, `MAIL_1` in
+        `\u2039EMAIL_1\u203a`), is left whole (G12d; no `\u2039E<SECRET_3>\u203a`). A look-alike that IS the value (`\u2039TOKEN_2024\u203a` for the value `TOKEN_2024`, the
+        counter below it) is swept as before. A look-alike without `original` protects nothing (`replace` would not change it): when none holds it,
+        `replace` is called once on the whole segment (G12e).
+
+        RESIDUAL LEAK (stated): a registered secret that is the tail of a real look-alike (`MAIL_1` in `\u2039EMAIL_1\u203a`), or that equals one the counter has
+        reached (`\u2039SECRET_7\u203a` for the value `SECRET_7` once the counter is 7), stays readable inside it: swept there, it would corrupt the look-alike."""
+        kept = []
         for m in _LOOKALIKE_TOKEN.finditer(segment):
             inner = m.group(1)
             label, _, number = inner.rpartition("_")
-            if label in self.counters and (
-                inner != original or (len(number) < 10 and int(number) <= self.counters[label])
+            if (
+                original in inner
+                and label in self.counters
+                and (inner != original or _issued(label, number, self.counters))
             ):
-                out.append(replace(segment[at : m.start()]))
-                out.append(m.group(0))
-                at = m.end()
+                kept.append(m)
+        if not kept:
+            return replace(segment)
+        out: list[str] = []
+        at = 0
+        for m in kept:
+            out.append(replace(segment[at : m.start()]))
+            out.append(m.group(0))
+            at = m.end()
         out.append(replace(segment[at:]))
         return "".join(out)
 
@@ -2847,9 +2881,7 @@ class _Redactor:
 
                 else:
 
-                    def replace(
-                        text: str, original=original, placeholder=placeholder, rule=rule
-                    ) -> str:
+                    def replace(text: str, original=original, placeholder=placeholder) -> str:
                         return _replace_standalone(text, original, placeholder, _joins(placeholder))
 
                 if "\u2039" in segment and "\u2039" not in original and "\u203a" not in original:
