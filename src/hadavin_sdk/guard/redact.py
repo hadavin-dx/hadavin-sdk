@@ -956,15 +956,12 @@ def redact(
     """
     r = _Redactor(mapping, _cache, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
-    near_before = r.bank_near
     out = r.find(text)
-    if r.bank_near != near_before:
-        # SAFETY NET (round 6, design M-D): a bank word found only in a folded view while the text was read. Within one `find` the flag is set
-        # before any line is masked and before the direct patterns run (the dry hits of the fold scan do not depend on it), so no leak was
-        # reproduced (evidence G7-1.md); the text is read once more with the flag set, as `redact_many` does, because the cost is one more
-        # pass on a rare text and the alternative is a proof about a function of 200 lines. The deadline is read first.
-        r._check_deadline()
-        out = r.find(text)
+    # No second read after a `bank_near` flip (round 7; round 6 had one as a safety net, which also counted `actions` twice): the flag is read
+    # only by `_decide`, and within one `find` every `_decide` call (`_mask_ex` of the patterns, `_folded_line`) comes after the fold scan has
+    # set the flag (its `_line_hits` and `_dry_hits` never call `_decide`), so the one text read already had the context. Pinned by
+    # tests/test_redact_settle_loop.py (every `_decide` call of a `find` sees the flag as it is when that `find` ends; 288 spelling x order
+    # combinations lose no account). `redact_many` still re-reads the strings read BEFORE the flip: they were read without it.
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
         known = len(
             r.mapping
@@ -1148,17 +1145,20 @@ class _Redactor:
         # cost of a token is the matched prefix length plus the suffix length plus the entries met at the terminals (P + S, not P x S: a
         # cookie jar that grows by one cookie per line, every line ending in the same signed suffix, matches one prefix more per line and
         # walks the suffix once, not once per prefix). The total work of a scan is counted and bounded (`defaults.SPELLED_MAX_WORK`) and
-        # the deadline is read in it. A rolled-back registration deletes its form (`_unspell`). MEMORY: the tries hold one dict per
-        # distinct character position of every registered written form (prefix and suffix), so a registration costs about the length of
-        # its written form in nodes (measured: evidence G7-1.md, "registry memory"); a single compound value of 200,000 characters is about
-        # 200,000 nodes, tens of megabytes, per registration. The registry lives as long as the `_Redactor` (one call), is not capped by
-        # count, and is bounded by the call's input cap. `_spelled_at` holds, per placeholder, the written form's token, its prefix and
-        # suffix (substrings of the written form; the full value is the SAME object as in `mapping` and in the terminal, not a copy).
+        # the deadline is read in it. A rolled-back registration deletes its form (`_unspell`). MEMORY: the tries hold one dict (about 185
+        # bytes, measured: evidence G7-1.md "G7 fix round 7") per character of every registered written form (prefix and suffix) that is
+        # not already a node; the characters held are COUNTED per call (`_spelled_chars`, charged in `_spell`, which every registration
+        # passes: `find` through `_place`, the union of an overlap through `_place_union` -> `_place`) and the call is REFUSED
+        # (`InputTooLarge("SpelledMemoryTooMuch")`, nothing stored by the refused registration) past `defaults.SPELLED_MAX_CHARS`;
+        # a registration is never skipped (that would fail open). The registry lives as long as the `_Redactor` (one call). `_spelled_at`
+        # holds, per placeholder, the written form's token, its prefix (a reversed COPY) and suffix (a slice COPY; the full value is the
+        # SAME object as in `mapping` and in the terminal): a second copy of each written form, not counted in `_spelled_chars`.
         self._spelled: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
         self._spelled_at: dict[
             str, tuple[str, str, str, int]
         ] = {}  # placeholder -> (token, prefix reversed, suffix, prefix id)
         self._next_prefix_id = 0
+        self._spelled_chars = 0  # trie nodes (characters of written forms) held now; refused past `defaults.SPELLED_MAX_CHARS`
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
             self._built_for = len(self.mapping)
@@ -1200,7 +1200,9 @@ class _Redactor:
 
         `known`: the size of the map read by the caller BEFORE its first sweep (`redact`, `redact_many`): the first round compares the map with
         it, so an entry the first sweep registered (a union of overlapping forms, `_place_union`) counts as growth and every string is swept once
-        more; without it the size is read at the start of the round.
+        more; without it the size is read at the start of the round. From round 2 on the loop does the same itself (round 7): it records the map
+        size before the sweep loop of EVERY round, and if the sweeps grew the map every string is put in `todo` and the next round sweeps every
+        string (NotSettled stays the cap).
 
         A `bank_near` flip (a bank word found in a folded view while a round read a string) puts EVERY string back in `todo`: the strings
         that no round changed were read without that context. So a round after a flip runs over every string, and a flip in the LAST round
@@ -1225,10 +1227,10 @@ class _Redactor:
             if not todo:
                 return cur
             self._check_deadline()
-            # the map size to compare with after the table ran: the caller's (read BEFORE the first sweep, so an entry that sweep
-            # registered, a union, counts as growth and every string is swept again) for the first round, else the size now
+            # the map size to compare with after the table ran: the size read BEFORE the sweeps that came before it (the caller's, before the
+            # first sweep, in round 1; the previous round's own, in the next ones), so an entry a sweep registered (a union) counts as growth
+            # and every string is swept again; the size now when nothing came before
             before = len(self.mapping) if known is None else known
-            known = None
             near_before = self.bank_near
             changed: set[int] = set()
             for i in sorted(todo):
@@ -1237,12 +1239,18 @@ class _Redactor:
                     cur[i] = text
                     changed.add(i)
             scope = range(len(cur)) if len(self.mapping) != before else sorted(changed)
+            # structural (round 7): the map size before the sweeps of EVERY round, not only the first
+            known = len(self.mapping)
             for i in scope:
                 text = self.sweep(cur[i], self._deadline)
                 if text != cur[i]:
                     cur[i] = text
                     changed.add(i)
             todo = changed
+            if len(self.mapping) != known:
+                # a sweep registered an entry (a union of overlapping forms): the strings swept before it never saw it, so every string is
+                # read again and, next round, swept again (`known` is the size before these sweeps: the map is bigger than that then)
+                todo = set(range(len(cur)))
             if self.bank_near != near_before:
                 # the fold scan of a string found a bank word in a folded view during this round: every string is read again
                 # (a pass depends on the text AND on `bank_near`, so "unchanged" no longer means "read")
@@ -1711,10 +1719,23 @@ class _Redactor:
 
     def _spell(self, original: str, first: re.Match[str], placeholder: str, full: str) -> None:
         """Register the written form `original` for `placeholder`; `first` is the first placeholder token in it (`_place` found it:
-        `original` differs from `full`, so it holds one the map resolves)."""
-        back_root, fwd_root = self._spelled.setdefault(first.group(1), ({}, {}))
+        `original` differs from `full`, so it holds one the map resolves).
+
+        MEMORY (round 7): the characters this registration adds to the tries (a node per character not already there, prefix and suffix) are
+        counted per call (`self._spelled_chars`; a rolled-back registration gives its nodes back) and refused, BEFORE anything is stored,
+        past `defaults.SPELLED_MAX_CHARS` (`InputTooLarge("SpelledMemoryTooMuch")`): the registration is never skipped (that would fail
+        open), the call is refused. Every registration passes here: `find` (`_place`) and the union of an overlap (`_place_union` -> `_place`)."""
+        token = first.group(1)
         prefix = original[: first.start()][::-1]  # read backwards from the token
         suffix = original[first.end() :]
+        roots = self._spelled.get(token) or ({}, {})
+        added = _new_nodes(roots[0], prefix) + _new_nodes(roots[1], suffix)
+        if self._spelled_chars + added > defaults.SPELLED_MAX_CHARS:
+            from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+            raise InputTooLarge("SpelledMemoryTooMuch")
+        self._spelled_chars += added
+        back_root, fwd_root = self._spelled.setdefault(token, roots)
         node = back_root
         for ch in prefix:
             node = node.setdefault(ch, {})
@@ -1733,7 +1754,7 @@ class _Redactor:
         else:
             entry[1] += 1
         terminals[entry[0]] = (placeholder, full)
-        self._spelled_at[placeholder] = (first.group(1), prefix, suffix, entry[0])
+        self._spelled_at[placeholder] = (token, prefix, suffix, entry[0])
 
     def _unspell(self, placeholder: str) -> None:
         """Delete the written form registered for `placeholder` (a rolled-back registration), and the trie nodes only it used. Every
@@ -1757,6 +1778,7 @@ class _Redactor:
                 if ahead[depth]:
                     break
                 del ahead[depth - 1][suffix[depth - 1]]
+                self._spelled_chars -= 1
         entry = back[-1][""]
         entry[1] -= 1
         if entry[1] == 0:
@@ -1765,6 +1787,7 @@ class _Redactor:
                 if back[depth]:
                     break
                 del back[depth - 1][prefix[depth - 1]]
+                self._spelled_chars -= 1
         if not back_root and not fwd_root:
             del self._spelled[token]
 
@@ -1793,7 +1816,9 @@ class _Redactor:
         unit of work, a token counts one, and so does every entry looked at in a terminal. The scan REFUSES
         (`InputTooLarge("SpelledWorkTooMuch")`) a text that needs more than `defaults.SPELLED_MAX_WORK` units, and reads the deadline (when
         given) every `_SPELL_CHECK_EVERY` units, a token with no form counting one, so a text of tokens with no forms is checked too. The
-        limit is read at the same points as the deadline, so it can be passed by up to `_SPELL_CHECK_EVERY` units. The work of registering
+        limit is read at the same points as the deadline, so the work done when it refuses can pass the limit by the units counted since the last
+        reading (under `_SPELL_CHECK_EVERY`) plus the one terminal lookup in progress, whose cost (up to `len(matched)` entries, not 1,024) is added after
+        the lookup is made. The work of registering
         the union of an overlap (`_place_union`) is counted too, one unit per character of the union."""
         if not self._spelled:
             return out
@@ -2054,12 +2079,23 @@ _MAX_NESTING = 200
 # The most rounds (a pattern pass over the strings the previous round changed, then a sweep) `_Redactor.settle` makes after the first
 # sweep. A call is settled when some round within the cap changes no text, so the last CHANGING round that is accepted is round 3 (round
 # 4 confirms). A margin that fails closed, not a derived bound: over the generated compositions of 4 to 8 lines with a pre-seeded map
-# (tests/test_redact_settle_loop.py; the distribution is printed by the test and recorded from a real run in handover/core-c/evidence/G7-1.md)
+# (tests/test_redact_settle_loop.py; the test records the distribution with `record_property` (junit xml), it does not print it; a real run is in handover/core-c/evidence/G7-1.md)
 # the most rounds run were 3 (a chain of three needs 3: two that change and one that confirms); a chain that changes a text in
 # round 4 is refused (RedactionError("NotSettled")).
 _SETTLE_ROUNDS = 4
 # The scan of the written forms (`_spelled_sweep`) checks its deadline every this many units of work (a placeholder token of the text, or one step of a trie walk).
 _SPELL_CHECK_EVERY = 1024
+
+
+def _new_nodes(root: dict[str, Any], chars: str) -> int:
+    """The nodes a walk of `chars` from `root` would add to a trie: the characters after the first one with no node (nothing is stored)."""
+    node = root
+    for i, ch in enumerate(chars):
+        nxt = node.get(ch)
+        if nxt is None:
+            return len(chars) - i
+        node = nxt
+    return 0
 
 
 def _compile_uncached(pattern: str) -> re.Pattern[str]:
@@ -2265,7 +2301,7 @@ def redact_many(
     table again over the strings the sweep changed, to a fixed point with a hard cap (RedactionError past it; see `settle`).
     `near`: texts not redacted here whose bank words still count as bank context (a discussion's evidence).
     `_deadline`: as for `redact` (CPU clock; InputTooLarge past it). A `bank_near` flip during the first reading (a bank word found only
-    in a folded view of string n) re-reads strings 0..n only, each after a deadline check; the strings after n were read with the flag set."""
+    in a folded view of string n) re-reads the strings before n only (n itself was read with the flag set), each after a deadline check; the strings after n were read with the flag set."""
     r = _Redactor(mapping, None, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
     near_before = r.bank_near
@@ -2276,11 +2312,12 @@ def redact_many(
         if flipped_at is None and r.bank_near != near_before:
             flipped_at = n
     if flipped_at is not None:
-        # `_fold_scan` found a bank word only in a FOLDED view while string `flipped_at` was read: that one and the strings read before it
-        # were read without the batch's bank context. Read THOSE again (the placeholders the first reading made are reused); the strings
+        # `_fold_scan` found a bank word only in a FOLDED view while string `flipped_at` was read: the strings read before it
+        # were read without the batch's bank context (that one itself was not: the flag is set before any decision). Read THOSE again (the placeholders the first reading made are reused); the strings
         # after it were read with the flag set. The deadline is read before every one of the reads (`find` itself is not interrupted), so
         # the flip costs at most one more string pass past the budget, not a second pass over every string.
-        for n in range(flipped_at + 1):
+        # not `flipped_at` itself: its `find` set the flag before any decision (see `redact`)
+        for n in range(flipped_at):
             r._check_deadline()
             found[n] = r.find(items[n])
     known = len(

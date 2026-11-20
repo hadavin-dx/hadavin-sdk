@@ -1,6 +1,9 @@
 """G7 fix round 6 mutants (scratch script kept as evidence): each mutant is applied to src/hadavin_sdk/guard/redact.py, the named tests run
-(serial), the file is restored after each. M-E in `redact` (one string) has no mutant: the only string is the one that registered the union.
-M-A has none either: its fail-before is the round 5 scan itself (tests run against the round 5 redact.py, evidence G7-1.md). Run from the worktree root: python handover/core-c/evidence/g7r6_mutants.py"""
+(serial), the file is restored after each. M-E in `redact` (one string): round 7 RAN the one-line mutant (`known=None`, g7r7_mutants.py): it SURVIVES, equivalent (G7-1.md round 7). M-A: the round 5 scan
+is itself the mutant, killed by the jar test and the work-of-a-token ratio test (evidence G7-1.md); the smaller-side lookup is pinned in round 7.
+REQUIRES the worktree (repo) root as the current directory and `uv`: it rewrites src/hadavin_sdk/guard/redact.py IN PLACE and restores it in a `finally`
+(not after a SIGKILL: check `git diff` then). Run: python handover/core-c/evidence/g7r6_mutants.py. Round 7: `redact()` no longer reads the text a second
+time, so the "M-D redact: no second read" mutant does not apply any more (SNIPPET NOT FOUND); see g7r7_mutants.py."""
 
 import subprocess
 
