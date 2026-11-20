@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:35:38Z
+UPDATED_UTC: 2026-11-20T09:37:30Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,29 +6,28 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 8
-CAPACITY: load 0.3 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 8, heavy agents 0
+AGENTS_RUNNING: 7
+CAPACITY: load 2.1 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 7, heavy agents 0
 DISK: / 58G free, 17% used; git worktrees 18; 1.1G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
-CONTAINER_RESTARTS: 2
+CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 4 (15 files: 2672 passed, 2 skipped, 5 xfailed). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only. ORDER 023 (09:30Z): E9(1) done (docstrings; redact.py module docstring in G7 r5, gate.py a4b2ce2), E9(3) is_masked: no consumer -> every promise withdrawn (Amendment 2), E9(2) builder running; E10 ticket G9 drafting then plan review; E11 ticket G10 + Latin split running; E12 Q9 builder runs both mutant lists; Q16 DONE (349e6ca0c: MIT licence checked, lock regenerated). 09:55Z target: E9 (1)-(3) done and E10 plan review started.
-PUSHED_UTC: 2026-11-20T09:34:37+00:00
+NEXT: LIVE only (7). G7 round 6 landed 9d8bc580a; fresh result reviews of round 6 and merged-tree batch 5 start now. ORDER 023: E9(1)(3) done, E9(2) building, E10 ticket G9 drafting then plan review round 1, E11 ticket G10 + split running, E12 Q9 builder, Q16 done.
+PUSHED_UTC: 2026-11-20T09:37:26+00:00
 
-(15:05 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:07 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) q9 | builder | claude-sonnet-5-5 | Q9 mutants and tests (after the 240-mutant run) | Q9: a test and a mutant for each of the 30 code points; fix  | 09:11 | 09:50 | 1 | running | 1 | 0 | ORDER 022 Q9; evidence G1-mutants-run.md |
-| (new) g7fix6 | builder | claude-sonnet-5-5 | G7 fix round 6 (after result review round 5) | G7 fix round 6 (bank_near hole in redact(), P x S walk, raw  | 09:17 | 09:55 | 1 | running | 6 | 0 | from G7-result-review-5.md |
-| (new) g4v5 | drafter | claude-opus-5-5 | G4 v5 ticket (after plan review round 4: card-path detection loss, stale G7 anchors, G8 order, TB fixes) | review round: 4 done, 5 next | 09:22 | 09:55 | 1 | running | 5 | 0 | EGM draft step |
-| (new) g8v3 | drafter | claude-opus-5-5 | G8 v3 ticket (after plan review round 2: IBAN opaque-token leak measured first, mutants run, G4 order) | review round: 2 done, 3 next | 09:27 | 10:00 | 1 | running | 3 | 0 | EGM draft step |
-| (new) own | builder | claude-sonnet-5-5 | E9(2): _OWN_OUTPUT restricted to SECRET tokens only (test + 3 mutants) | EGM: build now, review after | 09:36 | 10:00 | 1 | running | 1 | 0 | ORDER 023 E9 |
-| (new) g9 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point, bound 4, refuse if not converged | EGM plan review round 1 next (max 3) | 09:36 | 10:05 | 1 | running | 1 | 0 | ORDER 023 E10 |
-| (new) g10 | drafter | claude-opus-5-5 | ticket G10: deadline in the text fold + published false-hit rates | EGM plan review round 1 next | 09:36 | 10:05 | 1 | running | 1 | 0 | ORDER 023 E11 |
-| (new) split | evidence runner | claude-sonnet-5-5 | E11(c): split of Latin false hits (whole word / inside word / across spaces), low-load only | 09:36 | 10:00 | 1 | running | 1 | 0 | ORDER 023 E11 |
+| ab19d791 | builder | claude-sonnet-5-5 | Q9 mutants and tests (30 code points; 3 wrong-reason + 4 surviving textnorm mutants; stale N15; both mutant lists on HEAD) | RESTARTED 09:36Z on /tmp/core-c-q9 | 09:36 | 10:10 | 30 | running | 1 | 1 | container restart 09:35Z |
+| a04e121e | builder | claude-sonnet-5-5 | E9(2) _OWN_OUTPUT restricted to SECRET tokens (test + 3 mutants) | RESTARTED on /tmp/core-c-own | 09:36 | 10:00 | 40 | running | 1 | 1 | container restart 09:35Z |
+| adfc4857 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point (E10) | plan review round 1 next (max 3) | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
+| a759f3ff | drafter | claude-opus-5-5 | ticket G10: text-fold deadline + published false-hit rates (E11) | plan review round 1 next | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
+| a2db832a | drafter | claude-opus-5-5 | ticket G4 v5 (plan review round 4 findings; card-path fix) | plan review round 5 next | 09:37 | 10:10 | 0 | running | 5 | 1 | container restart 09:35Z |
+| ae8bb529 | drafter | claude-opus-5-5 | ticket G8 v3 (plan review round 2 findings; IBAN opaque-token measurement) | plan review round 3 next | 09:37 | 10:10 | 0 | running | 3 | 1 | container restart 09:35Z |
+| a83c98d5 | evidence runner | claude-sonnet-5-5 | E11(c) split of Latin false hits (low load only) | 09:37 | 10:00 | 0 | running | 1 | 1 | container restart 09:35Z |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
@@ -107,8 +106,7 @@ PUSHED_UTC: 2026-11-20T09:34:37+00:00
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
 |---|---|---|---|---|
-| 2026-11-20T06:38:11Z | container restart: BOOT_ID 70253298 -> 1e29cf8a | see AGENTS | not yet | to be checked by the session |
-| 2026-11-20T09:35:38Z | container restart: BOOT_ID 1e29cf8a -> 8493e966 | see AGENTS | not yet | to be checked by the session |
+| 09:35Z | container restart (boot id 8493e966): all 9 agents stopped; files survived | 7 agents re-started; G7 round 6 (9d8bc580a) already pushed; merged batch 5 killed and re-run |
 
 ## LOOPS
 | item | tries | review rounds | last error | reason it keeps failing |
