@@ -283,6 +283,18 @@ Rows that differ from v2 are marked (v3).
 | `call 415-555-0132.`, `call 4155550132.`, `call +1 415-555-0132.` | unchanged | unchanged | unchanged | L7 (section 6, L-D13) |
 | `call +1 415-555-0132+1 415-555-0199 now` | `<PHONE_1>+<PHONE_2>` | same as base | `<PHONE_1><PHONE_2>` | row 75 (v3): entry 6 masks the first number, the main entry then takes `+1 415-555-0199` after `>` (CHANGED in v4: numbered 6, N2) |
 
+CHANGED in v4: the codebase reviewer's round 3 examples, run on 99787d5b3 (`base4`, `v3h`, `v4`; `redact()` unless named):
+| input | base | v3 | v4 | what is true |
+|---|---|---|---|---|
+| `redact_untrusted("<TENANT_4155550132>")` | `‹TENANT_4155550132›`, map empty | `‹TENANT_<PHONE_1>›`, map `<PHONE_1>` = `4155550132` | `‹TENANT_4155550132›`, map empty | M2: the escape runs first; entry 7 now refuses `›` (U1) |
+| `redact("‹TENANT_4155550132›")` | unchanged | `‹TENANT_<PHONE_1>›` | unchanged | M2 (U2) |
+| `<TENANT_tel4155550132>` | unchanged | `<TENANT_tel<PHONE_1>>` | `<TENANT_tel<PHONE_1>>` | not placeholder-shaped (`n` is not digits): entry 8 masks a number after a phone word, as designed; no change |
+| `x+2026-11-20T10:00:00Z` | unchanged | `x<PHONE_1>T10:00:00Z` (stored as PHONE) | unchanged | N4 (K81) |
+| `t+2026-11-20 1012 ok` | unchanged | `t<PHONE_1> ok` | unchanged | N4 (K82) |
+| `at +2026-11-20 10:00 ok` | `at <PHONE_1>:00 ok` | same | same | the MAIN entry's own behaviour on the base (its date guard sits before `\+?`): not G8's, unchanged |
+| `ORD1234-5678-9012-3456` | unchanged, map empty | `ORD<CREDITCARD_1>` | `ORD<CREDITCARD_1>`, not storable | N1: L-D12's over-mask (AT7) |
+| `INV_1234-5678-9012-3456_x` | unchanged | `INV_<CREDITCARD_1>_x` | same | L-D12 (as K80) |
+
 ### 2.4 F1 measured: an IBAN-shaped tail inside an opaque token (scratch script f1.py; base, v3 and v3camel)
 Method: random tokens of the 62 ASCII letters and digits (seed 20261120), each written as `key <token> end` (HIGHENTROPY context)
 and `Authorization: Bearer <token> end` (BEARER context); "readable" = the longest run of the token's characters left outside the
