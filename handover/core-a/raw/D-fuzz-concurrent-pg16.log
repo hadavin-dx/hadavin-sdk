@@ -5,32 +5,61 @@ configfile: pyproject.toml
 plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
 collecting ... collected 9 items
 
-tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1] 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1] PASSED [ 11%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2] 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2] PASSED [ 22%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4] 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4] PASSED [ 33%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand PASSED [ 44%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers PASSED [ 55%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says PASSED [ 66%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql PASSED [ 77%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server PASSED [ 88%]
-tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load 
 tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load PASSED [100%]
 
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C1/1 seed=2026112041: sent=1502 valid=1016 (68%) rows=50 overlapping_keys=40 samples=30 model_calls=50 statuses[200:330, 202:10, 400:271, 401:135, 404:33, 405:29, 409:176, 413:18, 503:500] retried_503=500
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C1/2 seed=2026112042: sent=1484 valid=1014 (68%) rows=53 overlapping_keys=41 samples=57 model_calls=53 statuses[200:246, 202:18, 400:251, 401:148, 404:32, 405:21, 409:269, 413:18, 503:481] retried_503=481
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C1/4 seed=2026112043: sent=1007 valid=541 (54%) rows=57 overlapping_keys=41 samples=91 model_calls=57 statuses[200:205, 202:123, 400:245, 401:156, 404:26, 405:23, 409:211, 413:16, 503:2] retried_503=2
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:916: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C2 seed=2026112044: sent=1362 valid=729 (54%) rows=60 overlapping_keys=42 samples=117 model_calls=60 statuses[200:314, 202:50, 400:346, 401:194, 404:37, 405:34, 409:306, 413:22, 503:59] retried_503=59 get_run_calls=1122 raised=57 slowed=303
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C3 seed=2026112045: sent=1510 valid=197 (13%) rows=51 overlapping_keys=26 samples=99 model_calls=51 statuses[200:86, 202:44, 400:152, 401:1059, 404:36, 405:35, 409:60, 413:31, 503:7] retried_503=7 clock_calls=1335 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C5 seed=2026112047: sent=503 valid=274 (54%) rows=48 overlapping_keys=33 samples=29 model_calls=48 statuses[200:70, 202:97, 400:117, 401:78, 404:13, 405:13, 409:107, 413:8] retried_503=0
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:1104: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=104 no_answer=14 retried_503=0 statuses[0:14, 200:69, 202:163, 400:110, 401:45, 404:7, 405:13, 409:22, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:702: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=40 overlapping_keys=16 samples=160 model_calls=40 statuses[200:228, 202:20, 400:625, 401:382, 404:60, 405:68, 409:137, 413:44, 503:940] close_took=0.00s requests_after_close=1150 new_keys_after_close=934
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ============================= slowest 8 durations ==============================
-3.14s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
-1.83s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
-1.67s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
-1.49s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
-1.32s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
-1.27s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
-1.24s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+2.89s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+1.89s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+1.87s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+1.62s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+1.31s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+1.26s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+1.23s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
 1.17s call     tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
-============================== 9 passed in 14.12s ==============================
+======================== 9 passed, 9 warnings in 14.27s ========================

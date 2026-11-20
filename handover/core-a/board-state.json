@@ -415,11 +415,11 @@
   {
    "item": "B4b-fuzz-concurrent",
    "what": "concurrent fuzz: 16 client threads, store outages and slowness, a moving clock, raw sockets from 8 threads, PostgreSQL, close under load",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/D-fuzz-concurrent-pg16.log (not yet)",
+   "state": "DONE, no finding",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_fuzz_concurrent.py, raw/D-fuzz-concurrent-pg16.log",
    "tries": 1,
-   "reason": "ORDER 016 item 4b: the first fuzz was sequential and never reached the 503 paths"
+   "reason": "9 tests passed in 14 s (3 runs by the agent; run 1 failed on the agent's own test bugs, fixed). Layers: 16-thread bursts with max_running 1, 2 and 4 (both 503 paths hit; 40 to 41 keys with overlapping requests per layer), a slow and failing store (503 during the outage window, full recovery), a moving clock (69 jumps and 136 backward steps: accept and refuse matched the clock the endpoint saw), raw sockets from 8 threads, PostgreSQL 16 with 8 threads (no 503 occurred there so the retry check did not apply), close under load (no row appeared after close, all later requests 503). NOT covered: one seed per layer only and no same-seed rerun; no store fault, outage or moving clock on PostgreSQL; no model-call count per document hash; the test reads private fields of the worker and the store"
   },
   {
    "item": "EGM-SEQ",
@@ -986,15 +986,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:38",
-   "percent": 3,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": "0 (restart after the Fable limit)",
    "id": "sn-fuzz",
    "role": "builder (tests)",
    "what exactly it is doing": "concurrent fuzz (RESUME-NOTE 5)",
-   "expected end": "about 40 min after start",
-   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+   "expected end": "ended",
+   "reason": "finished, 166k tokens"
   },
   {
    "model": "sonnet",
@@ -1377,6 +1377,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "UNVERIFIED by me until the batch"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_fuzz_concurrent.py",
+   "branch and SHA": "working tree",
+   "run number": "3 (agent; run 1 failed on the test's own bugs)",
+   "passed / failed / errors": "9 / 0 / 0 (14 s)",
+   "first failing line": "run 1: a key tag with '/' and a retry delay race, both test bugs",
+   "state": "done",
+   "reason": "PostgreSQL 16.15 on port 55433"
   }
  ],
  "restarts": [],
