@@ -1,0 +1,30 @@
+.................F...................................................... [ 69%]
+................................                                         [100%]
+=================================== FAILURES ===================================
+________ test_f2_a_request_line_without_a_version_is_closed_on_purpose _________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f50691328e0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f5069132af0>
+
+    def test_f2_a_request_line_without_a_version_is_closed_on_purpose(capsys, caplog):
+        """Fuzz F2. `GET /v1/trigger` with no version: no answer, the connection is closed, and the log
+        holds one fixed DEBUG line, not the class name of an internal error."""
+        start = FakeStart()
+        with serving(make_wsgi(start)) as server:
+            seen = exchange(server.server_port, custom(body_bytes(), line=f"GET {endpoint.PATH}"))
+        assert seen.raw == b"" and seen.end in ("closed", "reset"), seen
+        assert start.calls == []
+>       assert trigger_records(caplog) == [
+            ("DEBUG", "trigger server: request line without an HTTP version, closed with no answer")
+        ]
+E       AssertionError: assert [('DEBUG', 't...is complete')] == [('DEBUG', 't...h no answer')]
+E         
+E         At index 0 diff: ('DEBUG', 'trigger server: request line without an HTTP version, closed once the request is complete') != ('DEBUG', 'trigger server: request line without an HTTP version, closed with no answer')
+E         Use -v to get more diff
+
+tests/triggers/test_t5_wsgiref.py:480: AssertionError
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.triggers:server.py:257 trigger server: request line without an HTTP version, closed once the request is complete
+=========================== short test summary info ============================
+FAILED tests/triggers/test_t5_wsgiref.py::test_f2_a_request_line_without_a_version_is_closed_on_purpose
+1 failed, 103 passed in 8.52s
