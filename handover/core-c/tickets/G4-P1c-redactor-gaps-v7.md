@@ -25,7 +25,7 @@ Version 5, written by the core-c drafter (opus tier), 2026-11-20. It replaces ti
 contests every finding of plan review round 4 (tickets/G4-review-4.md, both reviewers; section F at the end). It keeps what v4
 resolved from rounds 1-3 (sections A, D, E, now written out here, so no earlier version has to be read). A builder with no other
 context builds from this file alone: nothing below says "as v3" or "unchanged from v3" without the text. Nothing is built before
-plan review round 5 is clean (CHANGED in v6: round 6).
+plan review round 5 is clean (CHANGED in v6: round 6; CHANGED in v7: round 7).
 
 Base of every claim in this file: `cloud/core-c` at 2e3a081ae+ (09:45Z). Its last commit touching `src/` or `tests/` is e8ff6de2b
 ("code G: E9 _OWN_OUTPUT restricted to SECRET tokens"); later commits are board and notes only. That tree holds, merged:
@@ -82,7 +82,8 @@ Box rule kept: one heavy process at a time, `-n 3` at most, `uptime` read before
 - Depends on, all merged: G0, G7 with fix rounds 2-6, gate round 4, P1d-a rounds 2-3, E9(2). The base sha is the first commit of
   `cloud/core-c` that the builder starts from; it is the base sha of the evidence.
 - Build order with G8: G8 FIRST, then G4 (0.3, decision L23).
-- CHANGED in v6 (review round 5 M3): build order with G9: either side, no dependency (0.3b, decision L25).
+- CHANGED in v6 (review round 5 M3): build order with G9: either side, no dependency (0.3b, decision L25). CHANGED in v7: either
+  side still, but the second lander re-pins the rows 0.3b lists as order-dependent (TB-2.8, TB-2.11, test_e5), measured both ways.
 - Source of the code: our own (rung 5), with Python stdlib `base64` as the decoder. Nothing is copied from another repository.
 - Target files:
   - `src/hadavin_sdk/guard/runmap.py`: the scan refactor and the base64 step; CHANGED in v6 (review round 5 N1): one clause of the
@@ -92,11 +93,13 @@ Box rule kept: one heavy process at a time, `-n 3` at most, `uptime` read before
   - `src/hadavin_sdk/approvals/channel.py`: one kind added to `_ASSIGNMENT_KINDS` (L10).
   - `src/hadavin_sdk/approvals/gate.py`: one comment.
 
-### 0.1 Cite table (name, file, line at e8ff6de2b; CHANGED in v6: redact.py and defaults.py lines at bff88a7a1)
+### 0.1 Cite table (name, file, line at e8ff6de2b; CHANGED in v7: redact.py lines at 944d143db, defaults.py at bff88a7a1 = 944d143db)
 Rule for the builder: a line number is a hint, the NAME is the cite. Before each phase, `grep -n` the name; when the line moved,
 go by the name. CHANGED in v6 (review round 5 M2): the runmap.py, channel.py, cards.py, requests.py, gate.py, tools.py, k1b and
 agent_loop.py lines are those of e8ff6de2b and still hold at bff88a7a1 (those files did not change); every redact.py and
-defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 moved them; header).
+defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 moved them; header). CHANGED in v7 (review round 6
+readiness N2): those files are also unchanged at 944d143db; every redact.py line of this table and of sections 4 and 5 was
+re-derived by `grep -n` at 944d143db (3 lower than v6 from `_Redactor` on; the lines before `_char_class` did not move).
 | name | where |
 |---|---|
 | `redact_text` (def / `_within_cap` / `started =` / `try` / views / `cache =` / first `redact(` / R2 check / pairs / `for view in views:` / except tuple / `mapping.update(current)`) | runmap.py 533 / 554 / 555 / 556 / 560-561 / 562 / 563-565 / 567 / 569-577 / 578-591 / 593-596 / 603-604 |
@@ -105,18 +108,18 @@ defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 mo
 | `escape_placeholders`, `neutralise_untrusted`, `redact_untrusted` | runmap.py 354, 372, 377 |
 | `_GRAMMAR`, `storable`, runmap `STORED_KINDS`, the import block from redact | runmap.py 233, 286, 44, 25-38 |
 | `enforce_map` (overlap sentence of the docstring; `raise RedactionError("NotSettled")`) | runmap.py 688-775 (730-733; 775) |
-| `_rules_conflict`, `snapshot`, `held_value_left` | runmap.py 791, 885, 934 |
-| HOSTNAME entry of `PATTERNS` (comment above) | redact.py 407-414 (400-406) |
-| module docstring ("What this is not" paragraph; closing `"""`) | redact.py 1-26 (21; 26) |
-| `_KEPT_HOST`, `_LABELS`, `_OWN_TOKEN`, `_OWN_OUTPUT`, `strip_ansi` (CHANGED in v6) | redact.py 861-863, 868, 889, 890, 900 |
-| `redact()` (CHANGED in v6) | redact.py 942 |
-| `_Redactor` (counter restore) (CHANGED in v6) | redact.py 1095 (1113-1124, `self.counters = dict.fromkeys(_LABELS, 0)` at 1115, `self.counters[kind] = max(` at 1122) |
-| `find` (fold-scan call), `settle` (`raise RedactionError("NotSettled")`), `_fold_scan` (`splitlines`) (CHANGED in v6) | redact.py 1166 (1173), 1181 (1261), 1342 (1355) |
-| `_decide` (older all-placeholder rule; `_OWN_OUTPUT.fullmatch`), `_place` (CHANGED in v6) | redact.py 1652 (1675-1678; 1683), 1698 |
-| spelled scan refusal `raise InputTooLarge("SpelledWorkTooMuch")` (CHANGED in v6: now inside `_work_refused`) | redact.py 1939 (`_work_refused`, 1936) |
-| CHANGED in v6 (G9's names, 0.3b): `_spelled_sweep`, `_place_union`, `sweep` | redact.py 1794, 1941, 2013 |
-| `_build` (alias loop with N15's anchor / sort key / rules loop) (CHANGED in v6) | redact.py 1949 (1958-1960 / 1967 / 1970-1974) |
-| `_SETTLE_ROUNDS`, `SECRET_KINDS`, `_kind` / `kind_of`, `_EVERY_COPY`, `_sweep`, `_replace_standalone`, `redact_many` (CHANGED in v6) | redact.py 2085, 2185-2201, 2236 / 2240, 2244, 2249, 2270, 2291 |
+| `_rules_conflict`, `snapshot` (CHANGED in v7: its `if _rules_conflict(known):` 906, the comment under it 907-909), `held_value_left` | runmap.py 791, 885, 934 |
+| HOSTNAME entry of `PATTERNS` (comment above) (CHANGED in v7: the tuple is 407-413) | redact.py 407-413 (400-406) |
+| module docstring ("What this is not" paragraph; closing `"""`) | redact.py 1-26 (21-25; 26) |
+| `_KEPT_HOST`, `_LABELS`, `_OWN_TOKEN`, `_OWN_OUTPUT`, `strip_ansi` (did not move) | redact.py 861-863, 868, 889, 890, 900 |
+| `redact()` (did not move) | redact.py 942 |
+| `_Redactor` (counter restore) (CHANGED in v7) | redact.py 1092 (1112-1121, `self.counters: dict[str, int] = dict.fromkeys(_LABELS, 0)` at 1112, `self.counters[kind] = max(` at 1119) |
+| `find` (fold-scan call), `settle` (`raise RedactionError("NotSettled")`), `_fold_scan` (`splitlines`) (CHANGED in v7) | redact.py 1163 (1170), 1178 (1258), 1339 (1352) |
+| `_decide` (older all-placeholder rule; `_OWN_OUTPUT.fullmatch`), `_place` (CHANGED in v7) | redact.py 1649 (1672-1675; 1680), 1695 |
+| spelled scan refusal `raise InputTooLarge("SpelledWorkTooMuch")` inside `_work_refused` (CHANGED in v7) | redact.py 1936 (`_work_refused`, 1933) |
+| CHANGED in v6 (G9's names, 0.3b): `_spelled_sweep`, `_place_union`, `sweep` (CHANGED in v7) | redact.py 1791, 1938, 2010 |
+| `_build` (alias loop with N15's anchor / sort key / rules loop) (CHANGED in v7) | redact.py 1946 (1955-1957 / 1964 / 1967-1972) |
+| `_SETTLE_ROUNDS`, `SECRET_KINDS`, `_kind` / `kind_of`, `_EVERY_COPY`, `_sweep`, `_replace_standalone`, `redact_many` (CHANGED in v7) | redact.py 2082, 2182-2198, 2233 / 2237, 2241, 2246, 2267, 2288 |
 | `MAX_MAP_ENTRIES`, `MAX_REDACT_CHARS`, budget comment (first clause / `clean()` clause), `REDACT_BUDGET_S`, `SPELLED_MAX_WORK` (comment), `SPELLED_MAX_CHARS` (comment; G7 r7), `STORED_KINDS` (CHANGED in v6) | defaults.py 24, 45, 52-87 (59-60 / 83-87), 88, 115 (89-114), 125 (116-124), 184 |
 | `clean` (first `redact_text` / joined `redact_text`), `_MAX_REREADS`, `SETTLE_NOTE`, `_reread`, `settled`, `_TAGS`, `_ASSIGNMENT_KINDS`, `_neutralise` | channel.py 25-52 (37 / 44), 62, 67, 70, 76-95, 97, 98, 101 |
 | `cards._card`, `requests` summary fallback, card text `Plan <12 hex>.` | cards.py 58-63, requests.py 35-51, requests.py 42 |
@@ -125,11 +128,12 @@ defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 mo
 | `redact_bundle` (`redact_untrusted` call / `Counter`) | k1b/redaction.py 172 (188 / 195) |
 | agent_loop map ceiling; card None on a raise | agent_loop.py 427, 547; 622-625, 649-654 |
 | the patchers of `runmap.redact` (every one must still see each call) | tests/test_k5_round5.py:278; tests/test_k5_tools.py:317 (`broken`) and 339 (`flaky`); tests/test_redact_fold_budget.py:89 (`spy`) and 252; tests/fixtures/p1d_cases.py:261 (`mock.patch.object`, H27's `check_extra`) |
-| consumers of `_LABELS` (CHANGED in v6: counters line) | redact.py 868, 1115 (counters); tests/test_redact_context_after_sweep.py:469 (`_place` for every label); tests/test_runmap_enforce_map.py:470 (longest label) |
+| consumers of `_LABELS` (CHANGED in v7: counters line) | redact.py 868, 1112 (counters); tests/test_redact_context_after_sweep.py:469 (`_place` for every label); tests/test_runmap_enforce_map.py:470 (longest label) |
 | property test (`CONSTRUCTED`, `_build`, `p1c.reseed()`, `EXPECTED_INPUTS = 1836`, `P1C_GAP2`/`P1C_GAP3`, count asserts) | tests/test_redact_idempotent_property.py 65-90, 92-122, 114, 285-287, 203-219 |
 | neutralise-hook test (`assert len(seen) >= 2`) | tests/test_k5_round11.py 65-74 (74) |
 | CHANGED in v6: `test_e5_one_original_under_two_placeholders_follows_the_stronger_rule` (def; docstring; FAIL-BEFORE assert) | tests/test_runmap_enforce_map.py 518 (519-520; 523) |
 | CHANGED in v6: gate mutant count pin `MIN_MUTANTS = 105`; gate mutant R8 | tests/test_gate_mutants_picked_up.py 20; tests/gate_mutants.py 190 |
+| CHANGED in v7 (tree, header): the redact-mutant meta test (`EXPECTED_COUNT = 94`, `OCCURS_TWICE`, `test_every_search_string_occurs_exactly_once_in_its_file`) | tests/test_redact_mutants_meta.py 16, 17, 67 |
 
 ### 0.2 Phase 0 rule for anything merged after the base (by NAME, not by line)
 1. `git diff e8ff6de2b <base-sha> -- src/hadavin_sdk/guard/runmap.py src/hadavin_sdk/guard/redact.py src/hadavin_sdk/defaults.py src/hadavin_sdk/approvals tests/fixtures/p1d_cases.py tests/p1d_a_mutants.py tests/redact_mutants.py tests/gate_mutants.py tests/p1c_builders.py tests/test_redact_idempotent_property.py tests/g8_cases.py`.
@@ -137,6 +141,8 @@ defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 mo
    a non-empty diff alone is never a STOP. CHANGED in v6: at bff88a7a1 the diff is already non-empty (Q9 and G7 r7, header);
    G7 r7's changes to `settle`, `_spell`/`_unspell`, `find`, the union path and the `SPELLED_MAX_CHARS` comment touch no step of
    this ticket and are a line shift for it; G9, when merged, is handled by 0.3b.
+   CHANGED in v7: at 944d143db the diff also holds the Q9 review fixes (header): a line shift in redact.py and N1/N14 deleted from
+   tests/redact_mutants.py; no step of this ticket is touched. Add tests/test_redact_mutants_meta.py to the diff list of step 1.
 2. For each name in 0.1 the diff touches, re-read that function or entry and compare it with the step of this ticket that names it.
    STOP and report only when the change contradicts a numbered step:
    - a new `except` clause in `redact_text`;
@@ -151,6 +157,13 @@ defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 mo
    and adds `defaults.SPELLED_MAX_PASSES` and the refusals `InputTooLarge("SpelledNotSettled")` / `("SpelledOverlap")`. None of these
    is a STOP; 0.3b says what the second lander re-checks. A G9 change to the `_build` RULES LOOP (the lines G4 edits, 4 point 5)
    IS a STOP.
+   CHANGED in v7 (review round 6 design M1; G9 v2 section 3): G9 v2's names are `sweep` (pass loop), `_sweep_once`,
+   `_ensure_built`, `_spend`, `_read_back`, `_overlaps`, `_masked`, `_close`, `_place` (a `derived` parameter), `_place_union`
+   (takes a kind), `_spelled_sweep` (a `shared` count), `_longest` (set in `_build` and on the cached path of `__init__`),
+   `_may_register` (set by `redact` / `redact_many`), the module constant `_SEP`; the refusals are
+   `InputTooLarge("SpelledNotSettled")` and `RedactionError("SpelledOverlap")` (a RedactionError, NOT an InputTooLarge: G9 v2 4.5
+   `_close` and L-D1b); runmap.py docstrings of `enforce_map` (the overlap bullet, which holds the clause G4 edits, 4 point 5) and
+   `held_value_left`. None is a STOP; the docstring overlap is merged by 0.3b's rule.
    A pure line shift, or a change to a name G4 does not touch, is no stop: re-derive the lines and go on.
 3. p1d rows are found by id (`ROW_BY_ID["H27"]`, `["L2"]`, `["L3"]`, `["L11"]`, `["D3b"]`, `["D3c"]`), never by line. Gate rules
    are found by name (`_PLACEHOLDER_DOT`, `_outside_code`, `_per_part`, `_defang_prose`). Section 9.3's three new `after` cells and
@@ -158,7 +171,9 @@ defaults.py line below was re-derived by `grep -n` at bff88a7a1 (Q9 and G7 r7 mo
    named here no longer kills, STOP and report: no killer is invented.
 4. Mutant files: a new mutant appended at the END of tests/redact_mutants.py (Q9, as E9 did) is recorded in Phase 0 (g) like the
    others; G4 edits only R3 and mutant 21's docstring sentence there (13.3). CHANGED in v6: Q9's 30 are in the tree (96 entries),
-   and G9's rows, when merged, are appended after them; G4 touches none of them.
+   and G9's rows, when merged, are appended after them; G4 touches none of them. CHANGED in v7: at 944d143db there are 94 entries
+   (N1 and N14 deleted), pinned by tests/test_redact_mutants_meta.py `EXPECTED_COUNT = 94`; G4 adds no entry there, so the pin
+   holds; G9's rows raise it (G9's commit edits the pin, not G4's).
 
 ### 0.3 Order with G8 (decision L23; review round 4 readiness Major 2 and G8-review-2 Major 1)
 The same order is written in G8 v3 (handover core-c reconciles the two tickets).
@@ -171,8 +186,11 @@ The same order is written in G8 v3 (handover core-c reconciles the two tickets).
      `after_g4c` cell differs from the output G4c gives, the cell was measured against an older G4 regex: the builder writes the
      measured output into that cell, records old and new in evidence/G4-1.md, and reports it (a leak in the new output is a STOP);
   3. adds the two G8 files to the run lists of Phases 3, 4 and 5 (12), and CHANGED in v6 (G8 v3 8.1 G4-2, G8-review-3 M1): the
-     mutant run `python tests/g8_mutants.py` to Phase 4 step 4 and to Phase 5. Expected: `30 of 30 good` (G8 v3 section 9,
-     measured by G8's drafter on its own tree); a BAD is a finding (the G4 regex moved a G8 row), reported, not edited away.
+     mutant run `python tests/g8_mutants.py` to Phase 4 step 4 and to Phase 5. CHANGED in v7 (review round 6 readiness M1):
+     Expected: `N of N good`, where N is `len(M)` of the MERGED tests/g8_mutants.py, read by import in Phase 0 (g) (G8 v3: 30;
+     G8 v4 8.1 G4-2: 32, two mutants added in its 8.2; G8 v4's sections 8-9 and appendix C still print v3's 30 from its last run,
+     so the merged file decides); a BAD is a finding (the G4 regex moved a G8 row), reported, not edited away. G8 v4 8.1 G4-2 also
+     puts tests/test_redact_glued_rest.py in G4's Phase 4 step 1 run list (12).
 - G4a against G8's must-keep rows (G8-review-2 Major 2): Phase 3 runs tests/test_redact_glued_rest.py. A must-keep row that
   changes under G4a (G8 names K60 (base64url) and K66 (base64) as candidates) is a finding: the builder records the old and new
   output; if the new output masks a base64 blob that decodes to text holding a secret, it is intended and the row's expected cell
@@ -187,6 +205,14 @@ The same order is written in G8 v3 (handover core-c reconciles the two tickets).
   - tests/test_redact_g3_port.py: G8 re-points it; G4's "must stay green unchanged" means G8's version.
 - If the lead orders G4 first instead (fallback of L23): G4 builds on this base; G8 v3's builder sets `G4C_MERGED = True` from the
   start, re-measures the `after_g4c` column against v5's 5.2/5.3, and owns both rebases. G4 then has no G8 step.
+- CHANGED in v7 (review round 6 design N4; G8 v4 L-D3): G8's optional G8c (G8 v4 L-D3 fallback: `(?![^\W\d_]|-)` in place of G4c's
+  tail `(?![\w-])`) is NOT taken in either build: G8 v4's default is the stated limit L6, and G8c would edit G4's HOSTNAME entry,
+  which 0.2 step 2 makes a STOP. If the lead later wants G8c, it is a new ticket on the tree that holds G4c.
+- CHANGED in v7 (G8 v4 read by name): G8 v4 4.1 numbers the new PHONE entries 6-8 (6 `+`-led, 7 contiguous beside `_`, 8 after a
+  phone word; entry 5 is CREDITCARD); its oracle edit is still the `raw_copies` line 141 of tests/test_redact_idempotent_property.py;
+  its module-docstring paragraph is placed as above (G8 v4 4.3). G8 v4 also edits the `enforce_map` docstring at runmap.py 699 and
+  718 (the PHONE `_joins` clauses) and model_gate.py 12-13: different sentences from G4's clause (runmap.py 732), so a textual merge
+  only.
 
 ### 0.3b Order with G9 (CHANGED in v6, new: review round 5 M3; decision L25)
 Source: tickets/G9-spelled-fixed-point.md (DRAFT v1) and tickets/G9-review-1.md (its handling names the v2 decisions). There is NO

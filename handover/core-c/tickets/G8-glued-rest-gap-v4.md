@@ -737,7 +737,7 @@ CHANGED in v4 (M3): place, in G4 v5's words: after the "What this is not" paragr
 redact() ...)" sentence, redact.py 21-25), before the closing `"""`. G4 v5 section 6 adds its bare-number paragraph and base64
 sentence AFTER this G8 paragraph; under the default order (G8 first) the G4 builder places them (textual merge only). G4 v5's
 paragraph has a PHONE sentence that its Phase 0 (b) re-derives once G8 is merged (G4 v5 section 6, "G8 entries 5-7", which is
-entries 6-8 here). runmap.py `enforce_map` docstring 699 and 718, model_gate.py 12-13: appendix D.
+entries 6-8 here). runmap.py `enforce_map` docstring 699 and 718, model_gate.py 12-14 (CHANGED in v4, N3): appendix D.
 
 ### 4.4 What stays as it is
 `_sub_glued` stays EMAIL only (rows 74, 75, 77 are masked by plain `sub`); rows 13 and 76 (two values of one kind with nothing
@@ -756,7 +756,9 @@ G8 changes no host row with or without G4c. CHANGED in v4 (M3): G4 v5's 5.2 / 5.
 with `G4C_MERGED = True` (8.1 step G4-2; `python -m tests.g8_cases` checks only `now` and does not cover it). A red `after_g4c`
 cell there follows G4 v5's rule (0.3 step 2, adopted here): the G4 builder writes the measured output into the cell, records old
 and new in evidence/G4-1.md and reports it; a leak in the new output is a STOP. (v3 said "a finding to report, not an edit of the
-column"; that is withdrawn in favour of G4 v5's rule.)
+column"; that is withdrawn in favour of G4 v5's rule.) The rows v4 adds (87, 88, K81-K84, AT7, U1, U2) hold no host name and
+have no `after_g4c` cell; NOT RE-MEASURED with G4's host patterns (by reading: no `.corp` / `.internal` / `.local` / `.lan`
+label in them).
 G4a / G4b (base64, ENCODED; readiness Major 2): not measured (they are not built and live in `runmap.redact_text`'s base64 view).
 `test_must_keep_rows` calls `redact()`, which G4a does not change; K60 (`Zm9vYmFy_<PHONE_1>_YmF6`) and K66 (a base64 blob) are
 the two rows that a base64 view could move through `redact_text`. Rule for whoever lands second: run the G8 file (8.1).
@@ -799,35 +801,49 @@ A changed probe row is a finding, reported, not edited away.
 | `test_glued_rows_are_masked` | 51 (48 closed + rows 21, 22, 75) | output == expected in `redact`, `redact_many(...)[0][0]`, `redact_text`; no leak | 51: row2 row3 row4 row5 row7 row8 row9 row11 row12 row14 row15 row16 row18 row19 row20 row21 row22 row23 row24 row26 row28 row29 row30 row31 row32 row36 row37 row41 row42 row44 row47 row48 row49 row50 row51 row52 row53 row54 row55 row56 row57 row58 row72 row73 row74 row75 row77 row81 row82 row83 row84 |
 | `test_glued_character_stays_outside_the_placeholder` | 21: 2-5, 7-9, 18-20, 36-37, 47-51, 81-84 | output == text with the value replaced by its own placeholder | 21: all of them |
 | `test_controls_and_untouched_rows_keep_their_output` | 15 unchanged rows | output == expected and == `now` (host rows: `after_g4c` once `G4C_MERGED`) | 0 |
-| `test_limit_rows_are_pinned` | 18: 10, 13, 25, 27, 38, 39, 40, 45, 76, 67-70, 78-80, 85, 86 | the DESIRED behaviour (no leak), `xfail(strict=True)` with the limit id | 0 red; 18 xfailed (base and after) |
+| `test_limit_rows_are_pinned` | 20 (CHANGED in v4: + 87, 88): 10, 13, 25, 27, 38, 39, 40, 45, 76, 67-70, 78-80, 85, 86, 87, 88 | the DESIRED behaviour (no leak), `xfail(strict=True)` with the limit id | 0 red; 20 xfailed (base and after) |
 | `test_host_glued_before_is_closed_by_g4c` | 64, 71 | `x <HOSTNAME_1> y`; strict xfail naming G4c while `G4C_MERGED` is False | 0 red; 2 xfailed |
-| `test_must_keep_rows` | 80 | output == `after`; a kept row has an empty map | 27: K26 K27 K36 K43 K44 K45 K46 K47 K48 K49 K50 K51 K52 K53 K54 K55 K56 K57 K58 K59 K60 K62 K63 K65 K74 K78 K80 |
+| `test_must_keep_rows` | 84 (CHANGED in v4: + K81-K84, all green on the base) | output == `after`; a kept row has an empty map | 27: K26 K27 K36 K43 K44 K45 K46 K47 K48 K49 K50 K51 K52 K53 K54 K55 K56 K57 K58 K59 K60 K62 K63 K65 K74 K78 K80 |
 | `test_phone_before_a_full_stop_is_a_stated_limit` | F1-F3 | unchanged (L7) | 0 |
-| `test_an_iban_never_starts_inside_an_opaque_token` (v3) | K75-K77 | output == `after` and one map entry | 0 (it pins the base; red under v2's start: mutant I3) |
-| `test_at_rest_rows` (v3) | AT1-AT6 | (text, sorted map, sorted `storable(map)`) == `after` (or `now` when None) | 5: AT1 AT2 AT3 AT5 AT6 |
-| `test_second_call_changes_nothing` | 86 | a second `redact_text` changes neither text nor map | 0 |
-| `test_untrusted_matches_redact_text` | 86 | `redact_untrusted == redact_text` | 0 |
+| `test_an_iban_never_starts_inside_an_opaque_token` (v3) | K75-K77, K83, K84 (CHANGED in v4) | output == `after` and one map entry | 0 (it pins the base; red under v2's start: mutant I3; under v3's `_` start: I4, K83; under an `_` end after `-`: I5, K84) |
+| `test_at_rest_rows` (v3) | AT1-AT7 (CHANGED in v4: + AT7) | (text, sorted map, sorted `storable(map)`) == `after` (or `now` when None) | 6: AT1 AT2 AT3 AT5 AT6 AT7 |
+| `test_second_call_changes_nothing` | 88 (v4) | a second `redact_text` changes neither text nor map | 0 |
+| `test_untrusted_matches_redact_text` | 88 (v4) | `redact_untrusted == redact_text` | 0 |
+| `test_untrusted_placeholder_literal_keeps_its_number` (NEW in v4, M2) | U1, U2 | output == expected and the map stays empty | 0 (green on the base; red on v3h: both ids, MEASURED by the scratch check; mutant P13) |
 | `test_restore_round_trip_ipv4_and_phone` | 41 (IPv4 and phone rows without a UUID) | `restore_text(out, m) == text` | 0 |
 | `test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only` | row 31; seeded copies (as v2) | phone letter copy replaced, digit copy not; IPV4, HOSTNAME, TENANT letter copies not replaced | 1 |
 | `test_gate_enforce_map_rewrites_a_letter_glued_copy_of_a_known_phone` | as v2 | as v2 | 1 |
 | `test_bank_word_check_ignores_a_glued_uuid` | as v2 | False | 1 |
-| `test_row_counts_are_pinned` | 86 rows, 80 must-keep, 3 full-stop, 6 at-rest, classes 48 / 15 / 18 / 3 / 2, limit ids | | 0 |
-| `test_glued_patterns_are_linear` (perf) | 6 hostile texts x (`redact`, `redact_text`) = 12 | section 10 | not run on the base |
+| `test_row_counts_are_pinned` | 88 rows, 84 must-keep, 3 full-stop, 7 at-rest, 2 untrusted, classes 48 / 15 / 20 / 3 / 2, limit ids (CHANGED in v4) | | 0 |
+| `test_glued_patterns_are_linear` (perf) | 7 hostile texts (CHANGED in v4: + `iban underscore`) x (`redact`, `redact_text`) = 14 | section 10 | not run on the base |
 Fail-before total (measured: appendices A and B copied into the a5247ac4a archive, `pytest -q -p no:cacheprovider -m "not perf"
 tests/test_redact_glued_rest.py`): `107 failed, 289 passed, 12 deselected, 20 xfailed` (107 = 51 + 21 + 27 + 5 + 1 + 1 + 1).
 With G8 (`mut`): `396 passed, 12 deselected, 20 xfailed`. G8a only (`v3a`): `3 failed, 393 passed, 12 deselected, 20 xfailed`,
 the three ids of phase 1 (measured).
+CHANGED in v4 (the v4 drafter did NOT run pytest: box rule and the round's instruction; these are v3's measured counts plus the
+v4 rows, each row's pass or fail MEASURED by the scratch row check `check.py` on `base4` and `v4`, the sums BY ARITHMETIC):
+fail-before on 99787d5b3 `108 failed, 301 passed, 14 deselected, 22 xfailed` (108 = 107 + AT7; 301 = 289 + K81-K84 + OPAQUE
+K83, K84 + rows 87, 88 in the second-call and untrusted-equality tests + U1, U2; 14 deselected = 7 texts x 2 calls; 22 xfailed =
+20 limits + 2 G4c); with G8 v4 `409 passed, 14 deselected, 22 xfailed`; G8a only (phase 1 of the two-commit variant) `3 failed,
+406 passed, 14 deselected, 22 xfailed`, the same three ids. The builder's phase 0 (c) and phase 1+2 step 1 runs are the first
+pytest runs of these counts: a different count is a STOP and report (the expected ids are listed above).
 
 ## 8. Build order, phases and commands
 Common prefix `uv run --all-extras --group test`; run from the repo root of the builder's worktree. "Green" = exactly the named
 result. Rule for every phase: ANY red id that the phase does not name: STOP and report.
-How to apply the appendices: appendix D and E are unified diffs against a5247ac4a: save each as a file and run `patch -p1 <
-file` from the repo root (a line offset is fine, as on 93c0d08ee; a hunk that needs fuzz or fails means the base moved: STOP,
+How to apply the appendices: appendix D and E are unified diffs (CHANGED in v4: D against 99787d5b3, where it applies with no
+offset and no fuzz; on a5247ac4a its redact.py hunks 8-11 apply with offsets -31 / -42; E against a5247ac4a, where it applies
+exactly; on 99787d5b3 its g3 port hunk has offset 3; all MEASURED with `patch -p1 --fuzz=0`): save each as a file and run
+`patch -p1 < file` from the repo root (a line offset is fine; a hunk that needs fuzz or fails means the base moved: STOP,
 re-measure). Appendices A, B, C
 and F are whole files: copy the text between the ```python fence and the closing fence into the named path. All of them are
 already `ruff format`ed (v2's reflowed four files on `ruff format`: redact.py, tests/test_redact_idempotent_property.py,
 tests/test_redact_glued_rest.py and tests/g8_cases.py; v3's appendices are the formatted text, so `ruff format --check` on
-the changed files says "already formatted"; the ROWS table is under `# fmt: off`).
+the changed files says "already formatted"; the ROWS table is under `# fmt: off`). CHANGED in v4: measured on `v4` (ruff
+0.17.1): `ruff format --check src` and the new and edited test files: "already formatted", EXCEPT tests/test_redact_g3_port.py,
+which `ruff format --check` reports at 99787d5b3 already, before any G8 edit (its Q9 lines 271-292, not G8's): do NOT run
+`ruff format` on that file (it would reflow Q9's lines into the G8 commit); check that G8's hunk is unchanged by reading.
+`ruff check` on all of them: "All checks passed!".
 
 ### 8.1 Order with G4 (L-D7; readiness Major 1, F5; G4-review-4 Major 2)
 CHANGED in v4 (G8-review-3-codebase M3): v3 said G4 v5 was "still a copy of v4". It is not: G4 v5 (blob c96f9c01de99 at
@@ -890,15 +906,16 @@ Phase 0, no code. (a) Base sha recorded; `git archive <base> | tar -x -C /tmp/g8
 /tmp/g8-base/tests/g8_cases.py; `cd /tmp/g8-base && uv run --all-extras --group test python -m tests.g8_cases`. Green: exit 0, last
 line `0 differ`. Any `BAD` line: STOP and report (the base moved). (c) Fail-before: copy appendix B and F too; `uv run
 --all-extras --group test pytest -q -p no:cacheprovider -m "not perf" tests/test_redact_glued_rest.py -rfEX`. Green: `107 failed,
-289 passed, 12 deselected, 20 xfailed`, the failing ids exactly those of section 7. (d) Full suite of the base (`pytest -q -p
+289 passed, 12 deselected, 20 xfailed` on a5247ac4a (v3, measured); CHANGED in v4: on 99787d5b3 with v4's appendices
+`108 failed, 301 passed, 14 deselected, 22 xfailed` (by arithmetic, section 7), the failing ids exactly those of section 7. (d) Full suite of the base (`pytest -q -p
 no:cacheprovider -m "not perf and not live" -n 3 tests`), failures recorded. (e) Cost on the base: `uv run --all-extras --group
 test python -m tests.g8_cost run /tmp/g8-cost-base.json` (section 10), on a box with load under 2 (`uptime`); paste the table.
 (f) Record at the base: `python tests/redact_mutants.py`, `python tests/p1d_a_mutants.py`, `python tests/gate_mutants.py`,
 `python tests/stage_mutants.py`, `python tests/textnorm_mutants.py`, each verdict per mutant (phase 4 compares with it).
 Phase 1+2, G8a and G8b in one commit (readiness Major 6: the prototype was run; phase 1 alone is red by design). Apply appendix
 D and E, add appendices A, B, C, F.
-1. `pytest -q -p no:cacheprovider -m "not perf" tests/test_redact_glued_rest.py`. Green: `396 passed, 12 deselected, 20 xfailed`
-   (its own count, a separate run).
+1. `pytest -q -p no:cacheprovider -m "not perf" tests/test_redact_glued_rest.py`. Green: `409 passed, 14 deselected, 22 xfailed`
+   (its own count, a separate run; CHANGED in v4, was `396 passed, 12 deselected, 20 xfailed`).
 2. `pytest -q -p no:cacheprovider -m "not perf" -n 3 tests/test_redact_g3_port.py tests/test_redact_idempotent_property.py
    tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py tests/test_model_gate.py tests/warden_port
    tests/test_redact_fold.py tests/test_redact_context_after_sweep.py tests/test_redact_own_output.py
@@ -910,7 +927,7 @@ D and E, add appendices A, B, C, F.
    Their count is the builder's to record in evidence/G8-1.md; v3's `2679 passed, 3 skipped` covers the first six only.)
    (The enforce_map flake of v2 section 9, `test_m_new_1_enforce_map_has_the_redactors_time_budget`, is fixed by 833a86b: the test
    patches the redactor's clock too; a red there now is a finding.)
-   If the builder prefers two commits (G8a, then G8b): after G8a alone, step 1 gives exactly `3 failed`:
+   If the builder prefers two commits (G8a, then G8b): after G8a alone, step 1 gives exactly `3 failed` (and 406 passed, v4):
    `test_glued_rows_are_masked[row31]`, `test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only`,
    `test_gate_enforce_map_rewrites_a_letter_glued_copy_of_a_known_phone` (measured on `v3a`); any other red id: STOP.
 Phase 3, checks. `ruff format --check` and `ruff check` on the changed and new files: green ("already formatted", "All checks
@@ -922,7 +939,10 @@ tests.g8_cost compare /tmp/g8-cost-base.json /tmp/g8-cost-build.json`, both runs
 Green: exit 0 (`0 rows break the rule`). On a FAIL: re-run both (base and build) once; if a row still fails, STOP and report the
 two tables to the lead (no bound is changed by the builder).
 Phase 4, mutants: `uv run --all-extras --group test python tests/g8_mutants.py` (runner tools/mutation_runner.py, judge
-src/hadavin_sdk/testing/mutation.py). Green: `30 of 30 good` (measured, section 9). Rules: a BAD caused ONLY by a wrong expect
+src/hadavin_sdk/testing/mutation.py). Green: `34 of 34 good` (CHANGED in v4: 30 measured by v3 on a5247ac4a; the four new
+mutants (I4, I5, P13, P14) and the ten whose `old` changed (I1, I2, I3, P1-P4, P8, P10) were checked by the v4 drafter's scratch emulation only,
+section 9: each `old` occurs once in `v4`'s redact.py and the emulated first failing case and line match the expect; NOT run by
+the runner). Rules: a BAD caused ONLY by a wrong expect
 (`WRONG_REASON` whose first line is a `ROW` / `OPAQUE` / `SWEEP` line of the same killer, or `OTHER_TEST` whose id is another
 case of the same killer) is corrected to the actual first failing line and pinned case, and the correction is written in the
 evidence; a SURVIVING mutant (`SURVIVED`, or any verdict where the killer passes) is a STOP. Then `python tests/redact_mutants.py`,
@@ -968,14 +988,38 @@ output of phases 0-4. Owner: core-c (guard/redact.py, guard/runmap.py, guard/mod
   test_model_gate.py (`-n 3`) `2213 passed in 36.84s`; `python tests/g8_mutants.py` `30 of 30 good; problems: []`.
 - Cost: section 10 (`base` vs `mut`, both calls, `0 rows break the rule`).
 - F1 on 2e3a081ae and on a5247ac4a (2.4): identical.
+
+### 9.1 The v4 drafter's runs (CHANGED in v4; 99787d5b3, `git archive` copies in the drafter's own scratch folder; read-only;
+`.venv` Python 3.13; no pytest, no mutation runner: the round's instruction)
+- Step 0 (`python -m tests.g8_cases`, appendix A of v3 and of v4) on `base4`: `0 differ` both (MEASURED).
+- Appendix D of v3 on 99787d5b3: `patch -p1`, no fuzz, offsets 31 and 42 (MEASURED). v4's appendix D: generated as `diff -u`
+  of `base4` and `v4`; applied with `--fuzz=0` to a fresh archive of 99787d5b3 it gives `v4`'s `src` byte for byte, and it
+  applies to a5247ac4a with offsets -31 / -42 (MEASURED). Appendix E (v4): applies exactly to a5247ac4a and with offset 3 to
+  99787d5b3, `--fuzz=0` (MEASURED).
+- Scratch row check (`check.py`: every probe row through `redact`, `redact_many`, `redact_text`, a second `redact_text` with the
+  same map and `redact_untrusted`; every must-keep row with its map rule and the OPAQUE one-entry rule; full-stop, at-rest and
+  untrusted rows): v3's appendix A on `v3h`: 0 bad; v4's appendix A on `base4` (`now`): 0 bad; on `v4` (`after`): 0 bad; on `v3h`
+  10 bad, exactly v4's new rows: 87, 88, K81 (text and map), K82 (text and map), K83, K84, U1, U2 (AT7 holds on `v3h`: v3
+  already over-masks it; v4 only pins it) (MEASURED).
+- M1 measurement (2.4b): five trees, 320,000 random and 10,000 injected tokens each (MEASURED).
+- M2, N1, N4, N6 probes (2.3, 2.5, 2.7) on `base4`, `v3h`, `v4` (MEASURED).
+- G4 v4 vs v5 HOSTNAME regex lines: compared as text, equal (MEASURED); G4 v6: read while being written (BY READING).
+- Mutants: a scratch emulation (`runemu.py` + `emu.py`): for each of the 34 entries of appendix C, the `old` text occurs once in
+  `v4`'s redact.py, the mutated copy is imported, the killer's assertions are replayed in parametrize order without pytest, and
+  the first failing case and message are compared with the pinned case and the expect: `34 of 34 as expected` (MEASURED as an
+  emulation; the runner's own verdict is phase 4's).
+- `ruff format --check` / `ruff check` on `v4` (8 phase 3 note): as stated (MEASURED).
+- Cost (section 10): `base4` vs `v4`, `0 rows break the rule` on a loaded box (MEASURED, noisy).
+- NOT RUN: pytest of any file, the mutation runner, the phase 1+2 step 2 suites (their nine added files included), the full suite.
 - NOT RUN by the drafter (box rule): the whole suite (phase 0 (d) and 3 are the builder's); the perf tests under pytest (the cost
   script of appendix F ran instead); `redact_mutants.py`, `p1d_a_mutants.py`, `gate_mutants.py`, `stage_mutants.py`,
   `textnorm_mutants.py` (their anchors are not on G8 lines: checked by grep, not run); the approval-card and k1b suites.
 
 ## 10. Cost
-Script: appendix F, `tests/g8_cost.py` (not collected by pytest). `run OUT.json` times the six hostile texts of appendix B (`dots`
-`1.`, `digits and spaces` `x1 2 3 ...`, `underscore digits` `_4155550132`, `hex and dashes` `deadbeef-dead-beef-dead-`, `iban-ish`
-`aDE89` + 40 `A`, `plus digits` `a+1 415-555-0132`) repeated to 65,536 and 262,144 characters, through `redact()` and through
+Script: appendix F, `tests/g8_cost.py` (not collected by pytest). `run OUT.json` times the seven (CHANGED in v4: was six)
+hostile texts of appendix B (`dots` `1.`, `digits and spaces` `x1 2 3 ...`, `underscore digits` `_4155550132`, `hex and dashes`
+`deadbeef-dead-beef-dead-`, `iban-ish` `aDE89` + 40 `A`, `plus digits` `a+1 415-555-0132`, and v4's `iban underscore`
+`ab_DE89` + 20 `A` + `_x `, which drives every part of `_IBAN_START` / `_IBAN_END` at each repeat) repeated to 65,536 and 262,144 characters, through `redact()` and through
 `runmap.redact_text(t, RunMap())`, CPU seconds of the calling thread (`time.thread_time`), best of 3. `compare BASE.json BUILD.json`
 prints both side by side and exits 1 when a row breaks the rule.
 Acceptance rule (every text, both calls, on the build): the 262,144-character time is under 3.0 s; it is at most 6.0 times the
@@ -1002,10 +1046,31 @@ Read: G8 costs 0.66 to 1.08 times the base on these texts; `plus digits` is chea
 first and the main entry then has less to scan. The base's own 4x ratio reached 5.46 (`underscore digits / redact_text`) under
 this load, close to the 6.0 bound: that is why the rule needs a quiet box and allows one re-run. The perf test of appendix B
 (`test_glued_patterns_are_linear`, 12 cases, the same 3.0 s and 6.0 bounds without the base) was NOT run by the drafter.
+CHANGED in v4, the v4 drafter's run (10:39-10:42Z, 99787d5b3, `base4` vs `v4`, box load 3.9-6.4 from other work on the box:
+noisier than v3's run; the phase 3 run on a quiet box is the one that counts): `0 rows break the rule` (MEASURED).
+| text / call | base 65,536 | base 262,144 | G8 v4 65,536 | G8 v4 262,144 | G8 4x ratio | G8 / base |
+|---|---|---|---|---|---|---|
+| digits and spaces / redact | 0.202 | 0.802 | 0.219 | 0.929 | 4.24 | 1.16 |
+| digits and spaces / redact_text | 0.196 | 0.806 | 0.234 | 0.865 | 3.70 | 1.07 |
+| dots / redact | 0.239 | 1.008 | 0.275 | 1.096 | 3.99 | 1.09 |
+| dots / redact_text | 0.240 | 1.000 | 0.310 | 1.077 | 3.48 | 1.08 |
+| hex and dashes / redact | 0.212 | 1.041 | 0.251 | 1.048 | 4.17 | 1.01 |
+| hex and dashes / redact_text | 0.251 | 0.981 | 0.212 | 1.173 | 5.54 | 1.20 |
+| iban underscore / redact | 0.096 | 0.484 | 0.118 | 0.475 | 4.02 | 0.98 |
+| iban underscore / redact_text | 0.095 | 0.398 | 0.114 | 0.456 | 3.99 | 1.15 |
+| iban-ish / redact | 0.130 | 0.510 | 0.143 | 0.582 | 4.08 | 1.14 |
+| iban-ish / redact_text | 0.126 | 0.538 | 0.146 | 0.527 | 3.60 | 0.98 |
+| plus digits / redact | 0.283 | 1.068 | 0.183 | 0.717 | 3.91 | 0.67 |
+| plus digits / redact_text | 0.379 | 1.269 | 0.172 | 0.682 | 3.98 | 0.54 |
+| underscore digits / redact | 0.200 | 0.881 | 0.262 | 0.817 | 3.12 | 0.93 |
+| underscore digits / redact_text | 0.151 | 0.808 | 0.209 | 0.814 | 3.89 | 1.01 |
+Read: 0.54 to 1.20 times the base; the base's own 4x ratio reached 5.35 (`underscore digits / redact_text`) and v4's 5.54
+(`hex and dashes / redact_text`), both under the 6.0 bound but close, as v3 saw: the load explains it (a quiet-box rule and one
+re-run stay). The perf test under pytest was NOT run.
 Relabelled earlier figures: v1's numbers (0d93f20, `redact()` only, ratio 3.2-4.4) and v2's "at most 4.6" (which had no v2 source)
 are v1-era figures and are not used for any bound here.
 Correction kept from v2: FOUR existing entries change their boundaries in v2 (IBAN, UUID, EC2, dotted IPV4); v3 adds the pod-DNS and
-CREDITCARD entries (six change) and adds THREE PHONE entries (PATTERNS grows from N to N+3; `tests/test_redact_fold_budget.py:78`
+CREDITCARD entries (six change; v4 changes the IBAN entry again and adds two module constants) and adds THREE PHONE entries (PATTERNS grows from N to N+3; `tests/test_redact_fold_budget.py:78`
 reads `len(PATTERNS)` live); the sweep adds one dict lookup per swept copy.
 Builder effort: half a day (the data, tests, mutants and cost script are given; most of the time is the runs).
 
@@ -1014,7 +1079,10 @@ Builder effort: half a day (the data, tests, mutants and cost script are given; 
 - L2 Two dotted IPv4s glued with nothing between: row 13.
 - L3 A contiguous phone number glued to a letter (`4155550132a`, `x4155550132`): rows 25, 27 (masked when a clean copy of the same
   number is in the call, or the number is a known value at the gate: G8b).
-- L4 (v3: widened) A letter or digit glued before an IBAN (`xDE89...`, `ibanDE89...`, `7DE89...`): rows 38, 39, 40, 45 (L-D2).
+- L4 (v3: widened; CHANGED in v4: widened again, M1 / L-D15) A letter or digit glued before an IBAN (`xDE89...`, `ibanDE89...`,
+  `7DE89...`): rows 38, 39, 40, 45 (L-D2); and `_` beside an IBAN outside the short-word context: a snake_case key of two or more
+  words (`acct_iban_DE89...`, row 87), more than 8 characters after the `_` (`DE89..._reference`, row 88), a word longer than 8
+  letters before the `_` (`beneficiary_DE89...`, not a row: the same rule as row 87).
 - L5 Two IBANs glued: row 76.
 - L6 A letter, digit or `_` glued after a host's private suffix: rows 67-70, 78-80 (L-D3), also under G4c.
 - L7 A phone number before a full stop: F1-F3 (L-D13: ask the lead).
@@ -1024,8 +1092,15 @@ Builder effort: half a day (the data, tests, mutants and cost script are given; 
   (`710-0-3-22.ns.pod`): rows 85, 86.
 - L11 (v3, new) A piece of a secret with the shape of a stored kind (an IPv4 address, a phone number) is registered under that kind
   and is storable: AT1-AT3 (and AT4 on the base already); L-D14.
+- L12 (NEW in v4, M1; pre-existing, not G8's) An IBAN shape inside a base64 or base64url token that starts after `-`, `+`, `/`
+  (or at the token's start) and ends at `-`, `+`, `/` or the token's end is masked as an IBAN and splits the token; a head under
+  40 characters stays readable. MEASURED on the base and unchanged by G8 (2.4b: 9 per 80,000 base64url, 26 per 80,000 base64
+  `key` tokens; K84 pins that G8 adds no `_` end to it). Follow-up L-D16.
+- L13 (NEW in v4, N6) Non-ASCII glue: a non-ASCII letter or digit beside a value is glued text (masked, the guard classes are
+  ASCII), and a Unicode digit can be taken into the value (`\d`), which makes the original non-storable (2.7). No leak class;
+  stated, not pinned by a row (2.7's probe is in the evidence).
 - Over-masks accepted by decision (fail safe, evidence lost, not a leak): L-D4 (K27), L-D8 (K43-K53), L-D10 (K26, K54-K60),
-  L-D11 (K78). AT5, AT6: a stored-kind original that holds `_` + an IBAN shape is not stored or is cut (fail safe).
+  L-D11 (K78), L-D12 (AT7, CHANGED in v4: an order number in card groups glued to letters). AT5, AT6: a stored-kind original that holds `_` + an IBAN shape is not stored or is cut (fail safe).
 
 ## 12. Risks
 - Over-masking classes are listed with their decisions (section 6).
@@ -1035,6 +1110,11 @@ Builder effort: half a day (the data, tests, mutants and cost script are given; 
 - The gate: a known phone number glued to a word in model-visible text is rewritten (`build<PHONE_1>`); the model sees that text.
 - G4: rows 60-62 and 66 change under G4c (the flag handles it); textual conflicts in redact.py and the property test (8.1).
 - Non-ASCII glue (a Cyrillic letter or a full-width digit beside an IP) goes through the fold scan first; not probed.
+  CHANGED in v4 (N6): probed (2.7, MEASURED): masked more, never less; L13.
+- CHANGED in v4: the IBAN context rule (L-D15) is a heuristic: an all-letter word of 2-8 letters at a token's start followed by
+  `_` and an IBAN shape is read as a key (`iban_`), so such a token is split as v3 would (2.4b: at most the word stays readable).
+- CHANGED in v4: the untrusted escape (`‹ ›`) is a second spelling of a placeholder that pattern guards must know (M2); entry 7
+  now does. A future pattern with a `>` guard needs the same `›` (a review point, not a test).
 
 ## 13. For SECURITY wording (proposed text; through the security wording review)
 SECURITY.md bullet (appended as section 3 says):
