@@ -312,7 +312,8 @@ def test_dm_2_257_decomposed_names_refuse_the_text_and_256_do_not():
     # names carry one and the 257 / 256 edge is the one P2d-1 pinned.
     # OLD expectation (P2d-1, names = NFD("Zo\u00e9<X><nnnn> M\u00fcller") with an ASCII Z): 257 such names raise InputTooLarge, 256 do not.
     # NEW expectation (the fold): the same 257 / 256 edge holds for names that start with a full-width Z (U+FF3A); 257 NFD names with
-    # an ASCII Z are NOT refused and every one of them is masked (ORDER 014 item 10: both are named here).
+    # an ASCII Z were NOT refused on the fold alone (ORDER 014 item 10). On cloud/core-c `undo` composes again (fold fix round), so the
+    # edge holds for both kinds of name (see the end of this test).
     wide_z = chr(0xFF3A)
 
     def names(n, first=wide_z):
@@ -329,10 +330,19 @@ def test_dm_2_257_decomposed_names_refuse_the_text_and_256_do_not():
     with pytest.raises(InputTooLarge):
         run(257)
     run(256)
-    # NFD names without a compatibility character: nothing to pair, so no refusal, and every name is masked
-    plain = names(257, first="Z")
-    assert all(runmap.undo(v) == v for v in plain)
-    out = redact_text(" ; ".join(plain), {f"<NAME_{i + 1}>": v for i, v in enumerate(plain)})
+
+    # NFD names with an ASCII first letter: since the fold fix round `runmap.undo` composes the whole text (`nfkc`, NFKC of the whole
+    # string), so each NFD name is decoded to its NFC spelling and takes a slot like P2d-1's base did: the P2d-1 edge (257 refused, 256 not)
+    # holds for plain NFD names again (re-pinned in the pick onto cloud/core-c; the fold-only expectation "not refused" no longer holds).
+    def run_plain(n):
+        plain = names(n, first="Z")
+        assert all(runmap.undo(v) != v for v in plain)
+        mapping = {f"<NAME_{i + 1}>": v for i, v in enumerate(plain)}
+        return plain, redact_text(" ; ".join(plain), mapping)
+
+    with pytest.raises(InputTooLarge):
+        run_plain(257)
+    plain, out = run_plain(256)
     assert not any(v in out for v in plain) and "ller" not in out, out[:200]
 
 
