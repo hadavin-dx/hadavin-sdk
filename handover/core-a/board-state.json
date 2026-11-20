@@ -772,6 +772,58 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "dry-run 3 finding"
+  },
+  {
+   "id": "A7-drift-door",
+   "role": "builder/reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "drift report for the door area (docs vs code) -> DRIFT-door.md",
+   "started UTC": "17:08",
+   "expected end": "30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 17:02 order A7-A10"
+  },
+  {
+   "id": "A8-egm-ledger",
+   "role": "builder/reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "EGM-LEDGER.md: every built item, its fresh review, resolve and repeat state; items lacking review listed",
+   "started UTC": "17:08",
+   "expected end": "30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 17:02 order A7-A10"
+  },
+  {
+   "id": "A9-rev-c-G9c",
+   "role": "builder/reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh review of core-c G9c and G12d follow-up diffs as they land -> xr-from-core-a-4.md",
+   "started UTC": "17:08",
+   "expected end": "30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 17:02 order A7-A10"
+  },
+  {
+   "id": "A10-fuzz-pg",
+   "role": "builder/reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "hostile concurrency/crash fuzz of door against core-b real PG store (PG16) -> evidence/fuzz-pg-store.md",
+   "started UTC": "17:08",
+   "expected end": "30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 17:02 order A7-A10"
   }
  ],
  "tests": [
