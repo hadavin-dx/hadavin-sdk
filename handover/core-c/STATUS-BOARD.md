@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:12:02Z
+UPDATED_UTC: 2026-11-20T16:13:30Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: 16:30Z agents 4 (docs builder, G13d builder, G12d builder, G9b reviewer), load 0.7. G12c result review recorded (0B/2M, tickets/G12c-result-review-1-codebase.md). Next: G4c review. 16:26Z agents 3 (docs builder, G12c reviewer, G13d builder), load 0.1. G13c result review recorded (0B/2M/4N: tickets/G13c-result-review-1-codebase.md); G13d builder started on its findings. Next in sequence: G9b review, G4c review. 16:22Z OWNER ORDER 16:09 rows (agents 2: docs builder ad19c825, G13c reviewer a60a4532; load 0.2):
@@ -11,16 +11,16 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 0.7 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 53; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:11:48+00:00
+PUSHED_UTC: 2026-11-20T16:12:03+00:00
 
-(21:42 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:43 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
