@@ -263,10 +263,13 @@ def audit_drain(ctx: TickContext) -> None:
 def reservation_expire_s(app: App) -> int:
     """The age at which an open spend reservation expires: `defaults.RESERVATION_EXPIRE_S`, or the longest
     stuck-run age of any agent when that is larger, so no reservation expires while its run could still work."""
-    longest = max((stuck_after_s(app, a) for a in app.registry.agents), default=0)
+    ages = [stuck_after_s(app, a) for a in app.registry.agents]
+    if any(math.isnan(a) for a in ages):  # max() would skip a NaN depending on its position
+        return MAX_EXPIRY_AGE_S
+    longest = max(ages, default=0)
     if (
         not longest < MAX_EXPIRY_AGE_S
-    ):  # infinite, NaN or too large: clamp, or the store refuses it every tick
+    ):  # infinite or too large: clamp, or the store refuses it every tick
         return MAX_EXPIRY_AGE_S
     return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))
 

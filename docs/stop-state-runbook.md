@@ -79,7 +79,17 @@ runtime and not the reset login):
    transaction sets the EXPIRED holds of that agent and day to settled at 0 and lowers the day and the month counter by
    the same sum (never below zero); then the outcome row. Open holds and other days are never touched. Exit 0 done
    (also when 0 rows), 2 refused or the login lacks the right, 3 the audit is unavailable (nothing changed), 4 the store
-   is unreachable (nothing changed).
+   is unreachable (nothing changed), 5 the release is COMMITTED but its outcome row could not be written: the command
+   names the dangling intent id, and the audit then holds an intent row with no outcome. The counters did change; do
+   not run the release again to "fix" it. Record the outcome by hand against that intent id, or leave the dangling
+   intent as the only record and note it in the incident log.
+   The counters stop quietly at zero (`GREATEST`): when a counter was already lower than the expired sum (drift), it
+   is not hidden. The outcome row and the command output carry `requested_usd` (the sum of the expired holds) and
+   `applied_usd` (what the day counter really fell by); applied lower than requested is drift to look into.
+   The function runs as the migration owner with its search path pinned to `pg_catalog, <schema>, pg_temp` by
+   `migrate` (so a temp table of the release login cannot stand in for a money table). Consider
+   `REVOKE TEMP ON DATABASE <db> FROM PUBLIC`. The release secret name may not be read by the runtime: a tool,
+   source, executor or restored-hash secret that folds to the same name stops the start.
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.
 

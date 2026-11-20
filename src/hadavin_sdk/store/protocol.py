@@ -172,6 +172,11 @@ class SpendRelease:
     released_usd: Decimal
     day_usd: Decimal | None
     month_usd: Decimal | None
+    applied_usd: Decimal = Decimal(
+        0
+    )  # what the day counter really fell by; below released_usd means drift
+    intent_id: str = ""  # the audit intent row written before the release
+    outcome_audited: bool = True  # False: committed, but the outcome row could not be written
 
 
 class SpendReleaser(Protocol):

@@ -15,6 +15,7 @@ import os
 import tempfile
 import threading
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -761,7 +762,7 @@ class PostgresStore:
         check_store_id(actor, "actor")
         check_spend_day(day)
         ref = f"{agent_id}:{day.isoformat()}"
-        audit.write_intent(_release_event(actor, ref, "intent"))
+        intent_id = audit.write_intent(_release_event(actor, ref, "intent"))
         try:
             with self._lock, self._db.transaction():
                 row = self._exec(
@@ -777,14 +778,21 @@ class PostgresStore:
             released_usd=row["released_usd"],
             day_usd=row["day_usd"],
             month_usd=row["month_usd"],
+            applied_usd=row["applied_usd"] if row["applied_usd"] is not None else Decimal(0),
+            intent_id=str(intent_id),
         )
-        _write_outcome(
+        # requested = the sum of the expired holds; applied = what the day counter really fell by (a lower
+        # applied than requested is drift that the counter clamp at zero would otherwise hide)
+        audited = _write_outcome(
             audit,
             _release_event(
-                actor, ref, f"released rows={done.reservations} usd={done.released_usd}"
+                actor,
+                ref,
+                f"released rows={done.reservations} requested_usd={done.released_usd} "
+                f"applied_usd={done.applied_usd}",
             ),
         )
-        return done
+        return replace(done, outcome_audited=audited)
 
 
 def _release_event(actor: str, ref: str, result: str, error: str | None = None) -> AuditEvent:
@@ -800,8 +808,12 @@ def _release_event(actor: str, ref: str, result: str, error: str | None = None) 
     )
 
 
-def _write_outcome(audit: Any, event: AuditEvent) -> None:
+def _write_outcome(audit: Any, event: AuditEvent) -> bool:
+    """True when the outcome row was handed to the audit; False when it raised (the release is already committed
+    or already failed, so the error is logged, not raised)."""
     try:
         audit.write_outcome(event)
-    except Exception as exc:  # noqa: BLE001 - the release is already committed (or already failed)
+    except Exception as exc:  # noqa: BLE001
         _LOG.warning("release outcome not audited error_kind=%s", type(exc).__name__)
+        return False
+    return True

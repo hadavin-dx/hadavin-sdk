@@ -100,7 +100,7 @@ class Budget:
         """Replace the worst case with the real cost (it may be above it; settle never refuses) and return the
         overshoot. NotFound for an unknown id, ValueError for a bad amount. A repeat returns the first result
         and changes nothing. After `forfeit` the late settle of that call can only RAISE what is booked."""
-        return self.settle_for(None, reservation_id, actual_usd)
+        return self._settle(reservation_id, actual_usd, None)
 
     def settle_for(self, agent_id: str | None, reservation_id: str, actual_usd: Decimal) -> Decimal:
         """`settle` that also checks the agent: a reservation of ANOTHER agent is NotFound (ORDER 020 m2)."""
@@ -188,12 +188,19 @@ class Limits:
         """Replace the worst case with the real cost and return the overshoot (0 when none), always from the
         stored row: a repeated call returns the first result. NotFound for an unknown id, ValueError for a bad
         amount. An overshoot is booked in full and audited once; the audit never makes this raise."""
-        return self.settle_for(None, reservation_id, actual_usd)
+        return self._settle(reservation_id, actual_usd, None)
 
     def settle_for(self, agent_id: str | None, reservation_id: str, actual_usd: Decimal) -> Decimal:
         """`settle` that also checks the agent: a reservation of ANOTHER agent is NotFound and nothing changes
         (ORDER 020 m2). The gate should call this one."""
-        row, applied = self.store.settle_spend(reservation_id, actual_usd, agent_id=agent_id)
+        return self._settle(reservation_id, actual_usd, agent_id)
+
+    def _settle(self, reservation_id: str, actual_usd: Decimal, agent_id: str | None) -> Decimal:
+        # agent_id only goes to the store when given: a custom store with the old two-argument signature keeps working
+        if agent_id is None:
+            row, applied = self.store.settle_spend(reservation_id, actual_usd)
+        else:
+            row, applied = self.store.settle_spend(reservation_id, actual_usd, agent_id=agent_id)
         over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
         if applied and over > 0:
             try:
