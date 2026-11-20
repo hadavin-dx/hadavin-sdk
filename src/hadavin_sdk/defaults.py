@@ -134,12 +134,12 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6
 
 # --- triggers: the signed trigger endpoint (Config.triggers, TriggerSettings) -------------------------------------------
-TRIGGER_MAX_BODY_BYTES = (
-    262_144  # the largest request body the endpoint reads (JSON around one document)
-)
-TRIGGER_MAX_BODY_BYTES_CEILING = (
-    2 * MAX_DOCUMENT_BYTES
-)  # a config cannot raise the body cap above this
+# A config cannot raise the body cap above this. Twice the document cap: a document of the largest size still fits
+# once it is wrapped and escaped in JSON.
+TRIGGER_MAX_BODY_BYTES_CEILING = 2 * MAX_DOCUMENT_BYTES
+# The largest request body the endpoint reads when the config names none: the ceiling (524288). The document cap
+# itself would be too small, because the JSON around a full-size document adds bytes.
+TRIGGER_MAX_BODY_BYTES = TRIGGER_MAX_BODY_BYTES_CEILING
 TRIGGER_MAX_RUNNING = 4  # runs the worker's pool handles at once
 TRIGGER_MAX_RUNNING_CEILING = 64
 TRIGGER_ACK_WAIT_S = 5.0  # how long a request waits for its run row before it answers 503

@@ -7,7 +7,7 @@ Kept apart from the executor's provider (design §4.4): a backend factory gets a
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 
 from pydantic import BaseModel
 
@@ -61,3 +61,32 @@ def check(
             provider.get(name)
         except Exception as exc:
             raise ConfigError(f"secret {name!r} cannot be read at start-up") from exc
+
+
+def sender_field(sender_id: str) -> str:
+    return f"triggers.senders.{sender_id}.secret_names"
+
+
+def check_senders(
+    provider: SecretProvider, senders: Mapping[str, Iterable[str]], other_names: set[str]
+) -> None:
+    """Start-up, the signed trigger endpoint: no sender secret name is also a name another part of the app uses
+    (`other_names`: backends, action executors, read tools, sources, the restored-hash key), and every one resolves
+    once. Every refusal is found before the first read. A message names the sender and the field, never the name:
+    a mistyped config may hold the secret itself there, so the provider's own error is not chained either."""
+    senders = {sender_id: sorted(set(names)) for sender_id, names in sorted(senders.items())}
+    if shared := [
+        f"{sender_field(sender_id)}: a name is also used by another part of the config "
+        "(a backend, an action, a read tool, a source or the restored-hash key); give the sender its own secret"
+        for sender_id, names in senders.items()
+        if other_names.intersection(names)
+    ]:
+        raise ConfigError("; ".join(shared))
+    for sender_id, names in senders.items():
+        for name in names:
+            try:
+                provider.get(name)
+            except Exception:  # noqa: BLE001 - any provider failure is a start-up failure
+                raise ConfigError(
+                    f"{sender_field(sender_id)}: a named secret cannot be read at start-up"
+                ) from None

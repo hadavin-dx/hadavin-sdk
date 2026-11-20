@@ -343,16 +343,22 @@ class SourceConfig(_Strict):
 # (no trailing newline passes); with Python's `re`, use `fullmatch`.
 _TRIGGER_ID = r"^[a-z0-9-]{1,40}$"
 TriggerId = Annotated[str, Field(pattern=_TRIGGER_ID)]
-_Name = Annotated[str, Field(min_length=1)]
+# The NAME of a sender's secret, and the agent and principal ids a sender points to: no blank, no line break, no
+# control character. The repo had no shared rule for either, so these two are the trigger block's own. A value
+# that does not match is refused without being shown (`hide_input_in_errors`).
+_TRIGGER_NAME_RULE = r"^[A-Za-z0-9_.:/-]{1,128}$"
+_TRIGGER_REF_ID = r"^[A-Za-z0-9_.:-]{1,128}$"
+_SecretName = Annotated[str, Field(pattern=_TRIGGER_NAME_RULE)]
+_RefId = Annotated[str, Field(pattern=_TRIGGER_REF_ID)]
 
 
 class TriggerSender(_Strict):
     """One sender of signed trigger requests: the NAMES (in the secrets kind) of its signing secrets, and the agent
     and principal its runs use. Two names allow a secret change with no downtime (old and new both verify)."""
 
-    secret_names: tuple[_Name, ...] = Field(min_length=1, max_length=2)
-    agent_id: _Name
-    principal_id: _Name
+    secret_names: tuple[_SecretName, ...] = Field(min_length=1, max_length=2)
+    agent_id: _RefId
+    principal_id: _RefId
 
 
 class TriggerSettings(_Strict):
@@ -361,14 +367,24 @@ class TriggerSettings(_Strict):
 
     tenant: TriggerId
     senders: dict[TriggerId, TriggerSender] = Field(min_length=1)
+    # Strict: `true` is not 1 and "4" is not 4 (a whole number is still accepted for `ack_wait_s`).
     max_body_bytes: int = Field(
-        default=defaults.TRIGGER_MAX_BODY_BYTES, gt=0, le=defaults.TRIGGER_MAX_BODY_BYTES_CEILING
+        default=defaults.TRIGGER_MAX_BODY_BYTES,
+        gt=0,
+        le=defaults.TRIGGER_MAX_BODY_BYTES_CEILING,
+        strict=True,
     )
     max_running: int = Field(
-        default=defaults.TRIGGER_MAX_RUNNING, ge=1, le=defaults.TRIGGER_MAX_RUNNING_CEILING
+        default=defaults.TRIGGER_MAX_RUNNING,
+        ge=1,
+        le=defaults.TRIGGER_MAX_RUNNING_CEILING,
+        strict=True,
     )
     ack_wait_s: float = Field(
-        default=defaults.TRIGGER_ACK_WAIT_S, gt=0, le=defaults.TRIGGER_ACK_WAIT_S_CEILING
+        default=defaults.TRIGGER_ACK_WAIT_S,
+        gt=0,
+        le=defaults.TRIGGER_ACK_WAIT_S_CEILING,
+        strict=True,
     )
 
 

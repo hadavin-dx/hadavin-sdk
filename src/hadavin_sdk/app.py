@@ -53,9 +53,10 @@ class App:
     executor: Executor | None  # None in pilot and prod: Hadavin executes nothing there
     approvals: Approvals
     runtime: Runtime
-    # The secrets object this app was built with. For the trigger worker, which reads only the names listed under
-    # `config.triggers.senders` (checked at start-up); nothing else may take the provider from here.
-    secrets: SecretProvider
+    # For the trigger worker: reads one sender secret by NAME. Only a name listed under `config.triggers.senders`
+    # is read; any other name raises PermissionError and the secrets provider is not asked. The provider itself is
+    # not on the App.
+    trigger_secret: Callable[[str], str]
     # The configured read sources (probed at start-up and again by the tick) and the store the purge step
     # runs under (its own database role when `purge_dsn_secret_name` is set; else the store above).
     sources: dict[str, Source] = field(default_factory=dict)
@@ -168,12 +169,24 @@ def build(
         }
         | {sc.token_secret_name for sc in cfg.sources.values() if sc.token_secret_name}
         | ({cfg.evidence.restored_hash_key_secret_name} - {None})
-        # The signed trigger endpoint's sender secrets: read once here, and never shared with a backend or an action.
-        | {
-            n
-            for sender in (cfg.triggers.senders if cfg.triggers else {}).values()
-            for n in sender.secret_names
-        }
+    )
+    # The signed trigger endpoint's sender secrets, in their own step and first, so a sender name shared with
+    # anything else the app reads stops the start before any secret is read. Each is read once here, and no
+    # message of this step shows a name.
+    sender_names = {
+        sender_id: sender.secret_names
+        for sender_id, sender in (cfg.triggers.senders if cfg.triggers else {}).items()
+    }
+    platform_secrets.check_senders(
+        secrets,
+        sender_names,
+        set().union(
+            extra_secret_names,
+            executor_names,
+            *(platform_secrets.secret_names(s) for _, s in b.entries()),
+            # The reset login is never read by this process; a sender must not carry its name all the same.
+            {getattr(b.store, "reset_credential_ref", None)} - {None},
+        ),
     )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
@@ -301,7 +314,7 @@ def build(
         executor,
         approvals,
         runtime,
-        secrets,
+        _sender_secrets(secrets, {n for names in sender_names.values() for n in names}),
         sources={**built_sources, **(sources or {})},
         disabled_sources=disabled_sources,
         purge_store=purge_store,
@@ -318,6 +331,19 @@ def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[
     def read(name: str) -> str:
         if name not in allowed:
             raise PermissionError(f"secret {name!r} is not one of tool {spec.name}'s secrets")
+        return secrets.get(name)
+
+    return read
+
+
+def _sender_secrets(secrets: SecretProvider, names: set[str]) -> Callable[[str], str]:
+    """A secret reader limited to the trigger senders' `secret_names` (the same shape as `_own_secrets`): the
+    trigger worker is never handed the global provider. The refusal does not show the name that was asked for."""
+    allowed = frozenset(names)
+
+    def read(name: str) -> str:
+        if name not in allowed:
+            raise PermissionError("not one of the secret names under triggers.senders")
         return secrets.get(name)
 
     return read

@@ -339,12 +339,16 @@ def _module_pin_problems(config: Config) -> list[str]:
 
 def _trigger_problems(config, agents, principals) -> list[str]:
     """A trigger sender that points to a missing agent or principal stops the start, not the first request. Names
-    the sender and the field, never the value written there."""
+    the sender and the field, never the value written there. An agent that is not `live` is refused here too:
+    `Runtime.handle` does not look at the status (only the action gate does, after the model was called and paid
+    for), so a draft or retired agent must not be reachable from the endpoint."""
     out = []
     for sender_id, sender in sorted((config.triggers.senders if config.triggers else {}).items()):
         where = f"triggers.senders.{sender_id}"
         if sender.agent_id not in agents:
             out.append(f"{where}.agent_id: no agent with this id in agents.yaml")
+        elif agents[sender.agent_id].status != "live":
+            out.append(f"{where}.agent_id: the agent must have status live")
         principal = principals.get(sender.principal_id)
         if principal is None:
             out.append(f"{where}.principal_id: no principal with this id in principals.yaml")
