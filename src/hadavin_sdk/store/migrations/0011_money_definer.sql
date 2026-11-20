@@ -313,7 +313,7 @@ $fn$;
 REVOKE ALL ON FUNCTION hadavin_add_spend(TEXT, DATE, NUMERIC) FROM PUBLIC;
 
 -- Step 6 (caps out of the runtime's hands), ADDITIONS ONLY: the table of caps and the two functions around it. The
--- reserve function above still takes its caps as arguments in this step; a later step makes it read this table.
+-- reserve function below takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads its caps from this table.
 -- hadavin_caps: one row per agent. Owner only: no role holds any right on it (`migrate` GRANTS row is all ""); the
 -- definer functions below touch it as owner. The CHECKs are the part of the cap rule that is a property of the value
 -- (>= 0 and finite; NaN sorts above every number, so it fails the second test); the scale limit comes from

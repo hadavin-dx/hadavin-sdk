@@ -239,7 +239,7 @@ The runtime login has no right on that table and cannot run `hadavin_set_cap`; o
 The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
 Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
 
-The runtime login can neither lower a booked amount nor choose or raise a cap.
+The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
 
 Deploy, in this order (there is no rolling upgrade):
 1. Stop the tick scheduler and every runtime-side process.

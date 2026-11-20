@@ -58,3 +58,5 @@ Redaction is pattern based and treats the end of a value the way the redactor's 
 - A form-encoded `;` or `&` inside a value is ambiguous: `password%3Dab%3Bzq9` can be one secret or a key and a value followed by more text. The redactor decodes it, masks what its value pattern reaches, and keeps what pass one masked whole when the decoded view would mask less; it cannot know which reading the sender meant.
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege).
+
+On PostgreSQL after migration 0011, the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
