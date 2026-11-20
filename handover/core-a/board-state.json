@@ -752,17 +752,17 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "rev-1write",
-   "role": "fresh reviewer (codebase-details)",
+   "id": "fix-1write-nits",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "read-only adversarial review of the one-write change: error paths, double or lost answer, wire equality, vacuous tests",
-   "started UTC": "11:15",
+   "what exactly it is doing": "one-write review nits: mark headers_sent when the final send raises OSError (no misleading TypeError), tests for HEAD, a large app body, a raising send, an app failing before start_response; then one run",
+   "started UTC": "11:17",
    "expected end": "15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1 (behaviour-changing shipped code, no cap)",
+   "review round n of cap": "fix after round 1",
    "retries so far": 0,
-   "reason": "after C-single-write"
+   "reason": "rev-1write"
   }
  ],
  "tests": [
@@ -2836,6 +2836,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "d-fix13: ONE write per answer (QuietWSGIHandler buffers in _write, one sendall in finish_response); 49 new tests on a real loopback server with a recording socket (16 answer types: exactly one write, first write = status line + headers + complete body, golden bytes equal to the old four-write server: 29 of 49 fail on the old code, the 16 golden-byte tests pass on both = wire equality); pg-kill id 20 of 20 PASS after the fix (raw/REPRO-pgkill-after-fix-20.log); tests/triggers+crash 1424 passed 5 skipped 0 failed; ruff/bandit clean; mutant G34 written and KILLED when run alone (full script cannot run: the blocked G33d anchor); residual: a kill DURING the single sendall of a >socket-buffer answer (ours are < 300 bytes)"
+  },
+  {
+   "id": "rev-1write",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "read-only adversarial review of the one-write change: error paths, double or lost answer, wire equality, vacuous tests",
+   "started UTC": "11:15",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 (behaviour-changing shipped code, no cap)",
+   "retries so far": 0,
+   "reason": "one-write review: NO Blocker; 'Major' = my ticket cited FINDINGS-flake-pg-kill.md which did NOT exist (an agent had reported writing it): written now by me; nits: after super().finish_response() closed the handler a non-Broken-pipe OSError on the final send gives a misleading TypeError WARNING (headers_sent reset by close(); only for answers > socket buffer); HEAD/large body/send-raises/app-fails-before-start_response untested; BrokenPipe on the single send is silent (as before); all 5 key tests would fail if broken, none vacuous; wire equal; no answer sent twice or lost"
   }
  ]
 }
