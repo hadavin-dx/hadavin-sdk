@@ -1,0 +1,4 @@
+P1 statuses {202: 2, 400: 100, 401: 30, 404: 76, 405: 69, 409: 5, 413: 18}
+...P4 kinds {'lines': 53, 'bytes': 58, 'trunc': 46, 'length': 51, 'headers': 46, 'mutated': 46} answers 283 clean closes 17
+.
+4 passed in 5.14s
