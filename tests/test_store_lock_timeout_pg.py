@@ -103,7 +103,7 @@ def test_the_migrate_connection_sets_no_lock_timeout(scoped, monkeypatch):
         return db
 
     monkeypatch.setattr(migrate_mod, "connect", spy)
-    migrate_mod.migrate(scoped)  # idempotent on a migrated schema
+    migrate_mod.migrate(scoped, no_roles=True)  # idempotent on a migrated schema
     assert seen == ["0"]
     # and the shared `connect()` itself sets none: the store sets it in `build()` only
     with postgres_mod.connect(scoped) as db:

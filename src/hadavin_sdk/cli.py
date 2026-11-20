@@ -16,7 +16,7 @@
                                                          audit drain; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P] [--purge-role U] [--reset-role X]
-                                                         [--release-role Y]
+                                                         [--release-role Y] [--no-roles]
                                                          apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
@@ -124,6 +124,11 @@ def _main(argv: list[str] | None = None) -> int:
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
+        "--no-roles",
+        action="store_true",
+        help="apply the schema naming no role (no role is granted or checked); without it a migrate that names no role is refused",
+    )
+    mig.add_argument(
         "--purge-role",
         help="grant this database role the evidence purge (DELETE on tool_calls and redaction_maps) and nothing else",
     )
@@ -177,6 +182,7 @@ def _main(argv: list[str] | None = None) -> int:
             args.purge_role,
             args.reset_role,
             args.release_role,
+            args.no_roles,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -396,6 +402,7 @@ def _migrate(
     purge_role: str | None = None,
     reset_role: str | None = None,
     release_role: str | None = None,
+    no_roles: bool = False,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -408,6 +415,13 @@ def _migrate(
     if not dsn:
         print("refused: set HADAVIN_MIGRATE_DSN to the migration role's DSN", file=sys.stderr)
         return 2
+    if not no_roles and not any((runtime_role, portal_role, purge_role, reset_role, release_role)):
+        print(
+            "refused: no role is named, so the check of who could clear a stop would be skipped; name the "
+            "roles (--runtime-role ... --reset-role) in ONE command, or pass --no-roles to apply the schema only",
+            file=sys.stderr,
+        )
+        return 2
     from hadavin_sdk.store.migrate import migrate
     from hadavin_sdk.store.postgres import ca_file
 
@@ -419,6 +433,7 @@ def _migrate(
         purge_role=purge_role,
         reset_role=reset_role,
         release_role=release_role,
+        no_roles=no_roles,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,

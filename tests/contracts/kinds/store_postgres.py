@@ -33,7 +33,7 @@ def pg_schema(migrated=True, runtime=False):
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
-        migrate(scoped)
+        migrate(scoped, no_roles=True)
     role = purge = None
     try:
         if runtime:

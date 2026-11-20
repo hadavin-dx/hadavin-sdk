@@ -158,7 +158,7 @@ def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
     applied = []
 
     def run():
-        applied.append(migrate(fresh_dsn))
+        applied.append(migrate(fresh_dsn, no_roles=True))
 
     threads = [threading.Thread(target=run) for _ in range(2)]
     for t in threads:
@@ -167,7 +167,7 @@ def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
         t.join()
     every = sorted(p.stem for p in MIGRATIONS.glob("*.sql"))  # new migrations never break this test
     assert sorted(applied, key=len) == [[], every]
-    assert migrate(fresh_dsn) == []
+    assert migrate(fresh_dsn, no_roles=True) == []
 
 
 def test_runtime_role_can_write_but_not_delete(fresh_dsn):
@@ -288,7 +288,7 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
     assert migrate(
-        fresh_dsn
+        fresh_dsn, no_roles=True
     ) == [  # every file from 0004 on: a new migration never breaks this test
         p.stem for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem >= "0004"
     ]
