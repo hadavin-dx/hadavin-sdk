@@ -13,6 +13,12 @@ chain is parked in the outbox table and written by the next tick (step `audit_dr
 process's memory (the database was down for the outbox as well) is written at that process's next successful audit
 write, and is lost if the process exits first. The eval and replay commands do not write to the chain.
 
+**Stop.** A stop takes effect at the next gate check; a call already in flight is not interrupted; the command-line
+eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
+runtime's database login can add a stop and cannot clear one; only the reset login can, and its reset is written to
+the audit log first. The reset login can append audit rows (as the runtime login already can). The database owner and
+a superuser are outside this guarantee. The memory store guarantees nothing.
+
 **Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
 (for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT
 guarantee: that the write matches the plan that was shown; that the named approver approved it; that it happened
