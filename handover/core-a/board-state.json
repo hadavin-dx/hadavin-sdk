@@ -761,19 +761,6 @@
    "reason": "rev-door Majors"
   },
   {
-   "id": "docs-for-c",
-   "role": "builder in /home/user/wt/cdocs (wip/core-a-for-c-docs)",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c root-docs review round 2: 2 Blockers + 7 Majors: verify against code, fix docs only -> handover/core-a/DOCS-FOR-C.md",
-   "started UTC": "17:45",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 16:38"
-  },
-  {
    "id": "integ3",
    "role": "builder (scratch worktree /home/user/wt/integ3, never pushed)",
    "model": "sonnet",
@@ -785,6 +772,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead 16:38"
+  },
+  {
+   "id": "rev-docs-c",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the 3 CHANGELOG sentence splits: meaning identical to the code, pinned phrases, markdown",
+   "started UTC": "17:55",
+   "expected end": "10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1157,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:52 DOCS LANE (your item 1): core-c's DOCS3 commit 035c923f4 had ALREADY closed most of the round-2 findings: re-verified against the code: Blocker 1 holds; Blocker 2 holds for CHANGELOG.md lines 1-299 only (300-806 still carry P1a/P1b/G-codes/ORDER and several phrases are PINNED by tests: left); Majors 3,5,6,8,9,10 already fixed; Major 7 (sentences > 30 words) fixed by me: 3 CHANGELOG sentences split (lines 114/120/139); Major 4 (brand strings): no hit in the root docs; I removed the banned-string list from handover/core-c/evidence/DOCS3-notes.md. Branch wip/core-a-for-c-docs pushed (one commit on d53d6e7d1); table in handover/core-a/DOCS-FOR-C.md; core-c told in handover/core-c/requests/from-core-a-review.md. Fresh review rev-docs-c checks the 3 splits keep the meaning. Open: CHANGELOG 300+ cleanup, 6 nits, K50/K75/K76 re-read. Running: integ3, door-money, rev-docs-c.",
   "16:50 core-b 9b7610007 reviewed (reviews/rev-b-9b76.md; handover/core-b/requests/xr-from-core-a-3.md): no Blocker. FIXED: my NOINHERIT bypass (recursive closure over pg_auth_members: my probe, nested groups, pg_write_all_data, PUBLIC and a superuser role reachable by SET ROLE are all caught) and the all-or-nothing owner skip (now per table); TRIGGER added; 3 queries per check. NOT FIXED and WORSE: 0011_money_definer.sql edited in place AGAIN (p_day -> p_day window): an already-migrated DB keeps the old text, `_money_error` then loses the clock hint silently, check_m1_add_spend_window fails there, and the add_spend day window never reaches such DBs: needs a NEW migration or the reset-draft rule stated. d7d37db36: the B2 settle helper cannot raise; the hold stays open at the worst case on every failure path. 943a9161b: core-b's T1 has 17 tests (my wip/core-a-t1-merge e4b0c2331 has 26 with the stricter cases): compare before choosing. Running: integ3, docs-for-c, door-money.",
   "17:45 LEAD 16:38 taken, 4 agents: (1) docs-for-c (wip/core-a-for-c-docs on core-c d53d6e7d1: finds core-c's root-docs round-2 findings (2 Blockers + 7 Majors) in handover/core-c, verifies each against the CODE, fixes docs only, table in handover/core-a/DOCS-FOR-C.md; I tell core-c to merge when pushed); (2) rev-b-9b76: core-b f66eb784d (role closure, per-table owners: the answer to my rev-b-newest2 Majors 1+2) + d7d37db36 + 943a9161b; NOTE ec67808ec is DOCS ONLY (no src/tests diff): nothing to review there; core-b ALSO ported core-a's extra T1 cases itself (943a9161b): my wip/core-a-t1-merge may now duplicate it: integ3 compares; findings will go to handover/core-b/requests/xr-from-core-a-3.md; (3) integ3: dry-run 3 on core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (the heads moved from the ones you named: ec67808ec/0e33c0641 are older), plus my fix branches (contract-fix, door-merged, grants), PG16 counts, INTEGRATION-DRYRUN-2.md kept current; (4) door-money (the crash matrix money-state assertions). Load 0.1 -> expect ~4 with integ3's triggers run: heavy = 2 (integ3 triggers + door-money).",
   "17:35 rev-door (review of the crash-matrix support patch): NO Blocker; with RESERVES False the matrix is EXACTLY the old one (every removed line returns verbatim, counts kept). TWO MAJORS with core-b's reserve/settle: the crash tests assert the run row, model-call count and retry answer but NOTHING about the MONEY state (no read of spend_reservations/totals): a leaked or stuck-open hold or a double booking on the retry would pass; and the child's seeding widens max_day_skew to 100000 and min_expiry_age to 0, so the matrix proves nothing about the real day window/expiry floor (acceptable only for the one-row/one-approval/one-hold claims: to be stated). door-money builds static per-point money end states (before reserve: no row; between reserve and settle: one OPEN row, reserved=worst case; after settle: one settled row; after the retry: at most one row) with red proofs, a RESERVES guard and the documented limit. NOTE: the first patch is already applied to cloud/core-a (83 passed); the second goes in once reviewed. AGENTS 1.",
@@ -4202,6 +4203,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-b 9b7610007 (f66eb784d) reviewed: NO Blocker; Major 1 NOINHERIT bypass FIXED (recursive closure), Major 2 per-table owner skip FIXED, TRIGGER added, 3 queries; Major 3 NOT FIXED and WORSE (0011 edited in place again: message p_day -> p_day window breaks _money_error matching on already-migrated DBs); d7d37db36 settle helper never raises; 943a9161b core-b's T1 now 17 tests (mine 26); reviews/rev-b-9b76.md, handover/core-b/requests/xr-from-core-a-3.md"
+  },
+  {
+   "id": "docs-for-c",
+   "role": "builder in /home/user/wt/cdocs (wip/core-a-for-c-docs)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c root-docs review round 2: 2 Blockers + 7 Majors: verify against code, fix docs only -> handover/core-a/DOCS-FOR-C.md",
+   "started UTC": "17:45",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "wip/core-a-for-c-docs pushed: core-c's DOCS3 already closed most of the round-2 findings (2 Blockers: 1 holds, 2 holds for CHANGELOG lines 1-299 only; Majors 3,5,6,8,9,10 re-verified fixed; Major 7 fixed by splitting 3 sentences at CHANGELOG.md:114/120/139; Major 4 no brand hit); DOCS3-notes.md brand list removed; DOCS-FOR-C.md; left: CHANGELOG 300+ cleanup (phrases pinned by tests), 6 nits; reviewer started on the 3 splits"
   }
  ]
 }
