@@ -387,31 +387,22 @@ ACCOUNT = "1234" + "5678"
 BANK_LINES = f"BSB: {BSB}\npaid {BSB}/{ACCOUNT}"
 
 
-def test_shape_b_recorded_one_pass_leaves_the_account_number_and_a_second_pass_masks_it():
-    """Run 2026-11-20, confirmed (a gap of the redactor itself, reported, NOT fixed here: no pattern was
-    changed). Pass one masks the bank code and the sweep writes its placeholder on line 2; only a second
-    pass then reads `<BANKCODE_1>/digits` as an account."""
+def test_shape_b_one_pass_masks_the_account_beside_a_bank_code_and_is_a_fixed_point():
+    """History: on 2026-11-20 05:55 UTC one pass left the account number readable (`<BANKCODE_1>/digits`
+    was read as an account only by a second pass) and this was pinned as a recorded gap with a strict
+    xfail. guard/redact.py was changed after that (06:03 UTC, not by this ticket) and one pass now masks
+    it, so the promised shape B holds as a plain pass: the output of one pass is masked."""
     mapping = runmap.RunMap()
     once = runmap.redact_text(BANK_LINES, mapping)
-    assert once == f"BSB: <BANKCODE_1>\npaid <BANKCODE_1>/{ACCOUNT}"
-    assert dict(mapping) == {"<BANKCODE_1>": BSB}
-    assert _check(once, mapping) is False  # is_masked does see it: it fails closed
-    twice = runmap.redact_text(once, mapping)
-    assert twice == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
+    assert once == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
     assert dict(mapping) == {"<BANKCODE_1>": BSB, "<BANKACCT_1>": ACCOUNT}
-    assert _check(twice, mapping) is True
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason="idempotence counter-example: `BSB: <bank code>` on one line and `<same bank code>/<account>` "
-    "on the next; one redact_text pass leaves the account number readable (redact.py BANKCODE then sweep, "
-    "BANKACCT only matches on a second pass)",
-)
-def test_shape_b_round_trip_holds_for_a_bank_code_beside_an_account():
-    mapping = runmap.RunMap()
-    out = runmap.redact_text(BANK_LINES, mapping)
-    assert runmap.is_masked(out, mapping) is True
+    before = _frozen(mapping)
+    assert runmap.is_masked(once, mapping) is True
+    assert runmap.redact_text(once, mapping) == once and _frozen(mapping) == before
+    # and a half-masked text (what one pass used to return) is still seen as not masked
+    assert _check(f"BSB: <BANKCODE_1>\npaid <BANKCODE_1>/{ACCOUNT}", mapping) is False
+    fresh = runmap.RunMap({"<BANKCODE_1>": BSB})
+    assert runmap.is_masked(f"BSB: <BANKCODE_1>\npaid <BANKCODE_1>/{ACCOUNT}", fresh) is False
 
 
 def test_m8_a_mapping_whose_cache_attribute_raises_is_a_redaction_error_in_both_functions():

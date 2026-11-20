@@ -689,6 +689,41 @@ def test_m4_only_the_published_reasons_become_an_audit_code():
         assert client.sent == []
 
 
+PUBLISHED = (
+    Path(__file__).resolve().parents[1]
+    / "handover/core-c/inputs/interfaces-from-core-b/ii_meter.py"
+)
+
+
+def test_the_gates_meter_protocol_and_reason_codes_equal_the_published_interface():
+    """INTERFACE (ii) as core-b published it (a signature file, not importable package code): the gate's local
+    Protocol has the same methods with the same signatures, and the reason allowlist is the published five."""
+    if not PUBLISHED.exists():
+        pytest.skip("the published signature file is not in this checkout")
+    published: dict = {}
+    exec(compile(PUBLISHED.read_text(encoding="utf-8"), str(PUBLISHED), "exec"), published)  # noqa: S102
+    theirs, ours = published["Meter"], model_gate.Meter
+    names = sorted(n for n in vars(theirs) if not n.startswith("_"))
+    assert names == sorted(n for n in vars(ours) if not n.startswith("_")) == ["reserve", "settle"]
+    for name in names:
+        assert inspect.signature(getattr(ours, name)) == inspect.signature(getattr(theirs, name))
+    reasons = published["SpendRefused"].__doc__.split("one of:")[1].replace("|", " ").split()
+    assert set(reasons) == model_gate.SPEND_REASONS and len(reasons) == 5
+    assert published["SpendRefused"]("daily_budget").reason == "daily_budget"
+    assert issubclass(published["SpendRefused"], RuntimeError)
+    refused = published["SpendRefused"]("monthly_budget")  # the real class through the gate
+    bound, client, _, sink = build(meter=Meter(reserve_raises=refused))
+    with pytest.raises(published["SpendRefused"]):
+        bound.chat(CLEAN, system="s", route="main")
+    assert client.sent == [] and sink.codes() == [("refused", "monthly_budget")]
+
+
+def test_every_error_code_the_gate_writes_is_in_its_allowlist():
+    own = {v for k, v in vars(model_gate).items() if k.startswith("CODE_")} - {"gate_refused"}
+    assert model_gate.AUDIT_CODES == model_gate.SPEND_REASONS | own
+    assert not (model_gate.SPEND_REASONS & own)
+
+
 def test_worst_case_raising_is_a_reserve_refusal_too():
     def cannot(*args):
         raise LookupError("no such route")
