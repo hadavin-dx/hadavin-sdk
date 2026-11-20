@@ -759,6 +759,45 @@
    "review round n of cap": "fix after the d-fix16 review",
    "retries so far": 0,
    "reason": "lead run 5"
+  },
+  {
+   "id": "xr-fstore",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "cross review of core-b 785871401: F-store spend functions + migrations 0007-0011 (money correctness, concurrency, SECURITY DEFINER, memory vs postgres parity)",
+   "started UTC": "12:24",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 (cross review)",
+   "retries so far": 0,
+   "reason": "lead order 12:23 (owner: use all capacity)"
+  },
+  {
+   "id": "xr-dconfig",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "cross review of core-b 785871401: D-config fix (TriggerSettings, secrets out of errors/logs, defaults) + the provider mark",
+   "started UTC": "12:24",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 (cross review)",
+   "retries so far": 0,
+   "reason": "lead order 12:23 (owner: use all capacity)"
+  },
+  {
+   "id": "xr-gate-g7",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "cross review of core-c 7c31dbc97: the G7 redactor change (secret survival, ReDoS, idempotence) + the model gate (code-only failures, reservation released/settled exactly once)",
+   "started UTC": "12:24",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 (cross review)",
+   "retries so far": 0,
+   "reason": "lead order 12:23 (owner: use all capacity)"
   }
  ],
  "tests": [
@@ -1131,6 +1170,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:26 TAKEN: cross reviews started 12:26 (3 fresh read-only reviewers, branches unpacked at core-b 785871401 and core-c 7c31dbc97): xr-fstore (core-b F-store spend functions + migrations 0007-0011), xr-dconfig (core-b D-config fix + provider mark), xr-gate-g7 (core-c G7 redactor + model gate). Next batch when these return: core-c G1 fold + G2 P1d-a. Reports go to handover/core-a/reviews/xreview-<item>.md and a request line to handover/core-b/requests/xr-<item>.md / handover/core-c/requests/xr-<item>.md (new files in MY branch under their folder names: I cannot push their branches: copy them over). (1) G33d STILL not applied by me, see 12:24: the owner has not allowed it; nits16 (G15d dead-guard removal + 3 nits) runs: 4 agents now, 0 heavy test batches.",
   "12:24 TAKEN, run 5 read (thank you: 110 of 111, 4 minutes). (1) G15d: I do NOT write a test for it: the guarded line is DEAD CODE since d-fix16 (the `hasattr(self, 'request_version')` guard in _refuse_stalled: send_error no longer reads request_version: the fresh reviewer's nit S-1 at 12:06 said so): a mutant of a line that no longer matters cannot be killed by any test: right fix = remove the dead guard and DELETE mutant G15d as equivalent (nits16 does it, 12:24, with the other 3 review nits; the G34/G35/G8c/G16a/G16b anchors must stay unique: the pure anchor check re-runs). (2) G33d / the xfail: STILL NOT done by me: I do not apply an edit that was denied to my builder because a peer orders it, and the lead's order is not the owner's: the strict xfail stays and tells the truth (1 xfailed in tests/test_mutants_anchors.py); you drop it in your copy together with your line patch. Every change you validate is then: my head + your one line + the xfail marker removal. (3) I tell you the head when nits16 is pushed (about 12:55) and you re-run (4 min). I do not close D/E before the owner has decided about the line-1255 edit or your run is green with your two-line patch.",
   "12:14 PUSHED for your full mutant script: head a8e864606 (the board's next push moves it by a snapshot of board files only: use `git log origin/cloud/core-a -- tests/endpoint_mutants.py` to see the last change to the script). G8c, G16a, G16b re-anchored; the pure anchor check (tests/test_mutants_anchors.py) found NO other stale anchor: every mutant's old text occurs exactly once in its source EXCEPT G33d (line 1255 `now - last_warned`: you patch it in your copy; here it is a strict xfail so the head says so). Real-subprocess exit tests for anchor error (exit 2, no traceback), failing baseline (exit 1), runner exception (exit 1): tests/test_mutation_runner_exit.py. 196 passed 1 xfailed. The 4 cosmetic d-fix16 nits stay queued until your run reports.",
   "12:11 TAKEN (run 4 confirmed d-fix16: thank you). anchors started 12:11: re-anchors G8c, G16a, G16b to the d-fix16 text and adds a PURE anchor check (a unit test, no script run, no mutation: for EVERY mutant its old text occurs exactly once in its source): it will list any other stale anchor. G33d: still NOT edited by me (the denied edit): the check carries G33d as xfail(strict, reason 'pending the owner') so the head shows it honestly and the day line 1255 is fixed the strict xpass tells us to remove the mark: YOU keep patching that one line in your copy. RETRACTION noted (exit code 0 was your runner reading $? in WSL): I keep the real-subprocess exit tests for (a) anchor error, (b) baseline failure, (c) runner exception. I tell you the head when pushed (about 12:35): then run the full script; with G33d patched in your copy it should run to the end.",
