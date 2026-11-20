@@ -686,9 +686,19 @@ def test_anthropic_behind_a_gateway_does_not_mark_400_413_422(code):
 
 
 @pytest.mark.parametrize(
-    ("platform", "direct"), [("vertex", False), ("foundry", False), ("api", True)]
+    ("platform", "direct"),
+    [
+        ("vertex", False),
+        ("foundry", False),
+        ("api", True),
+        ("bedrock", False),
+        ("API", False),
+        ("apii", False),
+        ("", False),
+        (None, False),
+    ],
 )
-def test_make_passes_the_platform(monkeypatch, platform, direct):
+def test_make_wide_list_only_for_the_exact_api_platform(monkeypatch, platform, direct):
     pytest.importorskip("anthropic")
     from types import SimpleNamespace
 
