@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:13:07Z
+UPDATED_UTC: 2026-11-20T09:13:16Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 75
 ITEMS_OPEN: 21
 PERCENT: 81
 AGENTS_RUNNING: 3
-CAPACITY: load 2.61 of 4 cores (1-minute average), mem 1.4/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 2.81 of 4 cores (1-minute average), mem 1.3/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 17%; 566M /home/user/hadavin-sdk; 493M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T09:12:37Z (the push before this board)
+PUSHED_UTC: 2026-11-20T09:13:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,18 +106,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 10718s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 10718s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 10718s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 10718s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 10718s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 10718s ago | running | matched by name in ps |
-| 18091 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 72s ago | running | matched by name in ps |
-| 18111 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 71s ago | running | matched by name in ps |
-| 21425 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 21438 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 21442 | postgres: postgres postgres 127.0.0.1(43430) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 21447 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 10727s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 10727s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 10727s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 10727s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 10727s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 10727s ago | running | matched by name in ps |
+| 18091 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 81s ago | running | matched by name in ps |
+| 18111 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 80s ago | running | matched by name in ps |
+| 21863 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 21870 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 21878 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 21879 | postgres: postgres postgres 127.0.0.1(48732) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

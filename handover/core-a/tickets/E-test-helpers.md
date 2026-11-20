@@ -11,7 +11,7 @@ Session core-a (DOOR). Written 2026-11-20 from origin/main 51c9fc4fb (S = src/ha
 The core promises that a run which dies half-way is never lost and never done twice: it ends with a person. To prove that, a test must be able to stop the program at an exact place, for example "after the run row was written, before the model was called", and then look at what is left. Today no test can do that: tests only write an old row by hand and let the clean-up step find it (tests/test_p7_tick.py:216-232). This ticket adds one small test-only tool that wraps an object the test already hands to the runtime (the store, the model double) and, when the test has armed a named point, either raises a special error (same process) or kills the process (child process, for real PostgreSQL). It changes no existing file and no runtime code.
 
 ## 2. RIGHT-SIZE and NEEDED-CHECK
-RIGHT-SIZE: new shipping code, small and test-only (about 110 source lines), but it is the proof tool of two guarantee-class steps (D door, F money), so it gets its own tests; no mutation run, no review round.
+RIGHT-SIZE: new shipping code, small and test-only (crash.py is 295 lines as built, wc -l 2026-11-20; the first estimate was about 110), but it is the proof tool of two guarantee-class steps (D door, F money), so it gets its own tests; no mutation run, no review round.
 ONE-PLACE-PER-JOB: "stop the program at a named place" lives ONLY in `hadavin_sdk.testing.crash`. Steps D, F, H and the other sessions import it; none writes its own kill switch, flag file or exit code.
 
 NEEDED-CHECK per proposed helper (what I read, then the verdict):
@@ -40,18 +40,18 @@ RUNG TABLE (CODE-LAST v1)
 2. No module of S outside `S/testing/` imports `hadavin_sdk.testing.crash`. The helper ships in the wheel (section 4) but is dead code at run time; a test in this ticket scans for it.
 3. A `CrashPoints` object cannot be built outside a pytest run: the constructor raises `RuntimeError` unless the environment variable `PYTEST_CURRENT_TEST` is set (pytest sets it per test and a child process inherits it; UNVERIFIED in this run, pinned by test H1).
 4. Nothing fires unless a test armed that exact point. Unarmed, a wrapped object behaves as the target: same results, same exceptions, a missing attribute raises `AttributeError` (so the `getattr(..., None)` guard of S/runtime/tick.py:179 still works).
-5. One arm, one crash: the point is disarmed (memory) or its flag file deleted BEFORE the crash; if the delete fails, no crash (another thread took it; demo-hooks.py:45-48).
+5. One arm, one crash: the point is disarmed (memory) or its flag file deleted BEFORE the crash; if another thread took it, no crash (demo-hooks.py:45-48). As built, a delete that is refused (for example by Windows while the file is open) is retried 20 times with 20 ms between tries (crash.py:75-76, `_disarm` 272-281); only when all tries fail is there no crash.
 6. `SimulatedCrash` derives from `BaseException`, never from `Exception`.
 7. Kill mode ends the process with `os._exit(CRASH_EXIT_CODE)` after writing `CRASH_MARKER` with `os.write` on descriptor 1 in a `try`/`finally` followed by `os._exit`: no `finally`, no `atexit`, no buffered write runs.
-8. A point left armed at the end of the `with` block is an error (`RuntimeError` naming the point) and is disarmed all the same, so one test cannot crash the next.
+8. A point left armed at the end of the `with` block is an error (`RuntimeError` naming the point) and is disarmed all the same, so one test cannot crash the next. As built, a flag file that still cannot be deleted at that point raises a second, different `RuntimeError` ("the flag file could not be deleted"), and with an error already in flight `__exit__` raises nothing (crash.py:148-160).
 9. Point names are generic: `<name>.<method>:before` or `:after`, where name and method match `[a-z_][a-z0-9_]*`. No project word, no stage name. The helper has no stage parameter.
 10. No new dependency, no pytest import in S, absolute imports only, no dynamic import, no secret and no credential of any kind, no host name or URL even in a docstring (the scans of section 4 read docstrings).
 11. The module never contains a literal call of an attribute named `chat` or `apply_guardrail`; calls go through `getattr(target, method)(...)` (see guard G4 in section 4).
 
 ## 4. FILES
 Create (all new, ours):
-- `src/hadavin_sdk/testing/crash.py` (about 110 lines): the helper.
-- `tests/test_testing_crash.py` (about 190 lines): its tests (flat name, like tests/test_mutation_runner.py:25 for the sibling module). The child script of the kill-mode tests is written into `tmp_path` by the test; no second file.
+- `src/hadavin_sdk/testing/crash.py` (295 lines, wc -l 2026-11-20; planned about 110): the helper.
+- `tests/test_testing_crash.py` (1030 lines with 44 test functions, wc -l and grep 2026-11-20; planned about 190): its tests (flat name, like tests/test_mutation_runner.py:25 for the sibling module). The child script of the kill-mode tests is written into `tmp_path` by the test; no second file.
 Modify: none by us. REQUESTS TO core-b: none required. One optional request at landing: R1 `CHANGELOG.md`, in the entry of the D+E group (plan-v4-final.md:19), one line "`hadavin_sdk.testing.crash`: test-only crash points (in the wheel, not used at run time)"; reason: CHANGELOG.md:347 already tells readers what of `testing` is in the wheel, and CHANGELOG is core-b's (plan-v3.md:6). NOT requested: any change to tests/conftest.py, pyproject.toml, uv.lock, guard lists.
 Delete: none.
 
@@ -178,7 +178,7 @@ FAIL-BEFORE: N6 is the behaviour no existing test can show. Mutants (hand list, 
 - ruff rule S is on for src with only S101 lifted for tests (pyproject.toml:72, 78-79): no `assert` in crash.py; line length 100 (pyproject.toml:68).
 - `print` is used once on purpose (the marker); `os._exit` once. Bandit runs at `-ll` on src (ci.yml:181); a finding there is reported, never suppressed (UNVERIFIED that none appears: not run).
 - Python 3.12 and 3.13 (ci.yml:74, 142): `def wrap[T]` is 3.12 syntax, allowed by requires-python (pyproject.toml:6).
-- Size estimate: crash.py about 110 lines, test file about 190 lines, 2 files, 0 existing files touched. Three-try cap applies (ORDERS.md:40).
+- Size estimate (first plan): crash.py about 110 lines, test file about 190 lines, 2 files, 0 existing files touched. As built (wc -l 2026-11-20): crash.py 295 lines, test file 1030 lines, still 2 files. Three-try cap applies (ORDERS.md:40).
 - Evidence: the pytest output of the one test file, saved to handover/core-a/raw/E-tests.log; P1 is NOT RUN here unless PostgreSQL starts as a non-root user (ORDERS.md:61).
 - Rollback: delete the two files; nothing else refers to them.
 
