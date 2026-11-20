@@ -174,9 +174,27 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   T::test_f1_limits_meter_settles_through_settle_for_with_the_bound_agent
   T::test_f1_limits_meter_reserves_with_the_run_id_and_refuses_another_agent
   T::test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case
-- The gate masks what it SENDS, not the reply: a planted secret in a model reply is returned as the client gave it
-  (finding F2, owner decision pending, ESCALATIONS E25). Pinned as a strict xfail.
-  T::test_f2_a_reply_with_a_planted_secret_is_returned_unmasked
+- The gate also masks the model's REPLY (Q1, ESCALATIONS E25 option a, finding F2). After a successful provider call the
+  `text` of the reply and every string (key or value) inside each tool call's `input` are run through the same enforce
+  step and net as the request (`_chunk`, the call's map snapshot, a FRESH budget): a registered value in the reply
+  comes back as its placeholder, a value the model invents is not in the map and is left alone, a reply that holds
+  no registered value is returned as the SAME object (byte-identical), and a changed reply is a copy that keeps cost,
+  usage, model id and stop reason, so the settle is unchanged. The audit row's `decision` then ends in
+  `+reply_masked` (`map_enforced+reply_masked`). A caller that needs the real value maps identifier kinds back with
+  `guard.putback.put_back` (stored kinds only; a secret placeholder is never restored). If the reply cannot be
+  masked (budget, a raise, the net still sees a held secret) the raw reply is NOT returned: the cost is settled
+  by rule (a) (rule (c) when it is unusable), one row `refused` / `reply_mask_failed` is written and `ReplyMaskFailed`
+  (a `GateRefused`, though the call WAS made) is raised. Limits: the tool call `name`, `stop_reason` and `model_id` are not
+  masked; a value registered during the call is not in this call's snapshot; the independent substring net is not part of
+  this step.
+  T::test_f2_a_reply_with_a_planted_secret_is_returned_masked
+  T::test_q1_a_planted_secret_in_a_tool_call_argument_is_masked
+  T::test_q1_a_reply_with_unrelated_text_is_the_same_object_and_the_row_is_unmarked
+  T::test_q1_a_value_the_model_invents_is_left_alone
+  T::test_q1_put_back_restores_an_identifier_kind_and_never_a_secret
+  T::test_q1_a_reply_that_cannot_be_masked_is_withheld_but_its_cost_is_settled
+  T::test_q1_a_reply_with_no_usable_cost_that_cannot_be_masked_is_withheld_and_not_settled
+  T::test_q1_a_reply_still_holding_a_secret_after_the_sweep_is_withheld
 
 Before any provider contact the gate enforces the caller's run map on every message and document (a raw copy
 of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then asks for the
@@ -342,6 +360,7 @@ CODE_RESERVE_INTERRUPTED = "reserve_interrupted"  # a BaseException in `reserve`
 CODE_HELD_LEFT = "held_value_left"  # a held-back secret value still raw after the sweeps: no call
 CODE_COST_UNKNOWN = "cost_unknown"  # rule (c): a reply with no usable cost; returned, NOT settled
 CODE_SETTLE_FAILED = "settle_failed"  # the meter raised in settle: the worst case stays booked
+CODE_REPLY_MASK_FAILED = "reply_mask_failed"  # Q1: the reply could not be masked: the paid cost is settled, the raw reply is NOT returned
 CODE_OVERSHOOT = "overshoot"  # a paid call (result ok) whose real cost was above its reservation
 # The `decision` field of every row: whether this bound gate enforces a run map (design review D1).
 MODE_ENFORCED = "map_enforced"  # the default enforce function ran against a map with entries
@@ -349,6 +368,9 @@ MODE_EMPTY = "map_enforced_empty"  # the default function, but the run's map hel
 MODE_CUSTOM = "enforce_custom"  # an injected `enforce=` (tests): not the module's function
 MODE_FAILED = "map_failed"  # the enforce step refused: nothing was sent
 MODE_NO_MAP = "no_map"
+SUFFIX_REPLY_MASKED = (
+    "+reply_masked"  # Q1: appended to the row's `decision` when the reply text was changed
+)
 # The trusted framing of a tool result (runtime/agent_loop.py builds `<<TOOL RESULT call_id=ID tool=NAME>>`, the
 # text, then `<<END TOOL RESULT>>`; the markers are `tools.START_MARKER` and `tools.END_MARKER`). The gate never
 # replaces inside the FIXED words of these tokens; the call id, the tool name and the text between are enforced.
@@ -399,6 +421,7 @@ AUDIT_CODES = (
         CODE_COST_UNKNOWN,
         CODE_SETTLE_FAILED,
         CODE_OVERSHOOT,
+        CODE_REPLY_MASK_FAILED,
     }
 )
 
@@ -554,6 +577,17 @@ class HeldValueLeft(UnmaskedInput):
     word, hides in a forged placeholder-shaped token, or a bug)."""
 
     code = CODE_HELD_LEFT
+
+
+class _MaskFailed(Exception):
+    """Internal: one string of the reply could not be masked. Carries nothing."""
+
+
+class ReplyMaskFailed(GateRefused):
+    """The model answered (and was paid and settled) but its reply could not be masked within the budget, so the raw
+    reply is withheld. Raised outside any `except`: no cause and no context."""
+
+    code = CODE_REPLY_MASK_FAILED
 
 
 class WorstCaseInvalid(GateRefused):
@@ -715,7 +749,7 @@ class BoundGate:
             if enforced == CODE_MASK_BUDGET:
                 raise MaskBudgetExceeded
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
-        messages, documents, mode = enforced  # from here on only the enforced copies are used
+        messages, documents, mode, snap = enforced  # from here on only the enforced copies are used
         failure: str | None = None
         reserved, reservation = Decimal(0), ""
         try:
@@ -779,7 +813,20 @@ class BoundGate:
         except BaseException:  # rule (c): going down, cost unknown
             self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation, mode)
             raise
-        cost = usable_cost(reply)
+        cost = usable_cost(reply)  # read from the client's own reply, before the mask step
+        masked: bool | None = False
+        try:
+            reply, masked = self._mask_reply(reply, snap)
+        except Exception:  # noqa: BLE001 - Q1: a reply that cannot be masked is never returned raw
+            masked = None
+        if masked is None:
+            if cost is None:  # rule (c)
+                self._note(RESULT_REFUSED, CODE_REPLY_MASK_FAILED, reservation, mode)
+            else:  # rule (a): the reply was paid, so its cost is settled even though it is withheld
+                self._settle(reservation, cost, RESULT_REFUSED, CODE_REPLY_MASK_FAILED, mode)
+            raise ReplyMaskFailed
+        if masked and mode is not None:
+            mode += SUFFIX_REPLY_MASKED
         if (
             cost is None
         ):  # rule (c): the call is paid and its reply is returned; nothing to settle with
@@ -787,6 +834,41 @@ class BoundGate:
         else:  # rule (a)
             self._settle(reservation, cost, RESULT_OK, None, mode)
         return reply
+
+    def _mask_reply(self, reply: Reply, mapping: Mapping[str, str] | None) -> tuple[Reply, bool]:
+        """Q1 (ESCALATIONS E25 option a): the run's map applied to the model's reply (`text` and every string inside
+        each tool call's `input`), by the same enforce step and net as the request (`_chunk`). Returns (the reply,
+        changed). Nothing changed, no map, an empty map or a reply with no text: the SAME object comes back. A changed
+        reply is a copy that keeps every other field (cost, tokens, model id). Any raise is the caller's failure
+        path (`reply_mask_failed`). The map is read afresh, so a value registered during the call is covered."""
+        if mapping is None or not len(mapping):
+            return reply, False
+        if isinstance(mapping, runmap.MapSnapshot):
+            mapping.budget = (
+                runmap.EnforceBudget()
+            )  # a fresh budget: the provider call's wall time is not the mask's
+
+        def fix(value: Any) -> Any:
+            if isinstance(value, str):
+                fixed, code = self._chunk(value, mapping)
+                if code is not None:
+                    raise _MaskFailed
+                return fixed
+            if isinstance(value, dict):
+                return {fix(k) if isinstance(k, str) else k: fix(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [fix(v) for v in value]
+            return value
+
+        text = reply.text
+        calls = reply.tool_calls
+        new_text = fix(text) if text else text
+        new_calls = [c.model_copy(update={"input": fix(c.input)}) for c in calls]
+        if new_text == text and all(
+            n.input == c.input for n, c in zip(new_calls, calls, strict=True)
+        ):
+            return reply, False
+        return reply.model_copy(update={"text": new_text, "tool_calls": new_calls}), True
 
     def _settle(
         self, reservation: str, usd: Decimal, result: str, code: str | None, decision: str | None
@@ -808,8 +890,10 @@ class BoundGate:
         messages: list[dict[str, Any]],
         documents: list[bytes] | None,
         tools: list[dict[str, Any]] | None,
-    ) -> tuple[list[dict[str, Any]], list[bytes] | None, str | None] | str:
-        """(new messages, new documents, the audit `decision`) or a failure code (`mask_refused`,
+    ) -> (
+        tuple[list[dict[str, Any]], list[bytes] | None, str | None, Mapping[str, str] | None] | str
+    ):
+        """(new messages, new documents, the audit `decision`, the call's map snapshot or None) or a failure code (`mask_refused`,
         `mask_budget_exceeded`, `framing_refused`, `held_value_left`) when the step failed (then nothing is sent). A
         message or document in which nothing is replaced is passed on as the same object, so the bytes are the
         caller's; one with a replaced value is a new dict or new bytes. A content that is not `str` is refused with
@@ -867,7 +951,7 @@ class BoundGate:
             mode = MODE_CUSTOM
         else:
             mode = MODE_ENFORCED if len(mapping) else MODE_EMPTY
-        return sent, docs, mode
+        return sent, docs, mode, mapping
 
     def _sync_cache(self, mapping: Mapping[str, str]) -> None:
         """Empty the message cache and bump `map_version` when the map's entries differ from the ones the cache

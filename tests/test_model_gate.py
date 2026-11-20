@@ -30,7 +30,7 @@ from hadavin_sdk.guard.model_gate import (
 )
 from hadavin_sdk.llm.fake import FakeLLM, UnknownRecording
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
-from hadavin_sdk.models import Reply
+from hadavin_sdk.models import Reply, ToolCall
 from tests.k5_support import ScriptLLM
 
 KEY = "AKIA" + "IOSFODNN7EXAMPLE"  # the documented AWS example key, built from parts
@@ -1970,7 +1970,10 @@ def test_d9_the_snapshot_is_taken_once_per_call_so_every_text_sees_the_same_entr
         system="s",
         route="main",
     )
-    assert len(first_seen) == 2 and first_seen[0] == first_seen[1] == {"<IPV4_1>": IP}
+    # two request texts and then the reply, all against the one snapshot
+    assert len(first_seen) == 3 and first_seen[0] == first_seen[1] == first_seen[2] == {
+        "<IPV4_1>": IP
+    }
     sent = gate._llm.sent[0]["messages"]
     assert [m["content"] for m in sent] == [
         "<IPV4_1> " + later,
@@ -2038,19 +2041,142 @@ def test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="F2 (ESCALATIONS E25, owner decision): the gate masks what it sends, not the reply",
-)
-def test_f2_a_reply_with_a_planted_secret_is_returned_unmasked():
-    planted = "Zx9qPlantedSecret77"
-    client = Client()
-    client.reply = Reply(text=f"use {planted} now", cost_usd=COST, model_id="fake-model")
+PLANTED = "Zx9qPlantedSecret77"
+
+
+def _reply_map():
     mapping = runmap.RunMap()
-    runmap.redact_text(f"password={planted}", mapping)
+    runmap.redact_text(f"password={PLANTED}", mapping)
+    ph = next(p for p, v in mapping.items() if v == PLANTED)
+    return mapping, ph
+
+
+def test_f2_a_reply_with_a_planted_secret_is_returned_masked():
+    """Q1 (E25 option a): the reply carries the placeholder, not the value; cost and usage fields are kept and settled."""
+    client = Client()
+    client.reply = Reply(
+        text=f"use {PLANTED} now", cost_usd=COST, model_id="fake-model", input_tokens=7
+    )
+    mapping, ph = _reply_map()
+    bound, _, meter, sink = build(client, mapping=mapping)
+    out = bound.chat(CLEAN, system="s", route="main")
+    assert PLANTED not in out.text, "q1 reply masked: the planted value came back raw"
+    assert out.text == f"use {ph} now"
+    assert out.cost_usd == COST and out.input_tokens == 7, (
+        "q1 a masked reply keeps its cost and usage"
+    )
+    assert out.model_id == "fake-model"
+    assert meter.settles[-1][1] == COST
+    assert sink.rows[-1].decision == "map_enforced+reply_masked", "q1 row marks a masked reply"
+    assert sink.rows[-1].result == "ok"
+
+
+def test_q1_a_planted_secret_in_a_tool_call_argument_is_masked():
+    client = Client()
+    client.reply = Reply(
+        text="",
+        tool_calls=[ToolCall(name="run", input={"cmd": f"curl -u {PLANTED}", "n": [PLANTED, 3]})],
+        cost_usd=COST,
+        model_id="m",
+    )
+    mapping, ph = _reply_map()
     bound, _, _, _ = build(client, mapping=mapping)
     out = bound.chat(CLEAN, system="s", route="main")
-    assert planted not in out.text
+    assert out.tool_calls[0].name == "run"
+    assert out.tool_calls[0].input == {"cmd": f"curl -u {ph}", "n": [ph, 3]}, (
+        "q1 tool call argument raw"
+    )
+
+
+def test_q1_a_reply_with_unrelated_text_is_the_same_object_and_the_row_is_unmarked():
+    client = Client()
+    client.reply = Reply(
+        text="nothing secret here \u00e9",
+        cost_usd=COST,
+        model_id="m",
+        tool_calls=[ToolCall(name="t", input={"a": "b"})],
+    )
+    mapping, _ = _reply_map()
+    bound, _, _, sink = build(client, mapping=mapping)
+    out = bound.chat(CLEAN, system="s", route="main")
+    assert out is client.reply, "q1 an unchanged reply is the same object"
+    assert out.text.encode() == "nothing secret here \u00e9".encode()
+    assert sink.rows[-1].decision == "map_enforced"
+
+
+def test_q1_a_value_the_model_invents_is_left_alone():
+    client = Client()
+    client.reply = Reply(text="try Brand9NewSecretXyz1", cost_usd=COST, model_id="m")
+    mapping, _ = _reply_map()
+    bound, _, _, _ = build(client, mapping=mapping)
+    assert bound.chat(CLEAN, system="s", route="main").text == "try Brand9NewSecretXyz1"
+
+
+def test_q1_put_back_restores_an_identifier_kind_and_never_a_secret():
+    from hadavin_sdk.guard.putback import put_back
+
+    mapping = runmap.RunMap()
+    runmap.redact_text(f"host {IP} password={PLANTED}", mapping)
+    ip_ph = next(p for p, v in mapping.items() if v == IP)
+    sec_ph = next(p for p, v in mapping.items() if v == PLANTED)
+    text = f"{ip_ph} {sec_ph} <HOSTNAME_99>"
+    assert put_back(text, mapping) == f"{IP} {sec_ph} <HOSTNAME_99>", (
+        "q1 put_back restored a secret"
+    )
+    assert put_back({"a": [ip_ph, sec_ph]}, mapping) == {"a": [IP, sec_ph]}
+    assert put_back(f"{ip_ph}", mapping, kinds=frozenset({"SECRET"})) == ip_ph  # kinds only narrows
+    assert PLANTED not in put_back(f"{sec_ph}", mapping, kinds=frozenset({"SECRET", "IPV4"}))
+
+
+def _failing_reply_gate(client, mapping, sink=None):
+    def enforce(text, m):
+        if "REPLYBOOM" in text:
+            raise RuntimeError("boom with " + text)
+        return runmap.enforce_map(text, m)
+
+    log = []
+    meter, sink = Meter(log), sink or Sink(log)
+    gate = ModelGate(client, meter=meter, audit=sink, worst_case=worst, enforce=enforce)
+    return gate.bind("agent-1", "run-1", mapping=mapping), meter, sink
+
+
+def test_q1_a_reply_that_cannot_be_masked_is_withheld_but_its_cost_is_settled():
+    client = Client()
+    client.reply = Reply(text=f"REPLYBOOM {PLANTED}", cost_usd=COST, model_id="m")
+    mapping, _ = _reply_map()
+    bound, meter, sink = _failing_reply_gate(client, mapping)
+    with pytest.raises(model_gate.ReplyMaskFailed) as caught:
+        bound.chat(CLEAN, system="s", route="main")
+    assert PLANTED not in repr(caught.value) and caught.value.__cause__ is None
+    assert caught.value.__context__ is None
+    assert meter.settles and meter.settles[-1][1] == COST, "q1 the withheld reply cost is settled"
+    assert meter.open() == set()
+    assert sink.codes() == [("refused", "reply_mask_failed")]
+
+
+def test_q1_a_reply_with_no_usable_cost_that_cannot_be_masked_is_withheld_and_not_settled():
+    client = Client()
+    client.reply = SimpleNamespace(
+        text="REPLYBOOM", tool_calls=[], cost_usd=None, model_copy=lambda **k: None
+    )
+    mapping, _ = _reply_map()
+    bound, meter, sink = _failing_reply_gate(client, mapping)
+    with pytest.raises(model_gate.ReplyMaskFailed):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [] and sink.codes() == [("refused", "reply_mask_failed")]
+
+
+def test_q1_a_reply_still_holding_a_secret_after_the_sweep_is_withheld(monkeypatch):
+    client = Client()
+    client.reply = Reply(text=f"x {PLANTED}", cost_usd=COST, model_id="m")
+    mapping, _ = _reply_map()
+    bound, _, meter, _ = build(client, mapping=mapping)
+    monkeypatch.setattr(
+        runmap, "held_value_left", lambda text, m: "<" in text
+    )  # only the reply holds a placeholder
+    with pytest.raises(model_gate.ReplyMaskFailed):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles[-1][1] == COST
 
 
 def test_d8_every_test_the_module_docstring_names_exists():
@@ -3206,7 +3332,7 @@ def test_g14_a_changed_value_of_the_same_key_also_empties_the_cache():
 
 def test_g14_a_refusal_is_not_cached_and_the_message_is_enforced_again():
     run_map = runmap.RunMap({"<SECRET_1>": TOKEN})
-    outcomes = iter([None, "fixed"])  # the enforce step fails once, then works
+    outcomes = iter([None, "fixed", "done"])  # fails once, then works (the last is the reply)
 
     def flaky(text, mapping):
         return next(outcomes)
