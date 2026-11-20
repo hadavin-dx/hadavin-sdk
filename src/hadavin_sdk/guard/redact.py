@@ -23,6 +23,13 @@ the control; HIGHENTROPY is their backstop. There is NO second, independent patt
 model gate (`runmap.enforce_map`) replaces the values the run's map already holds (the redactor's own final sweep, with the
 gate's held-back values) and runs no pattern at all, so a value no pattern here matched and no map entry holds passes it.
 (A re-scan inside redact() used the sweep's own rule and could never fire, so it was removed - second review, 2026-09-30.)
+
+A value glued to a letter or `_` is masked with the glued text left outside the placeholder (`node_<IPV4_1>`, `<UUID_1>x`):
+an e-mail address, an IPv4 address, a UUID, a phone number that starts with `+`, a contiguous one beside `_` or straight
+after a phone word, and an IBAN beside `_` after a short word (`iban_DE89...`; not inside a longer token) (G8).
+A contiguous digit run glued to a letter is not read as a phone number (hashes and identifiers), and a letter or digit
+glued before an IBAN, or a digit before an address, is not read as one.
+A copy of a known phone number is swept where a letter or `_` touches it (not a digit).
 """
 
 from __future__ import annotations
@@ -66,6 +73,18 @@ _SP = "[ \t\u00a0\u2000-\u200a\u202f\u205f\u3000]"
 # `X-Account-Number`, `payeeBsb`, `bankRoutingNumber` (a lower-case letter, then the keyword starting upper case).
 # The bank entries run after UUID, so a UUID ending `-acc123456789` is a placeholder by then.
 _NOT_IN_WORD = r"(?:(?<![A-Za-z0-9])|(?-i:(?<=[a-z])(?=[A-Z])))"
+# Where an IBAN may start and end beside `_` (ticket G8 v4, M1). `_` is a base64url character, so inside an opaque token
+# `..._DE89..._...` is no IBAN (masking it there would cut the token and leave its head readable). `_` before counts as a
+# break only after a word of 2 to 8 ASCII letters that starts its token (`iban_DE89...`, `to_DE89...`); `_` after only
+# when at most 8 letters or digits follow it to the token's end (`DE89..._x`, `DE89..._`), and not when the IBAN starts
+# after `-`, `+` or `/` (inside a token, as the base already reads `...-DE89...-...`).
+_IBAN_START = (
+    r"(?:(?<![A-Za-z0-9+/_\-])"
+    r"|(?<=[+/\-])(?![A-Z]{2}\d{2}[A-Za-z0-9]{11,30}_)"
+    + "".join(rf"|(?<=(?<![A-Za-z0-9+/_\-])[A-Za-z]{{{n}}}_)" for n in range(2, 9))
+    + ")"
+)
+_IBAN_END = r"(?:(?![A-Za-z0-9_])|(?=_[A-Za-z0-9]{0,8}(?![A-Za-z0-9+/=_\-])))"
 # Key to value: a parenthesised qualifier (`Routing Number (ABA):`), Slack/Markdown marks (`*BSB:*`, `_Account:_`,
 # a value in backticks), quotes (escaped too, as in JSON logged inside a log line: `\"bsb\":\"062-000\"`), spaces,
 # an optional `is`, then `:`, `=`, `=>` or an XML `>` (with marks and an optional `#` after it), `#`, or a spaced
@@ -263,20 +282,25 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # which would otherwise fragment its digit runs and leak the country+bank prefix. The prefix is
     # restricted to the SWIFT IBAN-registry country set (not any two letters) so an uppercase
     # evidence token like `AB12CDEF...` is NOT clobbered — only a genuine IBAN country prefix fires.
+    # Glued (G8): not after an ASCII letter or digit and not before one (one would join the BBAN); `_` only in the
+    # short-word context of `_IBAN_START` / `_IBAN_END`, so `iban_DE89...` and `DE89..._x` are masked with the `_` text
+    # outside; `xDE89...`, `7DE89...`, `acct_iban_DE89...` stay (limit L4: inside a token an IBAN-shaped piece would cut
+    # a longer credential in two and leave its head readable, ticket G8 v3 F1 and v4 M1).
     (
         "IBAN",
         re.compile(
-            r"\b(?:AD|AE|AL|AT|AZ|BA|BE|BG|BH|BI|BR|BY|CH|CR|CY|CZ|DE|DJ|DK|DO|EE|EG|ES|FI|FO|FR|GB|GE"
+            _IBAN_START
+            + r"(?:AD|AE|AL|AT|AZ|BA|BE|BG|BH|BI|BR|BY|CH|CR|CY|CZ|DE|DJ|DK|DO|EE|EG|ES|FI|FO|FR|GB|GE"
             r"|GI|GL|GR|GT|HN|HR|HU|IE|IL|IQ|IS|IT|JO|KW|KZ|LB|LC|LI|LT|LU|LV|LY|MC|MD|ME|MK|MN|MR|MT"
             r"|MU|NI|NL|NO|PK|PL|PS|PT|QA|RO|RS|RU|SA|SC|SD|SE|SI|SK|SM|SO|ST|SV|TL|TN|TR|UA|VA|VG|XK)"
-            r"\d{2}[A-Za-z0-9]{11,30}\b"
+            r"\d{2}[A-Za-z0-9]{11,30}" + _IBAN_END
         ),
     ),
+    # No word boundary (G8): the 8-4-4-4-12 run is found inside a longer token (`pod_<uuid>_0`, `x<uuid>`, `<uuid>9`) and
+    # the glued text stays outside. An 8-4-4-4-16 hex id gives `<UUID_1>` and its last 4 hex digits (accepted, L-D4).
     (
         "UUID",
-        re.compile(
-            r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
-        ),
+        re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"),
     ),
     # Bank details (owner, 2026-10-28): masked by shape beside their keyword, never by checksum. After UUID (a UUID
     # can end `-aba123456789`) and before ACCOUNTID, SSN, CREDITCARD and PHONE. Codes first: a masked code is the
@@ -372,9 +396,15 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # id on a non-AWS deployment) since WARDEN runs on any cloud.
     ("ACCOUNTID", re.compile(r"\b\d{12}\b")),
     # An EC2 private DNS name carries the address with dashes: ip-10-0-3-22(.region.compute.internal).
-    ("IPV4", re.compile(r"\b(?:ip|ec2)-(\d{1,3}(?:-\d{1,3}){3})\b")),
-    ("IPV4", re.compile(r"\b(\d{1,3}(?:-\d{1,3}){3})\.[\w-]+\.pod\b")),  # k8s pod DNS
-    ("IPV4", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")),
+    # G8: `_` may stand before `ip-` / `ec2-` (`host_ip-10-0-3-22`), a letter may not (`xip-...`, `zip-...`: limit L10);
+    # a letter or `_` may follow the last group (`ip-10-0-3-22a`); a digit may not.
+    ("IPV4", re.compile(r"(?<![A-Za-z0-9])(?:ip|ec2)-(\d{1,3}(?:-\d{1,3}){3})(?![0-9])")),
+    # k8s pod DNS; G8: a letter or `_` may stand before the address (`pod_10-0-3-22.ns.pod`), a digit may not.
+    ("IPV4", re.compile(r"(?<![0-9])(\d{1,3}(?:-\d{1,3}){3})\.[\w-]+\.pod\b")),
+    # Dotted quad (G8): not inside a digit run (`7192.0.2.10`, `2026.11.20.10`: limit L1) and not after a lone `v` / `V`
+    # (`v1.2.3.4` is a version, L-D1). A letter or `_` on either side is glued text, left outside (`node_<IPV4_1>`,
+    # `<IPV4_1>a`); a four-part version glued to a word (`python3.11.4.1`) is masked too (L-D8).
+    ("IPV4", re.compile(r"(?<![0-9])(?<!(?<![A-Za-z])[vV])(?:\d{1,3}\.){3}\d{1,3}(?![0-9])")),
     # IPv6 — we redact IPv4, so an IPv6 address (common in dual-stack k8s pod logs) is the same
     # identifier and must be masked too. Deliberately matches ONLY real addresses: either a `::`
     # compression or a full 8 groups, so a `10:02:11` timestamp is left alone. (A MAC has its own
@@ -468,7 +498,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A grouped payment-card number (4-4-4-4 with space or dash separators). Masked WHOLE and BEFORE
     # PHONE, which otherwise catches only the first 12-14 digits and leaks the final group. A
     # contiguous 16-digit card is already caught by PHONE; this closes the spaced/dashed form.
-    ("CREDITCARD", re.compile(r"\b\d{4}[ \-]\d{4}[ \-]\d{4}[ \-]\d{4}\b")),
+    # Glued (G8): a letter or `_` may stand on either side (`x4242 4242 4242 4242`), a digit may not.
+    ("CREDITCARD", re.compile(r"(?<![0-9])\d{4}[ \-]\d{4}[ \-]\d{4}[ \-]\d{4}(?![0-9])")),
     # The negative lookahead stops an ISO-8601 date (YYYY-MM-DD, which every log line starts with)
     # being masked as a phone number — that was masking timestamps and losing evidence.
     #
@@ -488,6 +519,16 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     #   - (hadavin-sdk edit) nor may it be a compact timestamp `YYYYMMDDhhmmss` (`20261030123456`): 14 digits
     #     with a valid month, day and time. Narrow on purpose: a phone written with `+` or of another length is
     #     still masked.
+    # (G8) A number that starts with `+`, BEFORE the main entry (which would leave `<PHONE_1> 1234a`): a letter or `_` may
+    # stand before the `+` (`x+1 415-555-0132`, `tel_+44 20 5550 1234`) and after the last digit (`+1 415-555-0132a`);
+    # a digit or `.` may not. A number without `+` keeps the main entry's rules (`415-555-0132x123` is not masked).
+    # No date right after the `+` either (`x+2026-11-20T10:00:00Z` stays).
+    (
+        "PHONE",
+        re.compile(
+            r"(?<![0-9.\-])\+(?!\d{4}-\d\d-\d\d)\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![0-9.])"
+        ),
+    ),
     (
         "PHONE",
         re.compile(
@@ -495,6 +536,22 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"
             r"\+?\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![\w.])"
         ),
+    ),
+    # (G8) A contiguous 10 to 16 digit number with `_` on one side and no letter or digit on the other (`tel_4155550132`,
+    # `4155550132_x`); not a compact timestamp; `>` and `›` end no phone (a placeholder `<TENANT_4155550132>`, and the
+    # same literal as `redact_untrusted` escapes it, `‹TENANT_4155550132›`). `sha256_3851...ab` stays (a letter after);
+    # `order_1234567890` is masked (L-D10). Then a number glued straight to a phone word.
+    (
+        "PHONE",
+        re.compile(
+            r"(?<![0-9A-Za-z.\-+])(?:(?<=_)|(?=\d{10,16}_))"
+            r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"
+            r"\d{10,16}(?![0-9A-Za-z.>›])"
+        ),
+    ),
+    (
+        "PHONE",
+        re.compile(r"(?i)(?<![a-z0-9])(?:tel|phone|mobile|cell|fax)(\d{10,16})(?![0-9a-z.])"),
     ),
     # password=..., secret: ..., aws_secret_access_key="...": the value after a credential-ish key.
     # Runs LAST: a value already masked whole is left alone. The bounded [\w.\-] prefix/suffix lets the sensitive word sit INSIDE a
@@ -2013,7 +2070,8 @@ class _Redactor:
         # by the rule in _sweep: every copy of a secret, every standalone copy of an identifier. Real
         # example from a live cluster: a Kubernetes "failed to reserve container name" event embeds the pod
         # UID inside `..._default_<uid>_0`, where the trailing `b_` is not a `\b` boundary, so the `(uid)`
-        # copy was masked and the `_0`-suffixed copy was not.
+        # copy was masked and the `_0`-suffixed copy was not. (Since G8 the UUID pattern itself takes that copy;
+        # the sweep still takes such copies of the kinds whose pattern keeps a boundary: a tenant, a host name.)
         #
         # ⛔ The sweep must NOT run inside placeholders already placed. If a TENANT value happens to be
         # the literal `UUID_1`, a naive sweep rewrites the neighbouring `<UUID_1>` to `<<TENANT_1>>` -
@@ -2067,7 +2125,9 @@ class _Redactor:
                 if rule is _EVERY_COPY:
                     segment = segment.replace(original, placeholder)
                 else:
-                    segment = _replace_standalone(segment, original, placeholder)
+                    segment = _replace_standalone(
+                        segment, original, placeholder, _joins(placeholder)
+                    )
                 self.actions += segment.count(placeholder) - before  # one per copy replaced
             parts[i] = segment
         return "".join(parts)
@@ -2263,10 +2323,24 @@ def _sweep(placeholder: str, original: str):
 
 
 _ALNUM = frozenset(string.ascii_letters + string.digits)
+# The characters that make a touched copy part of a longer token, per kind (G8b). A PHONE value glued to a letter or `_`
+# is the number with a word beside it (the patterns read it so); a digit beside it makes another number. Every other kind:
+# `_ALNUM` (a host name, a tenant, an account id are made of letters and digits, so a letter beside one may be part of it).
+_JOINS = {"PHONE": frozenset(string.digits)}
 
 
-def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
-    """Replace `original` where no ASCII letter or digit touches it. A plain scan: a compiled pattern (or an
+def _joins(placeholder: str) -> frozenset[str]:
+    """The characters that, touching a copy of a known value, make it part of a longer token (ticket G8): a digit for
+    a phone number (a letter or `_` beside it is a word glued on, as the patterns read it); a letter or digit for
+    every other kind."""
+    return _JOINS.get(_kind(placeholder), _ALNUM)
+
+
+def _replace_standalone(
+    segment: str, original: str, placeholder: str, joins: frozenset[str] = _ALNUM
+) -> str:
+    """Replace `original` where no character of `joins` touches it (default `_ALNUM`: an ASCII letter or digit; callers
+    pass `_joins(placeholder)`). A plain scan: a compiled pattern (or an
     lru_cache of one) keyed by the identifier would keep one client's values in process memory, shared with every
     other client (R371), and `re` caches compiled patterns itself."""
     out: list[str] = []
@@ -2276,7 +2350,7 @@ def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
         if j < 0:
             break
         before, after = segment[j - 1 : j], segment[j + n : j + n + 1]
-        if before in _ALNUM or after in _ALNUM:
+        if before in joins or after in joins:
             out.append(segment[i : j + 1])
             i = j + 1
             continue

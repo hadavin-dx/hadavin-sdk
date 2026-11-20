@@ -29,6 +29,7 @@ from hadavin_sdk.guard.redact import (
     PATTERNS,
     SECRET_KINDS,
     _alias_keys,
+    _joins,
     _plain,
     _Redactor,
     _replace_standalone,
@@ -696,7 +697,7 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     the ones every producer's output already follows: longest originals first (a value that contains
     another is replaced whole); nothing is replaced inside a placeholder already in the text. Which copies
     (`redact._sweep`): a value of a secret kind of 4 characters or more, every copy; any other value, only
-    where no ASCII letter or digit touches it.
+    where no ASCII letter or digit touches it (a PHONE value: where no digit does; `redact._joins`, ticket G8).
 
     Two things are added to the sweep.
     1. Held-back values. Inside one stretch of text the sweep replaces value after value and does not look
@@ -715,7 +716,8 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     Limits, on purpose (each pinned by a test in tests/test_runmap_enforce_map.py):
     - NOT replaced at all: a value under 3 characters; and, unless it is a secret kind of 4 characters or
       more, a value that is all digits and under 6 characters or a common word (`redact._COMMON`).
-    - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit touches it and
+    - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit (for a PHONE value: a
+      digit) touches it and
       keeps touching it after every other replacement.
     - Only the spelling held in the map is replaced (for a value that is not ASCII, also its folded NFKC spellings,
       which the redactor sweeps with it: each is its own held-back item when it is a piece of a placeholder). A copy hidden by full-width letters, a zero-width
@@ -846,7 +848,7 @@ def _sweep_held(text: str, spelling: str, placeholder: str, rule: Any, deadline:
             if rule is _EVERY_COPY:
                 parts[i] = segment.replace(spelling, placeholder)
             else:
-                parts[i] = _replace_standalone(segment, spelling, placeholder)
+                parts[i] = _replace_standalone(segment, spelling, placeholder, _joins(placeholder))
     return "".join(parts)
 
 

@@ -243,7 +243,8 @@ def test_restore_round_trips():
 def test_survives_a_value_embedded_in_a_larger_token():
     """Live-cluster regression: a Kubernetes event embeds the pod UID inside a longer token
     (`..._default_<uid>_0`) where a trailing-`\\b` regex misses one of two occurrences. The final
-    literal sweep must catch the copy the pattern skipped."""
+    literal sweep must catch the copy the pattern skipped. (Since ticket G8 the UUID pattern has no
+    word boundary and takes that copy itself; the sweep's own count is pinned in test_redact_g3_port.)"""
     uid = "534e3098-a21e-415b-8010-24ae0fb955bb"
     text = f"reserve name checkout_default_{uid}_0 pod=({uid})"
     r = redact(text)
@@ -373,7 +374,8 @@ def test_a_mid_length_value_is_swept_only_where_it_stands_alone():
 
 
 def test_a_long_value_is_swept_even_inside_a_longer_token():
-    """The reason the sweep exists: a pod UID inside `..._default_<uid>_0`."""
+    """The reason the sweep exists: a pod UID inside `..._default_<uid>_0`. (Since ticket G8 the UUID
+    pattern takes that copy itself; this stays as a no-leak pin.)"""
     uid = "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0"
     out = redact(f"pod {uid} and k8s_x_default_{uid}_0")
     assert uid not in out.text
