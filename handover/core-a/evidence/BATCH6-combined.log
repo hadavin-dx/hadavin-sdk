@@ -1,18 +1,19 @@
-From https://github.com/hadavin-dx/hadavin-sdk
- * branch                cloud/core-b -> FETCH_HEAD
-   632af9e7d..70c61a4b6  cloud/core-b -> origin/cloud/core-b
-core-b head 70c61a4b6d8919dec57263660de75d514f35c136
-/home/user/hadavin-sdk/src/hadavin_sdk/__init__.py
+core-b head 70c61a4b6d8919dec57263660de75d514f35c136  (n8n absent in core-b: archive without it)
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/src/hadavin_sdk/__init__.py
 Traceback (most recent call last):
   File "<string>", line 1, in <module>
     import hadavin_sdk;print(hadavin_sdk.__file__);from hadavin_sdk.triggers import TriggerSettings;print('TriggerSettings ok')
                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ImportError: cannot import name 'TriggerSettings' from 'hadavin_sdk.triggers' (/home/user/hadavin-sdk/src/hadavin_sdk/triggers/__init__.py)
+ImportError: cannot import name 'TriggerSettings' from 'hadavin_sdk.triggers' (/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/src/hadavin_sdk/triggers/__init__.py)
 bringing up nodes...
 bringing up nodes...
 
-........................................................................ [ 21%]
-........................................................................ [ 42%]
-......................................................s................. [ 63%]
-..............s......................................................... [ 84%]
-..............F.............................
+........................................s............................... [  5%]
+........................................................................ [ 11%]
+............................................................s........... [ 16%]
+........................................................................ [ 22%]
+........................................................................ [ 27%]
+........................................................................ [ 33%]
+........................................................................ [ 38%]
+........................................................................ [ 44%]
+.....................
