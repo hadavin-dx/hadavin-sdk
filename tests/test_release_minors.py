@@ -48,22 +48,22 @@ def test_settle_without_an_agent_keeps_working():
     assert store.settle_spend(_reserved(store), D("0.5"))[1] is True
 
 
-def test_limits_settle_passes_the_agent_on():
+def test_limits_settle_for_passes_the_agent_on():
     store = MemoryStore()
     rid = _reserved(store)
     limits = Limits.__new__(Limits)
     limits.store = store
     with pytest.raises(NotFound):
-        limits.settle(rid, D("0"), agent_id="agent-b")
-    assert limits.settle(rid, D("0.5"), agent_id="agent-a") == 0
+        limits.settle_for("agent-b", rid, D("0"))
+    assert limits.settle_for("agent-a", rid, D("0.5")) == 0
 
 
 def test_budget_settle_of_another_agents_reservation_is_not_found():
     budget = Budget(D(10))
     rid = budget.reserve("agent-a", D(1))
     with pytest.raises(NotFound):
-        budget.settle(rid, D(0), agent_id="agent-b")
-    assert budget.settle(rid, D("0.5"), agent_id="agent-a") == 0
+        budget.settle_for("agent-b", rid, D(0))
+    assert budget.settle_for("agent-a", rid, D("0.5")) == 0
     assert budget.spent == D("0.5")
 
 
@@ -186,3 +186,14 @@ def test_the_command_refuses_before_any_connection(monkeypatch, capsys):
     assert cli.release_expired_cmd(same, "a", DAY, "u") == 2
     reset = _cfg(release_credential_ref="r", reset_credential_ref="r")
     assert cli.release_expired_cmd(reset, "a", DAY, "u") == 2
+
+
+def test_the_agreed_settle_signature_is_unchanged():
+    import inspect
+
+    for owner in (Limits, Budget):
+        assert list(inspect.signature(owner.settle).parameters) == [
+            "self",
+            "reservation_id",
+            "actual_usd",
+        ]

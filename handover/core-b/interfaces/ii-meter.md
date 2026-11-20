@@ -10,7 +10,7 @@ class SpendRefused(RuntimeError):
 
 class Meter(Protocol):   # implemented by Limits (store-backed) and by k1b Budget (in memory, with a lock)
     def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str: ...
-    def settle(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None) -> Decimal: ...
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal: ...
 ```
 
 SIX reasons since 06:20 UTC (lead ORDER 014): usd_cap is raised only by the in-memory Budget meter (the eval and replay command lines) when its one total cap would be passed or the budget was closed after an abandoned call. Allowlist all six.
@@ -20,7 +20,7 @@ What the gate can rely on:
 1. reserve returns a reservation id only after the worst case is booked. Any exception from reserve means: do not call the model. SpendRefused.reason is the audit error code. An unknown agent raises KeyError (still no call).
 2. worst_usd must be exactly a Decimal, finite, 0 or more and below 1000000000. A float, bool, int, None, NaN, Infinity or negative value raises SpendRefused("bad_amount").
 3. settle returns the overshoot, max(0, settled minus reserved), taken from the STORED row: the first settle wins; a repeat with another amount returns the first result and changes nothing.
-4. settle with an unknown reservation id raises NotFound (a KeyError subclass) from both meters. With the optional `agent_id=` keyword (ORDER 020 m2; the gate should pass the agent it reserved for), a reservation of ANOTHER agent raises the same NotFound and changes nothing. settle with a bad amount raises ValueError.
+4. settle with an unknown reservation id raises NotFound (a KeyError subclass) from both meters. `settle` keeps its pinned signature. ORDER 020 m2 adds `settle_for(agent_id, reservation_id, actual_usd)` on both meters (the gate should call it with the agent it reserved for): a reservation of ANOTHER agent raises the same NotFound and changes nothing. settle with a bad amount raises ValueError.
 5. Cost known (also 0 for a request that was refused before sending): settle(rid, cost). Cost unknown (timeout, abandoned thread, crash): either settle(rid, worst_usd) or do not settle; both keep the worst case booked. Never settle lower than the truth.
 6. If settle raises (store down after the call), return the reply anyway; the worst case stays booked. Never retry reserve.
 7. One reserve covers the whole chat call including the client's own retries; so worst_usd covers the system prompt, messages, tool schemas, documents (counted as the bytes that are actually sent: an invalid byte of a document becomes a 3-byte replacement character), the output schema counted twice, plus a fixed overhead (defaults.WORST_CASE_OVERHEAD_BYTES, 4096 bytes), at the input price (at most one token per byte), plus route.max_tokens at the output price, times the client's max_attempts (doubled when an output schema is passed). If no price can be worked out, the closure raises SpendRefused("bad_amount"): no call. core-b supplies this as the worst_case= callable at each install site (helper worst_case_usd in src/hadavin_sdk/llm/common.py).

@@ -39,11 +39,8 @@ class Meter(Protocol):
         """Book the worst case, then return the reservation id. Any exception: no model call."""
         ...
 
-    def settle(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
-    ) -> Decimal:
-        """Replace the worst case with the real cost; returns the overshoot (0 when none). First call wins.
-        With `agent_id`, a reservation of another agent is NotFound."""
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        """Replace the worst case with the real cost; returns the overshoot (0 when none). First call wins."""
         ...
 
 
@@ -99,12 +96,14 @@ class Budget:
             self._rows[rid] = [worst_usd, worst_usd, "open", Decimal(0), run_id, agent_id]
             return rid
 
-    def settle(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
-    ) -> Decimal:
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
         """Replace the worst case with the real cost (it may be above it; settle never refuses) and return the
-        overshoot. NotFound for an unknown id (or, with `agent_id`, another agent's), ValueError for a bad amount. A repeat returns the first result
+        overshoot. NotFound for an unknown id, ValueError for a bad amount. A repeat returns the first result
         and changes nothing. After `forfeit` the late settle of that call can only RAISE what is booked."""
+        return self.settle_for(None, reservation_id, actual_usd)
+
+    def settle_for(self, agent_id: str | None, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        """`settle` that also checks the agent: a reservation of ANOTHER agent is NotFound (ORDER 020 m2)."""
         check_spend_amount(actual_usd)
         with self._lock:
             row = self._rows.get(reservation_id)
@@ -185,13 +184,15 @@ class Limits:
             _LOG.warning("reserve refused: limits_unavailable error_kind=%s", type(exc).__name__)
             raise SpendRefused("limits_unavailable") from None
 
-    def settle(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
-    ) -> Decimal:
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
         """Replace the worst case with the real cost and return the overshoot (0 when none), always from the
-        stored row: a repeated call returns the first result. With `agent_id`, another agent's reservation is
-        NotFound. NotFound for an unknown id, ValueError for a bad
+        stored row: a repeated call returns the first result. NotFound for an unknown id, ValueError for a bad
         amount. An overshoot is booked in full and audited once; the audit never makes this raise."""
+        return self.settle_for(None, reservation_id, actual_usd)
+
+    def settle_for(self, agent_id: str | None, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        """`settle` that also checks the agent: a reservation of ANOTHER agent is NotFound and nothing changes
+        (ORDER 020 m2). The gate should call this one."""
         row, applied = self.store.settle_spend(reservation_id, actual_usd, agent_id=agent_id)
         over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
         if applied and over > 0:
