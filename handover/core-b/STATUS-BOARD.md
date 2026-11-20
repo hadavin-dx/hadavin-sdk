@@ -1,27 +1,29 @@
-UPDATED_UTC: 2026-11-20T05:40:49Z
+UPDATED_UTC: 2026-11-20T05:41:37Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
 BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
-PERCENT: 65
-AGENTS_RUNNING: 2
-CAPACITY: load 0.80 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, agents light 0 heavy 2
-DISK: / 60G free, 15% used; worktrees /tmp/core-b-wt 502M
+PERCENT: 70
+AGENTS_RUNNING: 3
+CAPACITY: load 1.95 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, agents light 2 heavy 2
+DISK: / 60G free, 15% used; worktrees /tmp/core-b-wt 589M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: F-store ticket review NOT clean (2 Blockers, 19 Majors), answered in text, not re-reviewed (ESCALATIONS E2); step B needed a fix round (done); E1 cron refused (accepted by lead)
 NEXT: EGM round on ticket B now; then C; land B and C test commits; ONE batch full-suite run
-PUSHED_UTC: 2026-11-20T05:38:37Z (previous push; this board is pushed right after writing)
-IST: 11:10 IST
+PUSHED_UTC: 2026-11-20T05:40:59Z (previous push; this board is pushed right after writing)
+IST: 11:11 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a0f43330 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/B-stop-state.md, compared with the built code | 05:43 | +6 min | UNVERIFIED | running | 1 of 1 | 0 | lead: review alongside the build |
+| ac4fc2b1 | reviewer (egm-codebase-details) | fable | same round; also hunts for ways the runtime login could still clear or block a stop | 05:43 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | security path |
 | B-tests | builder (tests) | fable | tests/test_stop_state_roles.py with real database logins, and mutants; worktree /tmp/core-b-wt/B-tests | 05:38 | +30 min | UNVERIFIED | running | none | 0 | the B builder proved nothing under a real non-owner login |
-| a87e21e9 | builder (tests) | fable | tests/test_price_constraint.py, fail-before proof, mutants; worktree C-tests | 05:36 | +15 min | UNVERIFIED | running | none | 0 | tests by a different agent |
+| a87e21e9 | builder (tests) | fable | tests/test_price_constraint.py: commit 737c93c, 246 tests | 05:36 | done | 100 | done | none | 0 | 246 passed; fail-before proven on the old code; 20 of 20 mutants killed; evidence/C-tests-evidence.txt |
 | a27419bd | builder | fable | D-config: commit on cloud/core-b (95 lines added in 4 files) | 05:36 | done | 100 | done | none | 0 | 577 passed, 17 skipped on the config, registry, app files; no new tests yet; full suite NOT run |
 | a6122910 | builder (fix) | fable | step B fix round 2: commit 6662afe (76 added, 16 removed in 9 files); 449 passed on 12 test files, owner login only | 05:37 | done | 100 | done | none | 1 | ticket check found the serial id lets the runtime login block a later stop |
 | a86102dd | builder (tests) | fable | tests/test_audit_drain.py: commit 3394b2c, 26 tests | 05:32 | done | 100 | done | none | 0 | 26 passed with PostgreSQL 16, 22 passed and 4 skipped without; mutants M1 to M9 all killed |
@@ -37,6 +39,7 @@ IST: 11:10 IST
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
 |---|---|---|---|---|---|
+| background shell brworijga | batch run 1: full test suite, 3 workers, in worktree /tmp/core-b-wt/batch at 737c93c, log /tmp/core-b-wt/batch-run-1.log | me | 05:43 | running | the ONE batch run after A, B and C are coded (lead order); step B role tests are not in it yet |
 | 4886 | PostgreSQL 16.15 server, 127.0.0.1 port 55439, data in /tmp/core-b-pg, trust login, test data only | me | 05:31 | running | per-file tests of the builders (ORDER 005 item 4); I stop it when the builds end |
 
 ## TESTS
@@ -48,7 +51,8 @@ IST: 11:10 IST
 | tests/test_audit_drain.py (new, 26 tests) | local/code-A-tests cdc5c9b (3394b2c) | 1 | 26 passed / 0 / 0 with PostgreSQL; 22 passed, 4 skipped without | none | done | evidence/A-tests-evidence.txt; E6 uses two threads, not two processes; invariant 8 has no test |
 | 12 files around migrations, store, stop state | local/code-B 8f2fa9e (6662afe) | 1 | 449 passed / 0 / 0 | none | done | step B fix builder, PostgreSQL 16, owner login only |
 | test_k5_producers, test_k5_round9 | cloud/core-b a1c1013 | 1 | 107 passed / 0 / 0 | none | done | producers rows for core-c's gate module |
-| full suite | none | 0 | | | NOT RUN | one batch run when A, B and C are coded (lead order) |
+| tests/test_price_constraint.py (new, 246 tests) | local/code-C-tests 35304a2 (737c93c) | 1 | 246 passed / 0 / 0 | none | done | evidence/C-tests-evidence.txt |
+| full suite, batch run 1 | cloud/core-b 737c93c | 1 | running | | RUNNING | recorded, not gated; failures will be listed as INHERITED or NEW |
 
 ## QUEUE ITEMS
 | # | state | % | evidence file | tries | reason |
@@ -62,7 +66,7 @@ IST: 11:10 IST
 | REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
 | BUILD A audit drain | DONE except the batch run | 90 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
 | BUILD B stop state | RUNNING | 65 | commits 80a07ce and 6662afe (fix round 2) | 2 | nothing proven yet under a real reset or runtime login: role tests running; docs and the review round not done |
-| BUILD C price constraint | RUNNING | 60 | commit eb775a8 (source) | 1 | new test file, mutants, CHANGELOG line and the review round not done |
+| BUILD C price constraint | DONE except review and batch run | 90 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
 | T3 one EGM review round per ticket | RUNNING | 30 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 

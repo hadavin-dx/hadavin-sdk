@@ -1,0 +1,46 @@
+== ruff check / format --check
+All checks passed!
+1 file already formatted
+
+== final pytest (source at HEAD eb775a8): pytest tests/test_price_constraint.py -q
+........................................................................ [ 29%]
+........................................................................ [ 58%]
+........................................................................ [ 87%]
+..............................                                           [100%]
+246 passed in 6.78s
+
+== FAIL-BEFORE: src/hadavin_sdk/config.py and defaults.py checked out from HEAD~1 (e5a64ee), then restored
+-- pytest -k 'fail_before or e8_config_hash_of'
+E       Failed: DID NOT RAISE ConfigError
+E       Failed: DID NOT RAISE ConfigError
+FAILED tests/test_price_constraint.py::test_fail_before_zero_price_with_a_real_kind_in_demo_is_refused
+FAILED tests/test_price_constraint.py::test_fail_before_negative_price_with_the_fake_kind_is_refused
+2 failed, 1 passed, 243 deselected in 0.68s
+-- whole file on the old source (last line; the rest fail on the missing prices_as_of key / _today, as expected):
+77 failed, 66 passed, 103 errors in 7.08s
+-- the 1 passed is test_e8_config_hash_of_the_fixture_agent_is_the_value_before_the_change: hash 3ac5b7c3...f1be9e on old and new code
+
+== mutants (one temporary edit each in src/hadavin_sdk/config.py, whole test file run, restored)
+M1 drop stage test                         | killed | 3 failed, 243 passed in 5.32s | e.g. test_e4_fake_in_pilot_with_zero_is_refused_beside_the_other_refusals, test_e4_fake_kind_zero_price_refusals_do_not_depend_on_the_demo_only_table
+M2 drop kind test                          | killed | 19 failed, 227 passed in 7.25s | e.g. test_e2_zero_refused_for_a_real_kind_in_demo, test_e3_zero_on_a_judge_route_is_refused, test_e3_zero_on_a_route_no_agent_uses_is_refused
+M3 ==0 -> <0                               | killed | 27 failed, 219 passed in 5.12s | e.g. test_e2_zero_refused_for_a_real_kind_in_demo, test_e3_zero_on_a_judge_route_is_refused, test_e3_zero_on_a_route_no_agent_uses_is_refused
+M4 input field only                        | killed | 12 failed, 234 passed in 4.40s | e.g. test_e2_zero_refused_for_a_real_kind_in_demo, test_e3_zero_on_a_judge_route_is_refused, test_e3_zero_on_a_route_no_agent_uses_is_refused
+M4b output field only                      | killed | 16 failed, 230 passed in 5.67s | e.g. test_e2_zero_refused_for_a_real_kind_in_demo, test_e3_zero_on_a_judge_route_is_refused, test_e4_fake_in_pilot_with_zero_is_refused_beside_the_other_refusals
+M5 is_signed branch removed                | killed | 25 failed, 221 passed in 7.99s | e.g. test_fail_before_negative_price_with_the_fake_kind_is_refused, test_h1_e7_bad_price_refused_for_fake_in_demo, test_h2_negative_price_text_has_no_value
+M5b is_signed -> v < 0                     | killed | 6 failed, 240 passed in 6.97s | e.g. test_h1_e7_bad_price_refused_for_fake_in_demo
+M6a ceiling branch removed                 | killed | 17 failed, 229 passed in 7.28s | e.g. test_h1_e7_bad_price_refused_for_fake_in_demo, test_h2_no_refused_price_is_echoed, test_i1_bad_price_refused_in_every_stage_and_kind
+M6b decimals branch removed                | killed | 18 failed, 228 passed in 5.47s | e.g. test_h1_e7_bad_price_refused_for_fake_in_demo, test_h2_no_refused_price_is_echoed, test_i1_bad_price_refused_in_every_stage_and_kind
+M6c ceiling > -> >=                        | killed | 8 failed, 238 passed in 8.54s | e.g. test_e7_prices_at_the_bounds_load
+M7 'live and' removed from date rule       | killed | 49 failed, 197 passed in 9.56s | e.g. test_e1_zero_loads_for_fake_in_demo, test_e3_zero_on_a_judge_route_is_refused, test_e4_fake_kind_zero_price_refusals_do_not_depend_on_the_demo_only_table
+M8 required-date rule removed              | killed | 5 failed, 241 passed in 8.53s | e.g. test_e4_fake_in_pilot_with_zero_is_refused_beside_the_other_refusals, test_e5_date_required_in_pilot_and_prod, test_e5_date_set_to_null_counts_as_missing_in_pilot
+M9 future > -> >=                          | killed | 6 failed, 240 passed in 6.88s | e.g. test_e6_the_day_is_read_from_the_clock_at_load, test_e6_today_and_old_dates_load, test_e6_unquoted_yaml_date_loads - had...
+M9b future rule removed                    | killed | 4 failed, 242 passed in 8.72s | e.g. test_e6_future_date_refused_in_every_stage, test_e6_the_day_is_read_from_the_clock_at_load
+M10 _plain_date unchecked                  | killed | 49 failed, 197 passed in 9.25s | e.g. test_h4_a_datetime_object_is_refused_directly, test_h4_only_a_plain_date_is_read
+M10b datetime allowed                      | killed | 5 failed, 241 passed in 8.79s | e.g. test_h4_a_datetime_object_is_refused_directly, test_h4_only_a_plain_date_is_read
+M10c fullmatch -> match                    | killed | 10 failed, 236 passed in 8.97s | e.g. test_h4_only_a_plain_date_is_read
+M10d [0-9] -> \d                           | killed | 2 failed, 244 passed in 5.49s | e.g. test_h4_only_a_plain_date_is_read
+M11 refused += _price_refusals removed     | killed | 31 failed, 215 passed in 9.61s | e.g. test_e2_zero_refused_for_a_real_kind_in_demo, test_e3_zero_on_a_judge_route_is_refused, test_e3_zero_on_a_route_no_agent_uses_is_refused
+M12 routes not sorted                      | killed | 1 failed, 245 passed in 9.41s | e.g. test_h3_all_zero_fields_in_one_error_sorted_by_route
+
+== git status after restore
+?? tests/test_price_constraint.py
