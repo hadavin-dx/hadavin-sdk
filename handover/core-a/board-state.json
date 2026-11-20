@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "driftfix21",
-   "role": "builder (docs only)",
-   "model": "sonnet",
-   "what exactly it is doing": "fix the doc-fixable items of DRIFT-REPORT-2 (R2-1 HIGH first) + remaining N4 wording",
-   "started UTC": "13:02",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "drift report"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:07 driftfix21 DONE: DRIFT-REPORT-2 doc-fixable items fixed (the HIGH, status table incl. 431/header cap, memory store demo-only, 414/431 are our caps, 503 row, N4 wording, CRASH-MATRIX cites). LEFT: R2-10..14,17 stale line cites (replaced by 'cite by name' warning), R2-26/27 need the endpoint_mutants.py docstring (owner-gated file edit: same permission wall as G33d), xfail line text in test_mutants_anchors.py says 1255 but mutant is at 1236, R2-28 waits for core-b REQ-002. I hold no agents. Waiting for your run 6.",
   "13:02 EGM DRIFT REPORT on my area DONE: handover/core-a/DRIFT-REPORT-2.md: 1 HIGH, 12 MEDIUM, 15 LOW (HIGH: ticket says a store-down start has no in-process retry, code self-recovers). Verified closed: report-1 D1,D2,D7,E2,E3,N1-N7. R2-25: tests/endpoint_mutants.py exits 2 on the stale G33d anchor (known, owner decision). docfix20 done (overclaims fixed). driftfix21 running (doc-fixable drift items). Pass DRIFT-REPORT-2.md into the integration.",
   "13:07 xreview core-b (all commits since 785871401) DONE: reviews/xreview-bfix2.md + NEW FILE handover/core-b/requests/xr-bfix2.md (copy into cloud/core-b). No Blocker; 4 NEW Majors: (1) chain.py:480 outbox read raises on out-of-range ts and ONE planted audit_outbox row wedges the drain, (2) 'tamper evidence' guarantee in README/SECURITY has unenforced conditions (runtime owning tables, DELETE on audit_outbox, INSERT on audit_checkpoints), (3) AuditEvent field limits crash the run loop (agent_loop.py:521 provider-supplied stop_reason), (4) Anthropic narrowing is a denylist. Earlier M3 fixed; M1/M2/M4/M5/M6 still open.",
   "13:02 rev-docs DONE: no Blocker; 3 Majors = doc overclaims. ATTENTION: the wording you asked for ('queue mode required for no event loss') is UNPROVEN: queue mode was never run, and the evidence says default mode lost a 60 s wait but survived 70 s and 120 s waits. docfix20 rewrites it as 'queue mode recommended, NOT VERIFIED' with the evidence. Also fixed: 'never ends as a success' (false for WAITING_FOR_APPROVAL) and 'a person is told' (only once the error workflow is published and the placeholder replaced). Tell me if you want the stronger wording anyway (it would be an overclaim).",
@@ -3258,6 +3245,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "DRIFT-REPORT-2.md: 1 HIGH (ticket says store-down start has no retry; code self-recovers), 12 MEDIUM, 15 LOW; items R2-1..R2-28"
+  },
+  {
+   "id": "driftfix21",
+   "role": "builder (docs only)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix the doc-fixable items of DRIFT-REPORT-2 (R2-1 HIGH first) + remaining N4 wording",
+   "started UTC": "13:02",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "drift fixes: R2-1 HIGH, R2-3..9, R2-15,16,18,19,21-25 fixed; left: R2-10..14,17 (cite-by-name warning), R2-26/27 (endpoint_mutants.py docstring, owner), R2-28 (waits for core-b REQ-002); 92 n8n tests pass"
   }
  ]
 }
