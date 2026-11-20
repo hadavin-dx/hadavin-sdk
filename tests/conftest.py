@@ -88,3 +88,30 @@ def fake_system():
 @pytest.fixture
 def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
     return make_cfg(tmp_path, port=fake_system.port)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _migrate_takes_the_server_gate():
+    """Every `migrate` call of every test module holds the shared server gate (tests/pg_gate.py), whatever name the
+    module imported it under: the function is replaced in each module that holds it. Without a PostgreSQL DSN, or
+    without psycopg, nothing changes."""
+    if not os.environ.get("HADAVIN_TEST_PG_DSN"):
+        yield
+        return
+    try:
+        import sys
+
+        from hadavin_sdk.store import migrate as migrate_mod
+    except ImportError:
+        yield
+        return
+    from tests import pg_gate
+
+    original = migrate_mod.migrate
+    patched = pg_gate.gated(original)
+    mp = pytest.MonkeyPatch()
+    for mod in [m for m in list(sys.modules.values()) if m is not None]:
+        if getattr(mod, "__dict__", {}).get("migrate") is original:
+            mp.setattr(mod, "migrate", patched)
+    yield
+    mp.undo()

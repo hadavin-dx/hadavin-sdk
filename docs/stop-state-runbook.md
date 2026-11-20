@@ -11,12 +11,15 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
    refused ("no role is named"): it would apply the schema and never check who can clear a stop. `migrate --no-roles`
    is the explicit way to apply the schema only (the first install, before the roles exist); it grants and checks
    nothing, so run the full command right after. A migrate without `--runtime-role` applies no grants, so an old runtime login keeps UPDATE on `kill_switch` and gets nothing on the new tables (its
-   stop then fails with exit 2). Whenever a role is named, migrate reads the grants on THIS schema's `kill_switch`
-   (UPDATE) and `kill_switch_clears` (INSERT) and refuses if anyone but the named reset role could clear a stop:
-   a role those tables grant the right to (a column grant counts; a grant to everyone is named `PUBLIC`), or a
-   member, directly or through other roles, of such a role or of the reset role. The message names each one.
-   Running it later without `--reset-role` therefore refuses the reset role itself. Roles of other schemas or
-   applications on the same server are not looked at. See "Limits" for who is not checked.
+   stop then fails with exit 2). Whenever a role is named, migrate reads the grants on THIS schema's stop tables and
+   refuses if anyone but the named reset role could clear or defeat a stop: a role those tables grant a right to
+   (UPDATE, DELETE or TRUNCATE on `kill_switch`; INSERT on `kill_switch_clears`; TRIGGER on any of the three; a
+   column grant counts; a grant to everyone is named `PUBLIC`), a member, directly or through other roles, of such
+   a role or of the reset role, or a role that can hand itself the reset role (see "Limits"). The message names
+   each one. Running it later without `--reset-role` therefore refuses the reset role itself. Roles of other
+   schemas or applications on the same server are not looked at. The check runs when migrate runs: a role or a
+   grant added afterwards is not seen until the next run, which is why you run migrate again after any role change.
+   See "Limits" for who is not checked.
 3. Store the reset login's connection string as a secret on the operator's machine only. Put the NAME of that secret
    in `backends.store.reset_credential_ref`. Do not give this secret to the runtime process: the secrets policy
    (IAM or the store's access rules) of the runtime's identity must NOT list the reset secret, because nothing in the
@@ -65,12 +68,29 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   function or view owned by a privileged role (review every function of the schema; the check reads grants only).
 - What migrate lists as able to clear or defeat a stop: any role that holds UPDATE, DELETE or TRUNCATE on
   `kill_switch`, INSERT on `kill_switch_clears` or TRIGGER on any of the three stop tables (a trigger can drop a stop
-  or block a clear), directly or by column grant or through PUBLIC; any member (with or without inheritance) of such
-  a role or of the reset role; below PostgreSQL 16 every non-superuser role with CREATEROLE (it can grant the reset
-  role to itself); from PostgreSQL 16 every holder of the ADMIN option on such a role or on the reset role. The
-  login that created the reset role holds the ADMIN option (when it is not a superuser), so it is listed: either
-  create the reset role as a superuser or the owner, or run `REVOKE ADMIN OPTION FOR <reset role> FROM <creator>`.
-  Before this change (2026-11-20) the ADMIN-only creator and the CREATEROLE login below 16 were not listed.
+  or block a clear), directly or by column grant or through PUBLIC; any member of such a role or of the reset role
+  (below PostgreSQL 16 every membership; from 16 a membership whose INHERIT, SET or ADMIN option is true: one with
+  all three false is not listed); below PostgreSQL 16 every non-superuser role with CREATEROLE (it can grant the
+  reset role to itself); from PostgreSQL 16 every holder of the ADMIN option on such a role or on the reset role
+  (ADMIN on the owner role is not followed: the owner is outside the guarantee). The login that created the reset
+  role holds the ADMIN option (when it is not a superuser), so it is listed: either create the reset role as a
+  superuser or the owner, or run `REVOKE ADMIN OPTION FOR <reset role> FROM <creator>`. The listing is
+  conservative: it can name a role that holds only DELETE or TRUNCATE on `kill_switch`, or only a column INSERT
+  that leaves out `stop_id`, which alone cannot clear a stop, and it judges each membership on its own, not along
+  the whole chain. These are harmless refusals: revoke the right.
+- A server that holds other administrators (below PostgreSQL 16, or a managed service): the CREATEROLE listing
+  looks at the whole server, not this schema. If a listed role is not a person or process that can use CREATEROLE to
+  grant the reset role to itself (for example a managed service's own administrator login), you may name it with
+  `--accept-admin-role <role>` (repeat the flag for several; in code `accepted_admin_roles`). Rules: you vouch for it;
+  each name must be a plain role name (no `PUBLIC`, no wildcard) and not one of the roles migrate grants; it is
+  left out of the CREATEROLE listing only, and is still listed when it holds a grant on the stop tables or is a
+  member of a listed role; it is printed by the command and logged at warning level; it changes nothing from
+  PostgreSQL 16. Use it only when you can say who holds that login; the other way out is `REVOKE CREATEROLE` from it
+  or PostgreSQL 16 or later.
+- The append-only triggers are not enforced while `session_replication_role` is `replica`. From PostgreSQL 15 a
+  superuser can let any role set it (`GRANT SET ON PARAMETER session_replication_role`). A role with DELETE or
+  TRUNCATE on a stop table plus that right could remove a stop: migrate does not look at parameter rights, so do
+  not grant them on a server that holds a stop switch.
 - migrate refuses (ConfigError that names the schema and the search_path) when the three stop tables are not all
   found in the schema the store uses (an empty search_path, a schema without the tables, a missing table, or a
   temporary table with a stop table's name): a check that finds nothing never passes. Set the same search_path for

@@ -8,7 +8,9 @@ never counts as a denial. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service); 
 
 from __future__ import annotations
 
+import contextlib
 import inspect
+import logging
 import os
 import threading
 import time
@@ -34,6 +36,7 @@ from hadavin_sdk.models import KillSwitch, RunState
 from hadavin_sdk.store import migrate as migrate_mod
 from hadavin_sdk.store.migrate import GRANTS, migrate
 from hadavin_sdk.store.protocol import Store
+from tests import pg_gate
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),
@@ -41,10 +44,10 @@ pytestmark = pytest.mark.skipif(
 )
 
 DENIED = errors.InsufficientPrivilege
-# One advisory lock for the whole server. Every case holds it SHARED while it runs; a case that makes a role that
-# every other case's migrate would refuse (below PostgreSQL 16, a CREATEROLE login is listed server-wide) takes it
-# EXCLUSIVE, so no other case runs meanwhile, with or without pytest-xdist.
-GATE = 7311
+# One advisory lock for the whole server (tests/pg_gate.py). Every `migrate` call of every test module holds it
+# SHARED (tests/conftest.py wraps it); a case that makes a role that every other migrate would refuse (below
+# PostgreSQL 16, a CREATEROLE login is listed server-wide) holds it EXCLUSIVE while the role exists, so no other
+# migrate runs meanwhile, with or without pytest-xdist.
 STOP_RELATIONS = ("kill_switch", "kill_switch_stops", "kill_switch_clears")
 OFF = KillSwitch(on=False, by="admin:reset")
 SETTINGS = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
@@ -172,8 +175,6 @@ class World:
 @pytest.fixture(name="w")
 def stop_world():
     world = World()
-    world.gate = psycopg.connect(world.dsn, autocommit=True)
-    world.gate.execute("SELECT pg_advisory_lock_shared(%s)", (GATE,))
     with psycopg.connect(world.dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(world.schema)))
         for r in world.roles:
@@ -184,7 +185,6 @@ def stop_world():
     finally:
         for s in world.stores:
             s._db.close()
-        world.gate.close()  # the locks go with the session; the cleanup below needs no gate
         with psycopg.connect(world.dsn, autocommit=True) as db:
             for schema in world.schemas:
                 db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
@@ -1233,9 +1233,9 @@ def test_s2_migrate_refuses_the_runtime_role_as_a_noinherit_member_of_a_group_th
     assert group in names
 
 
-def _who(scoped, reset):
-    with psycopg.connect(scoped, autocommit=True) as db:
-        return migrate_mod.who_else_can_clear(db, reset)
+def _who(scoped, reset, accepted=()):
+    with pg_gate.shared(), psycopg.connect(scoped, autocommit=True) as db:
+        return migrate_mod.who_else_can_clear(db, reset, accepted)
 
 
 def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(w):
@@ -1370,25 +1370,141 @@ def test_s2_a_member_of_a_role_that_holds_a_right_with_the_admin_option_only_is_
     assert _who(w.scoped, w.reset) == sorted([group, admin])
 
 
+def _below_16(w):
+    return w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]
+
+
+@contextlib.contextmanager
+def _server_wide_createrole(w, count=1):
+    """`count` LOGIN CREATEROLE roles for as long as the block runs, under the EXCLUSIVE server gate (below 16 they
+    are listed server-wide: see tests/pg_gate.py); NOCREATEROLE again before the gate is released."""
+    made = []
+    with pg_gate.exclusive():
+        try:
+            for _ in range(count):
+                made.append(w.new_role(f"cq{len(made)}", "LOGIN CREATEROLE"))
+            yield made
+        finally:
+            for creator in made:
+                w.grant("ALTER ROLE {} NOCREATEROLE", creator)
+
+
 def test_s2_below_16_a_createrole_login_that_is_not_a_superuser_is_listed(w):
     """Before PostgreSQL 16 a CREATEROLE login can GRANT the reset role to itself, and holds nothing now."""
-    if not w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]:
+    if not _below_16(w):
         pytest.skip(
             "from PostgreSQL 16 CREATEROLE alone cannot grant a role it has no ADMIN option on"
         )
-    w.gate.execute("SELECT pg_advisory_lock(%s)", (GATE,))  # exclusive: see GATE
-    creator = None
-    try:
-        creator = w.new_role("cq", "LOGIN CREATEROLE")
+    with _server_wide_createrole(w) as (creator,):
         assert _who(w.scoped, w.reset) == [creator]
-        with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop"):
+        with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop") as e:
             w.migrate()
+        assert "accepted_admin_roles" in str(e.value) and "--accept-admin-role" in str(e.value)
         w.grant("ALTER ROLE {} NOCREATEROLE", creator)
         assert w.migrate() == []
-    finally:
-        if creator:
-            w.grant("ALTER ROLE {} NOCREATEROLE", creator)
-        w.gate.execute("SELECT pg_advisory_unlock(%s)", (GATE,))
+
+
+def test_s2_below_16_an_accepted_createrole_role_is_not_listed_and_another_one_still_is(w, caplog):
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only: from 16 the CREATEROLE listing does not exist")
+    with _server_wide_createrole(w, 2) as (vouched, other):
+        assert _who(w.scoped, w.reset) == sorted([vouched, other])
+        assert _who(w.scoped, w.reset, (vouched,)) == [other]
+        with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop") as e:
+            w.migrate(accepted_admin_roles=(vouched,))
+        names = str(e.value).split("could clear a stop", 1)[1].split(". Name the runtime")[0]
+        assert other in names and vouched not in names
+        w.grant("ALTER ROLE {} NOCREATEROLE", other)
+        with caplog.at_level(logging.WARNING, logger="hadavin_sdk.store"):
+            assert w.migrate(accepted_admin_roles=(vouched,)) == []
+        assert vouched in caplog.text and "NOT checked" in caplog.text
+
+
+def test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_listed(w):
+    """The allow-list is for the CREATEROLE listing only, never for a grant on the stop tables or a membership."""
+    with _server_wide_createrole(w) as (creator,):
+        w.grant("GRANT UPDATE ON kill_switch TO {}", creator)
+        assert _who(w.scoped, w.reset, (creator,)) == [creator]
+        _refused_naming(w, creator, lambda: w.migrate(accepted_admin_roles=(creator,)))
+        w.grant("REVOKE UPDATE ON kill_switch FROM {}", creator)
+        w.grant("GRANT {} TO {}", w.reset, creator)
+        assert _who(w.scoped, w.reset, (creator,)) == [creator]
+        w.grant("REVOKE {} FROM {}", w.reset, creator)
+        w.grant("GRANT DELETE ON kill_switch_stops TO {}", creator)
+        assert _who(w.scoped, w.reset, (creator,)) == [creator]
+        w.grant("REVOKE DELETE ON kill_switch_stops FROM {}", creator)
+        assert _who(w.scoped, w.reset, (creator,)) == []
+
+
+@pytest.mark.parametrize(
+    "bad", ["public", "PUBLIC", "*", "%", "a b", "x; DROP ROLE y", "", "Reset", "session_user"]
+)
+def test_s2_an_accepted_role_name_that_is_not_one_plain_role_is_refused_before_any_connection(bad):
+    with pytest.raises(ConfigError, match="accepted_admin_roles must be plain database role names"):
+        migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=(bad,))
+
+
+def test_s2_accepted_roles_given_as_one_string_are_refused():
+    with pytest.raises(ConfigError, match="accepted_admin_roles must be plain"):
+        migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles="sb_y")
+
+
+def test_s2_accepted_roles_without_named_roles_are_refused():
+    with pytest.raises(ConfigError, match="only read when roles are named"):
+        migrate("postgresql://unused.invalid/none", accepted_admin_roles=("sb_y",))
+
+
+def test_s2_an_accepted_role_that_is_also_a_named_role_is_refused():
+    with pytest.raises(ConfigError, match="must not name a role this command grants: sb_x"):
+        migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=("sb_x",))
+
+
+def test_cli_migrate_prints_and_logs_every_accepted_admin_role(w, cfg_dir, monkeypatch, capsys, caplog):
+    fresh = w.new_schema("ac")
+    _demo(cfg_dir)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", fresh)
+    one, two = f"sb_ac1_{w.sfx}", f"sb_ac2_{w.sfx}"
+    base = ["--config", str(cfg_dir), "migrate", "--runtime-role", w.runtime, "--reset-role", w.reset]
+    assert cli.main(base) == 0
+    assert "accepted administrator roles" not in capsys.readouterr().out
+    argv = [*base, "--accept-admin-role", one, "--accept-admin-role", two]
+    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.store"):
+        assert cli.main(argv) == 0
+    line = [x for x in capsys.readouterr().out.splitlines() if x.startswith("accepted administrator roles")]
+    assert len(line) == 1 and one in line[0] and two in line[0]
+    assert one in caplog.text and two in caplog.text
+
+
+def test_the_server_gate_holds_every_migrate_while_another_session_holds_it_exclusively():
+    """tests/conftest.py wraps `migrate` for every module: with the gate held exclusively by another session, a
+    migrate call (here the name this module imported) waits; it runs when the gate is released."""
+    done = []
+
+    def call():
+        try:
+            migrate("postgresql://unused.invalid/none", reset_role="Not A Role")
+        except ConfigError as e:
+            done.append(e)
+
+    with psycopg.connect(os.environ["HADAVIN_TEST_PG_DSN"], autocommit=True) as holder:
+        holder.execute("SELECT pg_advisory_lock(%s)", (pg_gate.GATE,))
+        t = threading.Thread(target=call)
+        t.start()
+        t.join(1.5)
+        waiting = t.is_alive() and not done
+        holder.execute("SELECT pg_advisory_unlock(%s)", (pg_gate.GATE,))
+        t.join(30)
+    assert waiting, "migrate ran while another session held the server gate exclusively"
+    assert len(done) == 1 and not t.is_alive()
+
+
+def test_s2_a_view_with_a_stop_table_name_is_refused_not_passed(w):
+    fresh = w.new_schema("vw")
+    migrate(fresh, runtime_role=w.runtime, reset_role=w.reset)
+    with psycopg.connect(fresh, autocommit=True) as db:
+        db.execute("DROP TABLE kill_switch_clears")
+        db.execute("CREATE VIEW kill_switch_clears AS SELECT 1 AS stop_id")
+    _refuses_to_read(fresh, w.reset, "kill_switch_clears", "missing")
 
 
 def test_s2_from_16_a_createrole_login_with_no_membership_is_not_listed(w):

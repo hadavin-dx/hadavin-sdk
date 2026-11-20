@@ -28,18 +28,20 @@ cannot hide a stop; a runtime process that is itself taken over can ignore any s
 reset login can clear a stop by hand with no audit row. (3) The reset login cannot add a stop row, but it can set the
 old flag ON, which is also a stop (the safe direction). (4) A reset clears the stops visible to its clear statement:
 a stop committed after that statement began stays ON, and one committed between the audit row and that statement is
-cleared; the command reads the state back and exits 2 while it is still ON. (5) `migrate` refuses, when it applies
-grants, any other role that could clear a stop through a grant on this schema's stop tables or through membership
+cleared; the command reads the state back and exits 2 while it is still ON. (5) As of the last `migrate` that named all roles (the check runs only then: a role or grant added later is not seen
+until the next run), `migrate` refuses, when it applies grants, any other role that could clear a stop through a grant on this schema's stop tables or through membership
 in a role that holds one (or in the reset role), through UPDATE, DELETE or TRUNCATE on `kill_switch`, INSERT on
-`kill_switch_clears` or TRIGGER on any of the three; below PostgreSQL 16 also every non-superuser role with CREATEROLE,
-from 16 every holder of the ADMIN option on such a role or on the reset role (so the login that created the reset role
-is listed until it revokes that option). It refuses when it cannot find the three stop tables in the schema the store
+`kill_switch_clears` or TRIGGER on any of the three; below PostgreSQL 16 also every non-superuser role with CREATEROLE
+(an operator who vouches for such a role can name it with `--accept-admin-role`; it is then printed and logged, and a
+grant on the stop tables still lists it), from 16 every holder of the ADMIN option on such a role or on the reset
+role (so the login that created the reset role is listed until it revokes that option). It refuses when it cannot find the three stop tables in the schema the store
 uses. A plain `migrate` that names no role applies and checks no grants and leaves old ones in place, so name all roles
 in ONE command. Outside the guarantee and not checked: the schema owner (it can DROP and recreate the stop tables: the
 runtime login must not own the schema), superusers and managed-database admin roles that are not superusers
 (`rds_superuser`, `azure_pg_admin`, `cloudsqlsuperuser`), SECURITY DEFINER functions or views of a privileged role
 (review them), and a role whose only path is membership in the owner role, in a superuser or in a PostgreSQL predefined
-role such as `pg_write_all_data`.
+role such as `pg_write_all_data`, and a role that may set `session_replication_role` (the append-only triggers do
+not fire under `replica`) and holds DELETE or TRUNCATE on a stop table.
 
 **Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
 (for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT

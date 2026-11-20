@@ -16,7 +16,7 @@
                                                          audit drain; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P] [--purge-role U] [--reset-role X]
-                                                         [--release-role Y] [--no-roles]
+                                                         [--release-role Y] [--accept-admin-role A ...] [--no-roles]
                                                          apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
@@ -143,6 +143,13 @@ def _main(argv: list[str] | None = None) -> int:
         "--reset-role",
         help="grant this database role the kill switch reset (clear stops, write the reset to the audit) and nothing else",
     )
+    mig.add_argument(
+        "--accept-admin-role",
+        action="append",
+        default=[],
+        help="below PostgreSQL 16: a CREATEROLE role you vouch for (it cannot grant the reset role to itself); "
+        "repeat for several; named in the output and logged; never excuses a grant on the stop tables",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -183,6 +190,7 @@ def _main(argv: list[str] | None = None) -> int:
             args.reset_role,
             args.release_role,
             args.no_roles,
+            tuple(args.accept_admin_role),
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -415,6 +423,7 @@ def _migrate(
     reset_role: str | None = None,
     release_role: str | None = None,
     no_roles: bool = False,
+    accepted_admin_roles: tuple[str, ...] = (),
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -446,12 +455,18 @@ def _migrate(
         reset_role=reset_role,
         release_role=release_role,
         no_roles=no_roles,
+        accepted_admin_roles=accepted_admin_roles,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,
         sslrootcert=ca,
     )
     print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
+    if accepted_admin_roles:
+        print(
+            "accepted administrator roles (you vouch for them; not checked as able to clear a stop): "
+            + ", ".join(accepted_admin_roles)
+        )
     if applied and not runtime_role:
         print(
             "warning: new tables have no runtime grants; run again with --runtime-role <role>",
