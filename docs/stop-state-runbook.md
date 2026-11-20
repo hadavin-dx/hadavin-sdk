@@ -282,21 +282,32 @@ Residual: the audit line is written by the CLI, not by the function, so a stolen
 directly with no audit line (the same is true of `release-expired`). Keep the reset login off the runtime machines.
 
 ## After the upgrade to 0009: the stop-year constraints
-0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` (a `ts` between 2000-01-01 and 2100-01-01).
-It adds them NOT VALID, then validates each one itself ONLY when its table holds no row outside the range. A clean
-database therefore ends validated and `migrate` says nothing. A database that already holds a planted `ts` (the stop
+0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` (a `ts` between 2000-01-01 and 2100-01-01)
+NOT VALID and never validates them itself (a conditional validation needs a DO block, which the repo's statement lexer
+refuses). Right after the files, every `migrate` run validates each constraint whose table holds no row outside the
+range, silently. A clean database therefore ends validated. A database that already holds a planted `ts` (the stop
 tables are append-only, such a row cannot be deleted below a superuser) still upgrades, keeps that constraint NOT
 VALID, and every `migrate` run prints one warning naming it while the row exists. Look for the rows (`SELECT id, ts FROM
 kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), deal with
-them, then run as the owner `hadavin-sdk migrate --validate-constraints` (it runs `ALTER TABLE ... VALIDATE CONSTRAINT`
-only for a constraint still NOT VALID, gives up after 5 seconds if a long transaction holds the table, and changes
-nothing else; it cannot be combined with a role flag). It fails naming the constraint while a bad row exists. The
-migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the index build.
+them, then validate: the next `migrate` does it by itself, or run as the owner `hadavin-sdk migrate
+--validate-constraints` (only validates; it cannot be combined with a role flag, `--no-roles`, `--accept-admin-role`,
+`--accept-changed-draft` or `--reset-draft`; it needs the stop tables in the schema of HADAVIN_MIGRATE_DSN).
+Exit codes of that command: 0 done, 2 refused (a bad row, not the table owner, tables not found), 75 retry later
+(another transaction holds the table; it waits at most 5 seconds for the lock and at most 60 seconds for the scan, and
+changes nothing when it gives up). The 60-second limit assumes small stop tables (they hold one row per stop and per
+clear; not measured for millions of rows); on a far larger table raise
+`VALIDATE_STATEMENT_TIMEOUT` in `store/migrate.py` and say so in the change record. The migration takes a short
+ACCESS EXCLUSIVE lock on the stop tables for the ADD CONSTRAINT and the index build.
 
 0009 has no watermark table (nothing read it). A database that ran an EARLIER, unreleased 0009 still has
-`kill_switch_watermark` and `hadavin_watermark_guard()`: `migrate` refuses it with a message saying so. Drop and
-recreate that database, or run `DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard()
-CASCADE;` as the owner and migrate again (there is no 0012: 0009 is unreleased).
+`kill_switch_watermark` and `hadavin_watermark_guard()`: `migrate` refuses it with a message saying so. Steps:
+(1) as the owner `DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard() CASCADE;`;
+(2) run `migrate` with the same role flags plus `--accept-changed-draft 0009_stop_state_hardening` (the 0009 file
+changed since that database applied it, so migrate warns of the difference until the new checksum is accepted; the
+database then matches the file); the stop-year constraints are validated by that run. Do NOT use `--reset-draft 0009_...`
+for this: it deletes the ledger rows of 0009 and every later file and applies them again, which fails on the tables
+they already made unless you drop all of those first (the safe choice then is a new database). The leftover check runs
+before `--reset-draft`, so the leftovers must be dropped first in any case. There is no 0012: 0009 is unreleased.
 
 ## Going back to the release before the stop state
 The change of meaning cannot be undone by code alone: old code does not read `kill_switch_stops`, and its stop needs
