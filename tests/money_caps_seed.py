@@ -9,11 +9,12 @@ from __future__ import annotations
 import os
 from decimal import Decimal
 
-_SEEDED: dict[tuple[str, str, str], tuple[Decimal, Decimal]] = {}
+from hadavin_sdk.store.protocol import check_store_id
 
 _UPSERT = (
     "INSERT INTO {t} (agent_id, day_cap, month_cap, set_by) VALUES (%s, %s, %s, 'test-seed') "
-    "ON CONFLICT (agent_id) DO UPDATE SET day_cap = EXCLUDED.day_cap, month_cap = EXCLUDED.month_cap"
+    "ON CONFLICT (agent_id) DO UPDATE SET day_cap = EXCLUDED.day_cap, month_cap = EXCLUDED.month_cap "
+    "WHERE {t}.set_by = 'test-seed'"
 )
 
 
@@ -37,7 +38,8 @@ def seed_caps(dsn_or_conn, schema: str | None, agent: str, day_cap, month_cap) -
 def seeding_reserve(original):
     """Wrap `PostgresStore.reserve_spend`: seed the caps the caller passes, then delegate. The owner DSN is the test
     DSN (`HADAVIN_TEST_PG_DSN`) scoped to the schema of the store; the pair is written once per (schema, agent)
-    unless it changes."""
+    unless it changes. A row written by anything else (`set_cap`, set_by <> 'test-seed') is never overwritten: the table
+    wins, as in production. A seed failure is not swallowed."""
 
     def reserve_spend(self, reservation_id, agent_id, day, usd, *, day_cap, month_cap, run_id=None):
         dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
@@ -47,13 +49,12 @@ def seeding_reserve(original):
         except Exception:  # noqa: BLE001 - a bad argument: the store refuses it itself, seed nothing
             ok = False
         if dsn and ok:
-            key = (dsn, self._schema, str(agent_id))
-            if _SEEDED.get(key) != pair:
-                try:
-                    seed_caps(dsn, self._schema, agent_id, *pair)
-                    _SEEDED[key] = pair
-                except Exception:  # noqa: BLE001, S110 - an id the table refuses: the store refuses it below
-                    pass
+            try:
+                check_store_id(agent_id, "agent_id")
+            except ValueError:  # an id the store refuses itself below: nothing to seed
+                pass
+            else:
+                seed_caps(dsn, self._schema, agent_id, *pair)
         return original(
             self,
             reservation_id,

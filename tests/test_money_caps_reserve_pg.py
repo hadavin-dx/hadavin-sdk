@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 
 import psycopg
 import pytest
@@ -93,6 +94,59 @@ def caps_battery(w):
     _seed(w, "exact", D("5"), D("50"))
     _reserve(rt, "exact", "5")  # up to the cap is allowed
     _refused_by(rt, "exact", "0.000001", "day")  # one micro-dollar over the day cap
+    _refused_by(
+        rt, "exact", "0", "day"
+    )  # M10: a zero amount at the cap is refused too (usd < cap leg)
+    # the month cap exactly, day cap far above it (day above month): the month leg and its boundary
+    _seed(w, "exm", HUGE, D("7"))
+    _reserve(rt, "exm", "7")  # up to the month cap is allowed (<=, not <)
+    _refused_by(rt, "exm", "0", "month")  # zero amount at the month cap: refused (m.usd < cap leg)
+    _refused_by(rt, "exm", "0.000001", "month")
+    # a ZERO cap is a cap of zero, never "unlimited" (M10)
+    _seed(w, "zero", D("0"), HUGE)
+    _refused_by(rt, "zero", "1", "day")
+    _refused_by(rt, "zero", "0", "day")
+    _seed(w, "zero-m", HUGE, D("0"))
+    _refused_by(rt, "zero-m", "1", "month")
+    _cap_function_battery(w)
+
+
+def _cap_function_battery(w):
+    """`hadavin_set_cap` (an upsert that overwrites BOTH caps) and `hadavin_cap_matches` (same only when BOTH caps
+    are equal, differs otherwise, missing without a row)."""
+    rs, rt = w.store(w.reset), w.store(w.runtime)
+    assert rt.cap_matches("cm-agent", D("3"), D("30")) == "missing"
+    rs.set_cap("cm-agent", D("3"), D("30"), "user:op")
+    assert rt.cap_matches("cm-agent", D("3"), D("30")) == "same"
+    assert rt.cap_matches("cm-agent", D("3"), D("31")) == "differs"  # only the day cap matches
+    assert rt.cap_matches("cm-agent", D("4"), D("30")) == "differs"  # only the month cap matches
+    assert rt.cap_matches("cm-agent", D("4"), D("31")) == "differs"
+    rs.set_cap("cm-agent", D("5"), D("50"), "user:op2")  # the upsert replaces both caps
+    assert rt.cap_matches("cm-agent", D("5"), D("50")) == "same"
+    assert rt.cap_matches("cm-agent", D("3"), D("30")) == "differs"
+    assert rt.cap_matches("cm-agent", D("5"), D("30")) == "differs"
+    assert rt.cap_matches("cm-agent", D("3"), D("50")) == "differs"
+
+
+@pytest.mark.no_cap_seed
+def test_a_missing_cap_row_through_limits_refuses_with_the_sync_caps_hint(w, caplog):
+    """End to end on Postgres (no seeding hook): `Limits.reserve` for an agent with no cap row is refused as
+    `limits_unavailable`, the log tells the operator to run sync-caps, and no counter row exists."""
+    import logging
+
+    from hadavin_sdk.limits import Limits, SpendRefused
+
+    store = w.store(w.runtime)
+    agent = SimpleNamespace(
+        id=AGENT, status="live", budget_usd=SimpleNamespace(daily=D("5"), monthly=D("50"))
+    )
+    registry = SimpleNamespace(agents={AGENT: agent})
+    limits = Limits(store, SimpleNamespace(), registry)
+    with caplog.at_level(logging.WARNING), pytest.raises(SpendRefused) as err:
+        limits.reserve(AGENT, D("1"))
+    assert "limits_unavailable" in str(err.value)
+    assert any("sync-caps" in r.getMessage() for r in caplog.records)
+    assert w.run("SELECT count(*) FROM spend") == [(0,)]
 
 
 def test_t6_a_runtime_login_with_no_cap_row_is_refused_fail_closed(w):
