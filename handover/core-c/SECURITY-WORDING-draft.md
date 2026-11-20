@@ -52,3 +52,11 @@ The gate makes no model call without a reservation. It settles the real cost whe
 
 ### Honest note on the evidence behind these sentences
 The idempotence property test covers 1,835 existing hostile and fuzz inputs; none of the older inputs ever held the class G7 fixes, so the proof of the fix is 8 new shapes, and both remaining limits came from 5 hand-built chains, not from a corpus. The chain search was not exhaustive.
+
+---
+## REVISION 3 (06:46 UTC), after the independent review of G7 (tickets/G7-result-review-1.md; correct where this differs)
+- "Redaction is at most two pattern passes and two sweeps per call" is true per `redact()` call. `redact_text` calls `redact()` once on the text and once per decoded view (up to 7 calls), so the true statement is: "each call of the redactor does at most two pattern passes and two sweeps; a text is passed through it up to 7 times (the text and its decoded views)".
+- The tail left readable after a compound credential is found late is up to 7 characters on a bearer token (the earlier test pinned 5), also in other strings of the same call. Until fixed (dz-2) say "a short tail of up to 7 characters".
+- The cost: every text that contains one planted secret pays the 2.0x to 2.4x redaction time, not only unusual text; the redactor's time budget is checked between passes, not inside one (to be fixed, dz-3). Say so.
+- Removed: the earlier remark that a tool error text redacted twice is "harmless": a secret first seen in a tool error is not entered in the run's map, so its other copies in later tool results are not swept (dz-6; fix is in tools.py, core-b's file).
+- "Needs planted text" for the two chain limits is true; the attacker must also know the victim's bank code (narrow exposure); not tested.

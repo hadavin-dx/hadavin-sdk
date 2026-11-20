@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:44:26Z
+UPDATED_UTC: 2026-11-20T06:44:56Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 28
-ITEMS_OPEN: 13
+ITEMS_OPEN: 14
 PERCENT: 72
 AGENTS_RUNNING: 5
-CAPACITY: load 3.0 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
+CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 5; 68M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T06:43:53+00:00
+PUSHED_UTC: 2026-11-20T06:44:26+00:00
 
 (12:14 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
@@ -108,7 +108,7 @@ PUSHED_UTC: 2026-11-20T06:43:53+00:00
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT integration | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | P1c edits the same two files; it is built on the integrated tree |
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
 | Gate: lead code review round 2 fixes (ORDER 015) | RUNNING | 5 | evidence/F-G0-1.md | 2 | round 1 is committed (f16d48e); MJ1 is already built (4864984); MJ2 and the minors are running |
-| BUILD G7 context patterns after the sweep (E3) | DONE | 100 | evidence/G7-1.md, tickets/G7-context-after-sweep.md | 1 | committed 4864984; E3 and E5 fixed as a class; 2 chain shapes are strict expected failures = stated limits; honest note: the older corpora never held this class, the 8 inputs that prove the fix are the new G7 shapes |
+| BUILD G7 context patterns after the sweep (E3) | DONE, review follow-ups open | 100 | evidence/G7-1.md, tickets/G7-context-after-sweep.md | 1 | design review: no Blocker, 6 Majors; fixes (fail closed after the second pass, wider tail, budget inside pass 2, composition corpus) wait for the integration to land (same file); lead: fail closed OK? |
 | Backlog 7: T1 reserve cap test + grants 0007 tests for core-b | DONE | 100 | evidence/T1-reserve-cap.md | 1 | committed as "code F: T1 ..."; 49 passed on core-b code + PostgreSQL 16; skips in this tree until core-b code is merged; PostgreSQL 17 not run |
 | Backlog 4c: cross-lane read | DONE | 100 | CROSS-LANE.md | 1 | CROSS-LANE.md written; 5 mismatches listed for the lead |
 | Backlog 9: SECURITY and README wording | RUNNING (session) | 50 | SECURITY-WORDING-draft.md | 1 | draft pushed; final list after the gate and G7 agents report their stated limits |
@@ -150,4 +150,4 @@ PUSHED_UTC: 2026-11-20T06:43:53+00:00
 | (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-EGM-LEDGER.md (new): brainstorm/draft were not run through the egm skills for any ticket and egm-drift-report has not been run for anything; list of items built without a review step and the missing steps. Running now: result reviews of the fold and of P1d-a.
+G7 review (design reviewer): no Blocker, 6 Majors; recommended: make the second pass FAIL CLOSED (cap about 4, then RedactionError) instead of leaving the known chain readable: OK? requests/4-error-reason-run-map.md for core-b (tool error text is redacted with a throw-away map). SECURITY-WORDING-draft.md rev 3. EGM-LEDGER.md.

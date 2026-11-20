@@ -8,7 +8,7 @@ HONEST STATE: brainstorm and draft were NOT run through the egm skills for any t
 | G1 fold (P1a+P1b) | ticket G reviewed (readiness + code reviewers) | done | builder (939 + 8,616 tests) | NOT RUN | NOT RUN | result review: STARTED 06:50 (tickets/G1-result-review-1.md) |
 | G2 P1d-a | ticket G reviewed | done on its branch | builder (7879 passed, mutants 48/51) | NOT RUN | NOT RUN | result review: STARTED 06:50 (tickets/G2-result-review-1.md) |
 | G3 P2d-1 port | ticket G reviewed (cb-1-1 etc.) | done on its branch | builder (8237 passed) | NOT RUN | NOT RUN | after the integration (it changes the code again) |
-| G7 redactor class fix | NONE: built from the lead's order (E3, E5, ORDER 013), ticket written after the build | done (4864984) | builder + property test (1,835 inputs) | round 1 running (2 reviewers, sonnet, restarted twice) | NOT RUN | plan review after the fact: run egm-review-loop on tickets/G7-context-after-sweep.md after the result review |
+| G7 redactor class fix | NONE: built from the lead's order (E3, E5, ORDER 013), ticket written after the build | done (4864984) | builder + property test (1,835 inputs) | round 1: design reviewer done (no Blocker, 6 Majors, 2 Nits: tickets/G7-result-review-1.md), code reviewer running | NOT RUN | plan review after the fact: run egm-review-loop on tickets/G7-context-after-sweep.md after the result review |
 | G4 P1c gaps | ticket written; NOT reviewed | NOT BUILT | probe by an evidence-runner agent | - | - | plan review before any build |
 | G6 wording | ticket text only | not built | - | - | - | after the lead's OK |
 | step B grants tests (code B) | none (test file, written from the plan) | done | agent's own run, local PostgreSQL 16 | NOT RUN | NOT RUN | result review of the test files: queued |
