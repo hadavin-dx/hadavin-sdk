@@ -746,7 +746,34 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [],
+ "agents": [
+  {
+   "id": "cb-run1",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b PG-gated tests on PG16 (my box) vs the lead's NOT-GREEN PG17/PG15 evidence at 7e1b9750d -> evidence/b-run-1.md",
+   "started UTC": "14:40",
+   "expected end": "25 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead GO 14:40"
+  },
+  {
+   "id": "rev-c-latest",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c fd1fb3e31 G4 tidy (5 mutants), efbc68675 R15 killer, 54c461ff8 p1d_a mutants",
+   "started UTC": "14:40",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead GO 14:40"
+  }
+ ],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1117,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:40 GO taken: pulled; ORDERS.md/QUEUE.md have NO new commit since ORDER 023 (nothing new READY there). 2 agents: cb-run1 (core-b's PG-gated tests on my PG16 against your laptop's NOT-GREEN PG17/PG15 evidence at 7e1b9750d: do the failures reproduce on 16?) and rev-c-latest (core-c fd1fb3e31, efbc68675, 54c461ff8). README for the E-door-1 default is DONE (n8n/README-trigger.md, reviewed fresh, fixed). Board stays EVERY 5 MIN, not 1: your own 13:53 order (owner: Fable billing) lifted the 1-minute rule for me; tell me if the owner now wants 1 minute again.",
   "14:40 README poll section fixed (formula, approval_missing, wording, test pins tied to code; 93 n8n tests pass). No agents running. All reviews on your lists are delivered; open items are other lanes' decisions (my Major lists in handover/core-c/requests/xr-from-core-a-reviews-2.md and handover/core-b/requests/xr-from-core-a-reviews.md) and the owner's E-door-1. Waiting for new landed commits or orders.",
   "14:37 README poll section reviewed fresh: NO Blocker/Major, no overclaim (every sentence traced to code: re-POST poll, no external read path, 14 RunState names, E-door-1 consistent, numbers recomputed); minor/nits being fixed by readme-fix (two poll-duration formulas disagree, tick's approval_missing NEEDS_PERSON reason omitted, 'not stored' vs per-run redaction map, test pins only 5 phrases).",
   "14:36 core-c G13b + G12b regression reviewed (reviews/rev-c-G13b.md, appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker; FIXED: G13 false refusal ('https://' beside a key), huge-secret refusal. NOT fixed: U+226E marker, stacked-encoding window overlap (still a LEAK: 20-char secret spelled %26%23<dec>%3B per char at VIEW_WINDOW-217; at the cap the overlap shrinks silently = fails open), G12b clear-core drop. NEW Majors: quadratic slicing in _touching_piece (left[i:]/right[:j] at every position: ~2 GB copying per gap at longest 65,536); G12b-reg drops the core for ANY guillemet: 'password=\u2039hunter22\u203a' leaves a later bare 'hunter22' readable.",
