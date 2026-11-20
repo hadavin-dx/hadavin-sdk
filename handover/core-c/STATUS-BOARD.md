@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:19:37Z
+UPDATED_UTC: 2026-11-20T15:24:01Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:22Z load 3.6. Merged onto cloud/core-c (head 875b905a8): G4c (host rows 19+6 closed; host/p1c tests 810 passed), gate mutant fixes (139/140, only R8). Agents alive: G9b (E23), rec (g2/g3 leftovers into one head). Heavy runs: max 2. Timings from 15:00-15:11 INVALID-LOAD; full merged-tree re-run at idle after G9b/rec land. F-install blockers: NO_MAP r3, usd_cap, mark merged; K5 Q17 with lead. Grant tests vs core-b 0006/0007 queued after rec.
+STATE: 15:25Z load 2.1. cloud/core-c head 5828a355f (code head 875b905a8 incl. G4c, G13c, G12c, gate mutant fixes). Agents alive 3: G9b (E23), rec (g2/g3 leftovers into one head), grants (8 grant tests vs core-b 0006/0007, started 15:24). F-install blockers: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 2
-CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 2, heavy agents 0
+AGENTS_RUNNING: 3
+CAPACITY: load 2.1 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 3, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect G9b and rec, then idle full-suite run; docs root pass; grant tests vs core-b head.
-PUSHED_UTC: 2026-11-20T15:19:06+00:00
+PUSHED_UTC: 2026-11-20T15:19:37+00:00
 
-(20:49 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(20:54 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -30,6 +30,7 @@ PUSHED_UTC: 2026-11-20T15:19:06+00:00
 | a0385760 | builder | claude-sonnet-5-5 | BUILDS G9b (E23: _overlaps charge-as-you-go, union kind downgrade, weight calibration); /tmp/core-c-g9b | 15:00 | 15:40 | 1 | running | 1 | 0 |  |
 | aadbf6c1 | builder | claude-sonnet-5-5 | FIXES gate mutants G13d/G13e/E19g/E19i; /tmp/core-c-gm | 15:01 | 15:20 | 1 | done | 1 | 0 |  |
 | rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | running | 1 | 0 |  |
+| grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | running | 1 | 0 | light, 1 pytest |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
