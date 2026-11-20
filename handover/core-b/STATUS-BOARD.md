@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:29:07Z
+UPDATED_UTC: 2026-11-20T13:30:20Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.86 of 4 cores, mem 1/15 GB, disk 45G free, 36% used, agents light 4 heavy 2
+CAPACITY: load 2.20 of 4 cores, mem 1/15 GB, disk 45G free, 36% used, agents light 4 heavy 2
 DISK: / 45G free, 36% used; worktrees /tmp/core-b-wt 4.0G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T13:29:03Z (previous push; this board is pushed right after writing)
-IST: 18:59 IST
+PUSHED_UTC: 2026-11-20T13:30:02Z (previous push; this board is pushed right after writing)
+IST: 19:00 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -299,3 +299,5 @@ B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the m
 13:50Z G is DONE and merged (not running): lead-build-4.md written for the laptop with the remaining migrate.py items (M4, isolation check, A-audit-rights). Chain H1 (merged, 096c0f870) -> I1 (idempotent reserve, then M2/parity; MI1, since 13:36Z) -> B2 (after I1). Reviews running: step 4 (R9), H1 diff (R10). M6 (MM6), T2 (MT2) running.
 
 13:32Z LOAD 2.0 of 4 (my count, after killing three orphaned test runs of finished agents). AGENTS 6 live (all sonnet): I1 idempotent reserve then M2/parity (MI1; files: 0011 reserve+settle, postgres.py, memory.py, protocol.py, limits.py, contract tests, test call sites) | R11 reviewer M6 ledger (read-only, writes tickets/M6-review-1.md) | R12 reviewer A3+A4+outbox regex (read-only, tickets/A3A4-review-1.md) | TB2 B2 failing-first tests, NEW file tests/test_live_path_reserve_settle.py only (MB2T) | DOC honest money wording README/SECURITY/CHANGELOG/docs + handover/core-b/PR-TEXT-money.md (MDOC; docs only) | contract-spend diagnosis run (mine, one pytest). Stopped: H1 (finished, resent its report four times). Merged since 13:25Z: G step 4, A2, A3, A4, H1, M6, T2, H2. Reviews done: step 4 (2 Majors: 1 fixed docs, 1 on laptop list), H1 (minors fixed). Tickets without a builder: F-install (blocked by core-c), A-audit-rights (laptop), lead-b items (laptop); N4/5/7/8 are DECISIONS sentences only (accepted residuals, no code).
+
+13:50Z contract spend tests on the merged head: 202 passed (5 min). Reviews in: M6 (0 Blocker, 4 Major: false warning text, warning shows once, operator recipe incomplete, TOFU hides a changed released file) -> M6 fix round running (MM6); A3/A4/outbox (0 Blocker, 3 Major: audit_code vs pydantic ASCII \w, leap-year 29 Feb sorts last, _note fallback drops content) -> A3 fix round running (MA3). AGENTS live (sonnet): I1 (MI1), M6 fix (MM6), A3 fix (MA3), TB2 B2 failing-first tests (MB2T). Docs honest money wording + PR-TEXT-money.md merged (45d266d8a).
