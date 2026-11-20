@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:49:54Z
+UPDATED_UTC: 2026-11-20T06:51:17Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 3.36 of 4 cores, mem 1/15 GB, disk 58G free, 16% used, agents light 3 heavy 4
-DISK: / 58G free, 16% used; worktrees /tmp/core-b-wt 1.3G
+CAPACITY: load 2.77 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, agents light 3 heavy 4
+DISK: / 58G free, 17% used; worktrees /tmp/core-b-wt 1.3G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:48:54Z (previous push; this board is pushed right after writing)
-IST: 12:19 IST
+PUSHED_UTC: 2026-11-20T06:49:56Z (previous push; this board is pushed right after writing)
+IST: 12:21 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -56,7 +56,8 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
 | a83fab17 | reviewer (egm-codebase-details) | sonnet | F-install round 3 second reviewer: 1 Blocker, 10 Majors, 4 Nits; both reviewers ran, round NOT clean, answered (Z) and Y4 escalated (E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
 | a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
-| a99a298a | builder (fix) | sonnet | F-store fix round 3 from the hostile re-read (7 code items); worktree F5 | 06:58 | +25 min | UNVERIFIED | running | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
+| a8678338 | builder (tests) | sonnet | tests for F-store fix round 3 (ids, caps, memory atomicity, sender secret reader, document sizing, lock timeout) and 7 mutants; worktree FT | 07:15 | +25 min | UNVERIFIED | running | none | 0 | the fix builder wrote no tests |
+| a99a298a | builder (fix) | sonnet | F-store fix round 3: commit 83b1bb7 landed (F1 to F7); 862 passed on its list; lock timeout set in build(), not on the migrate connection | 06:58 | done | 100 | done | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
 | abb69602 | builder (merge) | sonnet | merge of cloud/core-b into the F-install integration tree: DONE, merge commit 28abb73 and 0aa9e9e pushed to wip/cloud-core-b/F-install; 958 passed, 1 failed (core-c's known test) on its list | 06:58 | done | 100 | done | none | 0 | |
 | a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config: 2 doc Blockers, 7 Majors, 10 Nits; report tickets/F-store-hostile-review-1.md | 06:46 | done | 100 | done | 1 of 1 | 1 | answered: code in fix round 3, docs fixed |
 | earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
