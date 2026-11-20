@@ -263,6 +263,7 @@ _RENAMED_TO_REAL = {
     "0009_release_expired_spend.sql": "0008_release_expired_spend.sql",
     "0010_stop_state_hardening.sql": "0009_stop_state_hardening.sql",
     "0011_money_guard.sql": "0010_money_guard.sql",
+    "0012_money_definer.sql": "0011_money_definer.sql",
 }
 
 
@@ -291,6 +292,7 @@ RENAMED = [
     "0009_release_expired_spend.sql",  # the later real files, shifted by one, so the grant map still finds what it names
     "0010_stop_state_hardening.sql",
     "0011_money_guard.sql",
+    "0012_money_definer.sql",
 ]
 
 
