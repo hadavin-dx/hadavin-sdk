@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
@@ -16,6 +17,7 @@ from hadavin_sdk.models import (
     DeadLetter,
     GateDecision,
     KillSwitch,
+    OpenStop,
     Plan,
     Run,
     RunState,
@@ -257,10 +259,19 @@ class Store(Protocol):
         ...
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
-        """`on=True` adds a stop. `on=False` clears the stops visible to its clear statement; on Postgres only the
-        reset role may (the runtime role is refused by the database). A stop committed after that statement began
-        stays ON; one committed between the audit intent and that statement is cleared. A reset that finds no
-        switch row raises (the state stays ON)."""
+        """`on=True` adds a stop. `on=False` clears every stop visible to its clear statement (kept for callers that
+        mean "clear all"; `limits reset` uses `clear_stops`); on Postgres only the reset role may (the runtime role
+        is refused by the database). A reset that finds no switch row raises (the state stays ON)."""
+        ...
+
+    def open_stops(self) -> list[OpenStop]:
+        """The stops no reset has cleared, oldest first (what `limits reset` shows before it clears)."""
+        ...
+
+    def clear_stops(self, by: str, stop_ids: Sequence[str]) -> None:
+        """Compare-and-clear: turn the old flag off and clear exactly the stops named by `stop_ids` (an id that is
+        not a stop, or is already cleared, is ignored). Any other stop, one set after `open_stops` was read, stays
+        open and the switch reads ON. On Postgres only the reset role may (the runtime role is refused)."""
         ...
 
     def get_tick_state(self, step: str) -> TickState | None: ...

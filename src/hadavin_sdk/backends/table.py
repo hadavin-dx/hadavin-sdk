@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
 
 
 class KindSettings(BaseModel):
@@ -140,6 +140,10 @@ class PostgresSettings(KindSettings):
     # The server's CA bundle, cloud-neutral: a file path, or a PEM held in any secrets kind.
     sslrootcert: str | None = None
     sslrootcert_secret_name: str | None = None
+    # Which login this store is built for: "runtime" (the default; held to the runtime's rights on the stop tables at
+    # start) or "reset" (set by `limits reset` after it swaps in the reset DSN). A private attribute: no config file
+    # can set it, so a runtime config cannot opt out of the check.
+    _login_role: Literal["runtime", "reset"] = PrivateAttr(default="runtime")
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:

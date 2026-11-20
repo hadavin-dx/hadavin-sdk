@@ -15,7 +15,8 @@ import os
 import re
 import tempfile
 import threading
-from collections.abc import Callable
+import uuid
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from datetime import date, datetime
 from decimal import Decimal
@@ -40,6 +41,7 @@ from hadavin_sdk.models import (
     DeadLetter,
     GateDecision,
     KillSwitch,
+    OpenStop,
     Plan,
     Run,
     RunState,
@@ -247,6 +249,51 @@ def verify_schema(conn: psycopg.Connection, expected: list[str]) -> str:
     return schema
 
 
+_ALL_TABLE_RIGHTS = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
+_COLUMN_RIGHTS = ("SELECT", "INSERT", "UPDATE", "REFERENCES")  # what a column grant can give
+
+
+def own_stop_rights_problems(conn: psycopg.Connection, schema: str) -> list[str]:
+    """What the CURRENT login can do on the three stop tables beyond what `GRANTS` gives the runtime role, however
+    it got it (a direct grant, a column grant, a role it is a member of, PUBLIC). Strings like `UPDATE on
+    kill_switch`: the right and the table, never a value. [] for a superuser or a member of the tables' owner:
+    that login owns the tables and is outside the guarantee (migrate warns when no roles are named)."""
+    from hadavin_sdk.store.migrate import GRANTS  # late: migrate imports this module
+
+    me = conn.execute(
+        "SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user"
+    ).fetchone()
+    if me is None or me[0]:
+        return []
+    rows = conn.execute(
+        "SELECT c.oid, c.relname, pg_catalog.pg_has_role(current_user, c.relowner, 'MEMBER') "
+        "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = %s AND c.relkind IN ('r','p') AND c.relname = ANY(%s)",
+        (schema, list(_STOP_TABLES)),
+    ).fetchall()
+    if any(owns for _, _, owns in rows):
+        return []
+    rights = list(_ALL_TABLE_RIGHTS)
+    if conn.info.server_version >= 170000:
+        rights.append("MAINTAIN")
+    problems = []
+    for oid, name, _ in sorted(rows, key=lambda r: r[1]):
+        allowed = {x.strip() for x in GRANTS[name].runtime.split(",") if x.strip()}
+        for right in rights:
+            if right in allowed:
+                continue
+            held = conn.execute(
+                "SELECT pg_catalog.has_table_privilege(%s, %s)", (oid, right)
+            ).fetchone()[0]
+            if not held and right in _COLUMN_RIGHTS:
+                held = conn.execute(
+                    "SELECT pg_catalog.has_any_column_privilege(%s, %s)", (oid, right)
+                ).fetchone()[0]
+            if held:
+                problems.append(f"{right} on {name}")
+    return problems
+
+
 def build(settings, deps) -> PostgresStore:
     """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
     password_source(
@@ -271,7 +318,17 @@ def build(settings, deps) -> PostgresStore:
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
     try:
-        verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+        schema = verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+        if getattr(settings, "_login_role", "runtime") == "runtime" and (
+            problems := own_stop_rights_problems(conn, schema)
+        ):
+            raise ConfigError(
+                "store postgres: this login holds rights on the stop tables that only the reset role may hold ("
+                + "; ".join(problems)
+                + "). A login that can write there can clear a stop. Revoke them from the login and from the "
+                "roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login "
+                "(it resets the grants and refuses what stays)"
+            )
     except BaseException:
         conn.close()
         raise
@@ -638,6 +695,51 @@ class PostgresStore:
                 ).format(**t),
                 (ks.by, ks.ts),
             )
+
+    def open_stops(self) -> list[OpenStop]:
+        t = self._stop_tables()
+        with self._lock:
+            rows = self._exec(
+                sql.SQL(
+                    'SELECT s.id::text AS id, s."by", s.ts FROM {stops} s WHERE NOT EXISTS '
+                    "(SELECT 1 FROM {clears} c WHERE c.stop_id = s.id) ORDER BY s.ts, s.id"
+                ).format(**t)
+            ).fetchall()
+        return [OpenStop.model_validate(r) for r in rows]
+
+    def clear_stops(self, by: str, stop_ids: Sequence[str]) -> None:
+        """Compare-and-clear (the reset role only): the old flag off and one clear row for each of exactly these
+        stop ids, in one transaction. A stop that is not in `stop_ids` (set after the caller read the open stops)
+        gets no clear and keeps the switch ON."""
+        t = self._stop_tables()
+        ids = [
+            str(uuid.UUID(str(i))) for i in stop_ids
+        ]  # a malformed id is an error here, not in the database
+        stamp = now()
+        with self._lock, self._db.transaction():
+            flag = self._exec(
+                sql.SQL('UPDATE {flag} SET "on" = FALSE, "by" = %s, ts = %s WHERE id = 1').format(
+                    **t
+                ),
+                (by, stamp),
+            )
+            if (
+                flag.rowcount != 1
+            ):  # a broken schema reads ON whatever is cleared: say so, clear nothing
+                raise ConfigError(
+                    "kill_switch row missing: the kill switch stays ON and nothing was cleared; "
+                    "run hadavin-sdk migrate"
+                )
+            if ids:
+                self._exec(
+                    sql.SQL(
+                        'INSERT INTO {clears} (stop_id, "by", ts) SELECT s.id, %s, %s '
+                        "FROM {stops} s WHERE s.id = ANY(%s::uuid[]) AND NOT EXISTS "
+                        "(SELECT 1 FROM {clears} c WHERE c.stop_id = s.id) "
+                        "ON CONFLICT (stop_id) DO NOTHING"
+                    ).format(**t),
+                    (by, stamp, ids),
+                )
 
     def get_tick_state(self, step: str) -> TickState | None:
         found = self._select(TickState, "tick_state", "step = %s", (step,))

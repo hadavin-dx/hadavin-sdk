@@ -288,6 +288,9 @@ def _main(argv: list[str] | None = None) -> int:
                 update={"dsn_secret_name": reset_ref, "purge_dsn_secret_name": None}
             )
             platform_secrets.check(secrets, [as_reset, b.audit], set())
+            as_reset._login_role = (
+                "reset"  # the reset login is not held to the runtime's rights at start
+            )
             store = make("store", as_reset, secrets)
             audit = make("audit", b.audit, secrets, store=store, signer=None, anchor=None)
         else:
@@ -295,7 +298,12 @@ def _main(argv: list[str] | None = None) -> int:
             platform_secrets.check(secrets, [b.signer, b.anchor, b.store, b.audit], set())
             signer = make("signer", b.signer, secrets)
             anchor = make("anchor", b.anchor, secrets)
-            store = make("store", b.store, secrets)
+            own = b.store.model_copy()
+            if args.cmd == "limits" and args.action == "reset":
+                # Demo without a reset ref: the one configured login does the reset (whichever it is; a runtime
+                # login is refused by the database). It is not held to the runtime's rights at start.
+                own._login_role = "reset"
+            store = make("store", own, secrets)
             audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
     except StoreUnavailable:
         if args.cmd == "audit":
@@ -665,7 +673,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
         print(f"kill switch ON (by {by})")
         return 0
     try:
-        limits.reset(by)
+        cleared = limits.reset(by)
     except AuditUnavailable:
         print(
             "refused: the audit store is unavailable, so the reset cannot be recorded. "
@@ -690,14 +698,22 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             if state.by
             else "set by someone unknown"
         )
+        try:  # name what was NOT cleared: these stops were set after the reset read the open stops
+            left = limits.store.open_stops()
+        except Exception:  # noqa: BLE001 - the line above is enough when the list cannot be read
+            left = []
+        shown = "".join(
+            f"\n  not cleared: stop {s.id} by {s.by!r} at {s.ts.isoformat()}" for s in left[:20]
+        ) + (f"\n  ... and {len(left) - 20} more" if len(left) > 20 else "")
         print(
-            f"kill switch still ON ({who}): the reset was written, but a stop is still open. A colleague may "
-            "have just set it, or an older flag is on. Check the stop reason with them before resetting again: "
-            "a second reset erases that stop too.",
+            f"kill switch still ON ({who}): cleared {len(cleared)} stop(s), but a stop that was not in the list "
+            "the reset showed is still open. A colleague may have just set it, or an older flag is on. Check the "
+            "stop reason with them before resetting again: the next reset clears every stop it lists."
+            + shown,
             file=sys.stderr,
         )
         return 2
-    print(f"kill switch OFF (by {by})")
+    print(f"kill switch OFF (by {by}; cleared {len(cleared)} stop(s))")
     return 0
 
 

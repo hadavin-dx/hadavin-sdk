@@ -93,11 +93,12 @@ class World:
 
     def store(self, role, scoped=None):
         """A store whose one connection is logged in as `role` (proven, not assumed)."""
-        s = make(
-            "store",
-            PostgresSettings(**SETTINGS),
-            FakeSecretProvider({"pg-dsn": self.dsn_of(role, scoped)}),
-        )
+        settings = PostgresSettings(**SETTINGS)
+        if (
+            role == self.reset
+        ):  # the CLI marks the reset login (E6): it is not held to the runtime's rights
+            settings._login_role = "reset"
+        s = make("store", settings, FakeSecretProvider({"pg-dsn": self.dsn_of(role, scoped)}))
         self.stores.append(s)
         assert s._db.execute("SELECT current_user").fetchone()[0] == role
         s._db.execute("SET statement_timeout = '30s'")  # a blocked statement fails, never hangs
@@ -1753,14 +1754,17 @@ def test_b2_cli_reset_says_still_on_when_a_stop_commits_after_its_clear_statemen
     ks = w.read()
     assert (ks.on, ks.by) == (True, "ops:during")
     assert _limits(cfg, "reset", "user:again") == 0
-    assert "kill switch OFF (by user:again)" in capsys.readouterr().out
+    assert "kill switch OFF (by user:again; cleared 1 stop(s))" in capsys.readouterr().out
     assert w.read().on is False
 
 
-def test_s5_a_stop_committed_between_the_audit_intent_and_the_clear_statement_is_cleared(
+def test_s5_a_stop_committed_between_the_audit_intent_and_the_clear_statement_stays_on(
     w, tmp_path, monkeypatch, capsys
 ):
-    """The owner locks the flag row, so the reset waits at its first statement, after its audit intent."""
+    """The owner locks the flag row, so the reset waits at its first statement, after its audit intent.
+    E6 changed the expectation (this test pinned the old unconditional clear, which erased a stop the operator was
+    never shown): the reset clears exactly the stops it read before the intent, so the stop set meanwhile stays ON,
+    is named, and the exit code is 2."""
     cfg = _reset_cli(w, tmp_path, monkeypatch)
     rt = _stop(w, "ops:before")
     with psycopg.connect(w.scoped) as owner:
@@ -1779,10 +1783,12 @@ def test_s5_a_stop_committed_between_the_audit_intent_and_the_clear_statement_is
         0,
     )  # the intent was written before anything was cleared
     out, err = capsys.readouterr()
-    assert codes == [0], err
-    assert "kill switch OFF (by user:op)" in out
-    assert w.count("kill_switch_clears") == 2
-    assert w.read().on is False
+    assert codes == [2], err
+    assert "kill switch still ON" in err and "ops:between" in err
+    assert "kill switch OFF" not in out + err
+    assert w.count("kill_switch_clears") == 1  # only the stop the operator was shown
+    ks = w.read()
+    assert (ks.on, ks.by) == (True, "ops:between")
 
 
 def test_b2_cli_normal_reset_prints_off_and_exits_0(w, tmp_path, monkeypatch, capsys):
@@ -1791,7 +1797,7 @@ def test_b2_cli_normal_reset_prints_off_and_exits_0(w, tmp_path, monkeypatch, ca
     w.do('UPDATE kill_switch SET "on" = TRUE')
     assert _limits(cfg, "reset", "user:resetter") == 0
     out, err = capsys.readouterr()
-    assert out.strip().splitlines()[-1] == "kill switch OFF (by user:resetter)"
+    assert out.strip().splitlines()[-1] == "kill switch OFF (by user:resetter; cleared 1 stop(s))"
     assert "still ON" not in err
     assert w.read().on is False
 
