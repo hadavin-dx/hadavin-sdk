@@ -1,26 +1,27 @@
-UPDATED_UTC: 2026-11-20T05:59:04Z
+UPDATED_UTC: 2026-11-20T05:59:45Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
-ITEMS_TOTAL: 17
-ITEMS_OPEN: 8
-PERCENT: 77
-AGENTS_RUNNING: 4
-CAPACITY: load 2.5 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 4; 88M	/tmp/claude-0;397M	/root/.cache/uv;
+ITEMS_TOTAL: 18
+ITEMS_OPEN: 9
+PERCENT: 73
+AGENTS_RUNNING: 5
+CAPACITY: load 3.0 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 4; 53M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: combined tree: 2 known failing tests (producers patch for SPINE; E4 for the lead). G2: 2 inherited tests (fix running)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:53:52+00:00
+PUSHED_UTC: 2026-11-20T05:59:04+00:00
 
 (11:29 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) G7 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:25 | 5 | running | n/a | 0 | lead GO BUILD G7 |
 | aa4ceadd | builder | fable | applies the lead's code review round 1 of the gate (ORDER 011): new settle rule, map write without clear(), ast-based guard test, mutants, stated limits; main checkout | 05:56 | 06:20 | 5 | running | 1 of 3 (lead review) | 0 | ORDER 011 |
 | a7728368 | builder | fable | ORDER 010: changes the one test clause to the stricter has_mixed_script rule, pins it, writes the Unicode 15.1.0 requirement into README/CHANGELOG/ticket G; main checkout, other files than the gate agent | 05:56 | 06:10 | 5 | running | n/a | 0 | ORDER 010 decision on E4 |
 | aa070de5 | builder | fable | code G3: ports the fold scan of core/P2d-1 (its own 14 files) onto the fold in its own worktree /tmp/core-c-g3, branch wip-g3-p2d cut from wip-g1-fold; adds the redactor action counter asked by the review; one test batch with 2 workers | 05:47 | 06:40 | 2 | running | n/a | 0 | the fold is in, so G3 can start; HEAVY at the end (tests) |
@@ -78,6 +79,7 @@ PUSHED_UTC: 2026-11-20T05:53:52+00:00
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT gate fixes | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | both edit guard/runmap.py in the main checkout; starts when the ORDER 011 fix agent ends |
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
 | Gate: lead code review round 1 fixes (ORDER 011) | RUNNING | 5 | evidence/F-G0-1.md | 1 | review round 1 of at most 3 |
+| BUILD G7 context patterns after the sweep (E3) | RUNNING | 5 | evidence/G7-1.md, tickets/G7-context-after-sweep.md | 1 | one builder in the main checkout, file guard/redact.py |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -97,4 +99,4 @@ PUSHED_UTC: 2026-11-20T05:53:52+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-E3 (confirmed by run): one redaction pass leaves a bank account readable: build as G7 or accept? Ticket F AS BUILT: enforce= keyword instead of mask_check=. requests/1-producers.patch for SPINE. G4 3 decisions; G6 text rev 2. E1 cron denied. 4 agents run (1 heavy at its end).
+ORDER 011 and 012 read; fixes and G7 running. Work-in-progress gate fixes committed and pushed. Open for the lead: ticket F AS BUILT (enforce= keyword), requests/1-producers.patch, G4 3 decisions, G6 text rev 2. E1 cron denied. 5 agents run.
