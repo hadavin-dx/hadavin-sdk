@@ -10,6 +10,9 @@ from typing import Any, Protocol
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
+    MAX_SPEND_DECIMALS,
+    MAX_SPEND_EXPONENT,
+    MAX_SPEND_USD,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
@@ -22,6 +25,7 @@ from hadavin_sdk.models import (
     SpendReservation,
     TickState,
     ToolCallRecord,
+    check_spend_amount,
 )
 
 
@@ -55,15 +59,6 @@ class SpendCapExceeded(RuntimeError):
     def __init__(self, which: str) -> None:
         super().__init__(f"{which} cap reached")
         self.which = which
-
-
-MAX_SPEND_USD = (
-    10**9
-)  # exclusive upper bound of one amount; the same bound as the table CHECK of 0007
-MAX_SPEND_DECIMALS = 12  # decimal places one amount may carry
-MAX_SPEND_EXPONENT = (
-    9  # a larger exponent can only be a zero such as 0E+999999, which the database refuses
-)
 
 
 MAX_RESERVATION_ID_CHARS = 200
@@ -107,22 +102,6 @@ def check_spend_day(day: object) -> date:
     if type(day) is not date:
         raise ValueError("a spend day must be a date")
     return day
-
-
-def check_spend_amount(usd: object) -> Decimal:
-    """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
-    bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
-    ValueError and nothing is booked."""
-    if (
-        type(usd) is not Decimal
-        or not usd.is_finite()
-        or not 0 <= usd < MAX_SPEND_USD
-        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
-    ):
-        raise ValueError(
-            "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
-        )
-    return usd
 
 
 def clean_spend_amount(usd: object) -> Decimal:
