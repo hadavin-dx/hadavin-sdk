@@ -111,7 +111,7 @@ M = [
         GATE,
         'part = _PLACEHOLDER_DOT.sub(r"\\1[.]", part)',
         "part = part",
-        "test_row_H27_card",
+        "test_row_D3b_defang",
     ),
     m(
         "A17",
@@ -127,7 +127,7 @@ M = [
         GATE,
         'parts = [line] if "``" in line else _INLINE_CODE.split(line)',
         "parts = [line]",
-        "test_row_L2_card",
+        "test_row_D3c_defang",
     ),
     m(
         "A43",
@@ -141,9 +141,15 @@ M = [
         GATE,
         "part if i % 2 else fix(part)",
         "fix(part) if i % 2 else part",
-        "test_row_L2_card",
+        "test_row_D3c_defang",
     ),
-    m("A6", GATE, "for s, e, ch in _closed_fences(text)", "for s, e, ch in []", "test_row_L3_card"),
+    m(
+        "A6",
+        GATE,
+        "for s, e, ch in _closed_fences(text)",
+        "for s, e, ch in []",
+        "test_row_L11_slack",
+    ),
     m("A37", GATE, 'if ch == "`"', 'if ch in "`~"', "test_row_L4_card"),
     m("A12", GATE, "range(s + 1, e)", "range(s, e)", "test_row_I1_card"),
     m(

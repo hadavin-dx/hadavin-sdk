@@ -335,10 +335,11 @@ def test_no_run_no_extra_work(monkeypatch):
     assert on[0] == NO_RUN_WORK, "TB-3.4 the work of a text with no run is not the base commit's"
 
 
-# measured at the base commit with the same wrappers (the text `prose` and `blob48` read the clock per 1,024 characters or per segment)
+# measured at the base commit with the same wrappers (the text `prose` and `blob48` read the clock per 1,024 characters or per segment);
+# the two 156 were 154 before Phase 4: the HOSTKEY pattern is one more pattern, two more clock reads on a 48-character run
 NO_RUN_WORK = [
     (2, 3), (2, 3), (2, 3), (2, 3), (1, 1), (1, 1), (1, 3),
-    (1, 3), (1, 1), (1, 154), (1, 1), (1, 154), (1, 1), (1, 1),
+    (1, 3), (1, 1), (1, 156), (1, 1), (1, 156), (1, 1), (1, 1),
 ]  # fmt: skip
 
 

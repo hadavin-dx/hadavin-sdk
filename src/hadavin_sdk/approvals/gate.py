@@ -237,8 +237,8 @@ def _rendered(views: set[str]) -> set[str]:
     return {_RENDERED_MARKUP.sub("", html.unescape(v)) for v in views}
 
 
-# A placeholder (`<HOSTNAME_1>`) followed by a dot and a name character: the redactor masks only the internal part of
-# a host, so what follows the dot (`example.com`) would stay linkable. Written `[.]` (P1d-a, D3).
+# A placeholder (`<EMAIL_1>`, or a host name masked before G4 and stored) followed by a dot and a name character: what follows the
+# dot would stay linkable. Written `[.]` (P1d-a, D3).
 _PLACEHOLDER_DOT = re.compile(r"(<[A-Z][A-Z0-9]*_[0-9]+>)\.(?=[\w-])")
 # The `[.]` the old gate wrote: between two name characters only (P1d-a, `undefang_text`).
 _LEGACY_DOT = re.compile(r"(?<=[\w-])\[\.\](?=[\w-])")
