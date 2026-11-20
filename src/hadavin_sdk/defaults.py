@@ -447,6 +447,8 @@ def money_context() -> decimal.Context:
         flags=[],
         traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow],
     )
+
+
 # INJECTION_BUDGET_S (guard.injection, G10): the CPU seconds (time.thread_time() of the thread that runs the check) that ONE RegexDetector check,
 # one detector call on one text, may spend in the text fold; past them textnorm raises DeadlinePassed and the run is flagged guard_unavailable
 # (fail closed). Per check, not per run: a run that checks many texts (k1b: one check per tool result) may spend it once per check. None: no

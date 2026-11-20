@@ -49,6 +49,32 @@ class Meter(Protocol):
         ...
 
 
+class AgentMeter:
+    """A meter with ONE agent id bound: what the model gate takes as `meter=` (`Limits.for_agent(agent_id)`,
+    `Budget.for_agent(agent_id)`). `reserve(worst_usd, run_id=None)` and `settle(reservation_id, actual_usd)`
+    carry no agent id; settle goes through `settle_for`, so a reservation of ANOTHER agent is NotFound. `reserve`
+    also accepts the gate's call shape `reserve(agent_id, worst_usd, run_id=...)` as long as that agent id is the
+    bound one (any other agent id is a ValueError: this adapter never books for a second agent)."""
+
+    def __init__(self, meter: Limits | Budget, agent_id: str) -> None:
+        check_store_id(agent_id, "agent_id")
+        self._meter, self.agent_id = meter, agent_id
+
+    def reserve(self, *args: object, run_id: str | None = None) -> str:
+        if len(args) == 2:
+            agent_id, worst_usd = args
+            if agent_id != self.agent_id:
+                raise ValueError("this meter is bound to another agent")
+        elif len(args) == 1:
+            (worst_usd,) = args
+        else:
+            raise TypeError("reserve(worst_usd, run_id=None)")
+        return self._meter.reserve(self.agent_id, worst_usd, run_id=run_id)  # type: ignore[arg-type]
+
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        return self._meter.settle_for(self.agent_id, reservation_id, actual_usd)
+
+
 class Budget:
     """The in-memory meter of the eval and replay command lines: ONE total USD cap for the whole invocation, kept
     in this process only (no store, no stop state, no expiry step, no run cost). Same shape as `Limits`:
@@ -119,6 +145,10 @@ class Budget:
                 with localcontext(defaults.money_context()):
                     row[2], row[3] = "settled", max(Decimal(0), actual_usd - reserved)
             return row[3]
+
+    def for_agent(self, agent_id: str) -> AgentMeter:
+        """This budget as a gate meter with `agent_id` bound (see `AgentMeter`)."""
+        return AgentMeter(self, agent_id)
 
     def forfeit(self, run_id: str) -> None:
         """The case `run_id` ended. Every hold made with that run id that is still open (a timeout, used-up
@@ -201,6 +231,11 @@ class Limits:
                 "reserve refused: limits_unavailable error_kind=%s%s", type(exc).__name__, hint
             )
             raise SpendRefused("limits_unavailable") from None
+
+    def for_agent(self, agent_id: str) -> AgentMeter:
+        """This meter as a gate meter with `agent_id` bound (see `AgentMeter`): reserve(worst_usd, run_id=None),
+        settle(reservation_id, actual_usd) through `settle_for`."""
+        return AgentMeter(self, agent_id)
 
     def settle(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str) -> Decimal:
         """Replace the worst case with the real cost and return the overshoot (0 when none), always from the

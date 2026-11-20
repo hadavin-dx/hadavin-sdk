@@ -65,7 +65,10 @@ def gate(
         )
     if not isinstance(llm, ModelGate):
         llm = ModelGate(
-            llm, meter=Budget(max_usd), audit=None, worst_case=worst_case_for(cfg.routes, llm)
+            llm,
+            meter=Budget(max_usd).for_agent(f"eval:{agent_id}"),
+            audit=None,
+            worst_case=worst_case_for(cfg.routes, llm),
         )
     # One payer for the whole call; the judge below gets this bound client too. No run map: every document is
     # redacted with its own fresh map just before it is sent.

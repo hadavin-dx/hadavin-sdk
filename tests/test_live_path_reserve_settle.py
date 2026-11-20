@@ -377,9 +377,11 @@ def test_kill_switch_refusal_at_reserve_stops_the_run_before_the_model(world):
 
 @pytest.mark.parametrize(
     ("exc", "code"),
-    [("bad_amount", "limits.bad_amount"), (RuntimeError("x"), "limits.limits_unavailable")],
+    [("bad_amount", "worst_case_failed"), (RuntimeError("x"), "worst_case_failed")],
 )
 def test_a_pricing_failure_ends_the_run_before_the_model(world, monkeypatch, exc, code):
+    # F-install: the gate prices the call; an error of the pricing function is never passed on (it may carry
+    # text), the run ends NEEDS_PERSON with the gate's own code and no model call is made.
     from hadavin_sdk.limits import SpendRefused
     from hadavin_sdk.runtime import agent_loop
 

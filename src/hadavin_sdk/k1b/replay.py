@@ -152,7 +152,10 @@ def _replay(
         if isinstance(client, ModelGate):
             return client
         return ModelGate(
-            client, meter=budget, audit=None, worst_case=worst_case_for(cfg.routes, client)
+            client,
+            meter=budget.for_agent(agent_id),
+            audit=None,
+            worst_case=worst_case_for(cfg.routes, client),
         )
 
     gate = wrap(llm)

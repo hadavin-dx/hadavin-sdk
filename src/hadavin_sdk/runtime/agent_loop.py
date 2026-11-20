@@ -44,6 +44,7 @@ from hadavin_sdk.models import (
     ToolCallRecord,
     audit_code,
     audit_ref,
+    check_spend_amount,
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
@@ -240,6 +241,38 @@ class Hooks:
     restored_key: bytes | None = None
 
 
+def _usable_cost(cost: Any) -> bool:
+    try:
+        check_spend_amount(cost)
+    except ValueError:
+        return False
+    return True
+
+
+class _RunMeter:
+    """The meter of one run's model gate: the agent's `Limits.for_agent` meter, plus the loop's rule for a settle
+    that fails (the run cost is booked directly when the settle rolled back, the run ends when the outcome is
+    unknown). The gate catches a failed settle and returns the reply, so the ended run is kept here for the
+    loop to return after the call."""
+
+    def __init__(self, rt: Runtime, run: Run) -> None:
+        self._rt, self._run = rt, run
+        self._meter = rt.limits.for_agent(run.agent_id)
+        self.ended: Run | None = None
+
+    def reserve(self, *args: Any, run_id: str | None = None) -> str:
+        return self._meter.reserve(*args, run_id=run_id)
+
+    def settle(self, reservation_id: str, actual_usd: Any) -> Any:
+        try:
+            return self._meter.settle(reservation_id, actual_usd)
+        except Exception as exc:
+            ended = self._rt._settle_failed(self._run, exc, actual_usd)
+            if ended is not None:
+                self.ended = ended
+            raise
+
+
 class Runtime:
     def __init__(
         self,
@@ -404,7 +437,7 @@ class Runtime:
         return ToolOutput(text, digest, error, int((time.monotonic() - started) * 1000))
 
     # --- the model gate: the one way this class reaches a model -------------------------------------
-    def _gate(self, llm: Any) -> ModelGate:
+    def _gate(self, llm: Any, meter: Any = None) -> ModelGate:
         """The model gate around `llm` (whatever client the runtime or a detector holds at this moment): the
         meter is the limits, the audit sink the runtime's, the worst case is priced from the configured routes.
         A client that already is a gate is used as it is; a BOUND gate client is refused (TypeError)."""
@@ -414,23 +447,28 @@ class Runtime:
             raise TypeError("a bound model gate client cannot be wrapped again")
         return ModelGate(
             llm,
-            meter=self.limits,
+            meter=self.limits if meter is None else meter,
             audit=self.audit,
             worst_case=worst_case_for(self.registry.config.routes, llm),
         )
 
-    def _bound_llm(self, run: Run, mapping: dict[str, str]) -> BoundGate:
+    def _bound_llm(self, run: Run, mapping: dict[str, str], meter: Any = None) -> BoundGate:
         """The run's model client: every call is reserved, sent with the run map enforced, settled and audited
-        for this agent and run. `mapping` is the run's LIVE map, passed by reference."""
+        for this agent and run (the ONE reserve and settle of the call: the loop makes none of its own).
+        `mapping` is the run's LIVE map, passed by reference. `meter` is the run's `_RunMeter` (the limits, with
+        the loop's rule for a failed settle)."""
         try:
-            return self._gate(self.llm).bind(run.agent_id, run.run_id, mapping=mapping)
+            return self._gate(self.llm, meter).bind(run.agent_id, run.run_id, mapping=mapping)
         except Exception:  # noqa: BLE001 - no gate, no call
             raise _GateError from None
 
     def _bound_detector(self, run: Run) -> Detector:
         """The detector with its model calls (llm_judge) booked to this agent and run."""
         try:
-            return bind_detector(self.detector, self._gate, run.agent_id, run.run_id)
+            meter = self.limits.for_agent(run.agent_id)
+            return bind_detector(
+                self.detector, lambda llm: self._gate(llm, meter), run.agent_id, run.run_id
+            )
         except Exception:  # noqa: BLE001 - no gate, no call
             raise _GateError from None
 
@@ -452,31 +490,36 @@ class Runtime:
         return self._to(run, S.NEEDS_PERSON, exc.code)
 
     def _settle_model_call(self, run: Run, rid: str, cost_usd: Any) -> Run | None:
-        """Replace the held worst case of one model call with its real cost; the store books the run cost with
-        the settle. Returns None when done, or the run ended in NEEDS_PERSON `limits.limits_unavailable`.
-        A failure keeps the hold at the worst case (an over-count, the safe direction; an operator releases it,
-        see the runbook). AMBIGUOUS failures are exactly the connectivity errors (`is_connectivity_error`:
-        StoreUnavailable, OSError and its subclasses, psycopg OperationalError and InterfaceError): the settle
-        may have committed and booked the run cost, so nothing more is booked and the run ends. EVERY other
-        failure rolled back: the run cost is booked directly (a bad amount cannot be booked: the run ends).
-        Never raises: if the run cannot be ended either, the failure is logged and the run is returned."""
+        """Replace the held worst case of one model call with its real cost (the gate makes this call through
+        `_RunMeter`; the store books the run cost with the settle). Returns None when done, or the run ended in
+        NEEDS_PERSON `limits.limits_unavailable` (see `_settle_failed`). Never raises."""
         try:
             self.limits.settle_for(run.agent_id, rid, cost_usd)
             return None
         except Exception as exc:  # noqa: BLE001
-            ambiguous = is_connectivity_error(exc)
-            _LOG.warning(
-                "run %s: settle failed (%s, %s); the hold stays at the worst case",
-                run.run_id,
-                type(exc).__name__,
-                "unknown outcome: run cost left to the settle" if ambiguous else "rolled back",
-            )
-            if not ambiguous:
-                try:
-                    self.store.add_cost(run.run_id, cost_usd)
-                    return None
-                except Exception:  # noqa: BLE001 - a bad amount, or the store is down
-                    _LOG.warning("run %s: the run cost could not be booked", run.run_id)
+            return self._settle_failed(run, exc, cost_usd)
+
+    def _settle_failed(self, run: Run, exc: Exception, cost_usd: Any) -> Run | None:
+        """The settle of a model call failed: the hold stays at the worst case (an over-count, the safe direction;
+        an operator releases it, see the runbook). AMBIGUOUS failures are exactly the connectivity errors
+        (`is_connectivity_error`: StoreUnavailable, OSError and its subclasses, psycopg OperationalError and
+        InterfaceError): the settle may have committed and booked the run cost, so nothing more is booked and the
+        run ends. EVERY other failure rolled back: the run cost is booked directly (a bad amount cannot be
+        booked: the run ends). Returns None when the run goes on, else the ended run. Never raises: if the run
+        cannot be ended either, the failure is logged and the run is returned."""
+        ambiguous = is_connectivity_error(exc)
+        _LOG.warning(
+            "run %s: settle failed (%s, %s); the hold stays at the worst case",
+            run.run_id,
+            type(exc).__name__,
+            "unknown outcome: run cost left to the settle" if ambiguous else "rolled back",
+        )
+        if not ambiguous:
+            try:
+                self.store.add_cost(run.run_id, cost_usd)
+                return None
+            except Exception:  # noqa: BLE001 - a bad amount, or the store is down
+                _LOG.warning("run %s: the run cost could not be booked", run.run_id)
         try:
             return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
         except Exception:  # noqa: BLE001 - the store is down: nothing more can be written
@@ -629,10 +672,11 @@ class Runtime:
             if (stopped := self._limits_stop(run, cited)) is not None:
                 return stopped
             self.store.touch(run.run_id)  # heartbeat for tick's stuck-run rule
+            run_meter = _RunMeter(self, run)
             try:
                 # The gate reserves the worst case, sends, settles the real cost (the store adds it to the run's
                 # cost) and writes the audit row of the call, also of a failed one.
-                reply = self._bound_llm(run, rmap).chat(
+                reply = self._bound_llm(run, rmap, run_meter).chat(
                     messages,
                     system=system,
                     route=agent.model_route,
@@ -648,6 +692,14 @@ class Runtime:
                     "provider_exhausted" if isinstance(exc, ProviderExhausted) else "provider_error"
                 )
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
+            if (
+                run_meter.ended is not None
+            ):  # the settle failed and the run could not go on (`_RunMeter`)
+                return run_meter.ended
+            if reply.cost_usd is not None and not _usable_cost(reply.cost_usd):
+                # A cost that is not a valid amount was returned, not settled (the worst case stays booked): the
+                # run's cost cannot be told, so it ends (fail closed). None (no usage reported) is not this case.
+                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",
