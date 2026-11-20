@@ -342,7 +342,7 @@ def priced(routes: dict[str, Any]) -> dict[str, Any]:
                 Route._price(v)
                 if v == 0:
                     raise ValueError("a price must be above 0")
-            except (ValueError, ArithmeticError) as exc:
+            except (ValueError, ArithmeticError, AttributeError) as exc:
                 raise ConfigError(f"route {name!r}: {field}: {exc}") from None
     return routes
 
@@ -372,8 +372,8 @@ class NetworkLLM:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
-        priced(self.routes)  # `llm.routes = ...` after build must not skip the check
-        r = self.routes[route]
+        r = self.routes[route]  # read once: the object checked is the object priced
+        priced({route: r})  # `llm.routes = ...` after build must not skip the check
         specs, forced = tools_for(tools, output_schema)
         return self._chat(r, system, turns(messages, documents), specs, forced, output_schema)
 
