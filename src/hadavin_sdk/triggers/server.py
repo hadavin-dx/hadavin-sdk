@@ -53,6 +53,13 @@ MAX_CONNECTIONS: Final[int] = (
 READ_DEADLINE_S: Final[float] = (
     30.0  # total time to read the request line, the headers and the body
 )
+REFUSAL_TEXT: Final[dict[int, str]] = {  # one phrase per code, the same on every CPython
+    400: "Bad Request",
+    408: "Request Timeout",
+    414: "URI Too Long",
+    417: "Expectation Failed",
+    431: "Request Header Fields Too Large",
+}
 SERVER_ERROR: Final[int] = 500  # no refusal made here has a status from this number up
 
 CAP_WARN_EVERY_S: Final[float] = 60.0  # the connection cap is logged at WARNING at most this often
@@ -203,17 +210,18 @@ class QuietRequestHandler(WSGIRequestHandler):
         return _NoStream()
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
-        """Status line and an empty body. `message` and `explain` can repeat the request and are dropped."""
-        if (
-            code >= SERVER_ERROR
-        ):  # the stdlib parser answers 505 for HTTP/2.0 and up: a caller's mistake
+        """The whole refusal in ONE write: status line, `Content-Length: 0`, `Connection: close`, an empty body.
+        It does not use the stdlib `send_response_only`/`end_headers`, which write nothing while the request
+        version is still HTTP/0.9 (older CPython patch releases) and so left a bad request line unanswered.
+        `message` and `explain` can repeat the request and are dropped; the phrases are our own (the stdlib
+        renamed some between 3.12 and 3.13); 5xx from the parser (505 for HTTP/2.0 and up) is 400."""
+        if code >= SERVER_ERROR or code not in REFUSAL_TEXT:
             code = STALLED_STATUS
         self._answer_begun = True
+        self.close_connection = True
         _LOG.debug("trigger status=%d sender=- (refused before the endpoint)", code)
-        self.send_response_only(code)
-        self.send_header("Content-Length", "0")
-        self.send_header("Connection", "close")
-        self.end_headers()
+        head = f"{self.protocol_version} {code} {REFUSAL_TEXT[code]}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+        self.wfile.write(head.encode("latin-1", "strict"))
 
     def handle(self) -> None:
         try:
