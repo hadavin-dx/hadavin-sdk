@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:54:32Z
+UPDATED_UTC: 2026-11-20T16:55:16Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 4
-CAPACITY: load 2.05 of 4 cores (1-minute average), mem 1.6/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 55G 21%; 664M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
+CAPACITY: load 2.92 of 4 cores (1-minute average), mem 1.5/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 55G 21%; 665M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 17:45 rev-b-9b76 + docs-for-c + integ3 + door-money running; then: fresh review of docs-for-c's changes, push core/integration-dryrun from integ3, apply door-merged-support-2.patch after review
-PUSHED_UTC: 2026-11-20T16:54:12Z (the push before this board)
+PUSHED_UTC: 2026-11-20T16:54:38Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -108,21 +108,31 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 |---|---|---|---|---|---|---|---|---|---|---|
 | integ3 | builder (scratch worktree /home/user/wt/integ3, never pushed) | sonnet | INTEGRATION DRY-RUN 3: core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (+ my fix branches), PG16 runs of contracts/triggers/grants; INTEGRATION-DRYRUN-2.md kept current | 17:45 | 50 min | 5 | running | - | 0 | lead 16:38 |
 | rev-c-G12d | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G12d 1c56de238 (label-shaped/look-alike-bracket values keep their core, budget rule): are my G12b/G9b Majors fixed? | 17:05 | 15 min | 5 | running | 1 | 0 | lead GO 16:51 + heads moved |
-| rev-c-G4d | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G4d 71c19f90f (host trailing glue, ASCII label set): is my db01.corp例 Major fixed, any regression (IDN hosts)? | 17:05 | 15 min | 5 | running | 1 | 0 | lead GO 16:51 + heads moved |
 | rev-lead-tswm-3 | fresh independent reviewer (codebase-details), read-only | sonnet | lead wip/lead-b-ts-watermark fix round 3 (dbc1c0db0): my 6 nits closed? catalog lookups, settle timeouts, retry vs refusal | 17:05 | 15 min | 5 | running | 1 | 0 | lead GO 16:51 + heads moved |
+| A4-B8-text | builder (docs) | sonnet | A4: refresh the step D+E text package (README/SECURITY/CHANGELOG door sections + PR description) to the current state; request file for core-b | 17:12 | 25 min | 5 | running | - | 0 | lead 16:55 A4 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 38406s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 38406s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 38406s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 38406s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 38406s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 38406s ago | running | matched by name in ps |
-| 20878 | uv run pytest tests/triggers -n 3 -q -p no:cacheprovider -rfE | core-a session or its agent | 83s ago | running | matched by name in ps |
-| 20882 | /home/user/wt/integ3/.venv/bin/python /home/user/wt/integ3/.venv/bin/p | core-a session or its agent | 83s ago | running | matched by name in ps |
-| 23562 | /home/user/wt/integ3/.venv/bin/python -m tests.triggers.test_t5_crash_ | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 38449s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 38449s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 38449s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 38449s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 38449s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 38449s ago | running | matched by name in ps |
+| 20878 | uv run pytest tests/triggers -n 3 -q -p no:cacheprovider -rfE | core-a session or its agent | 127s ago | running | matched by name in ps |
+| 20882 | /home/user/wt/integ3/.venv/bin/python /home/user/wt/integ3/.venv/bin/p | core-a session or its agent | 127s ago | running | matched by name in ps |
+| 25407 | postgres: postgres postgres 127.0.0.1(42184) idle | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 25417 | postgres: postgres postgres 127.0.0.1(42252) idle | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 25418 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 2s ago | running | matched by name in ps |
+| 25428 | postgres: postgres postgres 127.0.0.1(42358) idle | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 25455 | postgres: postgres postgres 127.0.0.1(42450) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 25460 | postgres: postgres postgres 127.0.0.1(42506) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 25470 | postgres: postgres postgres 127.0.0.1(42554) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 25486 | postgres: postgres postgres 127.0.0.1(42612) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 25488 | postgres: postgres postgres 127.0.0.1(42626) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 25489 | postgres: postgres postgres 127.0.0.1(42632) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 25492 | postgres: postgres postgres 127.0.0.1(42640) DROP SCHEMA | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -184,6 +194,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 16:59 SIX-PACKAGE ORDER (16:55): REAL STATE, /proc/loadavg 2.92 (1 min), 6 pytest/mutant processes; agents: A1 docs for core-c: DONE (wip/core-a-for-c-docs 8df581d45; core-c merges); A2 review of core-b 9b7610007 (+77794758b): DONE (rev-b-9b76, rev-b-MTA); A3 dry-run 3: RUNNING (integ3: it pushes core/integration-dryrun with the conflicts resolved when its PG16 runs end; the T1 file is core-b's); A4 B8-text: STARTED (A4-B8-text: door sections for README/SECURITY/CHANGELOG at the CURRENT state, handover/core-b/requests/from-core-a-B8-text.md); A5 open D/E fix passes: NONE OPEN (d-fix2..d-fix24 done, FIX-signed_post and the S-nits were done in d-fix14..17); A6 MUTANT RUN: run 19 DONE earlier (120 of 120, 5a8c83fd3); because worker.py changed since (d-fix22 max_running, d-fix24 conflict setting) run 20 on the current head is RUNNING now (/tmp/mut-run20.log: result into raw/ + evidence/). Also reviewed this round: core-c G4d (no Blocker/Major), core-c G12d + lead ts-watermark round 3 still RUNNING. Answers: handover/core-a/ANSWERS-1647.md (updated).
 - 16:58 core-b 77794758b reviewed (reviews/rev-b-MTA.md; appended to handover/core-b/requests/xr-from-core-a-3.md): no Blocker; the new read-only alert function `hadavin_expired_holds` itself is sound (runtime-only EXECUTE, PUBLIC revoked, SECURITY DEFINER, pinned search_path, LIMIT 1000, returns agent/day/count/sum only). MAJORS: (1) the tick step `check_expired_holds` raises EVERY tick until an operator releases the holds (stateless, every_s=0): exit 1 each tick, up to 1000 log lines per tick, no dedupe/backoff, nothing in the audit chain, agent_id only cut to 64 chars (newline/ANSI reach the log); (2) tests/test_money_definer_static.py:~745 regex `(?<![\w.])` -> `(?<![\w."])` now hides a raw-SQL call written as a quoted string from the no-literals test (the _money_call form never matched, so the loosening looks unnecessary). CARRIED Major 3: the function is ANOTHER in-place edit of 0011 (+33 lines, no 0012): a DB that applied 0011 never gets it while FUNCTION_GRANTS/MONEY_FUNCTIONS REQUIRE it. Running: integ3, rev-c-G12d, rev-c-G4d, rev-lead-tswm-3.
 - 16:55 AGENTS 5 (integ3 + 4 fresh reviewers): your list (docs/core-b review/dry-run) is DONE or RUNNING as in handover/core-a/ANSWERS-1647.md; what MOVED since: core-c 186051499 (G12d 1c56de238 = the answer to my G12b guillemet/NOT_A_VALUE Majors; G4d 71c19f90f = the answer to my db01.corp例 Major), core-b 77794758b (hadavin_expired_holds + tick check_expired_holds, static test changes), your wip/lead-b-ts-watermark dbc1c0db0 (fix round 3): one reviewer on each: rev-c-G12d, rev-c-G4d, rev-b-MTA, rev-lead-tswm-3. wip/lead-b-migrate is still 0891d81bd (no new head to review).
 - 16:47 ANSWER to your GO: handover/core-a/ANSWERS-1647.md: (1) docs wip/core-a-for-c-docs 8df581d45 DONE (core-c may merge), (2) core-b 9b7610007 review DONE (NOINHERIT + owner-skip Majors fixed; 0011 in-place edit Major not fixed and worse; ec67808ec docs only), (3) dry-run 3 RUNNING (integ3). AGENTS 1.
