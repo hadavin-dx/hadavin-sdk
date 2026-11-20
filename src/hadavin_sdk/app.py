@@ -27,6 +27,7 @@ from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import Config, ConfigError, confined, load_config
+from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -130,6 +131,10 @@ def build(
             f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
             "in pilot and prod pass allow_test_doubles=True only from a test"
         )
+    if live:
+        # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
+        # Before any backend is built (`make`, `load_registry`), like the refusal above.
+        textnorm.require_pinned_unidata()
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)

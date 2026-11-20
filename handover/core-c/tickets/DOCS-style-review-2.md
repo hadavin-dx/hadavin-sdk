@@ -1,0 +1,16 @@
+# Root docs style review 2 (fresh, style, read only): changes required. 2 Blocker, 7 Major, 6 Nit
+Blockers
+1. Label contradicts its definition: SECURITY.md ~561 "TESTED (batch not on file...)" in a table titled "Builders' batches on file"; K12 (~101), K80a (~171), K80b (~174), K85 (~177-181) repeat it. Appendix (~567) defines TESTED as a recorded batch with a result line. K12/K80a are FIXED, which requires a recorded batch. Rewrite as UNVERIFIED (the note names the tests; no result line exists) and then FIXED becomes OPEN, or add a defined label such as TESTED-UNRECORDED.
+2. Internal codes in shipped CHANGELOG: "K3 pilot build path" (~156), "until K6 and K8" (~166), "K1b-full" (~172), "PENDING K7" (~212), "(rounds 8 and 10)" (~122), `p1a-015` (~596); test-file names with codes (test_k5_fixes2.py ~24, test_redact_g3_port.py ~59, fold5 ~59). Name the feature; Kn only in SECURITY.md.
+Major
+3. Same rule broken in SECURITY.md 2.10 (~553-561): file paths, "G12", "G8T", "MIX", "R8" (~53): describe changes in words or say the notes are not shipped.
+4. Brand strings likely present (SECURITY ~35 says a repository test fails on it): slack, bedrock_guardrail (CHANGELOG ~18), PuTTY (~62), *.rds.amazonaws.com (~198), ARN (README ~80): check each against the test's list; use "chat tool", "cloud guardrail service" where a config value is not required.
+5. SECURITY Part 1 (~11-19) and "reviewed, not bugs" (~9) have no status labels.
+6. README ~81 (three views) and ~100 (not decoded for generic patterns: URL-encoded PII, HTML entities, octal/hex escapes) disagree with CHANGELOG ~63 (redact_text decodes percent, HTML-entity, \x and 3-digit octal to a fixed point): align or say which path decodes.
+7. Sentences far over 30 words (SECURITY ~17, 103, 124; CHANGELOG ~8, 10, 63); split one idea per sentence, sub-bullets for message and spellings lists.
+8. CHANGELOG "Upgrade steps" heading (~29) holds behaviour notes (look-alike redaction 45-62, fold5, Cost); "Breaking changes" has non-actions (12, 21): move to "Changed"; add the "unlabelled statements are read from the code" line (as README ~58); "measured" lowercase at ~26.
+9. "Accepted" without a decision on file: K75/K76 titled accepted yet PINNED; K70/K74 say owner has not decided; STATED needs a named source (K50 ~457 names none): retitle "Not prevented, pinned"; add a source to K50.
+10. Appendix says each TESTED claim names the test or batch (~567); most K entries say only "Evidence: TESTED": name the test file or weaken the definition.
+Nit: terms used before definition (run map, gate, pass one, sweep, fixed point, units of work, trie nodes, HMAC, CODEOWNERS; "redactor" vs "secret finder"): pointer to the appendix at line 9; unnumbered H2s above 2.0-2.10; "Limits and trust (read tools)" also covers redaction/roles/caps; K67 mixes two statuses, K70/K74 mix OPEN notes into FIXED/PINNED; "MEASURED here" undefined (define: printed by a direct call at commit 2552bcc95); README ~36 repeats the 3.14 refusal at ~21, ~19/21 unlabelled, ~19 repeats a tag claim ~34 marks UNVERIFIED, ~97 vague; K26/K29 default (tighten DB rights by 2026-11-23) vs README ~108 "must accept the waiver"; tables scannable only in 2.10.
+Counts agree across files (2,000 values, 524,288 chars, 6.0 s, 4.5-5.4 s, base64 12 chars depth 3, 14 uncalled functions).
+Not read: CHANGELOG ~219-769.

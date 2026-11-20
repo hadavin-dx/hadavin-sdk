@@ -1,0 +1,36 @@
+______________________ test_no_link_outside_code_on_card _______________________
+
+    def test_no_link_outside_code_on_card():
+        bad = (gate._DOMAIN, gate._NON_ASCII_HOST, gate._PLACEHOLDER_DOT, gate._WIDE_DOTS)
+        for x in C.texts("TXT-A"):
+            final = channel.clean(x)
+            for text in _text_tokens(final):
+                for rx in bad:
+>                   assert not rx.search(text), (
+                        f"LINK: {x!r} -> {final!r}: {text!r} matches {rx.pattern}"
+                    )
+E                   AssertionError: LINK: '3anna.m@example.orgmrn_．g_h。udb01.corp.example.com43 evil.comksét\nwk=:_aqt｡/\nw-?v例z6ydb01.corp.example.com_?password=#[ke5ni_2&vx```.?password=u例k<EMAIL_1>lgpg7épassword=~~~2u1épr87>。xpl~~~｡ &．```lk4xKp2Vb9Lr3NcW8dYh6uJss8beb?\nh3/3iq4xKp2Vb9Lr3NcW8dYh6uJswj```jrs v:]ez.*kanna.m@example.org例www.evil.digital4xKp2Vb9Lr3NcW8dYh6uJs~~~m
+E                   assert not <re.Match object; span=(22, 33), match='example.com'>
+E                    +  where <re.Match object; span=(22, 33), match='example.com'> = <built-in method search of re.Pattern object at 0x55f4ae247fa0>('w-?v例z6ydb01[.]corp[.]example.com')
+E                    +    where <built-in method search of re.Pattern object at 0x55f4ae247fa0> = re.compile('(?<![\\w.\\[/-])((?:[\\w-]+\\.)+)([a-z]{2,24}|xn--[a-z0-9-]+|[^\\x00-\\x7f\\W\\d_]{2,})(?![\\w@-])', re.IGNORECASE).search
+
+tests/test_p1d_a_rows.py:127: AssertionError
+_________________________ test_stored_card_round_trip __________________________
+
+    def test_stored_card_round_trip():
+        # G-TXT-B: a typed `[.]` between name characters is read as `.` by design (row L15), so it is not drawn.
+        for x in C.texts("TXT-B"):
+            stored = channel.clean(x)
+            if len(stored) <= 2900:
+>               assert C.e_slack(stored) == stored, f"ROUND TRIP: {x!r}: {stored!r}"
+E               AssertionError: ROUND TRIP: 'www.evil.digitalgfso.<evil.com<EMAIL_1>=例e<édb01.corp.example.com2?t6例8nwww.evil.digital```3&anna.m@example.organna.m@example.orgsq?g5m61a<EMAIL_1>evil.comi_/4xKp2Vb9Lr3NcW8dYh6uJs<HOSTNAME_1>例éx~~~#p_`.ix<HOSTNAME_1>@.anna.m@example.org?password=?l5pr@ev=?password=>ng.k4xKp2Vb9Lr3NcW8dYh6uJso`?password=y<EMAIL_1><EMAIL_1>#?password=h www.evil.d
+E               assert 'www[.]evil[....00b~\u200b~‹é' == 'www[.]evil[....00b~\u200b~‹é'
+E                 
+E                 Skipping 108 identical leading characters in diff, use -v to show
+E                 - &<EMAIL_2>.m@example.orgsq?g5m61a<EMAIL_1>evil.comi_/4xKp2Vb9Lr3NcW8dYh6uJs<HOSTNAME_1>例éx~​~​~#p_`.ix<HOSTNAME_1>@<EMAIL_3>?password=<SECRET_1> www[.]evil[.]digital`é&n?5sxl4gr3~​~​~‹é
+E                 ?           ^^^^^^^^^^^^^^^^
+E                 + &<EMAIL_2><EMAIL_4>?g5m61a<EMAIL_1>evil.comi_/4xKp2Vb9Lr3NcW8dYh6uJs<HOSTNAME_1>例éx~​~​~#p_`.ix<HOSTNAME_1>@<EMAIL_3>?password=<SECRET_1> www[.]evil[.]digital`é&n?5sxl4gr3~​~​~‹é
+E                 ?           ^^^^^^^^^
+
+tests/test_p1d_a_rows.py:148: AssertionError
+________________________ test_licences_are_proprietary _________________________

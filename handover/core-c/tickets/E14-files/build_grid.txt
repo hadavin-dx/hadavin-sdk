@@ -1,0 +1,11 @@
+build N=1 L=262144 chars=262144 peak_MB=114 retained_MB=10 cpu_s=0.68 ok finders=1 slow=0
+build N=4 L=65536 chars=262144 peak_MB=114 retained_MB=11 cpu_s=0.73 ok finders=1 slow=0
+build N=16 L=16384 chars=262144 peak_MB=114 retained_MB=20 cpu_s=0.64 ok finders=1 slow=0
+build N=128 L=2048 chars=262144 peak_MB=113 retained_MB=15 cpu_s=0.65 ok finders=1 slow=0
+build N=2 L=262144 chars=524288 peak_MB=238 retained_MB=14 cpu_s=1.21 ok finders=1 slow=0
+build N=8 L=65536 chars=524288 peak_MB=236 retained_MB=18 cpu_s=1.27 ok finders=1 slow=0
+build N=4 L=262144 chars=1048576 peak_MB=480 retained_MB=21 cpu_s=2.79 ok finders=1 slow=0
+build N=16 L=65536 chars=1048576 peak_MB=479 retained_MB=28 cpu_s=2.97 ok finders=1 slow=0
+build N=8 L=262144 chars=2097152 peak_MB=964 retained_MB=32 cpu_s=5.39 ok finders=1 slow=0
+build N=32 L=65536 chars=2097152 peak_MB=965 retained_MB=51 cpu_s=6.08 ok finders=1 slow=0
+build N=128 L=16384 chars=2097152 peak_MB=965 retained_MB=70 cpu_s=5.26 ok finders=1 slow=0

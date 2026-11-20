@@ -64,7 +64,7 @@ MODEL_CALLERS = frozenset(
 )
 # Callers whose model input is not produced by the redaction path, and why (reviewed: each is the user's own text).
 OUTSIDE_THE_CHOKE_POINT = {
-    "guard/model_gate.py": "the wrapper around the model client: it produces no text of its own; before sending it replaces every value the run's map already holds by that value's placeholder (it runs no pattern and finds no new value)",
+    "guard/model_gate.py": "the wrapper around the model client: it sends nothing of its own; it replaces the values the run already knows by their placeholders in what its caller passes (runmap.enforce_map) and then calls the client",
     "demos/ask-your-data/askdata/pipeline.py": "sends only the question the user typed plus a fixed prompt; no document, tool result or client record reaches the model",
     "k1b/loop.py": "sends the masked case bundle (`k1b case bundle` row masks every leaf) and tool results rendered from it",
 }

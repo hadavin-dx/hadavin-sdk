@@ -7,9 +7,13 @@ from __future__ import annotations
 
 import logging
 import re
+import time
+from collections.abc import Iterator
 from decimal import Decimal
 from typing import Protocol
 
+from hadavin_sdk import defaults
+from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import Verdict
 
@@ -35,20 +39,193 @@ _SQUASH = re.compile(r"[^a-z]")
 _SQUASHED = ("ignorepreviousinstructions", "ignoreallpreviousinstructions", "disregardtheabove")
 
 
+def _check_geometry() -> None:
+    """The settings of the chunked read, checked before use (a bad value raises, which ``injection_check`` turns into a flag): whole positive
+    numbers, an overlap smaller than the piece, a largest overlap that still leaves a piece twice as long as it."""
+    names = (
+        "TEXTNORM_INJECTION_CHUNK_CHARS",
+        "TEXTNORM_INJECTION_OVERLAP_CHARS",
+        "TEXTNORM_INJECTION_OVERLAP_MAX_CHARS",
+        "TEXTNORM_INJECTION_PHRASE_CHARS",
+    )
+    for name in names:
+        value = getattr(defaults, name)
+        if type(value) is not int or value < 1:
+            raise ValueError(f"defaults.{name} must be a whole number of at least 1")
+    size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS
+    low = defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
+    high = defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS
+    if not (low <= high and 2 * high <= size):
+        raise ValueError(
+            "the injection overlap must be smaller than the largest overlap, and twice the largest must fit in one piece "
+            f"(overlap {low}, largest {high}, piece {size})"
+        )
+
+
+_Deadline = tuple[float, float]
+
+
+def _deadline() -> _Deadline | None:
+    """The deadline of one ``RegexDetector.check``, a pair read here once in the thread that runs the check (never handed to another thread):
+    ``defaults.INJECTION_BUDGET_S`` seconds of its CPU clock from now (``time.thread_time()``) and ``defaults.INJECTION_WALL_FACTOR`` times that
+    on the wall clock (``time.monotonic()``); None (no deadline, no clock read) when the budget is None. A budget that is not a positive finite
+    number (a ``bool``, a string, zero, a negative number, NaN, infinity), or a factor that is not a finite number of at least 1, raises
+    ``ValueError``, which ``injection_check`` turns into a flag, as for a bad setting of the chunked read (``_check_geometry``)."""
+    budget = defaults.INJECTION_BUDGET_S
+    if budget is None:
+        return None
+    if type(budget) not in (int, float) or not 0 < budget < float("inf"):
+        raise ValueError(
+            "defaults.INJECTION_BUDGET_S must be a positive number of CPU seconds or None"
+        )
+    factor = defaults.INJECTION_WALL_FACTOR
+    if type(factor) not in (int, float) or not 1 <= factor < float("inf"):
+        raise ValueError("defaults.INJECTION_WALL_FACTOR must be a finite number of at least 1")
+    return time.thread_time() + budget, time.monotonic() + factor * budget
+
+
+def _left(deadline: _Deadline | None) -> float | None:
+    """The CPU seconds left before ``deadline`` (from ``_deadline``, in the thread that runs the check), as the ``budget_s`` of one
+    ``textnorm.scan_views_no_value`` call; None without a deadline. The wall time left, divided by the factor, is the other candidate (the call
+    sets its own wall deadline from its budget), and the smaller of the two is given, so the call carries both. That makes the rule from the second
+    call on stricter than "2x the CPU budget of wall time": the CPU still needed must not exceed half the wall time left (a false flag, never a miss).
+    Zero or less: that call raises ``DeadlinePassed`` after its size rule."""
+    if deadline is None:
+        return None
+    return min(
+        deadline[0] - time.thread_time(),
+        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,
+    )
+
+
+def _holds(
+    window: str, need_kept: int, need_letters: int, deadline: _Deadline | None = None
+) -> bool:
+    """True when EVERY view of ``window`` (``textnorm.scan_views_no_value``, the views the scan reads) keeps at least ``need_kept`` characters and holds at
+    least ``need_letters`` a-z letters. A phrase is read in one of the views, so a count that holds in all of them holds in the one that matters. A view
+    drops what the fold drops (invisible characters, spaces) and turns a look-alike into its letter (a Cyrillic o gives one), so padding is not counted
+    and a tag character (which reads as a letter in one view only) cannot lend letters to the others. No view at all (nothing but invisible
+    characters) holds nothing."""
+    # A mark on both sides: a view that drops everything of ``window`` (the tag characters, which read as letters in one view only) is then still a
+    # view (of the marks, with no letter), not a view that is left out because it is empty, so it counts as zero.
+    views = textnorm.scan_views_no_value("|" + window + "|", budget_s=_left(deadline))
+    if not views:
+        return False
+    return (
+        min(len(v) for v in views)
+        >= need_kept + 2  # +2: the marks (some views drop them; that only asks for a little more)
+        and min(len(_SQUASH.sub("", v.lower())) for v in views) >= need_letters
+    )
+
+
+def _start_of_next(text: str, start: int, end: int, deadline: _Deadline | None = None) -> int:
+    """Where the piece after ``text[start:end]`` starts. Going back from ``end``, the new piece must hold at least
+    ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS`` characters of the old one, AND in every view of it at least ``defaults.TEXTNORM_INJECTION_PHRASE_CHARS`` + 1
+    characters the fold keeps, AND more letters than the longest squeezed phrase (``_holds``). Then a phrase cut by the boundary would have to hold all
+    of those and its own first and last letter: more than it can. Invisible characters, spaces, digits and punctuation between its letters do not
+    help the writer: they are not counted, the start just moves back (in steps of a quarter of the overlap so far, so the work stays small) until
+    enough real ones are in. If that takes more than ``defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS`` characters, or the piece itself begins first
+    (a piece with almost no letters before the boundary), the text is refused (``TextTooLong``, fail closed)."""
+    need_kept = defaults.TEXTNORM_INJECTION_PHRASE_CHARS + 1
+    need_letters = max(len(s) for s in _SQUASHED) + 1
+    low = defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
+    high = defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS
+    cap = min(high, end - start - 2)
+    back = min(low, cap)
+    while back >= 1:
+        if back >= low and _holds(text[end - back : end], need_kept, need_letters, deadline):
+            return end - back
+        if back >= cap:
+            break
+        back = min(cap, back + max(16, back // 4))
+    raise textnorm.TextTooLong(
+        f"the {back} characters before a piece boundary (the most allowed: {high}) hold too few letters to read a steering phrase across it"
+    )
+
+
 class RegexDetector:
     backend = "regex"
 
     def __init__(self, threshold: float) -> None:
         self.threshold = threshold
 
-    def _score(self, text: str) -> float:
-        if _RX.search(text):
-            return 1.0
-        squashed = _SQUASH.sub("", text.lower())
-        return 1.0 if any(s in squashed for s in _SQUASHED) else 0.0
+    @staticmethod
+    def _read(
+        text: str, deadline: _Deadline | None = None
+    ) -> Iterator[tuple[str, tuple[str, ...]]]:
+        """``(piece, its scan views)``: the text whole when the fold takes it; otherwise (over the size rule) overlapping pieces of about
+        ``defaults.TEXTNORM_INJECTION_CHUNK_CHARS`` characters, each halved until the fold takes it, so a long document is READ, not flagged.
+        A piece starts where ``_start_of_next`` says (at least ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS`` before the end of the one before,
+        and far enough back to hold enough letters that no steering phrase can be cut in two, however many invisible or other non-letter
+        characters its writer puts between its letters). CEILING: a text longer than ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises
+        ``TextTooLong`` (flagged as guard_unavailable), and so does a boundary that has too few letters before it within
+        ``defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS`` characters (fail closed, never a pass)."""
+        if len(text) > defaults.TEXTNORM_INJECTION_MAX_CHARS:
+            raise textnorm.TextTooLong(
+                f"a text of {len(text)} characters is over the injection check's limit of {defaults.TEXTNORM_INJECTION_MAX_CHARS}"
+            )
+        try:
+            yield text, textnorm.scan_views_no_value(text, budget_s=_left(deadline))
+            return
+        except textnorm.TextTooLong:
+            pass
+        _check_geometry()
+        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS
+        start = 0
+        while True:
+            end = min(start + size, len(text))
+            yield from RegexDetector._fit(text[start:end], deadline)
+            if end >= len(text):
+                break
+            start = _start_of_next(text, start, end, deadline)
+
+    @staticmethod
+    def _fit(
+        piece: str, deadline: _Deadline | None = None
+    ) -> Iterator[tuple[str, tuple[str, ...]]]:
+        try:
+            yield piece, textnorm.scan_views_no_value(piece, budget_s=_left(deadline))
+        except textnorm.TextTooLong:
+            half = len(piece) // 2
+            if half == 0:
+                raise
+            # The second part starts where ``_start_of_next`` says. If the first half is too short or too bare to look back over, the cut moves
+            # later (the first part grows, the second shrinks), so both parts are smaller than the piece and the recursion ends.
+            cut, second = half, None
+            while second is None:
+                try:
+                    second = _start_of_next(piece, 0, cut, deadline)
+                except textnorm.TextTooLong:
+                    cut += max(1, half // 2)
+                    if cut >= len(piece):
+                        raise
+            yield from RegexDetector._fit(piece[:cut], deadline)
+            yield from RegexDetector._fit(piece[second:], deadline)
+
+    def _score(self, text: str, deadline: _Deadline | None = None) -> float:
+        """1.0 when the raw text OR any view of it (``textnorm.scan_views_no_value``: the look-alike fold, the squeeze, the scan keys; there is no protected value here) holds a
+        steering phrase, so a Cyrillic o or an inserted mark does not hide it. A text over the size rule of the fold is read in overlapping pieces
+        (``_read``); a text over ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises ``TextnormError``, which ``injection_check`` turns into a flag
+        (fail closed). ``deadline`` (None: none; a pair of ``time.thread_time()`` and ``time.monotonic()`` values of this thread, from ``_deadline``) gives every
+        ``textnorm.scan_views_no_value`` call the seconds left (``_left``); past it ``textnorm`` raises its
+        ``DeadlinePassed``, which no reader here catches, so ``injection_check`` flags the run (``guard_unavailable``)."""
+        for piece, views in self._read(text, deadline):
+            for view in (piece, *views):
+                if _RX.search(view):
+                    return 1.0
+                squashed = _SQUASH.sub("", view.lower())
+                if any(s in squashed for s in _SQUASHED):
+                    return 1.0
+        if len(text) > defaults.TEXTNORM_MAX_CHARS:
+            # After the pieces (a boundary that cannot be proven still fails closed in them first): the raw squash (ASCII a-z only) is read over the WHOLE text, as the old whole-text read did: a piece boundary cannot split it, however much
+            # look-alike or full-width padding a writer puts between `ignore` and `previous...` (the pieces' letter counts are those of the fold views).
+            raw = _SQUASH.sub("", text.lower())
+            if any(s in raw for s in _SQUASHED):
+                return 1.0
+        return 0.0
 
     def check(self, text: str, source: str) -> Verdict:
-        score = self._score(text)
+        score = self._score(text, _deadline())
         flagged = score >= self.threshold
         return Verdict(
             flagged=flagged,

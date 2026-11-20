@@ -1,0 +1,40 @@
+--- base/src/hadavin_sdk/guard/redact.py	2026-11-20 11:49:22.000000000 +0000
++++ c3/src/hadavin_sdk/guard/redact.py	2026-11-20 11:51:57.908597971 +0000
+@@ -298,6 +298,18 @@
+             r"\d{2}[A-Za-z0-9]{11,30}" + _IBAN_END
+         ),
+     ),
++    # Last: a long high-entropy run no named pattern claimed - a bare AWS secret key, one line of a
++    # private key logged line by line (a pod log splits it), a base64 credential. Upper, lower AND a
++    # digit, so hex digests, ids and plain words do not match.
++    # It may start right after `=`: the lookbehind used to exclude it, so a secret after `blob=` (a key
++    # no credential pattern names) was never masked (found 2026-09-30).
++    (
++        "HIGHENTROPY",
++        re.compile(
++            r"(?<![A-Za-z0-9+/_\-])(?=[A-Za-z0-9+/=_\-]{0,128}[A-Z])(?=[A-Za-z0-9+/=_\-]{0,128}[a-z])"
++            r"(?=[A-Za-z0-9+/=_\-]{0,128}\d)[A-Za-z0-9+/_\-]{40,}={0,2}(?![A-Za-z0-9+/=_\-])"
++        ),
++    ),
+     # No word boundary (G8): the 8-4-4-4-12 run is found inside a longer token (`pod_<uuid>_0`, `x<uuid>`, `<uuid>9`) and
+     # the glued text stays outside. An 8-4-4-4-16 hex id gives `<UUID_1>` and its last 4 hex digits (accepted, L-D4).
+     (
+@@ -727,18 +739,6 @@
+             r"[\"']?([0-9a-f]{32,})(?![0-9a-z])"
+         ),
+     ),
+-    # Last: a long high-entropy run no named pattern claimed - a bare AWS secret key, one line of a
+-    # private key logged line by line (a pod log splits it), a base64 credential. Upper, lower AND a
+-    # digit, so hex digests, ids and plain words do not match.
+-    # It may start right after `=`: the lookbehind used to exclude it, so a secret after `blob=` (a key
+-    # no credential pattern names) was never masked (found 2026-09-30).
+-    (
+-        "HIGHENTROPY",
+-        re.compile(
+-            r"(?<![A-Za-z0-9+/_\-])(?=[A-Za-z0-9+/=_\-]{0,128}[A-Z])(?=[A-Za-z0-9+/=_\-]{0,128}[a-z])"
+-            r"(?=[A-Za-z0-9+/=_\-]{0,128}\d)[A-Za-z0-9+/_\-]{40,}={0,2}(?![A-Za-z0-9+/=_\-])"
+-        ),
+-    ),
+ ]
+ 
+ # Every scanning bound above has a fallback that MASKS instead of letting the text through. A bound is a cost

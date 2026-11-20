@@ -98,6 +98,11 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _map_chars(rmap) -> int:
+    """Characters of the distinct originals a run's map holds (ticket E14: one trie path each; shared prefixes over-count)."""
+    return sum(map(len, set(rmap.values())))
+
+
 class Unqualified(RuntimeError):
     """The agent has no green gate run for its current model, prompt and config."""
 
@@ -518,7 +523,10 @@ class Runtime:
             self._save_map(run, rmap)  # before anything is sent: a crash now loses no placeholder
         except Exception:  # noqa: BLE001
             return self._evidence_unavailable(run, cited, "map")
-        if len(rmap) > self._evidence.max_map_entries:  # too many distinct values to redact cheaply
+        if (
+            len(rmap) > self._evidence.max_map_entries  # too many distinct values to redact cheaply
+            or _map_chars(rmap) > self._evidence.max_map_chars
+        ):
             self._note(
                 run, "guard", "document", result="stopped", error_code="document_too_complex"
             )
@@ -650,7 +658,10 @@ class Runtime:
                     self.store.add_tool_call(record)
                 except Exception:  # noqa: BLE001 - evidence that cannot be kept cannot be cited
                     return self._evidence_unavailable(run, cited, call.name)
-                if len(rmap) > self._evidence.max_map_entries:
+                if (
+                    len(rmap) > self._evidence.max_map_entries
+                    or _map_chars(rmap) > self._evidence.max_map_chars  # tool result
+                ):
                     self._note(
                         run, "tool", call.name, result="stopped", error_code="document_too_complex"
                     )

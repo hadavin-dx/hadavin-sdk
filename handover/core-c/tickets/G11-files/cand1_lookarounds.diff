@@ -1,0 +1,46 @@
+--- base/src/hadavin_sdk/guard/redact.py	2026-11-20 11:49:22.000000000 +0000
++++ c1m/src/hadavin_sdk/guard/redact.py	2026-11-20 11:51:32.884723409 +0000
+@@ -186,6 +186,22 @@
+ # the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
+ _KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
+ ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
++# (G11) A value that sits inside a run of 40 or more token characters that HIGHENTROPY would mask is left to HIGHENTROPY.
++_TOKCH = r"[A-Za-z0-9_\-+/]"
++
++
++def _has(cls: str) -> str:
++    # `cls` somewhere in the run: from the match start on (128), or in the 64 characters before it (fixed-width look-behinds)
++    left = "|".join(rf"(?<={cls}{_TOKCH}{{{k}}})" for k in range(64))
++    return rf"(?:(?={_TOKCH}{{0,128}}{cls})|{left})"
++
++
++_IN_LONG_RUN = (
++    r"(?!(?=(?:"
++    + "|".join(rf"(?<={_TOKCH}{{{l}}})(?={_TOKCH}{{{40 - l}}})" for l in range(41))
++    + "))(?=" + _has("[A-Z]") + ")(?=" + _has("[a-z]") + ")(?=" + _has("[0-9]") + "))"
++)
++
+ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+     # PuTTY FIRST (hadavin-sdk edit): its value runs to the end of the text, so a PuTTY block that starts inside a PEM block must be cut before the PEM
+     # pattern shortens the text; the PEM pattern then masks the rest (its unterminated form runs to the end). The other order left the lines after the PEM END in clear.
+@@ -302,7 +318,9 @@
+     # the glued text stays outside. An 8-4-4-4-16 hex id gives `<UUID_1>` and its last 4 hex digits (accepted, L-D4).
+     (
+         "UUID",
+-        re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"),
++        re.compile(
++            r"(?=[0-9a-fA-F]{8}-)" + _IN_LONG_RUN + r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
++        ),
+     ),
+     # Bank details (owner, 2026-10-28): masked by shape beside their keyword, never by checksum. After UUID (a UUID
+     # can end `-aba123456789`) and before ACCOUNTID, SSN, CREDITCARD and PHONE. Codes first: a masked code is the
+@@ -546,7 +564,8 @@
+     (
+         "PHONE",
+         re.compile(
+-            r"(?<![0-9A-Za-z.\-+])(?:(?<=_)|(?=\d{10,16}_))"
++            r"(?<![0-9A-Za-z.\-+])(?:(?<=_)|(?=\d{10,16}_))" + _IN_LONG_RUN +
++            r"(?=\d)"
+             r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"
+             r"\d{10,16}(?![0-9A-Za-z.>›])"
+         ),

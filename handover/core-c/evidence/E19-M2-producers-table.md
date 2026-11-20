@@ -1,0 +1,31 @@
+# E19 M2: model-bound paths vs redact_text (src/hadavin_sdk; line numbers as read)
+Gate: model_gate.py _chunk 734-741 = enforce_map (runmap.py 689) then held_value_left (runmap.py 936). enforce_map replaces ONLY the exact spelling held in the map (no NUL/ZWSP/full-width/escape views, runmap.py 722-727); held_value_left = one sweep of the same finder, same limits. Gate enforces only message `content` and `documents`; system/tools/output_schema/role untouched (model_gate.py 3, 109).
+
+| # | path (file:line) | producer | redaction on it | gate-only? | verdict |
+|---|---|---|---|---|---|
+| 1 | runtime/agent_loop.py:470 documents=[safe_doc] | the document | redact_untrusted (agent_loop.py:412 -> runmap.py:378 -> redact_text); strips NUL/surrogates (runmap.py 429-431), NFKC, invisibles, layers | no | covered |
+| 2 | agent_loop.py:470 messages[0] _ASK | fixed constant | none needed | n/a | covered |
+| 3 | agent_loop.py:575-583 tool result message | _run_tool (agent_loop.py:~299) -> tools.prepare_output (tools.py:936) -> redact_layered (tools.py:976) -> redact_untrusted; toolbox.invoke same row in producers.py:15 | redact_layered tools.py:982 | no | covered |
+| 4 | agent_loop.py:576 assistant echo `tool NAME {inputs}` | record.inputs = runmap.redact_value(call.input) (agent_loop.py ~543) | redact_value (producer row "document and model-written arguments") | no | covered (model-written; call.name is checked against allowed names first) |
+| 5 | agent_loop.py:470 system, tools | registry.prompt, contract/manifest descriptions | none; operator text | yes (and gate does not even touch it) | not verifiable (operator-controlled; gate install check by core-b per model_gate.py:3) |
+| 6 | guard/judge.py:72 (input to the judge model; reached from _screen on document/tool output, shadow card, approval summary, k1b tool result) | any text | redact_text(text, {}) judge.py:71, EMPTY map so run-known values are not applied but patterns+views are | no (plus gate with run map when bound) | covered |
+| 7 | approvals/cards.py render_shadow, approvals/requests.py summary | summary built from plan inputs | summary() via approvals/channel.clean -> redact_text (channel.py:37/44/73); the model sees it only through the judge (row 6) | no | covered |
+| 8 | k1b/loop.py:94 (_chat_bounded) messages[0] | {"alert": bundle.alert, "alert_time": bundle.alert_time_text} loop.py:147 | alert masked by k1b/redaction.py redact_bundle (_apply 160, mask -> redact_untrusted 188). alert_time_text is NOT masked (not in _apply) but is the raw string of incident.json "alert_time"; bundle.py:6 / _ts_before validate it as a timestamp | no | covered (alert_time_text relies on bundle.py format validation, not redaction: not verified here) |
+| 9 | k1b/loop.py:214 `tool NAME result: shown` | render(snap.call(...)) k1b/tools.py:230 over the MASKED bundle | masked at source (row 8); no re-redaction after render | no | covered by construction; any text synthesised in tools.py that is not a slice of bundle data would be unredacted (not audited) |
+| 10 | k1b/loop.py:211-213 assistant echo `tool NAME {call.input}` | the model's own call.name / call.input, verbatim, no redact | none | YES, only gate | uncovered in principle, practically model-origin: only leaks what the model already produced from masked data |
+| 11 | k1b/replay.py (replay CLI) | all of loop.py | gate bound mapping=NO_MAP (test_gate_install_callers.py:40,169): enforce and held_value_left do NOT run | all protection is masking | covered only if cfg.k1b.redact true; replay.py:119-123 lets --i-know-data-is-already-masked send raw bundle with no redaction and no gate net: operator-acknowledged, uncovered by design |
+| 12 | evals.py:73 documents=[doc] | golden input file | redact_untrusted evals.py:63 with fresh {} map | NO_MAP gate | covered |
+| 13 | extract.py:47 documents=[document] | caller-supplied raw bytes | NONE inside extract() (extract.py:34-55) | yes: only the gate net if bound; NOT in PRODUCERS rows as a redactor of the document (row "extract validation errors" only covers safe_head of error text) | uncovered, but no caller in src/demos (grep); test_gate_install_callers.py:46 BYPASS: "no caller in src; F-install deletes it" |
+| 14 | extract.py:55-58 retry messages | reply.text (model) and safe_head(error) | safe_head extract.py:54 | no | covered |
+| 15 | guard/bedrock_guardrail.py:98 | vendor screen, not an LLM | redact_text | no | covered (not a model) |
+| 16 | demos/ask-your-data/askdata/pipeline.py | user's own typed question | none (OUTSIDE_THE_CHOKE_POINT, producers.py:63) | yes | not verifiable here (demo, not read) |
+
+## Registry/test evidence
+- guard/producers.py:15-41 PRODUCERS (each row's function must call its redaction fn); 49-60 MODEL_CALLERS; 62-66 OUTSIDE_THE_CHOKE_POINT (gate, demo pipeline, k1b/loop.py "masked bundle").
+- tests/test_k5_producers.py:46 (producer calls its fn), :66 (each fn reaches redact_text), :98-105 (every module with `.chat(`/`.apply_guardrail(` is in MODEL_CALLERS, and each is a producer or in OUTSIDE), :118 and :172 (no [:N] cut before redaction). It checks MODULES, not call sites: a new `.chat(` in an already-listed module passes without a producer row.
+- tests/test_gate_install_callers.py:138-147 registry vs scan; 150 bypass/install entries still call a model; 296 judge sites. It checks that each caller is reached through a bound gate WITH a map, not that text was redacted.
+- tests/test_k1b_redaction_layers.py does NOT assert registry coverage: it tests masking spellings in a bundle (63-183) and that only known modules call the bare pattern redactor (134).
+- test_k1b_redaction.py name k1b/loop.py is in OUTSIDE_THE_CHOKE_POINT, so nothing machine-checks that every string reaching loop.py's messages came from the masked bundle (rows 9, 10).
+
+## What the gate does today with an unredacted input (tests/test_model_gate.py:1753)
+UTF-16LE bytes document, NUL-split copy (`"\0".join(secret)`), ANSI-split copy, ZWSP-split or full-width copy: enforce_map does not find them (runmap.py 722-727), held_value_left uses the same finder, so returns False; _chunk returns (text, None) and the text is SENT AS WRITTEN (test asserts `docs[0] is utf16`). Only the literal map spelling is replaced/refused. So for rows 10, 11 (acknowledged), 13 the gate is not a net for those spellings.

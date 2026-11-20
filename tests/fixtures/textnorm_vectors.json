@@ -1,0 +1,12 @@
+{
+  "note": "Shared vectors for guard.textnorm.fold. non-ASCII characters are written as {U+XXXX}. Every consumer of the fold (separation-of-duties comparison, egress domain check, output check) must pass these.",
+  "identities": [
+    {"id": "alice.ng", "variants": ["{U+0430}lice.ng", "al{U+0456}ce.ng", "{U+03B1}lice.ng", "alice.n{U+0261}", "ALICE.NG", "alice{U+200B}.ng", "alice{U+0301}.ng"], "different": ["alice.nq", "alic.eng"]},
+    {"id": "bob", "variants": ["b{U+043E}b", "b{U+03BF}b", "{U+0432}ob"], "different": ["bobb"]},
+    {"id": "ceo-1", "variants": ["{U+0441}{U+0435}o-1", "ce{U+03BF}-1", "ceo-{U+0661}"], "different": ["ceo-2"]}
+  ],
+  "domains": [
+    {"domain": "evil.com", "variants": ["{U+0435}vil.com", "evil.{U+0441}om", "ev{U+0456}l.com", "evil.c{U+043E}m", "{U+0435}vil.{U+0441}{U+043E}m", "evil.c{U+03BF}m", "{U+03B5}vil.com"]},
+    {"domain": "paypal.com", "variants": ["p{U+0430}ypal.com", "paypa{U+04CF}.com", "p{U+03B1}ypal.com"]}
+  ]
+}

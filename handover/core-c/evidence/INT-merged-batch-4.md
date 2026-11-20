@@ -1,0 +1,5 @@
+# Merged-tree batch 4 (core-c, 09:1xZ): the same 15 files after G7 round 5 and the flaky-test fix
+
+Tree: cloud/core-c at 8dbb9853c (src and tests equal d1384342 + 833a86b). Command (raw): `uv run --all-extras --group test pytest -q -n 3 --no-header -p no:cacheprovider` over tests/test_model_gate.py, test_runmap_enforce_map.py, test_runmap_map_write.py, test_gate_install_callers.py, test_gate_mutants_picked_up.py, test_redact_settle_loop.py, test_redact_context_after_sweep.py, test_redact_idempotent_property.py, test_redact_fold_budget.py, test_k5_producers.py, test_stage_names.py, test_no_hardcoded_values.py, test_p1d_a_paths.py, test_p1d_link_oracle.py, test_undo_composes.py.
+Result (raw last line): `2672 passed, 2 skipped, 5 xfailed in 67.94s (0:01:07)`; no failure or error line. This closes the open point of INT-merged-batch-3.md (the 15-file batch re-run after the fix). The round 5 figure "2,619 passed, 4 xfailed" in G7-1.md came with 1 failed (the flaky gate test, fixed in 833a86b).
+NOT RUN: the whole suite, perf tests on this tree, mutant runs, Python 3.12, PostgreSQL 17.
