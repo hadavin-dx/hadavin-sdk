@@ -1036,7 +1036,9 @@ def test_t13_rule_b_an_error_marked_refused_before_response_is_settled_at_zero(e
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value is error
     assert meter.settles == [("res_1", Decimal(0))], "a marked refusal was not settled at 0"
-    assert sink.codes() == [("failed", "provider_refused")]
+    assert sink.codes() == [("failed", "provider_refused")], (
+        "a marked exhausted error was not audited as provider_refused"
+    )
     assert sink.rows[0].object_ref == "res_1"
 
 
@@ -1380,7 +1382,13 @@ def test_pin_a_mark_that_raises_on_read_is_not_a_mark_and_the_audit_row_is_still
     """Review gate-(c) Major 1: the predicate runs inside `except ProviderError`: a property that raises must not
     escape from the handler (no audit row, the caller sees the property's error): it is not a mark, rule (c)."""
     error = error_type("hostile")
-    assert model_gate.refused_before_response(error) is False, "a raising mark counted"
+    escaped = None
+    try:
+        counted = model_gate.refused_before_response(error)
+    except Exception as exc:  # noqa: BLE001 - reported below as a failed assertion
+        escaped, counted = exc, None
+    assert escaped is None, "a raising mark escaped the predicate"
+    assert counted is False, "a raising mark counted"
     bound, _, meter, sink = build(Client(raises=error))
     with pytest.raises(error_type) as caught:
         bound.chat(CLEAN, system="s", route="main")
@@ -1417,7 +1425,9 @@ def test_pin_a_marked_exhausted_is_settled_at_zero_with_the_refused_code(error):
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value is error
     assert meter.settles == [("res_1", Decimal(0))], "a marked exhausted error was not settled at 0"
-    assert sink.codes() == [("failed", "provider_refused")]
+    assert sink.codes() == [("failed", "provider_refused")], (
+        "a marked exhausted error was not audited as provider_refused"
+    )
     assert sink.rows[0].object_ref == "res_1"
 
 
