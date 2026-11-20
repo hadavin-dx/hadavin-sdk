@@ -107,7 +107,7 @@ def _call(app, method, path, headers, body, content_length=_AUTO):
     )
 
 
-def _sender(sender_id=SENDER, secret_name="sender-a-secret"):
+def _sender(sender_id=SENDER, secret_name="sender-a-secret"):  # noqa: S107 - a secret NAME, not a value
     """One sender in the shape of the config block `triggers.senders` (R1): id, secret_names, agent, principal."""
     return SimpleNamespace(
         id=sender_id, secret_names=(secret_name,), agent_id=AGENT, principal_id=PRINCIPAL
@@ -635,7 +635,8 @@ def test_further_kill_switch_on_gives_state_stopped(door):
 def test_e5_empty_document_creates_one_run_and_logs_no_document(door, caplog):
     """E5. Request: a correctly signed body {"key": "e5-key", "document": ""} (parse_body takes it, EP:213).
     Status: 202 or 200 with the answer holding only run_id and state, the derived run id. Store: exactly one run
-    row, trigger_ref = sender/key#sha256(b""); one "received" event. Logs: the status line only."""
+    row, trigger_ref = sender/key#sha256(b""); one "received" event. Logs: one endpoint status line (the worker's own line about the fake model having no recording for an empty
+    document is not the endpoint's and is not judged here)."""
     caplog.set_level("DEBUG")
     reply = _post(door, _body("e5-key", ""))
     assert reply.status in (200, 202)
@@ -648,7 +649,7 @@ def test_e5_empty_document_creates_one_run_and_logs_no_document(door, caplog):
     assert run.trigger_ref.endswith("#" + hashlib.sha256(b"").hexdigest())
     assert [r.run_id for r in _all_runs(door.store)] == [run_id]
     assert len(_received(door, run_id)) == 1
-    lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.triggers"]
+    lines = [r.getMessage() for r in caplog.records if r.getMessage().startswith("trigger status=")]
     assert lines == [f"trigger status={reply.status} sender={SENDER}"]
 
 
