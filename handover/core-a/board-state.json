@@ -640,10 +640,10 @@
   {
    "item": "D-fix3",
    "what": "round 2 code nits (validate read_deadline_s/max_connections/port as ConfigError, AttributeError -> ConfigError naming the field, nested finally for slot release, rate-limited WARNING on cap hit, public Runner.ack_wait_s, handler on hadavin_sdk.triggers only, make_wsgi docstring on custom start)",
-   "state": "QUEUED after mut-fix ends (code text changes would break mutant anchors)",
-   "percent": 0,
+   "state": "RUNNING",
+   "percent": 5,
    "evidence file": "reviews/D-code-result-review-2 (to write)",
-   "tries": 0,
+   "tries": 1,
    "reason": "mut-fix reads the same source files now"
   }
  ],
@@ -1656,11 +1656,11 @@
    "what exactly it is doing": "mutant script: 4 stale anchors, loud anchor count, win32 not-run, new mutants for the new guards, one complete run",
    "started UTC": "07:43",
    "expected end": "about 30 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "after d-fix2"
+   "reason": "run 12: 88 killed, 2 crash-accepted (G20j, G29b), 0 known survivors, 90 of 90 as expected; 4 stale anchors fixed; anchor-count guard; win32 not-run (exit 3); finding: test-order pollution (a test_worker test leaves the stderr handler on the sdk logger: 44 failures when it runs first)"
   },
   {
    "id": "D-rev2",
@@ -1687,6 +1687,19 @@
    "review round n of cap": "2 of 3 (fix)",
    "retries so far": 0,
    "reason": "ticket D rewritten to the code (invariants 7,8,10-16, sections 6,7,7b,9,10b,14); ~75 cites re-done, ~45 checked; test-file line numbers and cites outside triggers/ not re-verified; 'main exits 3 on this tree' from reading only"
+  },
+  {
+   "id": "d-fix3",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "round 2 code nits + test pollution fix, then one mutant run",
+   "started UTC": "07:54",
+   "expected end": "about 30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2 of 3 (fix)",
+   "retries so far": 0,
+   "reason": "after mut-fix"
   }
  ],
  "tests": [
