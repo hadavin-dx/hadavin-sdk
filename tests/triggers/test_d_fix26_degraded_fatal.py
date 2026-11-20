@@ -299,6 +299,14 @@ def _is_value(node):
         return _is_value(node.operand)
     if isinstance(node, ast.Constant):
         return isinstance(node.value, int | float) and not isinstance(node.value, bool)
+    if isinstance(node, ast.Call) and getattr(node.func, "id", getattr(node.func, "attr", "")) in (
+        "float",
+        "int",
+        "Decimal",
+    ):  # float("inf"), Decimal("4"), int(4)
+        return all(isinstance(a, ast.Constant) for a in node.args)
+    if isinstance(node, ast.Attribute) and node.attr in ("inf", "nan"):  # math.inf
+        return True
     return isinstance(node, ast.Name) and node.id.isupper()
 
 
@@ -347,7 +355,9 @@ def hidden_defaults(tree, name):
         elif isinstance(n, ast.Try) and any(_mentions(s, name) for s in n.body):
             for h in n.handlers:
                 if "AttributeError" in _names(h.type) and any(
-                    isinstance(s, ast.Return) and s.value is not None and _is_value(s.value)
+                    isinstance(s, ast.Return | ast.Assign | ast.AugAssign | ast.AnnAssign)
+                    and s.value is not None
+                    and _is_value(s.value)
                     for s in ast.walk(h)
                 ):
                     found.append(h.lineno)
@@ -375,6 +385,14 @@ def test_worker_source_has_no_hidden_fallback(name):
         "x = min(4, settings.max_running)",
         "try:\n    x = s.max_running\nexcept AttributeError:\n    return 4",
         "try:\n    x = s.max_running\nexcept (KeyError, AttributeError):\n    return DEFAULT",
+        "try:\n    x = s.max_running\nexcept AttributeError:\n    x = 4",
+        "try:\n    x = s.max_running\nexcept AttributeError:\n    x = 4.0",
+        "try:\n    x = s.max_running\nexcept AttributeError:\n    x: int = DEFAULT",
+        "x = settings.max_running or float('inf')",
+        "x = settings.max_running or Decimal('4')",
+        "x = settings.max_running or math.inf",
+        "x = getattr(settings, 'max_running', float('inf'))",
+        "x = settings.max_running if ok else Decimal(4)",
     ],
 )
 def test_the_scan_catches_what_it_is_meant_to_catch(code):
@@ -388,6 +406,8 @@ def test_the_scan_catches_what_it_is_meant_to_catch(code):
         "x = max(settings.max_running, other)",
         "try:\n    x = s.max_running\nexcept AttributeError:\n    raise",
         "try:\n    x = s.max_running\nexcept OSError:\n    return 4",
+        "try:\n    x = s.max_running\nexcept AttributeError:\n    x = other",
+        "x = settings.max_running or float(other)",
         "x = other or 4",
     ],
 )

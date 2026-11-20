@@ -789,19 +789,6 @@
    "reason": "EGM"
   },
   {
-   "id": "d-fix27",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "config/registry file OSError is fatal (exit 2) not store-down; nits (defaults refs, registry reload, scan)",
-   "started UTC": "17:45",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "fix of round 3",
-   "retries so far": 0,
-   "reason": "EGM"
-  },
-  {
    "id": "grantfix4",
    "role": "builder (tests)",
    "model": "sonnet",
@@ -813,6 +800,32 @@
    "review round n of cap": "after cap",
    "retries so far": 0,
    "reason": "EGM cap"
+  },
+  {
+   "id": "mutant-run-21",
+   "role": "evidence runner",
+   "model": "script",
+   "what exactly it is doing": "full endpoint_mutants.py on the d-fix27 tree (/tmp/mut-run21.log)",
+   "started UTC": "17:52",
+   "expected end": "35 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "worker.py changed"
+  },
+  {
+   "id": "rev-dfix27",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh round 4 of d-fix25..27 (worker.py config/degraded handling)",
+   "started UTC": "17:52",
+   "expected end": "12 min",
+   "percent": 10,
+   "state": "running",
+   "review round n of cap": "4 of 5",
+   "retries so far": 0,
+   "reason": "EGM"
   }
  ],
  "tests": [
@@ -1662,6 +1675,19 @@
    "review round n of cap": "5 of 5",
    "retries so far": 0,
    "reason": "round 5 (cap): 2 Major (dated constant DAY 2026-03-10; clock-dependent release/purge tests), unconfirmed, tests pass 45/45 today; fix pass started; goes to ESCALATIONS"
+  },
+  {
+   "id": "d-fix27",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "config/registry file OSError is fatal (exit 2) not store-down; nits (defaults refs, registry reload, scan)",
+   "started UTC": "17:45",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix of round 3",
+   "retries so far": 0,
+   "reason": "d-fix27: config/registry file OSError fatal exit 2; tests/triggers 1164 passed 313 skipped; 15 new tests; anchors 0 problems; ca_file leak -> core-b request"
   }
  ]
 }

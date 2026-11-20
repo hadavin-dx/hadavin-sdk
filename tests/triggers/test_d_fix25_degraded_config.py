@@ -142,20 +142,5 @@ def test_the_scan_leaves_plain_code_alone():
     assert hidden_defaults(ast.parse("x = settings.max_running\ny = a or b"), "max_running") == []
 
 
-# --- post-merge drift: the Runner's own default must be core-b's default
-
-
-def _core_b_default():
-    try:
-        from hadavin_sdk import defaults
-    except ImportError:
-        return None
-    return getattr(defaults, "TRIGGER_CONFLICT_EVENTS_DEFAULT", None)
-
-
-@pytest.mark.skipif(
-    _core_b_default() is None,
-    reason="core-b's hadavin_sdk.defaults has no TRIGGER_CONFLICT_EVENTS_DEFAULT on this tree (post-merge check)",
-)
-def test_runner_default_equals_core_b_default():
-    assert worker.CONFLICT_EVENTS_PER_MINUTE == _core_b_default()
+# post-merge drift check: the one copy is test_d_fix26_degraded_fatal.test_runner_default_equals_core_b_default
+# (it matches every TRIGGER*CONFLICT* constant, TRIGGER_CONFLICT_EVENTS_DEFAULT included).

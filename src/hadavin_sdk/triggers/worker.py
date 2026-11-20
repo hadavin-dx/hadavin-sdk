@@ -15,6 +15,13 @@ one run per key rests on the primary key of the runs table, and every answer on 
 process remembers keys. At most `max_waiting` requests are inside `start` at one time; one more is answered
 503 at once and the store is not asked (a store that hangs must not pile up request threads without end).
 
+Start errors (exit codes): a file that cannot be read (config.yaml, the registry files: PermissionError,
+IsADirectoryError, FileNotFoundError, UnicodeDecodeError) is a configuration error, exit 2 naming the file and the
+cause, at start and on every degraded re-check; only the store step (`build`'s connection, the ping) may count as
+"store down" (connectivity errors: OSError without a config file, psycopg operational errors, `StoreUnavailable`,
+timeouts), which is retried in process. A migrate or grant `ConfigError` that `build` raises after the store has
+answered is fatal too (exit 2, not retried): retrying cannot fix it.
+
 Several threads at once: what was read, and what was not
 - `Runtime` keeps no per-run state on itself: its fields are set once in `__init__` (runtime/agent_loop.py:208-213)
   and a run's working data are locals of `handle` (396-398).
@@ -100,10 +107,10 @@ POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it wait
 NO_SLOT_POLL_CAP_S: Final[float] = 1.0  # with no free slot the wait doubles from POLL_S up to this
 POLL_S_MIN: Final[float] = 0.01
 POLL_S_MAX: Final[float] = 1.0
-# `max_running` has NO number here: it is read from `config.triggers.max_running` (core-b's `TriggerSettings`, filled
-# from `defaults.TRIGGER_MAX_RUNNING`), the one source (d-fix22). See the module text on spend and parallel runs.
-# The values of `defaults.TRIGGER_MAX_RUNNING_CEILING`, `TRIGGER_ACK_WAIT_S` and `TRIGGER_ACK_WAIT_S_CEILING`
-# (core-b); a test compares them where `defaults` has them.
+# `max_running` has NO number here: it is read from `config.triggers.max_running` (core-b's `TriggerSettings`; its
+# default is core-b's, the name is not yet in this tree's defaults.py), the one source (d-fix22). See the module
+# text on spend and parallel runs. The ceilings and the ack wait below are the values core-b's defaults are meant to
+# have under their own names (not yet in this tree); a test compares them where `defaults` has them.
 MAX_RUNNING_CEILING: Final[int] = 64
 ACK_WAIT_S: Final[float] = 5.0
 ACK_WAIT_S_CEILING: Final[float] = 30.0
@@ -929,25 +936,67 @@ def serve(server: WSGIServer, runner: Any) -> int:
     return EXIT_OK
 
 
+def _unreadable_text(exc: BaseException, what: str) -> str:
+    """ "<file> could not be read (<class>)": the file named by the error when it has one, else `what`. Only the
+    path and the class name, never the error text."""
+    name = getattr(exc, "filename", None)
+    return f"{name if name else what} could not be read ({type(exc).__name__})"
+
+
+def _is_config_file_error(exc: OSError, root: Any) -> bool:
+    name = getattr(exc, "filename", None)
+    if not name or root is None:
+        return False
+    try:
+        return Path(name).resolve().is_relative_to(Path(root).resolve())
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def _read_config_files(what: str, load: Callable[[Any], Any], arg: Any) -> Any:
+    """Run `load_config` or `load_registry`. Reading a file is not the store step: an OSError or a
+    UnicodeDecodeError from it is a ConfigError (exit 2) naming the file and the cause, never "store down"."""
+    try:
+        return load(arg)
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ConfigError(_unreadable_text(exc, what)) from None
+    except (
+        AnyConfigError
+    ) as exc:  # `load_config` turns a UnicodeDecodeError into a config error of its own
+        cause = exc.__cause__
+        if isinstance(cause, UnicodeDecodeError):
+            raise ConfigError(f"{what} could not be read ({type(cause).__name__})") from None
+        raise
+
+
 def _build_app(args: argparse.Namespace) -> tuple[Any, Runner, Any]:
     """Load the config, build the App and the Runner: (wsgi, runner, app). The caller closes the Runner."""
     from hadavin_sdk.app import build
     from hadavin_sdk.config import load_config
     from hadavin_sdk.registry import load_registry
 
-    config = load_config(args.config_dir)
+    config = _read_config_files("config.yaml", load_config, args.config_dir)
     settings = trigger_settings(config)
     check_fields(settings)  # before anything is built: no secret read, no connection
     host = args.host  # an empty --host is refused by `check_bind`, never turned into loopback
     port = args.port if args.port is not None else PORT
     check_port(port)
     check_bind(host, args.allow_non_loopback)
-    registry = load_registry(config)
+    registry = _read_config_files(
+        "principals.yaml, agents.yaml or another registry file", load_registry, config
+    )
     qualified = qualified_agents(registry)
     check_senders(
         sender_list(settings), qualified, registry.principals
     )  # agent and principal: no store needed
-    app = build(args.config_dir, qualified)
+    try:
+        app = build(args.config_dir, qualified)
+    except OSError as exc:
+        # `build` reads the config files again: a file error under the config folder is a configuration error;
+        # any other OSError (refused, reset, timed out) is the store step and the caller classifies it.
+        if _is_config_file_error(exc, getattr(config, "root", None)):
+            raise ConfigError(_unreadable_text(exc, "a file under the config folder")) from None
+        raise
     runner = None
     try:
         wsgi, runner = make_app(app)

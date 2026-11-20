@@ -1,5 +1,5 @@
-"""d-fix22: `max_running` has ONE source, the config (`config.triggers.max_running`, core-b's `TriggerSettings`
-filled from `defaults.py`). The worker holds no number of its own and refuses to start without the field."""
+"""d-fix22: `max_running` has ONE source, the config (`config.triggers.max_running`, core-b's `TriggerSettings`;
+its default is core-b's, not yet named in this tree's defaults.py). The worker holds no number of its own and refuses to start without the field."""
 
 from __future__ import annotations
 
