@@ -44,10 +44,12 @@ except those whose name an OLDER shipped file creates (they belong to a migratio
 owner's, never other names, never another schema, never `CASCADE`: a dependent object (a trigger, a column default)
 is a `ConfigError` naming it; drop or change that object first.
 
-**Recipe for `--reset-draft`.** 0010 and 0011 are idempotent over what a draft made while they are unreleased:
+**Recipe for `--reset-draft`.** 0010 and 0011 are re-runnable over what a draft made while they are unreleased:
 0010 drops and re-creates its three guard triggers (`spend_money_guard`, `spend_month_money_guard`,
-`spend_reservations_money_guard`); 0011 uses `CREATE TABLE IF NOT EXISTS` for `hadavin_limits` and `hadavin_caps` (an
-existing table with other columns stops the run) and creates the two `*_usd_range` constraints only when missing. So
+`spend_reservations_money_guard`); 0011 uses `CREATE TABLE IF NOT EXISTS` for `hadavin_limits` and `hadavin_caps` plus `ADD COLUMN IF NOT EXISTS`
+for each column (a NOT NULL column missing from a table that holds rows fails loudly; extra columns and other column types
+are NOT checked: the repo's statement lexer refuses the DO block a check needs) and drops and re-adds the two
+`*_usd_range` constraints. So
 `--reset-draft 0011_money_definer` (or `0010_money_guard`, which re-applies 0011 too) needs no manual drops and keeps
 the caps rows. Before any reset, back the caps up anyway: `CREATE TABLE hadavin_caps_backup AS SELECT * FROM
 hadavin_caps;` (as the owner; the table has no grants). Functions are replaced by the re-applied file (CREATE OR
