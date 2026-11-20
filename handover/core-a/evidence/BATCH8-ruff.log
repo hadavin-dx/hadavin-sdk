@@ -1,0 +1,17 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+EXIT=0
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+unformatted: File would be reformatted
+   --> handover/core-a/tickets/E-test-helpers.md:104:10
+    |
+103 |         self, point: str
+    -     ) -> None: ...  # one-shot: raise SimulatedCrash, or write the marker with os.write(1, ...) and os._exit
+104 +     ) -> (
+105 +         None
+106 +     ): ...  # one-shot: raise SimulatedCrash, or write the marker with os.write(1, ...) and os._exit
+107 |     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
+    |
+
+1 file would be reformatted, 450 files already formatted
+EXIT=1
