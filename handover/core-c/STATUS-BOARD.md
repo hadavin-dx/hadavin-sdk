@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:25:41Z
+UPDATED_UTC: 2026-11-20T16:31:01Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:31Z agents 4 (G12d, G9c, G4d, DOCS3 builders), load 3.1. Root docs style review round 2 recorded: still 2 Blocker, 7 Major (labels vs definitions, remaining internal codes, brand list check, README/CHANGELOG decode mismatch). EGM needs two clean rounds, cap 5: DOCS3 fixes then round 3. 16:25Z agents 3 (G12d, G9c, G4d builders), load 2.0. DOCS2 MERGED (root docs: breaking changes first, codes/brands removed, labels fixed; doc tests 71 passed, only the lead-file vendor test red). Fresh style review round 2 of the root docs next. 16:21Z agents 4 (G12d, G9c, G4d, DOCS2 builders), load 2.4. G13d MERGED onto cloud/core-c (every head hit charged 1+len//64 before the seen test; separator-only limit pinned test_g13d_1 + owner question ESCALATIONS E24; 8 new mutants, gate_mutants 146/14
+STATE: 1630Z agents 4, load 4.59 3.49 2.22 (/proc/loadavg), head 0e33c0641. C1-C6 rows and agent list in handover/core-c/ANSWERS-1630Z.md. 16:31Z agents 4 (G12d, G9c, G4d, DOCS3 builders), load 3.1. Root docs style review round 2 recorded: still 2 Blocker, 7 Major (labels vs definitions, remaining internal codes, brand list check, README/CHANGELOG decode mismatch). EGM needs two clean rounds, cap 5: DOCS3 fixes then round 3. 16:25Z agents 3 (G12d, G9c, G4d builders), load 2.0. DOCS2 MERGED (root docs: breaking changes first, codes/brands removed, labels fixed; doc tests 71 passed, only the lead-file vendor test red). Fresh style re
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 3.1 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+CAPACITY: load 4.8 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 57; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:25:34+00:00
+PUSHED_UTC: 2026-11-20T16:30:58+00:00
 
-(21:55 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:01 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
