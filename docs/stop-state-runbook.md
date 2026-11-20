@@ -18,7 +18,8 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
 3. Store the reset login's connection string as a secret on the operator's machine only. Put the NAME of that secret
    in `backends.store.reset_credential_ref`. Do not give this secret to the runtime process: the secrets policy
    (IAM or the store's access rules) of the runtime's identity must NOT list the reset secret, because nothing in the
-   code can stop a secrets provider from handing it over.
+   code can stop a secrets provider from handing it over. The runtime start refuses when ANY secret name it reads (a
+   backend, tool, source, action executor, sender or the restored-hash key) is, or folds to, the reset or release ref.
 
 ## Stop
 `hadavin-sdk limits stop --by <who>` adds one stop. It works even when the audit log is down (the audit row is written afterwards).
@@ -27,19 +28,21 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
 `hadavin-sdk limits reset --by <who>` on the operator's machine. The reset is written to the audit log first; then every
 stop visible to the clear statement is cleared. A stop committed after that statement began stays ON; a stop committed
 between the audit row and that statement is cleared. The command then reads the state back: it prints
-`kill switch OFF` and exits 0 only when the state really is OFF; when it is still ON it says so and exits 2 (run the
-reset again). A reset that finds no `kill_switch` row fails (exit 2, audit outcome `limits.reset_failed`): run migrate.
+`kill switch OFF` and exits 0 only when the state really is OFF; when it is still ON it says who set it and when (if
+known), that a colleague may have just set it, and exits 2. Check the stop reason with that person BEFORE resetting
+again: a second reset erases the new stop too. A reset that finds no `kill_switch` row fails (exit 2, audit outcome `limits.reset_failed`): run migrate.
 If the audit log is also down at that moment, the `reset_failed` outcome cannot be kept for later by this command (the login it runs under has no right to park events): the refusal is then shown only on the screen and in the exit code.
 The command refuses (exit 2, before any connection) when `backends.store.reset_credential_ref` names the same secret
-as `backends.store.dsn_secret_name`.
+as `backends.store.dsn_secret_name`, or when the two names hold the same DSN. `release_credential_ref` is checked the same way
+against the runtime, reset and purge secrets.
 
 ## Exit codes of `limits stop` and `limits reset`
 | code | meaning | what to do |
 |---|---|---|
 | 0 | done | nothing |
-| 2 | refused, or the database answered with an error (for example the login has no right to reset), or the state still reads ON after a reset | read the message; in pilot and prod set `backends.store.reset_credential_ref`; "still ON": reset again |
+| 2 | refused, or the database answered with an error (for example the login has no right to reset), or the state still reads ON after a reset | read the message; in pilot and prod set `backends.store.reset_credential_ref`; "still ON": check who set the stop and why before resetting again |
 | 3 | the audit log could not be written, so the reset was NOT done | bring the audit store back, then reset again |
-| 4 | the database cannot be reached | nothing was changed; fix the connection |
+| 4 | the database cannot be reached | for a stop, and for a reset that never connected, nothing was changed; for a reset that lost the connection while it ran, it may or may not have been applied: treat the switch as ON until a read shows OFF; fix the connection |
 
 ## What reads as ON
 The `kill_switch` row is missing, or its flag is on, or at least one stop has no clear. If the state cannot be read at
