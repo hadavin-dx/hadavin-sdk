@@ -682,19 +682,6 @@
    "review round n of cap": "3 of 3 (fix)",
    "retries so far": 0,
    "reason": "after batch5 and round 3"
-  },
-  {
-   "id": "ruff-haiku",
-   "role": "fixer",
-   "model": "haiku",
-   "what exactly it is doing": "the 4 ruff errors in handover/core-a/inputs (lead material, ORDER 022)",
-   "started UTC": "08:37",
-   "expected end": "5 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "lead command"
   }
  ],
  "tests": [
@@ -2164,6 +2151,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "BATCH5 (head 73d8d3db7, evidence only): checkout whole suite with REQUIRE_PG=1 stopped at COLLECTION (my strict switch raises ImportError in test_t5_main_start.py: nothing else ran) = my bug; combined tree core-b 05159ec19: 1110 passed, 74 failed (all test_n8n_template: the runner did not copy n8n/ = runner omission), 2 skipped, start tests pass there; mutants 89 of 90 (G13b WRONG_REASON); lint: ruff check 1 error + format 4 files, all in handover/core-a/inputs/ (lead material); bandit rc 0, no summary line"
+  },
+  {
+   "id": "ruff-haiku",
+   "role": "fixer",
+   "model": "haiku",
+   "what exactly it is doing": "the 4 ruff errors in handover/core-a/inputs (lead material, ORDER 022)",
+   "started UTC": "08:37",
+   "expected end": "5 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "ruff check and format on handover/core-a/inputs: all clean (3 files changed)"
   }
  ]
 }
