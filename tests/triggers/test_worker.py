@@ -1558,3 +1558,135 @@ def test_d4_start_says_where_it_listens_and_stop_says_it_is_waiting(monkeypatch,
     )
     assert len(stopping) == 1 and stopping[0].endswith("stopping, waiting for 3 runs")
     assert runner.closed
+
+
+# --- d-fix5: R4-3 bind wiring and defaults, R4-4 Runner.running, R4-6 plain location segments ------------------
+
+
+def _patched_main(monkeypatch, seen):
+    """`main` with load_config and build patched: build raises a marker, so a run that passes the bind check ends
+    with exit 3 ('start failed: _Built'), and one the bind check refuses ends with 2."""
+    import hadavin_sdk.app
+    import hadavin_sdk.config
+
+    class _Built(Exception):
+        pass
+
+    def built(*a, **kw):
+        seen.append("built")
+        raise _Built
+
+    monkeypatch.setattr(
+        hadavin_sdk.config, "load_config", lambda d: SimpleNamespace(triggers=_settings())
+    )
+    monkeypatch.setattr(hadavin_sdk.app, "build", built)
+    real_registry = __import__("hadavin_sdk.registry", fromlist=["load_registry"])
+    monkeypatch.setattr(real_registry, "load_registry", lambda config: [])
+    monkeypatch.setattr(worker, "qualified_agents", lambda registry: [])
+
+
+def test_d5_a_host_that_is_not_loopback_is_refused_with_exit_2_before_anything_is_built(
+    monkeypatch, capsys
+):
+    seen: list[str] = []
+    _patched_main(monkeypatch, seen)
+    assert worker.main(["--host", "0.0.0.0", "--port", "0"]) == 2
+    err = capsys.readouterr().err
+    assert "not loopback" in err and "--allow-non-loopback" in err and "Traceback" not in err
+    assert seen == []
+
+
+def test_d5_with_the_switch_a_host_that_is_not_loopback_passes_the_bind_check(monkeypatch, capsys):
+    seen: list[str] = []
+    _patched_main(monkeypatch, seen)
+    binds: list[tuple[str, object]] = []
+    real = worker.check_bind
+    monkeypatch.setattr(
+        worker, "check_bind", lambda host, allow: (binds.append((host, allow)), real(host, allow))[1]
+    )
+    assert worker.main(["--host", "0.0.0.0", "--port", "0", "--allow-non-loopback"]) == 3
+    err = capsys.readouterr().err
+    assert "not loopback" not in err and "start failed: _Built" in err
+    assert seen == ["built"] and binds == [("0.0.0.0", True)]
+
+
+def test_d5_the_defaults_are_host_127_0_0_1_and_port_8081(monkeypatch, capsys):
+    seen: list[str] = []
+    _patched_main(monkeypatch, seen)
+    parsed: list[object] = []
+    real_prepare = worker._prepare
+    monkeypatch.setattr(worker, "_prepare", lambda args: (parsed.append(args), real_prepare(args))[1])
+    checks: list[tuple[str, object]] = []
+    real_port, real_bind = worker.check_port, worker.check_bind
+    monkeypatch.setattr(worker, "check_port", lambda p: (checks.append(("port", p)), real_port(p))[1])
+    monkeypatch.setattr(
+        worker, "check_bind", lambda h, a: (checks.append(("host", (h, a))), real_bind(h, a))[1]
+    )
+    assert worker.main([]) == 3  # passes both checks, stops in the patched build
+    args = parsed[0]
+    assert args.host == "127.0.0.1" and args.port is None and args.allow_non_loopback is False  # type: ignore[attr-defined]
+    assert worker.LOOPBACK == "127.0.0.1" and worker.PORT == 8081
+    assert checks == [("port", 8081), ("host", ("127.0.0.1", False))]
+    capsys.readouterr()
+
+
+def test_d5_runner_running_counts_the_loops_that_have_not_ended(rt):
+    rt.llm.gate.clear()
+    try:
+        with Runner(rt, rt.store, max_running=1, ack_wait_s=5.0) as runner:
+            assert runner.running == 0
+            status, _ = runner.start(_req(1))
+            assert status in OK
+            deadline = time.monotonic() + 20
+            while rt.llm.calls < 1 and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert rt.llm.calls == 1  # the loop is inside the model, held by the gate
+            assert runner.running == 1
+            rt.llm.gate.set()
+            _free(runner)
+            assert runner.running == 0
+    finally:
+        rt.llm.gate.set()
+
+
+def test_d5_serve_reads_running_from_the_runner_with_no_default(monkeypatch):
+    class Server:
+        server_port = 0
+
+        def serve_forever(self):
+            pass
+
+        def server_close(self):
+            pass
+
+        def shutdown(self):
+            pass
+
+    monkeypatch.setattr(signal, "SIGBREAK", signal.SIGUSR1, raising=False)
+    runner = SimpleNamespace(close=lambda: None)  # no `running`: reading it must raise, not give 0
+    with pytest.raises(AttributeError):
+        worker.serve(Server(), runner)  # type: ignore[arg-type]
+
+
+def test_d5_a_location_segment_with_user_text_is_printed_as_a_question_mark(monkeypatch, capsys):
+    import pydantic
+
+    text_key = "my secret key " + "Zq7" * 5
+    long_key = "k" * 41
+
+    class Backend(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(extra="forbid")
+        endpoint: int
+
+    def fails(args):
+        try:
+            Backend.model_validate({"endpoint": 1, text_key: 1, long_key: 2, "ok-key.1": 3})
+        except pydantic.ValidationError as exc:
+            raise ConfigError("x") from exc
+
+    monkeypatch.setattr(worker, "_prepare", fails)
+    assert worker.main([]) == 2
+    err = capsys.readouterr().err
+    assert "ok-key.1 (extra_forbidden)" in err and "? (extra_forbidden)" in err
+    assert "Zq7" not in err and "secret" not in err and "k" * 20 not in err
+    assert worker._loc_text(("a", 3, "b c", "x" * 40, "x" * 41)) == "a.3.?." + "x" * 40 + ".?"
