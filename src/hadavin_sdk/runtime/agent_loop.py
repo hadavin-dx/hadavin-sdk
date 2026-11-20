@@ -271,15 +271,30 @@ class Runtime:
     def _note(self, run: Run, domain: str, operation: str, **kw: Any) -> None:
         try:
             event = self._event(run, domain, operation, **kw)
-        except Exception:  # noqa: BLE001 - a refused event must never kill the run: audit a sanitised one
+        except Exception as exc:  # noqa: BLE001 - a refused event must never kill the run: audit a sanitised one
+            _LOG.warning(
+                "run %s: audit event refused error_kind=%s", run.run_id, type(exc).__name__
+            )
+            keep = {
+                k: audit_code(kw[k])
+                for k in (
+                    "object_ref",
+                    "result",
+                    "error_code",
+                    "inputs_hash",
+                    "output_hash",
+                    "decision",
+                )
+                if kw.get(k) is not None
+            }
             event = AuditEvent(
                 run_id=audit_code(run.run_id),
                 domain=audit_code(domain),
                 operation=audit_code(operation),
                 principal=audit_code(run.principal_id),
                 source="runtime",
-                result=audit_code(kw.get("result")) if kw.get("result") is not None else None,
-                error_code="audit_event_refused",
+                rule_id="audit_event_refused",
+                **keep,
             )
         self.audit.write_outcome(event)
 
