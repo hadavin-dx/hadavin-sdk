@@ -21,9 +21,9 @@ them). The ledger keeps the checksum of what was applied, so `migrate` warns, na
 operator acts. Two ways:
 
 - The database must follow the new file: drop everything that file and every later unreleased file made, then run
-  `hadavin migrate ... --reset-draft 0011_money_definer` (version of the changed file). It deletes the ledger row of
+  `hadavin-sdk migrate ... --reset-draft 0011_money_definer` (version of the changed file). It deletes the ledger row of
   that version and every later one, in the migrate transaction, and applies them again. Refused for a released
-  version. By hand: `DELETE FROM schema_migrations WHERE version >= '0011_money_definer';` after dropping the objects.
+  version, and for any version in the shipped manifest even if `UNRELEASED_MIGRATIONS` still lists it. By hand: `DELETE FROM schema_migrations WHERE version >= '0011_money_definer';` after dropping the objects.
 - The database already matches the file: `--accept-changed-draft 0011_money_definer` records the file's checksum.
 
 A NULL checksum on an unreleased file is trusted once (warning) and recorded.

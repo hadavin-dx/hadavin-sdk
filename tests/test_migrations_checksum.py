@@ -242,3 +242,15 @@ def test_a_ledger_without_the_checksum_column_gets_it_and_is_filled(env):
     assert mig.migrate(env, no_roles=True) == []
     ledger = _ledger(env)
     assert all(v is not None for v in ledger.values())
+
+
+def test_unreleased_names_and_the_released_manifest_never_overlap():
+    assert not mig.UNRELEASED_MIGRATIONS & mig._released_hashes().keys()
+
+
+def test_a_version_in_the_manifest_is_not_draftable_even_if_listed_unreleased(monkeypatch):
+    v = "0007_spend_reservations"
+    monkeypatch.setattr(mig, "UNRELEASED_MIGRATIONS", mig.UNRELEASED_MIGRATIONS | {v})
+    assert v not in mig._draft_versions()
+    with pytest.raises(ConfigError, match="only an unreleased"):
+        mig._reset_draft(None, v, mig._migration_files())
