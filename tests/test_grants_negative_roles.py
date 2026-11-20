@@ -94,6 +94,7 @@ WRITES: dict[str, dict[str, set[str]]] = {
         "dead_letters": {"INSERT"},
         "spend": {"INSERT", "UPDATE"},
         "spend_month": {"INSERT", "UPDATE"},
+        "spend_reservations": {"INSERT", "UPDATE"},
         "kill_switch": {"INSERT", "UPDATE"},
         "tick_state": {"INSERT", "UPDATE"},
         "audit_entries": {"INSERT"},
@@ -103,7 +104,12 @@ WRITES: dict[str, dict[str, set[str]]] = {
         "redaction_maps": {"INSERT", "UPDATE"},
     },
     "portal": {},
-    "purge": {"tool_calls": {"DELETE"}, "redaction_maps": {"DELETE"}},
+    # spend_reservations: migration 0007 (F-store) lets the purge role delete CLOSED reservations only (purge_cols)
+    "purge": {
+        "tool_calls": {"DELETE"},
+        "redaction_maps": {"DELETE"},
+        "spend_reservations": {"DELETE"},
+    },
 }
 
 
@@ -206,6 +212,7 @@ def test_delete_is_held_only_on_the_outbox_and_the_purged_evidence():
         ("runtime", "audit_outbox"),
         ("purge", "tool_calls"),
         ("purge", "redaction_maps"),
+        ("purge", "spend_reservations"),
     }
 
 
@@ -224,6 +231,7 @@ def test_the_purge_role_holds_delete_only_and_no_whole_table_read():
         "runs",
         "tool_calls",
         "redaction_maps",
+        "spend_reservations",
     }
 
 
