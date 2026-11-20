@@ -281,17 +281,22 @@ synced is the safe direction (the agent is refused at the lower table value) but
 Residual: the audit line is written by the CLI, not by the function, so a stolen reset login can call `hadavin_set_cap`
 directly with no audit line (the same is true of `release-expired`). Keep the reset login off the runtime machines.
 
-## After the upgrade to 0009: validate the stop-year constraints
-0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` as NOT VALID: every new row is checked, rows
-already there are not, so the upgrade cannot fail on a database holding a planted `ts` (the stop tables are
-append-only, such a row cannot be deleted below a superuser). Later, once you have looked for such rows (`SELECT id, ts
-FROM kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), run as
-the owner `hadavin-sdk migrate --validate-constraints` (it runs `ALTER TABLE kill_switch_stops VALIDATE CONSTRAINT
-kill_switch_stops_ts_range;` and the same for `kill_switch_clears_ts_range`, only for a constraint still NOT VALID, and
-changes nothing else). It fails naming the constraint while a bad row exists. Every `migrate` run prints a warning
-while either constraint is still NOT VALID, so the step cannot be forgotten. 0009 has no watermark table (nothing read
-it). The migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the
-index build.
+## After the upgrade to 0009: the stop-year constraints
+0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` (a `ts` between 2000-01-01 and 2100-01-01).
+It adds them NOT VALID, then validates each one itself ONLY when its table holds no row outside the range. A clean
+database therefore ends validated and `migrate` says nothing. A database that already holds a planted `ts` (the stop
+tables are append-only, such a row cannot be deleted below a superuser) still upgrades, keeps that constraint NOT
+VALID, and every `migrate` run prints one warning naming it while the row exists. Look for the rows (`SELECT id, ts FROM
+kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), deal with
+them, then run as the owner `hadavin-sdk migrate --validate-constraints` (it runs `ALTER TABLE ... VALIDATE CONSTRAINT`
+only for a constraint still NOT VALID, gives up after 5 seconds if a long transaction holds the table, and changes
+nothing else; it cannot be combined with a role flag). It fails naming the constraint while a bad row exists. The
+migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the index build.
+
+0009 has no watermark table (nothing read it). A database that ran an EARLIER, unreleased 0009 still has
+`kill_switch_watermark` and `hadavin_watermark_guard()`: `migrate` refuses it with a message saying so. Drop and
+recreate that database, or run `DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard()
+CASCADE;` as the owner and migrate again (there is no 0012: 0009 is unreleased).
 
 ## Going back to the release before the stop state
 The change of meaning cannot be undone by code alone: old code does not read `kill_switch_stops`, and its stop needs

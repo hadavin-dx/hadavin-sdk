@@ -13,7 +13,7 @@ number; `tests/fixtures/migrations_released.json` holds a hash only for RELEASED
 | 0006 | 0006_stop_state.sql | step B (stop state) | cloud/core-b | check the manifest (lead's release decision) |
 | 0007 | 0007_spend_reservations.sql | step F-store (reservations) | cloud/core-b | NOT released |
 | 0008 | 0008_release_expired_spend.sql | step F-store, ORDER 020 (release command, release role) | cloud/core-b | NOT released |
-| 0009 | 0009_stop_state_hardening.sql | step B, E12 (reset table, audit seq guard, watermark, ts CHECKs NOT VALID) | cloud/core-b | NOT released |
+| 0009 | 0009_stop_state_hardening.sql | step B, E12 (reset table, audit seq guard, ts CHECKs added NOT VALID and validated by 0009 when no bad row; NO watermark table any more: a DB that ran the earlier 0009 is refused by migrate with a drop-and-recreate message, no 0012) | cloud/core-b | NOT released |
 | 0010 | 0010_money_guard.sql | step F-store, E11 M4 (money guard trigger, owner-first) | cloud/core-b | NOT released |
 | 0011 | 0011_money_definer.sql | ticket F-money-definer (option B, E13/E14): hadavin_limits, hadavin_caps, 7 SECURITY DEFINER functions | cloud/core-b | NOT released; step 6 (caps) is folded into it, so 0011 is still being edited (E2 = reserve reads hadavin_caps) |
 
