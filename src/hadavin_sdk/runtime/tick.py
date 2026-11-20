@@ -292,7 +292,10 @@ def check_caps(ctx: TickContext) -> None:
     """Compare the registry caps of every live and draft agent with the caps table (`cap_matches`, read-only,
     the runtime login). `Limits` shows the registry cap but the database enforces the table, so a cap lowered in
     the registry and not synced would stay high in the table: that is made loud here (the step fails, the tick
-    exits 1) for any difference and any missing row. Retired agents are not checked. A store without a cap table
+    exits 1) for any difference and any missing row. DIRECTION: `cap_matches` answers only same/differs/missing and
+    the runtime has no table right, so a RAISED registry cap (the safe direction) is reported like a lowered one;
+    this is a decided divergence from ticket T13 (sync after every registry edit). A database error for one agent
+    is reported as `agent:error` and the other agents are still checked. Retired agents are not checked. A store without a cap table
     (memory) has nothing to check. The fix is `hadavin-sdk limits sync-caps` under the reset login."""
     matches = getattr(ctx.app.store, "cap_matches", None)
     if matches is None:
@@ -301,7 +304,12 @@ def check_caps(ctx: TickContext) -> None:
     for agent in sorted(ctx.app.registry.agents.values(), key=lambda a: a.id):
         if agent.status == "retired":
             continue
-        state = matches(agent.id, agent.budget_usd.daily, agent.budget_usd.monthly)
+        try:
+            state = matches(agent.id, agent.budget_usd.daily, agent.budget_usd.monthly)
+        except Exception as exc:  # noqa: BLE001 - name the agent and go on: one bad id must not hide the others
+            _LOG.error("check_caps agent=%s error_kind=%s", agent.id, type(exc).__name__)
+            bad.append(f"{agent.id}:error")
+            continue
         if state != "same":
             bad.append(f"{agent.id}:{state}")
     if bad:

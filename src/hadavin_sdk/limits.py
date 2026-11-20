@@ -195,7 +195,11 @@ class Limits:
         except SpendCapExceeded as exc:
             raise SpendRefused(_CAP_REASON.get(exc.which, "limits_unavailable")) from None
         except Exception as exc:  # noqa: BLE001 - fail closed: whatever the store raised, no model call
-            _LOG.warning("reserve refused: limits_unavailable error_kind=%s", type(exc).__name__)
+            _LOG.warning(
+                "reserve refused: limits_unavailable error_kind=%s detail=%s",
+                type(exc).__name__,
+                exc,
+            )
             raise SpendRefused("limits_unavailable") from None
 
     def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:

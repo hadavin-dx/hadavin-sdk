@@ -15,7 +15,9 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 import psycopg
 from psycopg import sql
 
+from hadavin_sdk.config import ConfigError
 from hadavin_sdk.store import migrate as mig
+from hadavin_sdk.store.protocol import SpendCapExceeded
 from tests.test_money_caps_reserve_pg import caps_battery
 from tests.test_stop_state_roles import World
 
@@ -35,6 +37,10 @@ CREATE OR REPLACE FUNCTION hadavin_reserve_spend(
 AS $f$ SELECT hadavin_reserve_spend(p_id, p_agent, p_day, p_usd, p_run_id) $f$;
 """
 
+# What a mutant that changes behaviour looks like in the battery: a failed assertion, a missed `pytest.raises`, or the
+# store refusing a reserve the battery expects to pass. NOT a bare Exception (a broken SQL would count as "killed").
+BEHAVIOUR_FAILURES = (AssertionError, pytest.fail.Exception, SpendCapExceeded, ConfigError)
+
 MUTANTS = {
     "control": (lambda t: t, False),
     "M-q cap is a fixed huge value, the table row is ignored": (
@@ -51,6 +57,58 @@ MUTANTS = {
         lambda t: t.replace(
             "IF NOT FOUND THEN RAISE EXCEPTION 'caps' USING ERRCODE = 'HD005'; END IF;",
             "IF NOT FOUND THEN v_day_cap := 1E+30; v_month_cap := 1E+30; END IF;",
+        ),
+        True,
+    ),
+    "M-z drop the day `usd < cap` leg (a zero amount at the cap passes)": (
+        lambda t: t.replace("AND s.usd < v_day_cap AND s.usd + p_usd", "AND s.usd + p_usd"),
+        True,
+    ),
+    "M-z drop the month `usd < cap` leg": (
+        lambda t: t.replace("AND m.usd < v_month_cap AND m.usd + p_usd", "AND m.usd + p_usd"),
+        True,
+    ),
+    "M-z month boundary `<=` becomes `<`": (
+        lambda t: t.replace("m.usd + p_usd <= v_month_cap", "m.usd + p_usd < v_month_cap"),
+        True,
+    ),
+    "M-z a zero cap means unlimited": (
+        lambda t: t.replace(
+            "IF NOT FOUND THEN RAISE EXCEPTION 'caps' USING ERRCODE = 'HD005'; END IF;",
+            "IF NOT FOUND THEN RAISE EXCEPTION 'caps' USING ERRCODE = 'HD005'; END IF;"
+            " IF v_day_cap = 0 THEN v_day_cap := 1E+30; END IF;",
+            1,
+        ),
+        True,
+    ),
+    "M-cm cap_matches says same when only the day cap matches": (
+        lambda t: t.replace(
+            "rec.day_cap = p_day_cap AND rec.month_cap = p_month_cap", "rec.day_cap = p_day_cap"
+        ),
+        True,
+    ),
+    "M-cm cap_matches says same when either cap matches": (
+        lambda t: t.replace(
+            "rec.day_cap = p_day_cap AND rec.month_cap = p_month_cap",
+            "rec.day_cap = p_day_cap OR rec.month_cap = p_month_cap",
+        ),
+        True,
+    ),
+    "M-cm cap_matches says same for a missing row": (
+        lambda t: t.replace("IF NOT FOUND THEN RETURN 'missing'; END IF;", ""),
+        True,
+    ),
+    "M-sc set_cap does not overwrite the month cap": (
+        lambda t: t.replace(
+            "SET day_cap = EXCLUDED.day_cap, month_cap = EXCLUDED.month_cap, set_by",
+            "SET day_cap = EXCLUDED.day_cap, set_by",
+        ),
+        True,
+    ),
+    "M-sc set_cap writes the month cap into the day cap": (
+        lambda t: t.replace(
+            "VALUES (p_agent, p_day_cap, p_month_cap, p_by",
+            "VALUES (p_agent, p_month_cap, p_month_cap, p_by",
         ),
         True,
     ),
@@ -98,7 +156,7 @@ def test_the_caps_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatc
         assert killed, "the control must migrate"
         return
     if killed:
-        with pytest.raises((AssertionError, Exception, pytest.fail.Exception)):
+        with pytest.raises(BEHAVIOUR_FAILURES):
             caps_battery(scratch)
     else:
         caps_battery(scratch)
