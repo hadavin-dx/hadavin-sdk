@@ -1595,11 +1595,11 @@
    "what exactly it is doing": "ORDER 020 README items: permanent faults vs outage table; worker on Linux/containers, Windows limits",
    "started UTC": "07:29",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "lead: refill to 6+"
+   "reason": "README: permanent vs outage table, where the worker runs; 88 template tests pass (n8n-template-tests-8.log); Ctrl-Break and Docker-behind-proxy UNVERIFIED"
   },
   {
    "id": "skip-rep",
