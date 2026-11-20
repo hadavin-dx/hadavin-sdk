@@ -26,7 +26,8 @@ from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.identity import Principal
-from hadavin_sdk.limits import Limits
+from hadavin_sdk.limits import Limits, SpendRefused
+from hadavin_sdk.llm.common import worst_case_for
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import (
     RUN_ID_PATTERN,
@@ -387,6 +388,29 @@ class Runtime:
             self.store.add_cost(run.run_id, verdict.cost_usd)
         return verdict
 
+    def _settle_model_call(self, run: Run, rid: str, cost_usd: Any) -> Run | None:
+        """Replace the held worst case of one model call with its real cost; the store books the run cost with
+        the settle. Returns None when done, or the run ended in NEEDS_PERSON `limits.limits_unavailable` when the
+        cost cannot be booked at all (a bad amount). A failure keeps the hold at the worst case (an over-count,
+        the safe direction; an operator releases it, see the runbook). A DEFINITE refusal (ValueError, NotFound:
+        nothing committed) books the run cost directly; an ambiguous failure (a lost connection) books nothing
+        more, since the settle may have committed and booked it already. Never raises."""
+        try:
+            self.limits.settle_for(run.agent_id, rid, cost_usd)
+            return None
+        except (ValueError, NotFound):
+            _LOG.warning("run %s: settle refused; the hold stays at the worst case", run.run_id)
+            try:
+                self.store.add_cost(run.run_id, cost_usd)
+            except Exception:  # noqa: BLE001 - a bad amount: nothing can be booked, a person looks
+                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
+            return None
+        except Exception:  # noqa: BLE001 - ambiguous: the settle may have committed
+            _LOG.warning(
+                "run %s: settle failed (unknown outcome); run cost left to the settle", run.run_id
+            )
+            return None
+
     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
         cur = self.store.get_run(run.run_id)
         run = advance(self.store, run.run_id, cur.state, new, reason)
@@ -527,6 +551,18 @@ class Runtime:
             if (stopped := self._limits_stop(run, cited)) is not None:
                 return stopped
             self.store.touch(run.run_id)  # heartbeat for tick's stuck-run rule
+            # Reserve the worst case of this call BEFORE it is made; a refusal means no model call (B2).
+            try:
+                worst = worst_case_for(self.registry.config.routes, self.llm)(
+                    agent.model_route, system, messages, tools, [safe_doc], None
+                )
+                rid = self.limits.reserve(run.agent_id, worst, run_id=run.run_id)
+            except SpendRefused as exc:
+                if exc.reason == "kill_switch":
+                    return self._to(run, S.STOPPED, "kill_switch")
+                return self._to(run, S.NEEDS_PERSON, f"limits.{exc.reason}")
+            except Exception:  # noqa: BLE001 - no price or no booking: fail closed, no model call
+                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
             try:
                 reply = self.llm.chat(
                     messages,
@@ -543,8 +579,8 @@ class Runtime:
                 )
                 self._note(run, "llm", "chat", result="failed", error_code=code)
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
-            self.limits.charge(agent_id, reply.cost_usd)
-            self.store.add_cost(run.run_id, reply.cost_usd)
+            if (ended := self._settle_model_call(run, rid, reply.cost_usd)) is not None:
+                return ended
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",

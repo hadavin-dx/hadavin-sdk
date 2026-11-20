@@ -42,9 +42,9 @@ What this release does and does not promise, in one place.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
 
 ## Spend limits: what is in force today
-Status, in one sentence: exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+Status, in one sentence: exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
 - In force: money is exact decimal (no floats); on PostgreSQL after migration 0011 the runtime login cannot lower a booked amount or change a cap; the caps live in the table `hadavin_caps`, written only under the reset login; `Limits.reserve` and `Limits.settle` exist and are tested.
-- NOT in force: the live run path does not reserve before a model call. It still calls `Limits.blocked()` before the call and books the cost afterwards, so concurrent runs can each pass the check and overshoot a cap by up to (number of concurrent runs x the cost of one call). Do not rely on a hard spend cap or on "cannot exceed the budget" until the model gate installs reserve/settle (F-install).
+- The live loop's main model call reserves the worst case before the call and settles after, so concurrent runs cannot overshoot the cap for that call. NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired.
 
 ## Running the tests
 

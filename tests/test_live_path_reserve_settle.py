@@ -43,7 +43,6 @@ ROUTES = {
         "max_tokens": 1000,
     }
 }
-xfail_b2 = pytest.mark.xfail(strict=True, reason="B2: live path not gated yet")
 
 
 class StubLLM:
@@ -149,7 +148,6 @@ def _worst(llm: StubLLM, rt) -> Decimal:
 # (1) the cap holds across runs: a second run is refused BEFORE its model call ------------------------------
 
 
-@xfail_b2
 def test_second_sequential_run_is_refused_before_its_model_call(world, store):
     llm = StubLLM(cost="0.60")
     rt, _spy = world(llm)
@@ -164,7 +162,6 @@ def test_second_sequential_run_is_refused_before_its_model_call(world, store):
     assert _day(store) <= D("1.00")
 
 
-@xfail_b2
 def test_overlapping_runs_cannot_book_more_than_the_cap(world, store):
     llm = StubLLM(cost="0.60", hold_first=True)
     rt, _spy = world(llm)
@@ -185,7 +182,6 @@ def test_overlapping_runs_cannot_book_more_than_the_cap(world, store):
 # (2) the reservation comes before the model call, priced from the route -----------------------------------
 
 
-@xfail_b2
 def test_reserve_comes_before_the_model_call_with_the_worst_case(world):
     llm = StubLLM(cost="0.20")
     rt, spy = world(llm)
@@ -202,7 +198,6 @@ def test_reserve_comes_before_the_model_call_with_the_worst_case(world):
 # (3) a normal reply settles once with the real cost ------------------------------------------------------
 
 
-@xfail_b2
 def test_settle_once_with_the_actual_cost(world, store):
     llm = StubLLM(cost="0.20")
     rt, spy = world(llm)
@@ -217,7 +212,6 @@ def test_settle_once_with_the_actual_cost(world, store):
 # (4) a provider error leaves the hold at the worst case: no settle at 0 ----------------------------------
 
 
-@xfail_b2
 @pytest.mark.parametrize("error", [ProviderExhausted("quota"), ProviderError("boom")])
 def test_provider_error_keeps_the_hold_at_the_worst_case(world, store, error):
     llm = StubLLM(error=error)
@@ -231,7 +225,6 @@ def test_provider_error_keeps_the_hold_at_the_worst_case(world, store, error):
 # (5) a refused reserve ends the run in the spend-refused state with an audit code ------------------------
 
 
-@xfail_b2
 def test_refused_reserve_ends_run_with_audit_code(world, store):
     llm = StubLLM(cost="0.60")
     rt, spy = world(llm)
@@ -251,7 +244,6 @@ def test_refused_reserve_ends_run_with_audit_code(world, store):
 # (6) no double counting ---------------------------------------------------------------------------------
 
 
-@xfail_b2
 def test_day_total_is_the_actual_cost_not_actual_plus_worst_case(world, store):
     llm = StubLLM(cost="0.20")
     rt, spy = world(llm)
@@ -272,3 +264,99 @@ def test_fixture_runs_the_agent_and_books_the_cost(world, store):
     run = handle(rt)
     assert len(llm.calls) == 1 and run.state in (S.NO_ACTION, S.NEEDS_PERSON)
     assert _day(store) == D("0.20")
+
+
+# (7) the settle fallback, the other refusals, the overshoot (review B2-1: M2, m2, m6) -------------------------
+
+
+def test_definite_settle_refusal_books_the_run_cost_directly(world):
+    from hadavin_sdk.store.protocol import NotFound
+
+    llm = StubLLM(cost="0.20")
+    rt, _spy = world(llm)
+
+    def refuse(agent_id, rid, usd):
+        raise NotFound(rid)
+
+    rt.limits.settle_for = refuse
+    run = handle(rt)
+    assert (
+        run.state in (S.NO_ACTION, S.NEEDS_PERSON)
+        and run.reason_code != "limits.limits_unavailable"
+    )
+    assert rt.store.get_run(run.run_id).cost_usd == D("0.20")  # the fallback add_cost
+
+
+def test_ambiguous_settle_failure_does_not_double_count_the_run_cost(world):
+    llm = StubLLM(cost="0.20")
+    rt, _spy = world(llm)
+    real = rt.limits.settle_for
+
+    def commit_then_lose_the_reply(agent_id, rid, usd):
+        real(agent_id, rid, usd)  # the settle committed and booked the run cost
+        raise ConnectionError("reply lost")
+
+    rt.limits.settle_for = commit_then_lose_the_reply
+    run = handle(rt)
+    assert rt.store.get_run(run.run_id).cost_usd == D("0.20")  # not 0.40
+
+
+def test_a_bad_reply_cost_ends_the_run_and_never_raises(world):
+    class BadCost(StubLLM):
+        def chat(self, *a, **kw):
+            super().chat(*a, **kw)
+            # a client that skips Reply validation (a test double or a future client)
+            return Reply.model_construct(
+                text="x", cost_usd=D("NaN"), model_id="m", tool_calls=[], stop_reason=None
+            )
+
+    llm = BadCost()
+    rt, _spy = world(llm)
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.limits_unavailable")
+
+
+def test_kill_switch_refusal_at_reserve_stops_the_run_before_the_model(world):
+    from hadavin_sdk.limits import SpendRefused
+
+    llm = StubLLM()
+    rt, _spy = world(llm)
+
+    def refuse(agent_id, worst, *, run_id=None):
+        raise SpendRefused("kill_switch")
+
+    rt.limits.reserve = refuse
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.STOPPED, "kill_switch")
+    assert llm.calls == []
+
+
+@pytest.mark.parametrize(
+    ("exc", "code"),
+    [("bad_amount", "limits.bad_amount"), (RuntimeError("x"), "limits.limits_unavailable")],
+)
+def test_a_pricing_failure_ends_the_run_before_the_model(world, monkeypatch, exc, code):
+    from hadavin_sdk.limits import SpendRefused
+    from hadavin_sdk.runtime import agent_loop
+
+    def broken(routes, llm):
+        def worst_case(*a):
+            raise SpendRefused(exc) if isinstance(exc, str) else exc
+
+        return worst_case
+
+    monkeypatch.setattr(agent_loop, "worst_case_for", broken)
+    llm = StubLLM()
+    rt, _spy = world(llm)
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, code)
+    assert llm.calls == []
+
+
+def test_a_reply_above_the_worst_case_is_booked_in_full_through_the_loop(world, store):
+    llm = StubLLM(cost="0.90")  # worst case is about 0.60: an overshoot of 0.30
+    rt, spy = world(llm)
+    run = handle(rt)
+    assert spy.settles[0][1] == D("0.90")
+    assert _day(store) == D("0.90")
+    assert rt.store.get_run(run.run_id).cost_usd == D("0.90")

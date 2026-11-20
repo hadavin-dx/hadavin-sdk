@@ -104,11 +104,13 @@ def test_tool_not_in_tools_allowed_is_unknown(cfg_dir):
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "unknown_action")
 
 
-def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir):
+def test_budget_crossed_by_this_call_is_refused_before_the_model(cfg_dir):
+    # B2: the worst case of the call is reserved first; 0.999 + worst case crosses 1.00, so no model call
     rt, cfg = build(cfg_dir)
-    rt.limits.charge("test-agent", Decimal("0.999"))  # the call costs 0.00225 and crosses 1.00
+    rt.limits.charge("test-agent", Decimal("0.999"))
     run = rt.handle("test-agent", "svc:test-agent", _doc(cfg, "create.txt"))
-    assert (run.state, run.reason_code) == (S.DENIED, "limits.daily_budget")
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.daily_budget")
+    assert rt.llm.calls == []
 
 
 def test_budget_already_spent_stops_before_the_model(cfg_dir):

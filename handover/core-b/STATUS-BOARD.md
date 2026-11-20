@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T14:44:05Z
+UPDATED_UTC: 2026-11-20T15:16:30Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 3.30 of 4 cores, mem 1/15 GB, disk 42G free, 40% used, agents light 4 heavy 2
-DISK: / 42G free, 40% used; worktrees /tmp/core-b-wt 4.2G
+CAPACITY: load 3.17 of 4 cores, mem 1/15 GB, disk 40G free, 43% used, agents light 4 heavy 2
+DISK: / 40G free, 43% used; worktrees /tmp/core-b-wt 4.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T14:43:54Z (previous push; this board is pushed right after writing)
-IST: 20:14 IST
+PUSHED_UTC: 2026-11-20T15:15:17Z (previous push; this board is pushed right after writing)
+IST: 20:46 IST
 
 MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
@@ -321,3 +321,5 @@ B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the m
 (8) mutant baselines: audit_drain/reserve/price/stage repinned by T1 (merged; kill counts 20/20, 31/31, 22/22, 37/37 on its run); reserve --hand H7/H9/H10 + price/stage re-run: R1; stop_state_mutants --hand (2 survivors S12 isfinite, 13 other): S1
 (9) Port.io in handover/BRIEF-PREAMBLE.md: lead's file, ignored.
 Also live: B2 builder (MB2). Waiting: laptop wip/lead-b-migrate (M4, isolation, audit-rights, column grants). After S1+R1+B2 land: I re-request laptop PG evidence on the final head.
+
+14:25Z LEAD ROUTE (laptop evidence on base 3924f81a0 + wip/lead-b-migrate 0891d81bd: caps role, isolation check, owner-refusal tests; take it after the laptop's review is clean). My routing: stop-state failures (s2_*, e7_a_flag, broken_stdout, accepted_admin_roles, reset_role_member_of_owner, round2, S12/other mutants) -> S1 (MS1); money_definer mutants (f_/i_ patterns), pg, review_fixes, migrate limits test, audit_drain, spend_reservations, contracts caps, reserve/price/stage mutants -> R1 (MR1); parallel-run isolation of the 4 step-4 grant tests -> W1 (MW1, new, own DB); A-audit-rights design -> reviewer AR (writes tickets/A-audit-rights-review-1.md with a builder brief; then a builder); B2 review fixes (settle fallback double count, docs, ungated sites) -> B2 builder (MB2). Docs 'reset login sets caps' (runbook ~252-261, README): fix at the merge of wip/lead-b-migrate. AGENTS LIVE (5, sonnet): S1, R1, W1, AR, B2.

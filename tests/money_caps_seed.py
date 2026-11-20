@@ -107,6 +107,23 @@ def seeding_reserve(original):
     return reserve_spend
 
 
+def widening_expire(original):
+    """Wrap `PostgresStore.expire_spend_reservations`: widen the window first, as `seeding_reserve` does. A sequence
+    may call expire BEFORE any reserve (the model test of seed 23 does), and the real `min_expiry_age` (3600 s) would
+    then refuse the age 0 the contract tests use."""
+
+    def expire_spend_reservations(self, older_than_s):
+        dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
+        if dsn:
+            try:
+                widen_day_window(dsn, self._schema)
+            except Exception:  # noqa: BLE001, S110 - no limits table yet: the store refuses below
+                pass
+        return original(self, older_than_s)
+
+    return expire_spend_reservations
+
+
 def seed_registry_caps(dsn_or_conn, schema: str | None, registry) -> None:
     """Seed the caps of every non-retired agent of `registry` with the registry's own budget, as the owner: the
     state `limits sync-caps` leaves, so a FULL tick (step `check_caps`) finds no drift."""
