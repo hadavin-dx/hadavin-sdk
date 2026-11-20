@@ -314,9 +314,17 @@ def refused_before_response(exc: BaseException) -> bool:
     "Update 13:2xZ"). An unmarked ProviderExhausted stays under rule (c). The gate CANNOT verify the mark: the
     adapter must set it on an exhausted error only when no attempt produced a response or may have been billed (a
     timeout after the request was sent is NOT a refusal). A non-ProviderError with the mark, a truthy value that
-    is not True and a mark that raises on read are not honoured. llm/retry.py sets no mark yet, so today this is
+    is not True and a mark that raises on read are not honoured (a class-level mark on a ProviderExhausted subclass
+    is honoured like an instance one). Only attempts rejected BEFORE processing count (a refused connection or DNS
+    failure before the send, a 4xx on a request the provider did not process); a timeout, a 5xx or a 429 after
+    processing may have been billed and must not be marked. A marked ProviderError after earlier retried attempts is the
+    adapter's call: the gate reads only this exception, so the retry layer must not mark when an earlier attempt may
+    have been billed. llm/retry.py sets no mark yet, so today this is
     False for every real error and every failed call keeps its worst case booked."""
-    marked = getattr(exc, "refused_before_response", False) is True
+    try:
+        marked = getattr(exc, "refused_before_response", False) is True
+    except Exception:  # noqa: BLE001  a property that raises is not a mark (the audit row must still be written)
+        return False
     return marked and isinstance(exc, ProviderError)
 
 

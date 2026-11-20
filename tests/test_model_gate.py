@@ -1324,7 +1324,7 @@ def test_pin_a_gate_is_never_wrapped_twice_in_either_form():
         raise AssertionError("a gate was wrapped by a second gate")
 
 
-def test_pin_the_mark_counts_only_on_a_provider_error_that_is_not_exhausted():
+def test_pin_the_mark_counts_on_a_provider_error_and_on_an_exhausted_one_only_when_it_is_exactly_true():
     """E4 (changed by design, 13:2xZ): the predicate itself. A flagged non-ProviderError is NOT refused; a flagged
     ProviderExhausted IS (every attempt was refused); an unmarked or non-True-marked one is not."""
     refused_before = model_gate.refused_before_response
@@ -1347,6 +1347,38 @@ def test_pin_the_mark_counts_only_on_a_provider_error_that_is_not_exhausted():
         "a truthy non-True mark counted"
     )
     assert refused_before(ProviderError("x")) is False
+
+
+class _RaisingMark(ProviderError):
+    @property
+    def refused_before_response(self):
+        raise RuntimeError("hostile property")
+
+
+class _RaisingMarkExhausted(ProviderExhausted):
+    @property
+    def refused_before_response(self):
+        raise RuntimeError("hostile property")
+
+
+@pytest.mark.parametrize(
+    "error_type", [_RaisingMark, _RaisingMarkExhausted], ids=["error", "exhausted"]
+)
+def test_pin_a_mark_that_raises_on_read_is_not_a_mark_and_the_audit_row_is_still_written(
+    error_type,
+):
+    """Review gate-(c) Major 1: the predicate runs inside `except ProviderError`: a property that raises must not
+    escape from the handler (no audit row, the caller sees the property's error): it is not a mark, rule (c)."""
+    error = error_type("hostile")
+    assert model_gate.refused_before_response(error) is False, "a raising mark counted"
+    bound, _, meter, sink = build(Client(raises=error))
+    with pytest.raises(error_type) as caught:
+        bound.chat(CLEAN, system="s", route="main")
+    assert caught.value is error, "the caller got another error than the provider's"
+    assert meter.settles == [], "a raising mark was settled"
+    assert len(sink.rows) == 1 and sink.rows[0].result == "failed", (
+        "no audit row for the failed call"
+    )
 
 
 def test_pin_a_flagged_value_error_and_an_unmarked_exhausted_are_not_settled_through_the_gate():
