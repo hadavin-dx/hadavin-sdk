@@ -134,11 +134,11 @@ def test_must_keep_rows(k):
 
 
 @pytest.mark.parametrize("fid,text,now,after", [pytest.param(*f, id=f[0]) for f in G.FULL_STOP])
-def test_phone_before_a_full_stop_is_a_stated_limit(fid, text, now, after):
-    """L7, found on the way (not glued): PHONE's end guard refuses `.`, so a number before a full stop is not masked
-    (F1-F3, unchanged by G8) or only in part (F4: the last group stays readable, as on the base). Pinned as it is."""
+def test_phone_before_a_full_stop_is_masked(fid, text, now, after):
+    """G7-F3 (was the stated limit L7): a number before a full stop that ends a sentence is masked up to the full stop, in all
+    four PHONE entries (F4: the last group no longer stays readable). The rows are pinned as they are now."""
     out = redact(text).text
-    assert out == (after or text), f"ROW {fid} full stop: {out!r}"
+    assert out == after, f"ROW {fid} full stop: {out!r}"
 
 
 @pytest.mark.parametrize("k", [pytest.param(k, id=k["id"]) for k in G.KEEP if k["id"] in OPAQUE])
@@ -289,22 +289,12 @@ def test_opaque_token_tail_is_masked_with_it(o):
 
 
 @pytest.mark.parametrize(
-    "f",
-    [
-        pytest.param(
-            f,
-            id=f[0],
-            marks=pytest.mark.xfail(strict=True, reason="stated limit L7 (review round 1)"),
-        )
-        for f in G.FULL_STOP
-        if f[0] in ("F5", "F6")
-    ],
+    "f", [pytest.param(f, id=f[0]) for f in G.FULL_STOP if f[0] in ("F5", "F6")]
 )
-def test_phone_word_or_underscore_before_a_full_stop_is_a_limit(f):
-    """Review round 1 (design N4), L7: `tel_4155550132.` / `tel4155550132.` stay readable; the desired behaviour is pinned
-    as a strict xfail (the as-is output is pinned by test_phone_before_a_full_stop_is_a_stated_limit)."""
+def test_phone_word_or_underscore_before_a_full_stop_is_masked(f):
+    """G7-F3 (was the strict xfail of limit L7, review round 1 design N4): `tel_4155550132.` / `tel4155550132.` no longer leak."""
     out = redact(f[1]).text
-    assert not G.leak("phone", G.P10, out), f"ROW {f[0]} full stop limit: {out!r}"
+    assert not G.leak("phone", G.P10, out), f"ROW {f[0]} full stop: {out!r}"
 
 
 def test_gate_sweep_of_a_held_back_phone_value_uses_the_phone_joins():
@@ -326,7 +316,7 @@ def test_row_counts_are_pinned():
 
     assert (
         len(G.CASES) == 101
-        and len(G.KEEP) == 84
+        and len(G.KEEP) == 90
         and len(G.FULL_STOP) == 6
         and len(G.AT_REST) == 9
         and len(G.UNTRUSTED) == 2

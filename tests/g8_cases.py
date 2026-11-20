@@ -465,6 +465,12 @@ MUST_KEEP = [
     # v4 (G8-review-3-codebase N4): a date right after `+` is not a phone number (PHONE entry 6's date guard).
     ("K81", "x+2026-11-20T10:00:00Z", None, None, "kept (N4)"),
     ("K82", "t+2026-11-20 1012 ok", None, None, "kept (N4)"),
+    ("K85", "ts 1732095071.123", None, None, "kept (G7-F3: a `.` and a digit still end no phone)"),
+    ("K86", "build 1234567890.tar", None, None, "kept (G7-F3)"),
+    ("K87", "x 415-555-0132.5", None, None, "kept (G7-F3, main entry)"),
+    ("K88", "call +1 415-555-0132.x", None, None, "kept (G7-F3, + entry)"),
+    ("K89", "tel_4155550132.x", None, None, "kept (G7-F3, _ entry)"),
+    ("K90", "tel4155550132.5", None, None, "kept (G7-F3, phone-word entry)"),
     # v4 (G8-review-3-codebase M1): an IBAN shape inside a base64url token: after `_` and before `-` (K83), after `-` and
     # before `_` (K84). Both are whole HIGHENTROPY tokens on the base and must stay so.
     (
@@ -482,18 +488,17 @@ MUST_KEEP = [
         "same (L-D15: M1, `-` before and `_` after, 49 characters)",
     ),
 ]
-# Found on the way, NOT glued (stated limit L7): a phone number before a full stop is not masked, or only in part.
-# (id, text, now, after); None = the text itself. F1-F3, F5, F6: unchanged by G8 (F5, F6: review round 1, limit L7 for the entries 7 and 8). v5 (G8-review-4-design N2): F4, a spaced `+`
-# number glued to a letter before a full stop: the main entry masks its head on the base and `1234.` stays readable; G8's
-# entry 6 takes the `+` inside, the last group stays readable (as on the base).
+# Found on the way, NOT glued (was stated limit L7, closed by G7-F3): a phone number before a full stop was not masked, or only in
+# part. (id, text, now, after); None = the text itself; `now` is the output on the base (before G7-F3), `after` is the output
+# now. F1-F6 are all masked up to the full stop: the four PHONE entries end `(?!\w|\.\w)`-style (a `.` that is not followed by a
+# letter or digit ends no phone); `1234567890.tar`, `1732095071.123` stay (K-rows).
 FULL_STOP = [
-    ("F1", "call 415-555-0132.", None, None),
-    ("F2", "call " + P10 + ".", None, None),
-    ("F3", "call " + V["PHONE_P"] + ".", None, None),
-    ("F4", "call x" + V["PHONEUK"] + ".", "call x+<PHONE_1> 1234.", "call x<PHONE_1> 1234."),
-    # review round 1 (design N4): the phone-word and `_` entries refuse a trailing `.` too; both stay readable, as on the base
-    ("F5", "call tel_" + P10 + ".", None, None),
-    ("F6", "call tel" + P10 + ".", None, None),
+    ("F1", "call 415-555-0132.", None, "call <PHONE_1>."),
+    ("F2", "call " + P10 + ".", None, "call <PHONE_1>."),
+    ("F3", "call " + V["PHONE_P"] + ".", None, "call <PHONE_1>."),
+    ("F4", "call x" + V["PHONEUK"] + ".", "call x+<PHONE_1> 1234.", "call x<PHONE_1>."),
+    ("F5", "call tel_" + P10 + ".", None, "call tel_<PHONE_1>."),
+    ("F6", "call tel" + P10 + ".", None, "call tel<PHONE_1>."),
 ]
 # At rest (G8-review-2 F6): (id, text, now, after): each side is (text, sorted map items, sorted storable items) of
 # `redact(text)` and `runmap.storable(mapping)`. AT1-AT3: a piece of a secret with a stored kind's shape is registered under

@@ -523,12 +523,14 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     #     still masked.
     # (G8) A number that starts with `+`, BEFORE the main entry (which would leave `<PHONE_1> 1234a`): a letter or `_` may
     # stand before the `+` (`x+1 415-555-0132`, `tel_+44 20 5550 1234`) and after the last digit (`+1 415-555-0132a`);
-    # a digit or `.` may not. A number without `+` keeps the main entry's rules (`415-555-0132x123` is not masked).
+    # a digit or `.` + a word character may not. A number without `+` keeps the main entry's rules (`415-555-0132x123` is not masked).
+    # (G7-F3) A full stop that ends a sentence (`call 415-555-0132.`, then a space, the end, `)` or `,`) does not stop the mask in
+    # any of the four PHONE entries; a `.` followed by a letter or digit still does (`1234567890.tar`, `1732095071.123`).
     # No date right after the `+` either (`x+2026-11-20T10:00:00Z` stays).
     (
         "PHONE",
         re.compile(
-            r"(?<![0-9.\-])\+(?!\d{4}-\d\d-\d\d)\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![0-9.])"
+            r"(?<![0-9.\-])\+(?!\d{4}-\d\d-\d\d)\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![0-9]|\.\w)"
         ),
     ),
     (
@@ -536,7 +538,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             r"(?<![\w.\-])(?!\d{4}-\d\d-\d\d)"
             r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"
-            r"\+?\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![\w.])"
+            r"\+?\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?!\w|\.\w)"
         ),
     ),
     # (G8) A contiguous 10 to 16 digit number with `_` on one side and no letter or digit on the other (`tel_4155550132`,
@@ -548,12 +550,12 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             r"(?<![0-9A-Za-z.\-+])(?:(?<=_)|(?=\d{10,16}_))"
             r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"
-            r"\d{10,16}(?![0-9A-Za-z.>›])"
+            r"\d{10,16}(?![0-9A-Za-z>›]|\.\w)"
         ),
     ),
     (
         "PHONE",
-        re.compile(r"(?i)(?<![a-z0-9])(?:tel|phone|mobile|cell|fax)(\d{10,16})(?![0-9a-z.])"),
+        re.compile(r"(?i)(?<![a-z0-9])(?:tel|phone|mobile|cell|fax)(\d{10,16})(?![0-9a-z]|\.\w)"),
     ),
     # password=..., secret: ..., aws_secret_access_key="...": the value after a credential-ish key.
     # Runs LAST: a value already masked whole is left alone. The bounded [\w.\-] prefix/suffix lets the sensitive word sit INSIDE a

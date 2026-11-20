@@ -22,15 +22,16 @@ RD = "src/hadavin_sdk/guard/redact.py"
 TEST = "tests/test_redact_glued_rest.py"
 PIN = "tests/test_redact_glued_rest::"
 UU = r'r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+FS = "test_phone_before_a_full_stop_is_masked"
 E6 = (
     '    (\n        "PHONE",\n        re.compile(\n'
-    '            r"(?<![0-9.\\-])\\+(?!\\d{4}-\\d\\d-\\d\\d)\\d(?:(?!\\d{4}-\\d\\d-\\d\\d)[\\d \\-]){8,14}\\d(?![0-9.])"\n'
+    '            r"(?<![0-9.\\-])\\+(?!\\d{4}-\\d\\d-\\d\\d)\\d(?:(?!\\d{4}-\\d\\d-\\d\\d)[\\d \\-]){8,14}\\d(?![0-9]|\\.\\w)"\n'
     "        ),\n    ),\n"
 )
 MAIN = (
     '    (\n        "PHONE",\n        re.compile(\n            r"(?<![\\w.\\-])(?!\\d{4}-\\d\\d-\\d\\d)"\n'
     '            r"(?!(?:19|20)\\d\\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\\d|3[01])(?:[01]\\d|2[0-3])[0-5]\\d[0-5]\\d(?!\\d))"\n'
-    '            r"\\+?\\d(?:(?!\\d{4}-\\d\\d-\\d\\d)[\\d \\-]){8,14}\\d(?![\\w.])"\n        ),\n    ),\n'
+    '            r"\\+?\\d(?:(?!\\d{4}-\\d\\d-\\d\\d)[\\d \\-]){8,14}\\d(?!\\w|\\.\\w)"\n        ),\n    ),\n'
 )
 TS = r'r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"'
 J5 = '_JOINS = {"PHONE": frozenset(string.digits)}'
@@ -53,7 +54,7 @@ GR, KEEP, SW = (
 OPQ = "test_an_iban_never_starts_inside_an_opaque_token"
 UNT = "test_untrusted_placeholder_literal_keeps_its_number"
 IS = '_IBAN_START\n            + r"(?:AD|AE'
-E7 = r'r"\d{10,16}(?![0-9A-Za-z.>›])"'
+E7 = r'r"\d{10,16}(?![0-9A-Za-z>›]|\.\w)"'
 # The names skip G8-P6 and G8-P7 on purpose: P6 (a 5-digit guard) was removed in v3 (ticket G8, L-D9 flipped), and P7 went when the
 # PHONE entries were renumbered (6, 7, 8) in v4; the numbers are not reused.
 # Mutant G8-S7 edits runmap.py (the gate's held-back sweep), the others redact.py.
@@ -79,14 +80,22 @@ M = [
     m("G8-P2 the + entry removed", E6, "", GR, "ROW 18 "),
     m("G8-P3 the + entry refuses a letter before +", r'r"(?<![0-9.\-])\+(?!', r'r"(?<![\w.\-])\+(?!', GR, "ROW 21 "),
     m("G8-P4 the + entry takes a number without +", r'r"(?<![0-9.\-])\+(?!\d{4}-\d\d-\d\d)\d(?:', r'r"(?<![0-9.\-])\+?(?!\d{4}-\d\d-\d\d)\d(?:', KEEP, "ROW K5 "),
-    m("G8-P5 the + entry end back to the main guard", r'[\d \-]){8,14}\d(?![0-9.])"', r'[\d \-]){8,14}\d(?![\w.])"', GR, "ROW 18 "),
-    m("G8-P8 the _ entry allows a letter after", E7, r'r"\d{10,16}(?![0-9.>›])"', KEEP, "ROW K8 "),
+    m("G8-P5 the + entry end back to the main guard", r'[\d \-]){8,14}\d(?![0-9]|\.\w)"', r'[\d \-]){8,14}\d(?!\w|\.\w)"', GR, "ROW 18 "),
+    m("G8-P8 the _ entry allows a letter after", E7, r'r"\d{10,16}(?![0-9>›]|\.\w)"', KEEP, "ROW K8 "),
     m("G8-P9 the _ entry without the timestamp guard", '|(?=\\d{10,16}_))"\n            ' + TS + "\n", '|(?=\\d{10,16}_))"\n', KEEP, "ROW K16 "),
-    m("G8-P10 the _ entry without the > guard", E7, r'r"\d{10,16}(?![0-9A-Za-z.›])"', KEEP, "ROW K64 "),
+    m("G8-P10 the _ entry without the > guard", E7, r'r"\d{10,16}(?![0-9A-Za-z›]|\.\w)"', KEEP, "ROW K64 "),
     m("G8-P11 the _ entry needs _ before", r'(?:(?<=_)|(?=\d{10,16}_))', r'(?<=_)', GR, "ROW 26 "),
     m("G8-P12 keyword entry without tel", "(?:tel|phone|mobile|cell|fax)", "(?:phone|mobile|cell|fax)", GR, "ROW 28 "),
-    m("G8-P13 the _ entry without the \u203a guard (M2)", E7, r'r"\d{10,16}(?![0-9A-Za-z.>])"', UNT, "UNTRUSTED U1"),
+    m("G8-P13 the _ entry without the \u203a guard (M2)", E7, r'r"\d{10,16}(?![0-9A-Za-z>]|\.\w)"', UNT, "UNTRUSTED U1"),
     m("G8-P14 the + entry without its date guard after + (N4)", r'\+(?!\d{4}-\d\d-\d\d)\d(?:', r'\+\d(?:', KEEP, "ROW K81 "),
+    m("G8-P15 the + entry end back to refusing a full stop (G7-F3)", r'\d(?![0-9]|\.\w)"', r'\d(?![0-9.])"', FS, "ROW F3 "),
+    m("G8-P16 the main entry end back to refusing a full stop (G7-F3)", r'[\d \-]){8,14}\d(?!\w|\.\w)"', r'[\d \-]){8,14}\d(?![\w.])"', FS, "ROW F1 "),
+    m("G8-P17 the _ entry end back to refusing a full stop (G7-F3)", r'\d{10,16}(?![0-9A-Za-z>›]|\.\w)"', r'\d{10,16}(?![0-9A-Za-z.>›])"', FS, "ROW F5 "),
+    m("G8-P18 the phone-word entry end back to refusing a full stop (G7-F3)", r'(\d{10,16})(?![0-9a-z]|\.\w)"', r'(\d{10,16})(?![0-9a-z.])"', FS, "ROW F6 "),
+    m("G8-P19 the main entry end drops the .word rule (G7-F3)", r'[\d \-]){8,14}\d(?!\w|\.\w)"', r'[\d \-]){8,14}\d(?!\w)"', KEEP, "ROW K87 "),
+    m("G8-P20 the + entry end drops the .word rule (G7-F3)", r'\d(?![0-9]|\.\w)"', r'\d(?![0-9])"', KEEP, "ROW K88 "),
+    m("G8-P21 the _ entry end drops the .word rule (G7-F3)", r'\d{10,16}(?![0-9A-Za-z>›]|\.\w)"', r'\d{10,16}(?![0-9A-Za-z>›])"', KEEP, "ROW K89 "),
+    m("G8-P22 the phone-word entry end drops the .word rule (G7-F3)", r'(\d{10,16})(?![0-9a-z]|\.\w)"', r'(\d{10,16})(?![0-9a-z])"', KEEP, "ROW K90 "),
     m("G8-S1 _JOINS empty", J5, "_JOINS = {}", GR, "ROW 31 "),
     m("G8-S2 sweep call without joins", "original, placeholder, _joins(placeholder)", "original, placeholder", GR, "ROW 31 "),
     m("G8-S3 HOSTNAME given digits", J5, '_JOINS = {"PHONE": frozenset(string.digits), "HOSTNAME": frozenset(string.digits)}', SW, "SWEEP host"),
