@@ -3,6 +3,18 @@
 ## Unreleased
 
 ### Upgrade steps
+- **`migrate` now refuses a database whose `hadavin_*` functions or money tables have more than one owner (F-money-definer, migration 0011).**
+  - **What changed.** Every `hadavin_*` function must have the same owner, that owner must not be a named role (or
+    a role a named role is a member of), and `spend`, `spend_month`, `spend_reservations`, `runs` and the new
+    `hadavin_limits` must be owned by it (a superuser owner is the one exception and prints a note). The refusal
+    names the functions, tables and owners, never a value. Fix: run `ALTER FUNCTION ... OWNER TO <owner>` (or
+    `ALTER TABLE ...`) as that owner or a superuser, then run migrate again. A database whose migrations were run by
+    one login is not affected; one where 0008 and 0011 ran under different logins is.
+  - **Also new.** `migrate` writes the five limits the money functions read into `hadavin_limits` from the Python
+    constants on every run, pins their search path, gives EXECUTE per function to the runtime role (reserve, settle,
+    expire, add) and the purge role (purge), and refuses when any other named role or PUBLIC can still run one.
+  - **Upgrade order.** Stop the tick scheduler and every runtime process before migrating 0011; after migrate run
+    one smoke `tick`.
 - **Breaking: the stop switch can no longer be cleared by the runtime's database login (migration `0006_stop_state.sql`).**
   - **What changed.** A stop is now a row added to the new table `kill_switch_stops`; a reset adds a row to
     `kill_switch_clears`. Both tables are append-only for everyone. The runtime login may add a stop and read the state;

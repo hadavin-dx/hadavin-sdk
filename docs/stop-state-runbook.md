@@ -164,6 +164,18 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   cancelled. For a hard cut, stop the processes as well.
 - Old code must not run against a database that has migration `0006_stop_state`.
 
+## Before and after migration 0011 (money functions)
+
+- Stop the tick scheduler and every runtime, purge and portal process before running `migrate` for 0011. Old code
+  against a migrated database, or new code before 0011, fails; do not leave a cron `tick` running across it.
+- After migrate, run ONE smoke `tick` and read its result before restarting the scheduler.
+- `migrate` refuses when the `hadavin_*` functions or the money tables (`spend`, `spend_month`,
+  `spend_reservations`, `runs`, `hadavin_limits`) have different owners, or when a named role owns them. The message
+  names the objects and owners. Run `ALTER FUNCTION <name>(<args>) OWNER TO <the one owner>` (or
+  `ALTER TABLE <name> OWNER TO ...`) as that owner or a superuser, then run migrate again.
+- `migrate` rewrites the rows of `hadavin_limits` on every run and takes back any hand grant on it or on a money
+  function; only the owner reads or writes `hadavin_limits`.
+
 ## Release expired spend holds
 A hold nobody settled (a crash, a lost connection) is marked expired by the tick and stays booked at its worst case, so
 an agent can sit at its cap. The one sanctioned way to free it is the release command, under its own login (not the
