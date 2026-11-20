@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:48:49Z
+UPDATED_UTC: 2026-11-20T07:49:46Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 10
-CAPACITY: load 1.5 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 10, heavy agents 0
-DISK: / 59G free, 15% used; git worktrees 7; 99M	/tmp/claude-0;398M	/root/.cache/uv;
+AGENTS_RUNNING: 9
+CAPACITY: load 1.3 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 9, heavy agents 0
+DISK: / 59G free, 15% used; git worktrees 8; 99M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:47:57+00:00
+PUSHED_UTC: 2026-11-20T07:48:49+00:00
 
-(13:18 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:19 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -54,8 +54,8 @@ PUSHED_UTC: 2026-11-20T07:47:57+00:00
 | (new) r-gate | builder | claude-sonnet-5-5 | restart: gate round 2 findings + ORDER 017 (mapping required with NO_MAP, one pre-call exception type, framing protection); phases with progress notes | 06:40 | 07:30 | 2 | INTERRUPTED | 3 of 3 not used yet | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
 | (new) r-int | builder | claude-sonnet-5-5 | restart: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then the ORDER 014/016c follow-ups, one batch | 06:40 | 07:40 | 2 | INTERRUPTED | n/a | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
 | (new) r-grants | builder (tests only) | claude-sonnet-5-5 | restart: grants negative tests reworked for core-b step B map, local PostgreSQL 16 | 06:40 | 07:10 | 2 | INTERRUPTED | n/a | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
-| (new) g7D | reviewer | (retired tier, run ended 06:36 UTC) | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the second pattern pass unmask or corrupt, remaining chains, the own-output rule as a smuggling path | 06:35 | 06:50 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the earlier-model limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
-| (new) g7C | reviewer | (retired tier, run ended 06:36 UTC) | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): every pattern against the second pass, map entries holding placeholders, tests that cannot fail | 06:35 | 06:55 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the earlier-model limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
+| (new) g7D | reviewer | (retired tier, run ended 06:36 UTC) | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the second pattern pass unmask or corrupt, remaining chains, the own-output rule as a smuggling path | 06:35 | 06:50 | 100 | done | 1 of 3 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
+| (new) g7C | reviewer | (retired tier, run ended 06:36 UTC) | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): every pattern against the second pass, map entries holding placeholders, tests that cannot fail | 06:35 | 06:55 | 100 | done | 1 of 3 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
 | ae03e30a | builder | (retired tier, run ended 06:36 UTC) | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identifier glued to a shorter secret), budget check, six refusal reasons, extra stated limits, deletes runmap.is_masked, fixes the stage-name sample word, runs gate_mutants on the final code | 06:26 | 07:20 | 5 | INTERRUPTED | 2 of 3 (lead review) | 0 | stopped by the earlier-model limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | a4bfb7dd | builder (tests only) | (retired tier, run ended 06:36 UTC) | reworks tests/test_grants_negative_roles.py so it is correct on main AND on core-b's step B grant map (reset identity), turns the 12 to-enable cases into real tests, runs on a worktree of core-b's code with local PostgreSQL 16 | 06:24 | 06:50 | 5 | INTERRUPTED | n/a | 0 | stopped by the earlier-model limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | ab3dcc71 | reviewer | (retired tier, run ended 06:36 UTC) | EGM RESULT review of the gate code at f16d48e (egm:egm-design): hostile design read of model_gate.py and the runmap functions against the ticket and the evidence file | 06:22 | 06:35 | 100 | done | 1 of 3 | 0 | finished: gate NOT ready to install by its reading: 1 Blocker (bind without mapping= silently skips the enforce step, and core-b install draft binds the run loop that way), 9 Majors, 9 Nits. Nothing executed. 6 points escalated (E6), the rest sent to the gate builder |
@@ -82,13 +82,14 @@ PUSHED_UTC: 2026-11-20T07:47:57+00:00
 | aeb4ebd0 | lookup | (retired tier, run ended 06:36 UTC) | reads core/P2d-1, core/P1d-a, finds what P1c is in the plans, checks runmap/redact/gate lines; writes tickets/G-survey-P2d-P1d-P1c.md | 05:24 | 05:40 | 100 | done | n/a | 0 | finished: survey file written (199 lines); P1c has no code, ticket or corpus on any ref |
 | a39c0f8b | reviewer | (retired tier, run ended 06:36 UTC) | ORDER 001 dry run, style review of the 3-line paragraph | 04:11 | 04:11 | 100 | done | 1 of 1 | 0 | proof only, finished |
 | a997db3c | reviewer | (retired tier, run ended 06:36 UTC) | ORDER 001 dry run, comprehension review of the 3-line paragraph | 04:11 | 04:12 | 100 | done | 1 of 1 | 0 | proof only, finished |
-| (new) g7D | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-design) | 07:50 | 08:05 | 2 | running | 2 | 0 | fresh reviewer after fixes |
-| (new) g7C | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-codebase-details): callers, tests, deadline clock | 07:50 | 08:05 | 2 | running | 2 | 0 | fresh reviewer after fixes |
+| (new) g7D | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-design) | 07:50 | 08:05 | 100 | done | 2 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
+| (new) g7C | reviewer | claude-sonnet-5-5 | EGM RESULT review of G7 round 2 (egm:egm-codebase-details): callers, tests, deadline clock | 07:50 | 08:05 | 100 | done | 2 | 0 | reported: codebase 1B/5M, design 0B/5M (G7-result-review-2.md) |
 | (new) g4R | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: implementation readiness | 07:55 | 08:10 | 2 | running | 2 | 0 | build P1c only after clean plan review |
 | (new) g4C | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: codebase details | 07:55 | 08:10 | 2 | running | 2 | 0 | same |
 | (new) gfix4 | builder | claude-sonnet-5-5 | gate fix round 4 on review round 3 findings (model_gate.py, enforce functions, gate tests, ticket, request 3) | 07:52 | 08:40 | 1 | running | 4 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
 | (new) secC | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: comprehension | 08:00 | 08:12 | 2 | running | 3 | 0 | final review of the wording |
 | (new) secS | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: style | 08:00 | 08:12 | 2 | running | 3 | 0 | final review of the wording |
+| (new) g7fix3 | builder | claude-sonnet-5-5 | G7 fix round 3 (real fixed point, rollback ghost, spelled loop, deadline, stale text, tests) | 07:55 | 08:45 | 1 | running | 3 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
