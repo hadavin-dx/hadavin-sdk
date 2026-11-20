@@ -16,20 +16,22 @@ ROOT = Path(__file__).resolve().parents[1]
 LOOP = "src/hadavin_sdk/runtime/agent_loop.py"
 T = "tests/test_live_path_reserve_settle.py"
 
-RESERVE = "                rid = self.limits.reserve(run.agent_id, worst, run_id=run.run_id)\n"
-SETTLE = "            self.limits.settle_for(run.agent_id, rid, cost_usd)\n"
-ERR = '                self._note(run, "llm", "chat", result="failed", error_code=code)\n'
-
-FALLBACK = "                    self.store.add_cost(run.run_id, cost_usd)\n"
-KILL = '                    return self._to(run, S.STOPPED, "kill_switch")\n'
+GATE = "src/hadavin_sdk/guard/model_gate.py"
+RESERVE = "        return self._meter.reserve(*args, run_id=run_id)\n"
+SETTLE = "            return self._meter.settle(reservation_id, actual_usd)\n"
+FALLBACK = "                self.store.add_cost(run.run_id, cost_usd)\n"
+KILL = '    "kill_switch": (S.STOPPED, "kill_switch"),\n'
+ENDED_ON_ERROR = "                if run_meter.ended is not None:  # the settle at 0 failed: the run is already over\n"
+ENDED_AFTER = "            if (\n                run_meter.ended is not None\n            ):  # the settle failed and the run could not go on (`_RunMeter`)\n"
 
 M = [
-    # reserve removed: the model is called with no booking (and the settle has no id to settle)
+    # F-install: the reserve now lives in the gate, reached through `_RunMeter.reserve`. Removed: the model is
+    # called with no booking (and the settle has no id to settle)
     Mutant(
-        "B2-1 reserve removed",
+        "B2-1 gate reserve removed",
         LOOP,
         RESERVE,
-        '                rid = "res-none"\n',
+        '        return "res-none"\n',
         "assert",
         test_file=T,
     ),
@@ -38,19 +40,18 @@ M = [
         "B2-2 settle removed",
         LOOP,
         SETTLE,
-        "            pass\n",
+        "            return 0\n",
         "assert",
         test_file=T,
     ),
-    # settle on a provider error: lowers the hold to 0 although the provider may have billed
+    # settle on a provider error that was NOT marked refused before any response: lowers the hold to 0 although
+    # the provider may have billed (the rule lives in the gate, rule (b))
     Mutant(
         "B2-3 settle on provider error",
-        LOOP,
-        ERR,
-        ERR + "                self._settle_model_call(run, rid, 0)\n",
-        "quota",  # the first E line is the chained provider error; the assertion on spy.settles follows
-        allow_crash=True,
-        crash_type="ProviderExhausted",
+        GATE,
+        "            if refused_before_response(exc):  # rule (b): it cost nothing\n",
+        "            if True:  # rule (b): it cost nothing\n",
+        "assert",
         test_file=T,
     ),
     # the definite-refusal fallback removed: the run cost is never booked
@@ -58,7 +59,7 @@ M = [
         "B2-4 settle fallback removed",
         LOOP,
         FALLBACK,
-        "                    pass\n",
+        "                pass\n",
         "assert",
         test_file=T,
     ),
@@ -66,8 +67,8 @@ M = [
     Mutant(
         "B2-5 fallback on ambiguous failure",
         LOOP,
-        "            ambiguous = is_connectivity_error(exc)\n",
-        "            ambiguous = False\n",
+        "        ambiguous = is_connectivity_error(exc)\n",
+        "        ambiguous = False\n",
         "assert",
         test_file=T,
     ),
@@ -75,8 +76,8 @@ M = [
     Mutant(
         "B2-7 definite set too small",
         LOOP,
-        "            ambiguous = is_connectivity_error(exc)\n",
-        "            ambiguous = not isinstance(exc, (ValueError, NotFound))\n",
+        "        ambiguous = is_connectivity_error(exc)\n",
+        "        ambiguous = not isinstance(exc, (ValueError, NotFound))\n",
         "assert",
         test_file=T,
     ),
@@ -96,7 +97,48 @@ M = [
         "B2-6 kill switch at reserve not STOPPED",
         LOOP,
         KILL,
-        '                    return self._to(run, S.NEEDS_PERSON, "kill_switch")\n',
+        '    "kill_switch": (S.NEEDS_PERSON, "kill_switch"),\n',
+        "assert",
+        test_file=T,
+    ),
+    # `_RunMeter` no longer applies the loop's rule for a failed settle (neither the direct run-cost booking nor
+    # the end of the run)
+    Mutant(
+        "B2-9 _RunMeter fallback removed",
+        LOOP,
+        "            ended = self._rt._settle_failed(self._run, exc, actual_usd)\n",
+        "            ended = None\n",
+        "assert",
+        test_file=T,
+    ),
+    # review M1: the ProviderError branch ignores the ended run: IllegalTransition escapes handle()
+    Mutant(
+        "B2-10 ended check removed on the provider error branch",
+        LOOP,
+        ENDED_ON_ERROR,
+        "                if False:\n",
+        "refused",  # the chained provider error leads the first E line; IllegalTransition follows
+        allow_crash=True,
+        crash_type="ProviderError",
+        test_file=T,
+    ),
+    # the ended check after a reply removed: the run goes on after it was ended
+    Mutant(
+        "B2-11 ended check removed after the reply",
+        LOOP,
+        ENDED_AFTER,
+        "            if False:\n",
+        "IllegalTransition",
+        allow_crash=True,
+        crash_type="IllegalTransition",
+        test_file=T,
+    ),
+    # review m2: a judge settle that ended the run is not noticed after the screen
+    Mutant(
+        "B2-12 ended check removed after the screen",
+        LOOP,
+        "        if meter.ended is not None:\n            raise _RunEnded(meter.ended)\n        return verdict\n",
+        "        return verdict\n",
         "assert",
         test_file=T,
     ),

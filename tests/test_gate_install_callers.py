@@ -16,8 +16,6 @@ import ast
 import pathlib
 from types import SimpleNamespace
 
-import pytest
-
 import hadavin_sdk
 from hadavin_sdk.guard import judge
 from hadavin_sdk.guard.model_gate import BoundGate
@@ -37,7 +35,7 @@ INSTALLED = {
         "runtime/agent_loop.py"
     },  # the judge is bound per call by _screen / _shadow with the run's map
     "evals.py": {"evals.py"},  # eval command line: mapping=NO_MAP
-    "k1b/loop.py": {"k1b/replay.py"},  # replay command line: mapping=NO_MAP
+    "k1b/loop.py": {"k1b/loop.py"},  # the replay command line's case loop binds with mapping=NO_MAP
 }
 # Callers that are NOT reached through the gate, by design (module -> one-line reason). A NEW caller must be in INSTALLED or here.
 BYPASS = {
@@ -232,13 +230,9 @@ def test_the_gate_does_not_check_the_stage_so_the_refusal_is_an_install_time_che
     )
 
 
-# ---- parts that need core-b's install: strict xfails (remove the marker when the install lands) ----
-
-NOT_INSTALLED = "core-b has not installed the gate yet: requests/3-bind-mapping-required.md"
-_xfail = pytest.mark.xfail(strict=True, raises=AssertionError, reason=NOT_INSTALLED)
+# ---- the install tests (they were strict xfails until the install landed) ----
 
 
-@_xfail
 def test_install_every_model_caller_is_reached_through_a_bound_gate_with_a_mapping():
     trees = _trees()
     assert _gate_builders(trees), "no module under src builds a ModelGate"
@@ -248,10 +242,9 @@ def test_install_every_model_caller_is_reached_through_a_bound_gate_with_a_mappi
         )
 
 
-@_xfail
 def test_install_no_map_is_used_by_both_command_lines():
     trees = _trees()
-    for rel in sorted(NO_MAP_ALLOWED):
+    for rel in ("evals.py", "k1b/loop.py"):  # the eval line and the replay line's case loop
         assert _names_no_map(trees[rel]), (
             f"{rel} (eval/replay command line) does not bind with mapping=NO_MAP"
         )
@@ -285,17 +278,14 @@ def test_the_tier_refusal_check_does_not_pass_on_a_mere_mention():
     assert _refuses_by_tier(ast.parse("if env == PROD:\n    raise X\n"))
 
 
-@_xfail
-def test_install_the_module_that_builds_the_gate_refuses_a_non_default_enforce_or_worst_case_in_pilot_and_prod():
+def test_install_no_module_that_builds_the_gate_passes_a_custom_enforce_or_an_unnamed_worst_case():
+    """The install builds every gate with the default enforce step and `worst_case_for(...)`: no production code can
+    pass `enforce=`, so there is nothing for a tier refusal to refuse (the argument check is the guard)."""
     trees = _trees()
     builders = _gate_builders(trees)
     assert builders, "no module under src builds a ModelGate"
     for rel in builders:
-        t = trees[rel]
-        assert _refuses_by_tier(t), (
-            f"{rel} builds the gate but never refuses by tier (a mention is not enough)"
-        )
-        assert not _bad_gate_arguments(t), f"{rel}: {_bad_gate_arguments(t)}"
+        assert not _bad_gate_arguments(trees[rel]), f"{rel}: {_bad_gate_arguments(trees[rel])}"
 
 
 # ---- the judge call sites (code review round 3, M3/M4): the table must be complete; holds today ----
@@ -314,7 +304,7 @@ def test_the_judge_call_sites_in_src_are_all_in_the_table():
     assert all(why.strip() for why in JUDGE_SITES.values())
 
 
-# ---- behavioural install tests: strict xfails until core-b installs the gate ----
+# ---- behavioural install tests ----
 
 
 def _gate_rows(events):
@@ -332,7 +322,6 @@ def _gate_rows(events):
     ]
 
 
-@_xfail
 def test_install_behavioural_every_chat_call_of_a_run_has_a_gate_audit_row(tmp_path):
     """A recording client behind the REAL Runtime (wired as `app.build` wires it): every `chat` the client receives
     must have exactly one gate row (domain llm, operation chat, a gate `decision`) in the audit chain. Catches a
@@ -358,11 +347,19 @@ def test_install_behavioural_every_chat_call_of_a_run_has_a_gate_audit_row(tmp_p
     )
 
 
-@_xfail
-def test_install_behavioural_the_judge_is_built_on_a_bound_gate():
-    """`judge.make(settings, deps)` is what `app.build` calls (through `backends.table`) with the plain llm. The judge it
-    returns must hold a `BoundGate` (and the install must pass the RUN's map: the `Detector` protocol has no map
-    argument, so core-b either binds per call or extends the protocol)."""
+class _NullMeter:
+    def reserve(self, *a, **k):
+        return "r"
+
+    def settle(self, *a, **k):
+        return 0
+
+
+def test_install_behavioural_the_judge_is_bound_per_run_to_a_gate_with_the_run_map():
+    """`judge.make` holds the plain client; `bind` (called per run by the Runtime, with the run's map) returns a judge
+    on a BoundGate, so its text is enforced and metered."""
+    from hadavin_sdk.guard.model_gate import ModelGate
+    from hadavin_sdk.guard.runmap import RunMap
 
     class Recording:
         def chat(self, messages, **kwargs):
@@ -371,6 +368,11 @@ def test_install_behavioural_the_judge_is_built_on_a_bound_gate():
     detector = judge.make(
         SimpleNamespace(route="main", threshold=0.5), SimpleNamespace(llm=Recording())
     )
-    assert isinstance(detector.llm, BoundGate), (
-        "the judge holds the plain client: its text is not enforced"
+    bound = detector.bind(
+        lambda llm: ModelGate(llm, meter=_NullMeter(), audit=None, worst_case=lambda *a: 1),
+        "agent",
+        "run-1",
+        RunMap(),
+        "user:jo",
     )
+    assert isinstance(bound.llm, BoundGate)

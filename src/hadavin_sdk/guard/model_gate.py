@@ -562,6 +562,10 @@ class ModelGate:
     ) -> None:
         if isinstance(llm, ModelGate | BoundGate):
             raise TypeError("the client is already a model gate")
+        if callable(getattr(meter, "for_agent", None)):
+            # core-b's `Limits` and `Budget` serve many agents: their `settle` needs the agent id, which this gate
+            # does not pass, so every settle would fail and every paid call would stay booked at its worst case.
+            raise TypeError("the meter must be bound to one agent: pass limits.for_agent(agent_id)")
         self._llm, self._meter, self._audit = llm, meter, audit
         self._worst_case, self._enforce = worst_case, enforce
 

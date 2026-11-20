@@ -106,6 +106,8 @@ def _pilot_builds_on_an_interpreter_with_other_unicode_data(request, monkeypatch
     ):
         monkeypatch.setattr(textnorm, "require_pinned_unidata", lambda *a, **k: None)
     yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _migrate_takes_the_server_gate():
     """Every `migrate` call of every test module holds the shared server gate (tests/pg_gate.py), whatever name the

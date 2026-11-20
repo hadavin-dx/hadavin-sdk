@@ -41,7 +41,13 @@ ROUTES = {
         "input_usd_per_mtok": "0.01",
         "output_usd_per_mtok": "600.00",
         "max_tokens": 1000,
-    }
+    },
+    "judge": {  # a small worst case, so a judge call fits beside the main call in the 1.00 day budget
+        "model_id": "fake-model",
+        "input_usd_per_mtok": "0.01",
+        "output_usd_per_mtok": "600.00",
+        "max_tokens": 10,
+    },
 }
 
 
@@ -345,7 +351,9 @@ def test_settle_failure_with_a_store_that_is_down_never_raises(world):
     assert run is not None  # the run is returned, nothing was raised
 
 
-def test_a_bad_reply_cost_ends_the_run_and_never_raises(world):
+def test_a_bad_reply_cost_is_not_settled_the_worst_case_stays_booked_and_nothing_raises(
+    world, store
+):
     class BadCost(StubLLM):
         def chat(self, *a, **kw):
             super().chat(*a, **kw)
@@ -357,7 +365,12 @@ def test_a_bad_reply_cost_ends_the_run_and_never_raises(world):
     llm = BadCost()
     rt, _spy = world(llm)
     run = handle(rt)
-    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.limits_unavailable")
+    # the gate returns the reply and does not settle (cost_unknown): the hold stays at the worst case on the day
+    # counter, the run cost is not moved (stated in ii-meter, point 11), the run goes on
+    assert run.state in (S.NO_ACTION, S.NEEDS_PERSON)
+    assert run.reason_code != "limits.limits_unavailable"
+    assert rt.store.get_run(run.run_id).cost_usd == D(0)
+    assert _day(store) > D(0)
 
 
 def test_kill_switch_refusal_at_reserve_stops_the_run_before_the_model(world):
@@ -406,3 +419,160 @@ def test_a_reply_above_the_worst_case_is_booked_in_full_through_the_loop(world, 
     assert spy.settles[0][1] == D("0.90")
     assert _day(store) == D("0.90")
     assert rt.store.get_run(run.run_id).cost_usd == D("0.90")
+
+
+# (R1) integration review 1, M1 / m2 / m3 / m4: a failed settle ends the run exactly once -------------------------
+
+
+def _marked(cls=ProviderError):
+    error = cls("refused")
+    error.refused_before_response = True  # the retry layer's mark: nothing was billed
+    return error
+
+
+@pytest.mark.parametrize("cls", [ProviderError, ProviderExhausted])
+def test_a_marked_refusal_whose_settle_at_zero_fails_ambiguously_returns_the_ended_run(world, cls):
+    """M1: the gate settles a marked refusal at 0; that settle fails with a connectivity error; the run is then
+    already NEEDS_PERSON (final), so the ProviderError branch must return it, not move it again."""
+    llm = StubLLM(error=_marked(cls))
+    rt, _spy = world(llm)
+
+    def lost(agent_id, rid, usd):
+        raise OSError("connection reset")
+
+    rt.limits.settle_for = lost
+    run = handle(rt)  # must not raise IllegalTransition
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.limits_unavailable")
+    assert len(llm.calls) == 1
+
+
+def test_a_marked_refusal_whose_settle_at_zero_is_rolled_back_ends_as_a_provider_error(world):
+    llm = StubLLM(error=_marked())
+    rt, _spy = world(llm)
+
+    def refuse(agent_id, rid, usd):
+        raise RuntimeError("rolled back")
+
+    rt.limits.settle_for = refuse
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "provider_error")
+
+
+class JudgeLLM:
+    """A judge client: answers 'no injection' at `cost`."""
+
+    def __init__(self, cost="0.05"):
+        self.cost, self.calls = D(cost), 0
+
+    def chat(self, messages, **kwargs):
+        self.calls += 1
+        return Reply(
+            text='{"injection": false, "confidence": 0.1}',
+            cost_usd=self.cost,
+            model_id="fake-model",
+        )
+
+
+def _with_judge(rt, judge_llm):
+    from hadavin_sdk.guard.judge import JudgeDetector
+
+    rt.detector = JudgeDetector(judge_llm, "judge", 0.5)
+
+
+def test_a_judge_settle_that_fails_ambiguously_ends_the_run_once_and_the_main_call_is_not_made(
+    world,
+):
+    llm = StubLLM()
+    rt, _spy = world(llm)
+    _with_judge(rt, JudgeLLM())
+
+    def lost(agent_id, rid, usd):
+        raise OSError("connection reset")
+
+    rt.limits.settle_for = lost
+    run = handle(rt)  # the screen of the document is the judge's call
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.limits_unavailable")
+    assert llm.calls == []
+
+
+def test_a_judge_settle_that_rolls_back_books_the_run_cost_directly_and_the_run_goes_on(world):
+    llm = StubLLM(cost="0.20")
+    rt, _spy = world(llm)
+    judge_llm = JudgeLLM("0.05")
+    _with_judge(rt, judge_llm)
+    real = rt.limits.settle_for
+    state = {"n": 0}
+
+    def first_fails(agent_id, rid, usd):
+        state["n"] += 1
+        if state["n"] == 1:
+            raise RuntimeError("rolled back")
+        return real(agent_id, rid, usd)
+
+    rt.limits.settle_for = first_fails
+    run = handle(rt)
+    assert run.reason_code != "limits.limits_unavailable"
+    assert judge_llm.calls == 1 and len(llm.calls) == 1
+    assert rt.store.get_run(run.run_id).cost_usd == D(
+        "0.25"
+    )  # judge 0.05 (direct) + main 0.20 (settled), once
+
+
+def test_the_judge_call_is_audited_with_the_runs_principal_and_the_main_call_too(world):
+    llm = StubLLM(cost="0.20")
+    rt, _spy = world(llm)
+    _with_judge(rt, JudgeLLM())
+    run = handle(rt)
+    rows = [e for e in rt.audit.events(run.run_id) if e.domain == "llm" and e.operation == "chat"]
+    assert len(rows) == 2
+    assert {r.principal for r in rows} == {run.principal_id}
+
+
+def test_the_runtime_refuses_a_pre_built_gate_at_build(world, tmp_path, store):
+    from hadavin_sdk.config import ConfigError
+    from hadavin_sdk.guard.model_gate import ModelGate
+
+    llm = StubLLM()
+    rt, _spy = world(llm)
+    gate = ModelGate(
+        llm,
+        meter=rt.limits.for_agent(AGENT),
+        audit=None,
+        worst_case=worst_case_for(rt.registry.config.routes, llm),
+    )
+    cfg = k5_cfg(tmp_path / "g", config={"routes": ROUTES}, max_run_usd="50.00")
+    with pytest.raises(ConfigError):
+        build_runtime(cfg, gate, store=store)
+
+
+def test_a_gate_refuses_a_meter_that_serves_many_agents():
+    from hadavin_sdk.guard.model_gate import ModelGate
+    from hadavin_sdk.limits import Budget
+
+    for raw in (Budget(D("1")), Limits.__new__(Limits)):
+        with pytest.raises(TypeError):
+            ModelGate(StubLLM(), meter=raw, audit=None, worst_case=lambda *a: D(1))
+    ModelGate(
+        StubLLM(), meter=Budget(D("1")).for_agent("a"), audit=None, worst_case=lambda *a: D(1)
+    )
+
+
+def test_a_detector_without_the_runs_map_is_a_gate_error_not_an_empty_map(world):
+    from hadavin_sdk.runtime.agent_loop import _GateError
+
+    rt, _spy = world(StubLLM())
+    run = rt.store.get_run(handle(rt).run_id)
+    with pytest.raises(_GateError):
+        rt._bound_detector(run, None)
+
+
+def test_a_summary_detector_never_holds_a_model_backed_member():
+    from hadavin_sdk.app import _unmetered
+    from hadavin_sdk.guard.injection import AnyOf, RegexDetector
+    from hadavin_sdk.guard.judge import JudgeDetector
+
+    judge = JudgeDetector(JudgeLLM(), "default", 0.5)
+    regex = RegexDetector(0.5)
+    assert isinstance(_unmetered(judge, 0.5), RegexDetector)
+    assert _unmetered(AnyOf([regex, judge]), 0.5) is regex
+    assert _unmetered(regex, 0.5) is regex

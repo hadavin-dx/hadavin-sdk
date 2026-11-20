@@ -69,13 +69,18 @@ class JudgeDetector:
         self.llm, self.route, self.threshold = llm, route, threshold
 
     def bind(
-        self, wrap: Callable[[Any], Any], agent_id: str, run_id: str, mapping: Any
+        self,
+        wrap: Callable[[Any], Any],
+        agent_id: str,
+        run_id: str,
+        mapping: Any,
+        principal: str | None = None,
     ) -> JudgeDetector:
         """The same judge on a metered client: `wrap` turns the raw client into a model gate, which is bound to
         the payer, with the run's `mapping` enforced by the gate (``NO_MAP`` for the eval and replay command lines);
         the judge also redacts its input with its own fresh map in ``check``."""
         return JudgeDetector(
-            wrap(self.llm).bind(agent_id, run_id, mapping=mapping),
+            wrap(self.llm).bind(agent_id, run_id, mapping=mapping, principal=principal),
             self.route,
             self.threshold,
         )

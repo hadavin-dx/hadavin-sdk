@@ -44,7 +44,6 @@ from hadavin_sdk.models import (
     ToolCallRecord,
     audit_code,
     audit_ref,
-    check_spend_amount,
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
@@ -241,12 +240,13 @@ class Hooks:
     restored_key: bytes | None = None
 
 
-def _usable_cost(cost: Any) -> bool:
-    try:
-        check_spend_amount(cost)
-    except ValueError:
-        return False
-    return True
+class _RunEnded(Exception):
+    """A settle failed inside a screen or a card and the run is already ended (`_RunMeter.ended`): the caller
+    returns `run` as it is and must not move the run again (NEEDS_PERSON is final)."""
+
+    def __init__(self, run: Run) -> None:
+        super().__init__("run ended")
+        self.run = run
 
 
 class _RunMeter:
@@ -289,6 +289,11 @@ class Runtime:
         # lenient list (it skips), so this loop stays apart from it on purpose.
         for agent_id in agents:
             assert_qualified(registry, agent_id)
+        if isinstance(llm, ModelGate | BoundGate):
+            raise ConfigError(
+                "Runtime takes the plain model client: it builds the model gate itself, per run, on the "
+                "agent's meter (a pre-built gate would keep its own meter and skip the settle-failure rule)"
+            )
         self.registry, self.store, self.audit = registry, store, audit
         self.llm, self.detector, self.limits = llm, detector, limits
         self.agents = set(agents)
@@ -440,11 +445,10 @@ class Runtime:
     def _gate(self, llm: Any, meter: Any = None) -> ModelGate:
         """The model gate around `llm` (whatever client the runtime or a detector holds at this moment): the
         meter is the limits, the audit sink the runtime's, the worst case is priced from the configured routes.
-        A client that already is a gate is used as it is; a BOUND gate client is refused (TypeError)."""
-        if isinstance(llm, ModelGate):
-            return llm
-        if isinstance(llm, BoundGate):
-            raise TypeError("a bound model gate client cannot be wrapped again")
+        A client that already is a gate (bound or not) is refused: its own meter would skip the run's settle
+        rule (`_RunMeter`) and the principal; `Runtime.__init__` refuses it at build."""
+        if isinstance(llm, ModelGate | BoundGate):
+            raise TypeError("the runtime builds its own model gate: pass the plain client")
         return ModelGate(
             llm,
             meter=self.limits if meter is None else meter,
@@ -458,29 +462,46 @@ class Runtime:
         `mapping` is the run's LIVE map, passed by reference. `meter` is the run's `_RunMeter` (the limits, with
         the loop's rule for a failed settle)."""
         try:
-            return self._gate(self.llm, meter).bind(run.agent_id, run.run_id, mapping=mapping)
-        except Exception:  # noqa: BLE001 - no gate, no call
-            raise _GateError from None
-
-    def _bound_detector(self, run: Run, mapping: Any = None) -> Detector:
-        """The detector with its model calls (llm_judge) booked to this agent and run."""
-        try:
-            meter = self.limits.for_agent(run.agent_id)
-            return bind_detector(
-                self.detector,
-                lambda llm: self._gate(llm, meter),
-                run.agent_id,
-                run.run_id,
-                mapping if isinstance(mapping, runmap.RunMap) else runmap.RunMap(mapping or {}),
+            return self._gate(self.llm, meter).bind(
+                run.agent_id, run.run_id, mapping=mapping, principal=run.principal_id
             )
         except Exception:  # noqa: BLE001 - no gate, no call
             raise _GateError from None
 
-    def _screen(self, run: Run, text: str, source: str, mapping: Any = None):
+    def _bound_detector(self, run: Run, mapping: Any) -> tuple[Detector, _RunMeter]:
+        """The detector with its model calls (llm_judge) booked to this agent and run, on the run's own
+        `_RunMeter` (same settle-failure rule as the main call; read `.ended` after use). `mapping` is the run's
+        RunMap and is required: a missing one is a gate error, never an empty map."""
+        try:
+            if not isinstance(mapping, runmap.RunMap):
+                raise TypeError("the run's RunMap is required")
+            meter = _RunMeter(self, run)
+            bound = bind_detector(
+                self.detector,
+                lambda llm: self._gate(llm, meter),
+                run.agent_id,
+                run.run_id,
+                mapping,
+                run.principal_id,
+            )
+            return bound, meter
+        except Exception:  # noqa: BLE001 - no gate, no call
+            raise _GateError from None
+
+    def _screen(self, run: Run, text: str, source: str, mapping: Any):
         """The injection check. A model-backed detector (llm_judge) calls through the run's gate, which books the
         call; nothing is charged here. Raises SpendRefused or GateRefused when the gate made no call: the caller
-        ends the run with `_refused`."""
-        return injection_check(self._bound_detector(run, mapping), text, source)
+        ends the run with `_refused`. Raises `_RunEnded` when a settle failed and ended the run."""
+        detector, meter = self._bound_detector(run, mapping)
+        try:
+            verdict = injection_check(detector, text, source)
+        except Exception:
+            if meter.ended is not None:
+                raise _RunEnded(meter.ended) from None
+            raise
+        if meter.ended is not None:
+            raise _RunEnded(meter.ended)
+        return verdict
 
     def _refused(self, run: Run, exc: SpendRefused | GateRefused, cited: list[str]) -> Run:
         """End a run whose model call the meter or the gate refused (no provider was contacted): never WORKING.
@@ -638,6 +659,8 @@ class Runtime:
             return self._abstain(run, S.NEEDS_PERSON, "document_too_complex", cited)
         try:
             verdict = self._screen(run, safe_text, "document", rmap)
+        except _RunEnded as ended:
+            return ended.run
         except (SpendRefused, GateRefused) as exc:
             return self._refused(run, exc, cited)
         if verdict.flagged:
@@ -688,10 +711,14 @@ class Runtime:
                     documents=[safe_doc],
                 )
             except (SpendRefused, GateRefused) as exc:  # no call was made
+                if run_meter.ended is not None:
+                    return run_meter.ended
                 return self._refused(run, exc, cited)
             except (
                 ProviderError
             ) as exc:  # a refused key or request must not strand the run in WORKING
+                if run_meter.ended is not None:  # the settle at 0 failed: the run is already over
+                    return run_meter.ended
                 code = (
                     "provider_exhausted" if isinstance(exc, ProviderExhausted) else "provider_error"
                 )
@@ -700,10 +727,6 @@ class Runtime:
                 run_meter.ended is not None
             ):  # the settle failed and the run could not go on (`_RunMeter`)
                 return run_meter.ended
-            if reply.cost_usd is not None and not _usable_cost(reply.cost_usd):
-                # A cost that is not a valid amount was returned, not settled (the worst case stays booked): the
-                # run's cost cannot be told, so it ends (fail closed). None (no usage reported) is not this case.
-                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",
@@ -787,6 +810,8 @@ class Runtime:
                 )
                 try:
                     verdict = self._screen(run, out.text, f"tool:{call.name}", rmap)
+                except _RunEnded as ended:
+                    return ended.run
                 except (SpendRefused, GateRefused) as exc:
                     return self._refused(run, exc, cited)
                 if verdict.flagged:  # tool output is untrusted text too
@@ -878,22 +903,26 @@ class Runtime:
         mapping: Any = None,
     ) -> Run:
         """Shadow: the would-be outcome is shown and never acted on."""
+        meter: _RunMeter | None = None
         try:
             # The judge's screen of the diagnosis is a model call of this run: bound, so it is booked.
+            detector, meter = self._bound_detector(run, mapping)
             card: Card | None = cards.render_shadow(
-                plan,
-                decision,
-                cited,
-                diagnosis=diagnosis,
-                detector=self._bound_detector(run, mapping),
+                plan, decision, cited, diagnosis=diagnosis, detector=detector
             )
         except (
             SpendRefused,
             GateRefused,
         ) as exc:  # no card: the refusal is not a verdict on the text
+            if meter is not None and meter.ended is not None:
+                return meter.ended
             return self._refused(run, exc, cited)
         except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
             card = None
+        if (
+            meter is not None and meter.ended is not None
+        ):  # a settle failed: the run is already over
+            return meter.ended
         d = self._deliver(card)
         # A fix that would only need sign-off is not a caught mistake; a would-be refusal is.
         # An input that could not be resolved is a gap in the evidence trail, not a caught mistake.

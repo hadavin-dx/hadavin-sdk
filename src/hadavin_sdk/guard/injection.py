@@ -243,8 +243,15 @@ class AnyOf:
     def __init__(self, detectors: list[Detector]) -> None:
         self.detectors = detectors
 
-    def bind(self, wrap: Callable[[Any], Any], agent_id: str, run_id: str, mapping: Any) -> AnyOf:
-        return AnyOf([bind(d, wrap, agent_id, run_id, mapping) for d in self.detectors])
+    def bind(
+        self,
+        wrap: Callable[[Any], Any],
+        agent_id: str,
+        run_id: str,
+        mapping: Any,
+        principal: str | None = None,
+    ) -> AnyOf:
+        return AnyOf([bind(d, wrap, agent_id, run_id, mapping, principal) for d in self.detectors])
 
     def check(self, text: str, source: str) -> Verdict:
         verdicts = [injection_check(d, text, source) for d in self.detectors]
@@ -268,15 +275,16 @@ def bind(
     agent_id: str,
     run_id: str,
     mapping: Any,
+    principal: str | None = None,
 ) -> Detector:
     """The detector for one payer: a detector that calls a model (it has a ``bind`` method: ``JudgeDetector``,
     ``AnyOf``) is given back with its model client wrapped by `wrap` (client -> model gate) and bound to the agent
     and the run, so its calls are reserved, settled and audited for that run. Any other detector is returned as
     it is. The Detector protocol does not change: a ``check`` called on an unbound model detector runs on its
     raw client, outside every meter. `mapping` is the run's map (a ``runmap.RunMap``) the gate enforces on what the
-    judge sends; ``NO_MAP`` only on the eval and replay command lines (required: no default)."""
+    judge sends; ``NO_MAP`` only on the eval and replay command lines (required: no default). `principal` is who triggered the run (the audit rows of the judge's calls carry it)."""
     fn = getattr(detector, "bind", None)
-    return fn(wrap, agent_id, run_id, mapping) if callable(fn) else detector
+    return fn(wrap, agent_id, run_id, mapping, principal) if callable(fn) else detector
 
 
 def injection_check(detector: Detector, text: str, source: str) -> Verdict:

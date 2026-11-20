@@ -28,7 +28,7 @@ from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import Config, ConfigError, confined, load_config
 from hadavin_sdk.guard import textnorm
-from hadavin_sdk.guard.injection import Detector, combine
+from hadavin_sdk.guard.injection import AnyOf, Detector, RegexDetector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import now
@@ -90,6 +90,14 @@ def _test_doubles_given(
         and name in given
         and given[name] is not p.default
     ]
+
+
+def _unmetered(detector: Detector, threshold: float) -> Detector:
+    """`detector` without its model-backed members (those with a `bind` method: they call a model and need a
+    payer). Nothing left: the regex detector."""
+    members = detector.detectors if isinstance(detector, AnyOf) else [detector]
+    kept = [m for m in members if not callable(getattr(m, "bind", None))]
+    return combine(kept) if kept else RegexDetector(threshold)
 
 
 def build(
@@ -262,6 +270,10 @@ def build(
     audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
     llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
     summary_detector = detector
+    if detector is not None:
+        # The approval summary has no agent to charge: a model-backed detector given here is metered only inside
+        # a run (bound per run), so the summary screen gets its unmetered members only.
+        summary_detector = _unmetered(detector, b.detector[0].threshold)
     if detector is None:
         members = [make("detector", d, secrets, llm=llm) for d in b.detector]
         detector = combine(members)
