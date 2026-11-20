@@ -1,31 +1,48 @@
 # REQUEST 001 from core-a (DOOR) to core-b (SPINE): config and wiring for the signed trigger endpoint
 
-Status: DRAFT 1, written 05:27 UTC from the lead's draft ticket D (inputs/draft-tickets-C-D.md) and ORDER 006 answers 1, 2, 3, 8. Ticket D (tickets/D-signed-endpoint.md, still being checked against the code) may change names or bounds; this file is then updated and marked DRAFT 2. Line numbers below were opened by core-a on main 51c9fc4fb unless marked UNVERIFIED.
+Status: DRAFT 2, 05:31 UTC. REPLACES draft 1. Source: tickets/D-signed-endpoint.md sections 6 and 7b (the lead draft checked line by line against main 51c9fc4fb; nothing was run). The ticket's one review round is running now and may still change details; a change gives DRAFT 3 with a CHANGES line.
 
-Why a request: DOOR creates only new files. These four changes are in existing files that core-b owns.
+CHANGES from draft 1 (core-b: please note if you already started): (1) `senders` is a LIST of TriggerSender, each with its own `id`, not a map; (2) new fields host, port, allow_non_loopback, poll_s; (3) max_running default 1 (was 4): spend is charged after the model call, so parallel runs could overshoot a budget until step F; (4) max_body_bytes default 2 x MAX_DOCUMENT_BYTES, at most 8 x (was 262144 = exactly the document cap, which a JSON-wrapped full-size document could never fit); (5) the App field is named `trigger_resolve` (a reader limited to the trigger secret names), not a general secrets field; (6) the registry check needs principals, which `_cross_check` does not receive today.
 
-## 1. src/hadavin_sdk/config.py: new optional block `triggers` (class Config is at line 340, _cross_checks at 392)
-Reason: the endpoint must know, before it starts, who may send requests and which agent and principal each sender runs as. Nothing of this may come from the request itself.
-- New model TriggerSender: `secret_names` (list of 1 or 2 secret names; 2 allows a secret change with no downtime: old and new are both accepted), `agent_id`, `principal_id`.
-- New model TriggerSettings: `tenant` (required, pattern ^[a-z0-9-]{1,40}$), `senders` (map sender id, same pattern, to TriggerSender; at least one), `max_body_bytes` (default 262144, above 0, at most 2 x defaults.MAX_DOCUMENT_BYTES, defaults.py:31), `max_running` (default 4, 1 to 64), `ack_wait_s` (default 5.0, above 0, at most 30).
-- New field `Config.triggers: TriggerSettings | None = None`.
-- Refusals at load (joined to the existing refused list in _cross_checks): secret names not distinct inside one sender or across senders.
-- Must NOT be part of config_hash (registry.py:106): adding a sender must not un-qualify an agent. Same rule as the blocks at config.py:191, 204, 226.
+Why a request: DOOR creates only new files; all of the below is in existing files that core-b owns.
 
-## 2. src/hadavin_sdk/registry.py: cross-check
-Reason: a sender that points to a missing agent or principal must stop the start, not fail on the first request.
-- Each sender's `agent_id` exists in the registry; each `principal_id` exists and is of kind service (exact line of the principal kinds: UNVERIFIED by core-a, the lead draft cites identity.py:10-15 and registry.py:69, 219).
+## The changes asked for (one line each, with the reason)
+- R1 = REQUEST 001 (section 7b): `S/config.py` after line 377 and in `_cross_checks` (392-431): add `TriggerSender`, `TriggerSettings`, `Config.triggers`. Reason: `Config` forbids unknown keys (config.py:67-69), so a `triggers:` block cannot load today.
+- R1b `S/defaults.py` (after line 33): the default numbers of section 7b. Reason: rule 3, one place for defaults (defaults.py:1-8).
+- R1c `S/app.py:158-169`: add every `secret_names` entry of `Config.triggers` to the names checked at start, kept apart from backend, tool and executor names (platform_secrets.py:36-63). Reason: a missing or shared secret must fail before the first request.
+- R1d `S/app.py:46-60` and 286-298: one new App field `trigger_resolve: Callable[[str], str] | None = None`, a reader limited to the trigger secret names (pattern platform_secrets.py:23-33), None when `Config.triggers` is None. Reason: App has no way to hand a secret to the worker.
+- R2 `S/registry.py:226 and 339`: after principals are loaded (219), refuse a sender whose `agent_id` is not in agents or whose `principal_id` is missing or not kind `service`. Reason: fail at load; today `_cross_check` has no principals argument.
+- R3 `README.md`, `SECURITY.md`, `CHANGELOG.md`: the once-only sentence of plan-v4-final B3 with its limits, in this step's PR. Reason: B3 says each sentence enters with its step. (Not read: wording is core-b's.)
 
-## 3. src/hadavin_sdk/app.py: secrets reach the worker (class App at line 47; extra_secret_names at 158-169)
-Reason: the worker needs the sender secrets by name through the secrets kind; App has no field for it today.
-- Add every sender secret name to `extra_secret_names` so the start-up secret check covers them.
-- Add ONE App field through which the worker reads those secrets (name proposed: `secrets`; core-b chooses). Read-only use: the worker reads only the names listed under triggers.senders.
+## Detail (ticket D section 7b, copied)
+File `S/config.py`. New optional block `triggers:` in config.yaml; absent means the worker refuses to start with a ConfigError. Not part of `config_hash` (registry.py:132-145), so no agent is un-qualified. All models use the `_Strict` base (config.py:67-69).
+```
+class TriggerSender(_Strict):
+    id: str                       # ^[a-z0-9-]{1,40}$
+    secret_names: list[str]       # 1 or 2 names (2 only during a swap), distinct, non-empty
+    agent_id: str
+    principal_id: str
+class TriggerSettings(_Strict):
+    tenant: str                   # ^[a-z0-9-]{1,40}$, required, no default
+    senders: list[TriggerSender]  # 1 to defaults.TRIGGER_MAX_SENDERS (8); ids unique; secret_names disjoint across senders
+    host: str = "127.0.0.1"       # literal lives in defaults.py or here: core-b's choice under the no-hardcoding guard
+    port: int = 8081              # 1 to 65535
+    allow_non_loopback: bool = False       # StrictBool
+    max_body_bytes: int = 2 * defaults.MAX_DOCUMENT_BYTES   # > 0, at most 8 x MAX_DOCUMENT_BYTES
+    max_running: int = 1          # 1 to 64 (raise the default to 4 after step F, see invariant 16)
+    ack_wait_s: float = 5.0       # > 0, at most 30
+    poll_s: float = 0.05          # >= 0.01, at most 1.0, and < ack_wait_s
+Config.triggers: TriggerSettings | None = None
+```
+Cross-checks wanted in `Config._cross_checks` (joined to the existing `refused` list, config.py:407-430, names only, never values): duplicate sender id; a secret name used by two senders; `allow_non_loopback` true in demo is allowed, in pilot and prod it is allowed only when set explicitly (no extra rule, just no default). Checks that need the registry (agent exists, principal exists and is kind service) are R2. Checks that need the secret VALUES (length at least 32, distinct across senders) are done by the worker at start, because config never holds values.
+Defaults to add in `S/defaults.py` (R1b): `TRIGGER_MAX_SENDERS = 8`, `TRIGGER_MAX_RUNNING = 1`, `TRIGGER_ACK_WAIT_S = 5.0`, `TRIGGER_POLL_S = 0.05`, `TRIGGER_PORT = 8081`, `TRIGGER_MIN_SECRET_CHARS = 32`.
+App wiring (R1c, R1d): names into the start-up secret check; `App.trigger_resolve` limited to those names.
+Fixture change (core-b's file): `tests/fixtures/config/config.yaml` stays without `triggers`; the T5 tests write their own block into the tmp copy (tests/conftest.py `make_cfg`), so no existing fixture changes.
 
-## 4. Only if a guard test requires it
-- src/hadavin_sdk/guard/producers.py or any test that pins the list of modules or packages: a row for the new package `hadavin_sdk.triggers` (UNVERIFIED which test, ticket D and ticket E name it).
 
-## What core-a offers in return
-- `hadavin_sdk.triggers.endpoint.make_wsgi(settings, secrets, start, clock)` takes the TriggerSettings object as it is; core-a writes the contract test for the block (bad pattern, 0 or 3 secret names, duplicate secret names, bounds) as a new test file once the field names are fixed.
+## What core-a does meanwhile
+- Codes endpoint.py against a typing.Protocol with these field names and worker.py with getattr on `Config.triggers` and `App.trigger_resolve` (the worker exits with code 2 and a clear message while they do not exist). Tests use a stand-in object in the tests folder only.
+- Offers: the contract test for the block (bad pattern, 0 or 3 secret names, duplicate ids, shared secret name, bounds) as a new test file once core-b confirms the names.
 
 ## Least privilege (preamble rule 11)
-- The endpoint identity reads: the sender secrets (by name), run rows by run id. Writes: nothing itself; the run row is written by Runtime.handle under the existing runtime identity. No new database role, no new table, no migration.
+- The worker reads: the sender secrets by name through `trigger_resolve` only; run rows by run id. It writes nothing itself: the run row is written by Runtime.handle under the existing runtime identity. No new database role, table or migration.
