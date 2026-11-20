@@ -1,5 +1,21 @@
 # REPORT from core-a (newest on top, UTC and IST)
 
+## FINAL STATE of core-a, 11:05 UTC (head f18af73cb); honest list, nothing hidden
+**Done and tested (my own runs and independent evidence runners):**
+- Step D (signed trigger endpoint + worker + E1: trigger.conflict audit event with per-sender cap, GET /health 503 + counter, in-process recovery when the store is down, no exit code 4): tested commits 70feef2c5 (09:08), 48dc30064 (09:24), 3b39df08f (09:50); later code only by builders (fix commits are the board's 'code D+E: WIP snapshot' commits: the tree at head is the tested one: tests/triggers + crash + k5 = 1399 passed, 5 skipped, raw/D-fix12-tests.log). 4 fresh code review rounds + 4 E1 rounds + 3 test/mutant reviews; E7 decided by the lead (keep the stdlib server).
+- Step E (testing/crash.py): 7 fresh review rounds, round 7 found no Blocker/Major (lead ruling: no cap for shipped helper code).
+- n8n template: three review rounds + 2 on new evidence; run in real n8n 2.47.7 by the lead (evidence-n8n-4.md): works; README marks SEEN only where evidence shows; 92 tests.
+- T4 contract tests for core-b/core-c (tests/contracts/*): green on their newest heads at my last run.
+- Drift report (DRIFT-REPORT.md): 26 drifts, fixed in the documents.
+**Independent evidence (BATCH9, head 32eae7c17, before the last cosmetic edits):** whole suite REQUIRE_PG=1 -n 3: 13 failed / 12305 passed / 458 skipped / 75 xfailed; 10 failures are strict-mode by design (tree lacks core-b's trigger config; they pass on the combined tree core-b d2920f552 + my files: 1377 passed, 0 failed); the other 3: dblink test (needs PostgreSQL on the default socket), the vendor-brand rule test (the lead's handover/BRIEF-PREAMBLE.md contains the string), and ONE crash-matrix test that is a TEST RACE (truncated answer of a killed worker): fixed in the test client afterwards (signed_post), not re-run in a whole-suite batch.
+**NOT done / open (exact):**
+1. BLOCKED: complete mutant run 19: needs tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` (a cosmetic rename of mine moved the G33d anchor) and `uv run python tests/endpoint_mutants.py`: my builder's attempt was denied by the permission classifier; not worked around; waits for the owner. Evidence on the previous code: run 18 = 109 of 109 as expected (raw/endpoint-mutants-run-18.log).
+2. No independent whole-suite run after the last edits (signed_post fix, 3 nits, n8n pins): builder runs only (tests 1399 passed).
+3. Nothing was run on Windows (WINDOWS-NOTES.md has 16 rows to run on the laptop). The 45 s timeout, 3xx, 502/503/504 with body, 520-524, Retry-After, 45 rounds exhausted, states other than NO_ACTION, lone surrogate, null values, an execution lost in a restart: UNVERIFIED in n8n.
+4. worker.main cannot start on THIS branch (core-b's Config.triggers is not merged here): expected; it starts on core-b's head + my files (tests pass there).
+5. Optional deletions the last E1 reviewer listed (not needed for the lead's verdict): _ack_wait_of 18 lines, _warn_no_audit 11, the 5-minute warning limit 10, drop-warning throttle 8, parameter validation 7.
+6. Left on this box: PostgreSQL 16 on port 55433 (mine; stop when the owner says the mutant run is not needed), scratch folders under the scratchpad.
+
 ## OWN SESSION MODEL: NOT FABLE, proof 07:22 UTC / 12:52 IST
 Output of get_session for this session (own id), after the owner's /model claude-sonnet-5-5 typed in this session: session_context.model = claude-sonnet-5-5; external_metadata.model = claude-sonnet-5-5; external_metadata.last_served_model = claude-sonnet-5-5; user_switched_model = claude-sonnet-5-5. configured_model = claude-fable-5-2 is only the value stored at creation and cannot be edited by me. The owner's switch was done before this lead message; no action by me was needed. Agents started since: sonnet (haiku for lookups; opus only inside brainstorm/draft/resolve skill files).
 

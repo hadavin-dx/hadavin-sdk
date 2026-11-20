@@ -741,19 +741,6 @@
    "what exactly it is doing": "adds mutants for every guard added since the last script version",
    "expected end": "about 30 min",
    "reason": "minor 10 + new guards"
-  },
-  {
-   "id": "n8n-fix7",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "n8n review Major (round count) + nits, tests",
-   "started UTC": "11:04",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "fix after round 1 on the new evidence",
-   "retries so far": 0,
-   "reason": "after n8n-rev6"
   }
  ],
  "tests": [
@@ -2771,6 +2758,19 @@
    "review round n of cap": "1 on the new evidence",
    "retries so far": 0,
    "reason": "n8n review after the real run: NO Blocker, 1 Major (ECONNREFUSED 'three rounds' is wrong in README:3 and two JSON notes: the evidence shows rounds 0 and 1, round 2 answered 202), nits (caller 202 vs receiver 200; two executions mixed; an UNVERIFIED mark on a stub-seen row; 105 min = waiting only; proxy part unverified); all other SEEN marks match the evidence lines; stale numbers gone; arithmetic recomputed correct"
+  },
+  {
+   "id": "n8n-fix7",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n review Major (round count) + nits, tests",
+   "started UTC": "11:04",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix after round 1 on the new evidence",
+   "retries so far": 0,
+   "reason": "review Major fixed (ECONNREFUSED: two refused sends, rounds 0 and 1, then round 2 answered 202) in README and both JSON notes; 5 nits; 92 template tests pass (raw/n8n-template-tests-14.log, try 2)"
   }
  ]
 }

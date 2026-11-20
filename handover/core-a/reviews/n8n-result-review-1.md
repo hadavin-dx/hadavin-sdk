@@ -105,3 +105,17 @@ New fact documented: a receiver that is down and then recovers is silent (succes
 Still UNVERIFIED: timeout 45 s, 3xx, 502/503/504 with body, 520 to 524, Retry-After, 45 rounds to the end, every state but NO_ACTION/RECEIVED/WORKING, lone surrogate, null values, empty id, falsy rerun, placeholder values, lost execution notice, editor paths, Cloud/queue, other versions.
 
 Checks: both JSON files load; ruff check and format clean; pytest log `handover/core-a/raw/n8n-template-tests-13.log` (92 passed; run 2 of 3, run 1 failed on three pins, log overwritten).
+
+## n8n-fix7
+
+| Finding | Evidence | Fixed in |
+|---|---|---|
+| MAJOR: "ECONNREFUSED for three rounds" | evidence-n8n-4.md line 50: refused in rounds 0 and 1, round 2 answered 202, next check 200 NO_ACTION | README line 3, error file note, main file note (README 93, 388, 420 and main node note already right) |
+| "The same event again: 200" | line 48: receiver 200, caller 202 | README line 91 |
+| "3 rounds and 2 checks" mixed two executions | case 5: 3 sends and 1 check; case 8: 2 checks | README real-loop bullet and loop-numbers paragraph |
+| "UNVERIFIED:" on the no-answer and 502/504 rows | record 2 ran them against a stub | README: "stub-only in record 2; behind a real proxy UNVERIFIED"; test pin updated |
+| "105 minutes is the worst case" | waiting only | README limit 12: "105 minutes of waiting plus the sends" |
+| Silent-recovery section claimed the proxy case | only a direct worker was run | README: proxy part marked UNVERIFIED |
+| Verify items 6 and 19 "NOT VERIFIED" although partly seen | lines 99 to 101, 112, 116 | README: "NOT VERIFIED (PARTLY SEEN, see below)" |
+
+Checks: both JSON files load; ruff clean; pytest log `handover/core-a/raw/n8n-template-tests-14.log`.
