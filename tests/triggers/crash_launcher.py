@@ -205,6 +205,8 @@ def signed_post(port: int, body: bytes, secret: str) -> tuple[int | None, bytes]
             if declared is None or not declared.isdigit() or len(data) < int(declared):
                 return None, b"IncompleteResponse"  # a truncated answer is no complete ack
         return reply.status, data
+    except http.client.IncompleteRead:
+        return None, b"IncompleteResponse"
     except (OSError, http.client.HTTPException) as exc:
         return None, type(exc).__name__.encode()
     finally:
