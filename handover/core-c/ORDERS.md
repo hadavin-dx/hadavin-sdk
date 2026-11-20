@@ -80,3 +80,10 @@ Decision: the gate does not re-scan with patterns and does not refuse on a patte
 5. Keep your test group that pushes real producer output through the gate: with this design it must show ZERO refusals and byte-identical output when nothing in the map occurs raw. Add two tests: a value added to the map after an earlier message is replaced in that earlier message on the next call; placeholders already present are untouched.
 6. Write this decision into ticket F and DECISIONS.md; the guarantee sentence becomes: "values the run has identified as sensitive are replaced by their placeholders in everything sent to a model; detection of new values is done by the producers' pattern redactor".
 The lead records option (a) (re-mask at the producers) as not needed, and the composed-string limit as a ledger row.
+
+## ORDER 008 (lead, 05:37Z) TEST FILE NAMES for the lead's ONE batch evidence run (tests in batches only, never one by one)
+The lead runs every test group together in parallel containers on the laptop (python 3.12 and 3.13, postgres 17.10, lint, security steps, mutants, role tests, T1, T5). So that your work is picked up automatically:
+1. Mutant scripts, format of tests/stage_mutants.py (a Mutant list and tools.mutation_runner.run_mutants; last line "N of N good; problems: [...]"): tests/gate_mutants.py (no call without a reservation, enforce step failure means no call, known originals replaced). A guarantee with no mutant script counts as NOT RUN = not done.
+2. Tests that need PostgreSQL read the DSN from HADAVIN_TEST_PG_DSN (the lead sets it; it is a superuser on a throwaway server with trust login, so tests create their own roles as tests/contracts/kinds/store_postgres.py does). Never skip silently when the variable is set.
+3. File name markers the batch run greps for: the 50-connection cap test lives in a file named tests/contracts/test_t1_*.py; per-role negative tests assert psycopg InsufficientPrivilege; endpoint tests that serve over wsgiref live under tests/triggers/.
+4. In your own box: per-file tests while coding, then ONE batch (the whole suite once) when all your steps are coded. No per-step full-suite runs.
