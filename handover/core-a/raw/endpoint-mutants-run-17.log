@@ -114,3 +114,14 @@ ok  KILLED       G32j _prepare does not warn that the App has no audit  [test_e1
 ok  KILLED       G33a _recover does not close the App's store after a failed try  [test_fix2_recover_closes_the_store_on_every_failed_try]
 ok  KILLED       G33b Runner.health puts the ping in place before its thread has started  [test_fix2_a_ping_thread_that_does_not_start_is_a_counted_503_and_the_n]
 ok  KILLED       G33c the conflict audit write is waited for 30 s, not 2 s  [test_fix2_a_blocked_audit_write_costs_the_409_at_most_2_s_and_one_writ]
+ok  CRASH        G33d a degraded worker never stops on repeated non-store errors  [test_fix2_five_non_store_failures_in_a_row_stop_the_worker_with_exit_3]
+ok  KILLED       G33e the 409 event cap uses one shared key for all senders  [test_fix2_the_cap_is_per_sender_and_the_window_dict_is_bounded_by_the_]
+ok  KILLED       G33f an unsigned request is taken as the first configured sender  [test_fix2_an_unsigned_or_wrongly_signed_conflicting_document_writes_no]
+103 killed, 4 crash-accepted (G20j, G31, G32e, G33d), 0 known survivors
+KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass
+  - (none: every mutant of the list has a killer test)
+107 of 109 run are as expected; problems: ['G32a the per-minute cap of the 409 audit events is never reached', 'G32d the /health body gets an extra key']
+
+real	4m5.315s
+user	1m35.857s
+sys	0m28.329s
