@@ -54,6 +54,15 @@ CREATE TABLE hadavin_limits (
 );
 REVOKE ALL ON hadavin_limits FROM PUBLIC;
 
+-- The counters refuse a negative or infinite amount by themselves (review N1), whoever writes them: NaN sorts above every
+-- number, so it fails the second test. Added NOT VALID (no long lock on a big table) and validated at once (this file is
+-- unreleased: a database that already holds a bad row stops here, which is the point). The reservation amounts have
+-- the same bounds since 0007.
+ALTER TABLE spend ADD CONSTRAINT spend_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
+ALTER TABLE spend VALIDATE CONSTRAINT spend_usd_range;
+ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
+ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;
+
 -- hadavin_reserve_spend: book the worst case of one model call on the day and month counters, in the transaction that
 -- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
 -- back with the caller's transaction). A duplicate id is the native unique_violation (23505).

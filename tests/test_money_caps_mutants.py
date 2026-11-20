@@ -22,6 +22,7 @@ from tests.test_money_caps_reserve_pg import caps_battery
 from tests.test_money_h1_pg import (
     check_b3_day_window,
     check_m1_min_expiry_age,
+    check_n1_counters_refuse_bad_usd,
 )
 from tests.test_stop_state_roles import World
 
@@ -222,6 +223,41 @@ H1_MUTANTS = {
             "                            - pg_catalog.make_interval",
         ),
         check_m1_min_expiry_age,
+        True,
+    ),
+    "M-N1a no CHECK on spend": (
+        lambda t: t.replace(
+            "ALTER TABLE spend ADD CONSTRAINT spend_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;\n"
+            "ALTER TABLE spend VALIDATE CONSTRAINT spend_usd_range;\n",
+            "",
+        ),
+        check_n1_counters_refuse_bad_usd,
+        True,
+    ),
+    "M-N1b no CHECK on spend_month": (
+        lambda t: t.replace(
+            "ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;\n"
+            "ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;\n",
+            "",
+        ),
+        check_n1_counters_refuse_bad_usd,
+        True,
+    ),
+    "M-N1c the CHECK is left NOT VALID": (
+        lambda t: t.replace("ALTER TABLE spend VALIDATE CONSTRAINT spend_usd_range;\n", ""),
+        check_n1_counters_refuse_bad_usd,
+        True,
+    ),
+    "M-N1d the CHECK lets a negative amount through": (
+        lambda t: t.replace(
+            "CHECK (usd >= 0 AND usd < 'Infinity'::numeric)", "CHECK (usd < 'Infinity'::numeric)"
+        ),
+        check_n1_counters_refuse_bad_usd,
+        True,
+    ),
+    "M-N1e the CHECK lets Infinity through": (
+        lambda t: t.replace("CHECK (usd >= 0 AND usd < 'Infinity'::numeric)", "CHECK (usd >= 0)"),
+        check_n1_counters_refuse_bad_usd,
         True,
     ),
 }
