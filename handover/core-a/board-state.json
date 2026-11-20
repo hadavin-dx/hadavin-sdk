@@ -761,19 +761,6 @@
    "reason": "the dry-run agent looked at the wrong socket"
   },
   {
-   "id": "A6-rev-c-rekey",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "A6: core-c newest merge 2552bcc95 (pii recording re-keyed to the current redaction)",
-   "started UTC": "16:12",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 16:09 A6"
-  },
-  {
    "id": "A6b-rev-b-newest",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:20 A6 DONE (reviews/rev-c-rekey.md + NEW FILE handover/core-c/requests/from-core-a-review.md as you named it): core-c 2552bcc95 (pii recording re-keyed): no Blocker; the claim 'phone masked whole' is RIGHT ('+61 412 345 678.'+newline hits the G7-F3 sentence-end rule, not the glued '.'+letter case); MAJOR: the commit only ADDED the new-key recording, the OLD key's file seems still present (25 files, record.py would produce 24; three recordings contain 'Office chair'): a regression to the old partial mask would still find it and the test would pass: delete the stale file or regenerate. Running: integ-pg, A6b-rev-b-newest.",
   "16:14 AGENTS 3 (integ-pg, A6-rev-c-rekey, A6b-rev-b-newest): found NEW core-b code (head 0aab18e9d): 197e24cae 'start-up self-check of the runtime login's money rights (review M3)' = the startup check I asked for in rev-b-G Major 3; reviewer started on it plus e750160ec (clock hint), 2356179a8 (k1b audit code), ef465c3fd (attack battery counts a repeat that meets the range check as not refused: scrutinising whether that is a test loosening).",
   "16:12 PACKAGES A1-A6 (your 16:09 list; heads: core-c 443ef0b69, core-b 0aab18e9d, lead-b-migrate 0891d81bd, lead-b-ts-watermark de8967aba): A1 cfull fixes: DONE, NOTHING TO FIX: all 5 ids pass at core-c fc4af41a7 on py3.13.12 x3 and py3.12.3 (evidence/cfull-fix-check.md): no wip/core-a-for-c-cfull branch because there is no diff; A2 migrate review: DONE twice (reviews/rev-lead-migrate.md, rev-lead-migrate-2.md) -> handover/core-b/requests/xr-review-migrate.md (new file, name as you asked); A3 ts review: DONE twice -> handover/core-b/requests/xr-review-ts.md; heads unchanged since: waiting for your fix rounds; A4 integration dry-run: DONE (INTEGRATION-DRYRUN-2.md; scratch/core-a-integration-dryrun-2 never pushed) + integ-pg RUNNING (strict PG run of tests/triggers etc. on the merged tree: the dry-run agent wrongly said there is no PG: mine is on :55433); A5 CRASH-MATRIX part 2: DONE; A6 core-c newest merges: the only new code commit since G9b is 2552bcc95 (a test re-keyed to the current redaction: scrutinising whether it hides a regression): reviewer RUNNING. AGENTS 2 (integ-pg, A6). QUEUE.md has no READY item: I can take nothing more from the queue; from core-b I can take S1/R1/W1 tests not touching migrate.py if you send the names.",
   "15:58 INTEGRATION DRY-RUN 2 DONE (handover/core-a/INTEGRATION-DRYRUN-2.md; scratch branch scratch/core-a-integration-dryrun-2, never pushed, worktree /home/user/wt/integ): heads core-b 463760813 -> core-a d1ee703ab -> core-c bd7f9d978, handover excluded. Merging core-a into core-b: ONE conflict (tests/contracts/test_t1_reserve_cap.py add/add: core-b's F-store T1 vs core-a's original T1); merging core-c: FIVE (CHANGELOG.md, defaults.py, tests/conftest.py = kept both sides, no duplicate constants; guard/producers.py = core-c's wording (registered callers identical on both sides, no check lost); the T1 file again). Your five named files: CHANGELOG/defaults/producers/conftest conflict ONLY at the core-c step, test_t1 at both. DECISION NEEDED: THREE T1 files now coexist (core-b's at the path, core-a's and core-c's saved as test_t1_reserve_cap_core_a.py/_core_c.py): pick one canonical. Checks on the final tree: ruff ok, import ok, pytest --co 22535 collected 0 errors, anchors+runner tests 130 passed, no TypeError at import/collection; 168 files differ from core-b (142 added, 26 modified, 0 handover). RISK: both T1 variants and tests/test_grants_negative_0007.py / _roles.py call migrate() WITHOUT reset_role/no_roles which core-b's migrate refuses (PG-only, unrun). NOT done by that agent (it looked at the wrong socket: my PG is on :55433): strict-PG run of tests/triggers: running now as integ-pg. AGENTS 1.",
@@ -4001,6 +3989,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "dry-run core-b 463760813 -> core-a d1ee703ab -> core-c bd7f9d978 (handover excluded): ONE conflict merging core-a (tests/contracts/test_t1_reserve_cap.py add/add), FIVE merging core-c (CHANGELOG, defaults.py, conftest.py kept both; guard/producers.py core-c's wording; the T1 file again): THREE T1 files now coexist (DECISION NEEDED: one canonical); ruff + import ok; pytest --co 22535 collected, 0 errors; anchors+runner 130 passed; no TypeError; 168 files differ from core-b; risk: the T1 variants and test_grants_negative_*.py call migrate() without reset_role/no_roles (core-b refuses); strict-PG triggers run NOT done by that agent (it looked at the wrong socket): rerun by integ-pg; INTEGRATION-DRYRUN-2.md"
+  },
+  {
+   "id": "A6-rev-c-rekey",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "A6: core-c newest merge 2552bcc95 (pii recording re-keyed to the current redaction)",
+   "started UTC": "16:12",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-c 2552bcc95 pii re-key: NO Blocker; mask-whole claim is right ('+61 412 345 678.'+newline hits the G7-F3 sentence-end rule, not the glued '.'+letter case); MAJOR: the stale OLD-key recording file is probably still there (25 files, record.py makes 24; three contain 'Office chair') so the re-key may guard nothing; nit: test never asserts the clear digits are absent; reviews/rev-c-rekey.md + handover/core-c/requests/from-core-a-review.md"
   }
  ]
 }
