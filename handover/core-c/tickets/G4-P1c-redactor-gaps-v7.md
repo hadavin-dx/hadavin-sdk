@@ -816,7 +816,7 @@ HOSTNAME = (
    texts through `channel.clean` from the TXT-A / TXT-B / EH alphabets of tests/fixtures/p1d_cases.py 65-153, which hold
    `db01.corp.example.com`, `<HOSTNAME_1>`, `.`, `-`, `_`, `[.]` and `。`) and tests/test_p1d_a_paths.py `_PIECES` (about 268) are
    the guard: a red in any of them in Phase 4 is a STOP (12).
-2. Label class ASCII (L11). Non-ASCII labels stay the fold scan's job (it runs first on every non-ASCII line, redact.py 1167).
+2. Label class ASCII (L11). Non-ASCII labels stay the fold scan's job (it runs first on every non-ASCII line: CHANGED in v7: `find` calls `_fold_scan` at redact.py 1170).
 3. Tail: after a `_HOST_TAIL` suffix, the rest of the dotted name is in the match. A trailing dot is not a label
    (`db01.corp.example.` gives `<HOSTNAME_1>.`). A port, a path and `@` end the name.
 4. Bare suffix `.internal` / `.local`: a following label or `(` means code (`jdk.internal.reflect`, `threading.local()`), so there is
@@ -832,12 +832,18 @@ HOSTNAME = (
 6. `_KEPT_HOST` is unchanged and applied to the whole match in `_decide`. MEASURED unchanged: `x.svc.cluster.local`,
    `x.svc.cluster.local.foo`, `eu-west-1.compute.internal`, `ec2.internal`, `jdk.internal.reflect.Method`, `threading.local()`.
    A defanged `x[.]svc[.]cluster[.]local` is masked (accepted).
+   CHANGED in v7 (review round 6 design N1): because `_KEPT_HOST` is searched in the WHOLE match, a private name that goes on into
+   a kept suffix is kept whole: `dial db01.corp.example.svc.cluster.local now` is unchanged after G4c, so `db01.corp` stays readable
+   (MEASURED with v6's 5.2/5.3 patterns put into `redact.PATTERNS` in-process, `g4c.py`; the base gives the same text, because its
+   pattern also matches the whole name up to `.local` and `_KEPT_HOST` keeps it). Stated limit L-H5, pinned by a TB-4.8 row (plain
+   assert of the unchanged text) and named in SECURITY. Not changed: testing `_KEPT_HOST` on the part after the private suffix would
+   mask in-cluster service names that hold `.corp`, which WARDEN reads and acts on (the reason `_KEPT_HOST` exists).
 7. Java packages: `com.acme.corp.billing.Service` was `<HOSTNAME_1>.billing.Service` and becomes `<HOSTNAME_1>` (limit L-H1, an
    over-mask, pinned by TB-4.7 as a plain assert).
 
 ### 5.3 The host-key rule (a second ("HOSTNAME", HOSTKEY) entry right after the main one; group 1 is the value). MEASURED in-process by v4.
 ```
-_HOST_ARCH = r"(?:x86(?:_64)?|i[3-6]86|amd64|arm64|aarch64|ppc64)"   # CPU names a build log writes after `host`
+_HOST_ARCH = r"(?:x86(?:[-_]64)?|x64|i[3-6]86|amd64|arm64|aarch64|ppc64|win(?:32|64))"   # CPU and platform names a build log writes after `host`
 HOSTKEY = (r"(?i)(?<![\w-])(?:--)?host(?:name)?(?:[\"']?[ \t]*[:=][ \t]*[\"']?|[ \t]+)"
            r"(?!" + _HOST_ARCH + r"(?![\w-]))"
            r"([A-Za-z][A-Za-z0-9_-]{0,60}(?:-[0-9]|[0-9]{2}))(?![\w\-/@])(?!\.\w)")
@@ -847,7 +853,12 @@ digit, and is not a CPU architecture name.
 - Kept (each was masked by v3's rule): `host ec2 failed`, `host k8s node`, `host x86 box`, `host http2 on`, `host x86_64`,
   `host eth0 up`, `host arm64 runner`, `host: x86_64-unknown-linux-gnu` (`rustc -vV` prints it), `hostname: Web2`, `host web1 down`.
 - `host s3 bucket` is not masked even by v3's rule, because `s3` is 2 characters (contested in round 3, measured).
-The sweep side effect: a value this rule registers is a HOSTNAME entry, and `_sweep` / `_replace_standalone` (redact.py 2207, 2228)
+- CHANGED in v7 (review round 6 design N3): `_HOST_ARCH` gains `x64`, `x86-64` (as `x86(?:[-_]64)?`) and `win32` / `win64`.
+  MEASURED (`g4c.py`, patterns in-process): with v6's `_HOST_ARCH`, `host x64 build`, `host win32 target`, `host win64 target` and
+  `host x86-64 runner` gave `host <HOSTNAME_1> ...`; with v7's they are unchanged, and `host x86_64`, `host x86 box`, `host arm64
+  runner`, `host: x86_64-unknown-linux-gnu` stay unchanged while `host db01 down`, `host py311 image`, `host web-1 down` and
+  `hostname=db02 state=down` are still masked. The base masks none of them.
+The sweep side effect: a value this rule registers is a HOSTNAME entry, and `_sweep` / `_replace_standalone` (CHANGED in v7: redact.py 2246, 2267)
 then replace every later standalone copy in the run.
 - MEASURED: v3's rule turned `host ec2 failed; see ec2.internal, k8s.io, s3://b and x86_64 builds` into
   `host <HOSTNAME_1> failed; see <HOSTNAME_1>.internal, ...`. v5 leaves the whole line unchanged.
@@ -890,7 +901,7 @@ The pin, by class, RE-MEASURED at e8ff6de2b (the same rows as v3 and v4):
 The classifier (I18 and tests/p1c_cases.py `number_class`, 11) is written out in 10.1.
 
 ## 7. Constants (defaults.py, one SPINE commit holding only these lines and their comments)
-They are placed right after `SPELLED_MAX_WORK = 4_000_000` (defaults.py 112), before `def cut_margin`. (v4's anchor
+They are placed right after `SPELLED_MAX_WORK = 4_000_000` (CHANGED in v7: defaults.py 115), before `def cut_margin`. (v4's anchor
 `SPELLED_MAX_FORMS` no longer exists.) CHANGED in v6 (header, G7 r7): at bff88a7a1 `SPELLED_MAX_CHARS = 1_000_000` and its comment
 (defaults.py 116-125) stand between the two; the eight constants go right after `SPELLED_MAX_CHARS`, before `def cut_margin`
 (and after G9's `SPELLED_MAX_PASSES` when G9 lands first, 0.3b). Exact comment above each, one line each; no host and no 32-character run in them:
