@@ -45,3 +45,18 @@ A sonnet BUILDER (not the author, not a reviewer) edits n8n/*.json, n8n/README-t
 | 9 | Words used here | tenant, agent, principal, ack_wait_s, max_running, max_steps, registry added |
 | 10 | Wait advice conflict | Now "keep 60 s; do not restart n8n while events are in flight" |
 | 11 | Test docstring | Added 520-524 and state check |
+
+## Round 3 (builder, core-a; text only, no loop numbers changed)
+
+| # | Nit | Done |
+|---|---|---|
+| 1 | 400 row Content-Length "missing or wrong" | README: missing, zero or longer than the bytes sent; shorter gives a cut body and a 401 |
+| 2 | falsy rerun ignored | README says "non-empty rerun value" (0, empty text, false ignored); expression unchanged; Hash note and test pin updated |
+| 3 | lone surrogate gets 400 "document is not valid text" | README 400 row and Build-guard note: a STOP |
+| 4 | "about 45 minutes" for no answer | README: 45 minutes plus up to 45 s per send (about 79 minutes when each send times out) |
+| 5 | "changed twice" / "round 1 changed only notes" | trigger json, error json, README line 3: "after review rounds 1 and 2 (round 3 text only)" |
+| 6 | Number.isFinite detail in guard note | Dropped; marked "recalled, not in the evidence" |
+| 8 | 414 and 431 origin | README: from the stdlib HTTP server layer in server.py |
+| 7 | (not in this list) | n/a |
+
+Checks: both JSON files load; ruff check and format clean; pytest log handover/core-a/raw/n8n-template-tests-7.log. Not run: n8n.

@@ -103,4 +103,94 @@ ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 35%]
 ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 46%]
 ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 58%]
 ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 70%]
-sssssssssssssssssssss.............xxxxxxxxxx..xxxxxxxxx......xxxxxxxx.
+sssssssssssssssssssss.............xxxxxxxxxx..xxxxxxxxx......xxxxxxxx..x [ 82%]
+xx...xx.xxxxxxxxxxxxxx.............................xxxxxxxxxxxxxxxxxxxxx [ 93%]
+xxxxxxxx..............................                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_trigger_config.py:37: core-b trigger config not on this branch yet
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:44: the model gate (step F) is not on this branch yet: hadavin_sdk.guard.model_gate is missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:115: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:127: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:145: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:163: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:172: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:182: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [28] tests/contracts/test_store_spend_reservations.py:196: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:209: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:222: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:243: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:259: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:271: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:283: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:300: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:315: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [28] tests/contracts/test_store_spend_reservations.py:323: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:337: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:358: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:389: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:406: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:420: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:440: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:456: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:470: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:492: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:510: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [36] tests/contracts/test_store_spend_reservations.py:539: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:552: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:566: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:599: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:615: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:632: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [12] tests/contracts/test_store_spend_reservations.py:639: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [4] tests/contracts/test_store_spend_reservations.py:665: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:707: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:99: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_t1_reserve_cap.py:107: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:153: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:188: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:227: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:258: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:316: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:337: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:369: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:405: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_meter.py:319: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:319: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [3] tests/contracts/test_meter.py:350: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:365: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:382: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:393: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:400: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:412: core-b meter not on this branch yet
+SKIPPED [24] tests/contracts/test_meter.py:436: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:450: core-b meter not on this branch yet
+SKIPPED [45] tests/contracts/test_meter.py:464: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:476: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:490: core-b meter not on this branch yet
+SKIPPED [15] tests/contracts/test_meter.py:509: core-b meter not on this branch yet
+SKIPPED [12] tests/contracts/test_meter.py:529: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:544: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:559: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:571: core-b meter not on this branch yet
+SKIPPED [45] tests/contracts/test_meter.py:584: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:601: core-b meter not on this branch yet
+SKIPPED [12] tests/contracts/test_meter.py:617: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:636: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:664: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:681: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:702: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:726: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:737: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:748: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:760: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:773: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:788: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:825: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:836: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:857: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:884: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:897: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:914: core-b meter not on this branch yet
+SKIPPED [39] tests/contracts/test_meter.py:1034: core-b meter not on this branch yet
+SKIPPED [1] tests/test_redact_idempotence_property.py:204: tests/fixtures/textnorm_corpus.json is not on this branch: that corpus is not run here
+86 passed, 455 skipped, 75 xfailed in 25.69s

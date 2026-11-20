@@ -1556,11 +1556,11 @@
    "what exactly it is doing": "re-runs the six updated test files on newest core-b/core-c heads and our branch",
    "started UTC": "07:24",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "after maint1"
+   "reason": "core-b a11ab5132: 696 passed 20 skipped; core-c 613611e25: 1 failed 354 passed 1 skipped 8 xfailed (new: static guard 'line 383: module-level call of _NoMap'); our branch 86 passed 455 skipped 75 xfailed; log raw/MAINT-evidence-2.log"
   },
   {
    "id": "n8n-fix3",
@@ -1574,6 +1574,19 @@
    "review round n of cap": "3 of 3 (nits only)",
    "retries so far": 0,
    "reason": "round 3"
+  },
+  {
+   "id": "maint2",
+   "role": "builder (test, non-builder)",
+   "model": "sonnet",
+   "what exactly it is doing": "decides interface change vs finding for the one new core-c gate test failure and fixes the test",
+   "started UTC": "07:27",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 1,
+   "reason": "evidence run found a new failure after core-c moved"
   }
  ],
  "tests": [
