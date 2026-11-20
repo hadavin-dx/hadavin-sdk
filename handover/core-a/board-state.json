@@ -2,7 +2,7 @@
  "order": "008 (002 to 006 standing; no ORDER 007 in my file)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "worker change and skeleton land: ONE batch run (new files, guard files, then one full pytest); ticket fix lands: push, T3 done",
+ "next": "batch suite ends: classify every failure as INHERITED or NEW in REPORT.md; then my own files once with PostgreSQL 16; mutant script and ticket fix land",
  "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -100,11 +100,11 @@
   {
    "item": "T5-SKEL",
    "what": "T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/)",
-   "state": "RUNNING",
-   "percent": 70,
-   "evidence file": "tests/triggers/test_t5_cases.py, n8n/*.json, n8n/README-trigger.md (not yet)",
+   "state": "DONE (n8n part is an outline, NOT run in n8n: ESCALATIONS E4)",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_cases.py (645 lines), n8n/ (3 files)",
    "tries": 1,
-   "reason": "lead message 05:27Z asks for it now; whole test module is skipped until the package exists"
+   "reason": "65 passed, 66 skipped (64 need the database variable, 1 crash case still skip-marked, 1 other); one early run showed 3 failures while the code under it was being rewritten, not captured: a timing flake is NOT ruled out; every n8n node parameter is from memory and marked UNVERIFIED (12 notes)"
   },
   {
    "item": "BUILD-D-endpoint",
@@ -127,11 +127,11 @@
   {
    "item": "BATCH",
    "what": "ONE batch test run when E and D are both coded",
-   "state": "WAIT builds",
-   "percent": 0,
-   "evidence file": "",
-   "tries": 0,
-   "reason": "lead: tests in batches only"
+   "state": "RUNNING",
+   "percent": 20,
+   "evidence file": "raw/BATCH-lint.log, raw/BATCH-bandit.log, raw/BATCH-full-suite.log",
+   "tries": 1,
+   "reason": "lint and format clean on src tests demos tools (331 files), bandit -ll on the new code: no finding; whole suite running once with 3 workers, database tests skip (no DSN); then ONE run of my own files with PostgreSQL 16"
   },
   {
    "item": "MUTANTS",
@@ -202,12 +202,12 @@
    "model": "fable",
    "what exactly it is doing": "writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only",
    "started UTC": "05:27",
-   "expected end": "about 15 min after start",
-   "percent": 85,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "third parallel item; 3 agents now run"
+   "reason": "finished, 177k tokens"
   },
   {
    "id": "build-E",
@@ -355,6 +355,42 @@
    "first failing line": "none",
    "state": "interim",
    "reason": "skeleton writer still running; 66 skips must be explained before this counts"
+  },
+  {
+   "suite or file": "ruff check + ruff format --check (src tests demos tools)",
+   "branch and SHA": "a748ab3 + working tree",
+   "run number": "1",
+   "passed / failed / errors": "clean, 331 files",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "batch part 1"
+  },
+  {
+   "suite or file": "bandit -ll (triggers package, crash.py)",
+   "branch and SHA": "same",
+   "run number": "1",
+   "passed / failed / errors": "no finding, exit 0",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "batch part 1"
+  },
+  {
+   "suite or file": "whole suite: pytest -n 3 -m 'not live and not perf'",
+   "branch and SHA": "same",
+   "run number": "1 of 1",
+   "passed / failed / errors": "running",
+   "first failing line": "-",
+   "state": "running",
+   "reason": "the ONE batch run; lead baseline for main: 10821 passed, 2 failed (missing .git in the lead copy)"
+  },
+  {
+   "suite or file": "8 rule test files (skeleton writer)",
+   "branch and SHA": "working tree",
+   "run number": "1",
+   "passed / failed / errors": "446 / 1 / 0",
+   "first failing line": "test_no_vendor_brand_string_is_tracked: handover/BRIEF-PREAMBLE.md contains a vendor brand name (rule 15 text)",
+   "state": "done",
+   "reason": "FAILURE is in the lead's file handover/BRIEF-PREAMBLE.md, not in core-a files: see LEAD ACTIONS"
   }
  ],
  "restarts": [],
@@ -369,8 +405,10 @@
  ],
  "lost": [],
  "lead_actions": [
+  "handover/BRIEF-PREAMBLE.md (your file) makes the repo rule test test_no_vendor_brand_string_is_tracked FAIL on this branch: rule 15 names vendor products. It will fail in any full run of cloud/core-a. I do not edit your file: reword it or keep handover/ out of the code commits you pick",
   "ESCALATIONS.md E1 to E4 need a lead word (audit event on 409 and exit after store errors; wsgiref on socket timeout; shared qualification helper in core-b's file; n8n template needs a real n8n)",
   "Please write 'GO BUILD D' into ORDERS.md (I acted on your session message); ORDER 007 is not in my ORDERS.md (006 is followed by 008): tell me if I missed one",
   "requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you"
- ]
+ ],
+ "failed": "1 rule test fails on the branch because of handover/BRIEF-PREAMBLE.md (lead's file): test_no_vendor_brand_string_is_tracked"
 }

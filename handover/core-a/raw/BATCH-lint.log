@@ -1,0 +1,5 @@
+HEAD a748ab3 2026-11-20T05:39:45Z python Python 3.13.18
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+331 files already formatted

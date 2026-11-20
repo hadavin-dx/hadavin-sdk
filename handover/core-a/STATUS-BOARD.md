@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:39:32Z
+UPDATED_UTC: 2026-11-20T05:40:05Z
 SESSION: core-a
 ORDER: 008 (002 to 006 standing; no ORDER 007 in my file)
 STATE: WORKING
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 15
-ITEMS_OPEN: 6
-PERCENT: 77
-AGENTS_RUNNING: 3
-CAPACITY: load 0.64 of 4 cores (1-minute average), mem 0.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_OPEN: 5
+PERCENT: 80
+AGENTS_RUNNING: 2
+CAPACITY: load 0.39 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.3G 60G 14%; 297M /home/user/hadavin-sdk; 40M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
-FAILED: none
+FAILED: 1 rule test fails on the branch because of handover/BRIEF-PREAMBLE.md (lead's file): test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: worker change and skeleton land: ONE batch run (new files, guard files, then one full pytest); ticket fix lands: push, T3 done
-PUSHED_UTC: 2026-11-20T05:38:56Z (the push before this board)
+NEXT: batch suite ends: classify every failure as INHERITED or NEW in REPORT.md; then my own files once with PostgreSQL 16; mutant script and ticket fix land
+PUSHED_UTC: 2026-11-20T05:39:36Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -30,10 +30,10 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | T3 | one EGM review round for ticket D (and H if written) | RUNNING (review done, resolve written, ticket text being repaired) | 80 | tickets/D-review-1.md, ESCALATIONS.md (E1 to E4) | 1 | round 1 of 1: 3 Blocker, 20 Major; 33 fixes, 4 escalated, 4 nits declined, 0 contested; reviewers read the ticket, not the built code |
 | T4 | store contract test files for core-b interface | BLOCKED-ON-CORE-B | 0 |  | 0 | ORDER 006 answer 9: interface (i) not published yet; lead copies it into inputs/ |
 | BUILD-E | build step E on wip/cloud-core-a/E | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/E-tests.log, raw/E-tests-pg16.log, raw/E-guards.log, raw/E-mutants.log | 1 | crash.py 197 lines, test file 698 lines (ticket guessed 110 and 190); 4 mutants caught; NOT checked: wheel contents, Windows exit code, Python 3.12 run by me |
-| T5-SKEL | T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/) | RUNNING | 70 | tests/triggers/test_t5_cases.py, n8n/*.json, n8n/README-trigger.md (not yet) | 1 | lead message 05:27Z asks for it now; whole test module is skipped until the package exists |
+| T5-SKEL | T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/) | DONE (n8n part is an outline, NOT run in n8n: ESCALATIONS E4) | 100 | tests/triggers/test_t5_cases.py (645 lines), n8n/ (3 files) | 1 | 65 passed, 66 skipped (64 need the database variable, 1 crash case still skip-marked, 1 other); one early run showed 3 failures while the code under it was being rewritten, not captured: a timing flake is NOT ruled out; every n8n node parameter is from memory and marked UNVERIFIED (12 notes) |
 | BUILD-D-endpoint | src/hadavin_sdk/triggers/endpoint.py + tests/triggers/test_endpoint.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-endpoint-tests.log, -guards.log, -mutants.log (not yet) | 1 | endpoint.py 300 lines (draft guessed 130), 190 tests pass, 2 skipped; 3 mutants caught; NOT run: bandit, real socket, timing of the secret comparison |
 | BUILD-D-worker | src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-worker-tests.log, -mutants.log (not yet) | 1 | worker.py 391 lines, 32 tests pass 4 times in a row (about 5.4 s), 4 mutants caught; in-process key table removed, no-slot path polls the stored row; KNOWN COST: a pool-full 503 for a new key takes the full ack wait (5 s) and holds a server thread, no cap on waiting requests; NOT run: main past its two refusal paths, PostgreSQL, two real processes |
-| BATCH | ONE batch test run when E and D are both coded | WAIT builds | 0 |  | 0 | lead: tests in batches only |
+| BATCH | ONE batch test run when E and D are both coded | RUNNING | 20 | raw/BATCH-lint.log, raw/BATCH-bandit.log, raw/BATCH-full-suite.log | 1 | lint and format clean on src tests demos tools (331 files), bandit -ll on the new code: no finding; whole suite running once with 3 workers, database tests skip (no DSN); then ONE run of my own files with PostgreSQL 16 |
 | MUTANTS | tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants | RUNNING | 5 | raw/endpoint-mutants-run.log (not yet) | 1 | ORDER 008: a guarantee with no mutant script counts as not done |
 
 ## AGENTS
@@ -43,7 +43,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | a86435a3 | lookup | fable | T1: reads plan-v2, v3, v4-final and round-3 reviews, writes PLAN-READBACK.md | 05:19 | ended 05:24 | 100 | done | n/a | 0 | finished, 119k tokens, PLAN-READBACK.md written |
 | a8e21a19 | builder (ticket writer, no code) | fable | T2-D: checks every line of the lead draft of ticket D against the code, writes tickets/D-signed-endpoint.md, gives the step H verdict | 05:22 | ended | 100 | done | n/a | 0 | finished, 247k tokens, ticket D written |
 | ac060f95 | builder (ticket writer, no code) | fable | T2-E: writes tickets/E-test-helpers.md (helpers, where they live, guard tests they could break) | 05:22 | ended | 100 | done | n/a | 0 | finished, 220k tokens, ticket E written (nothing run for the ticket) |
-| t5-skel | builder (tests and templates, new files only) | fable | writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only | 05:27 | about 15 min after start | 85 | running | n/a | 0 | third parallel item; 3 agents now run |
+| t5-skel | builder (tests and templates, new files only) | fable | writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only | 05:27 | ended | 100 | done | n/a | 0 | finished, 177k tokens |
 | build-E | builder | fable | step E: src/hadavin_sdk/testing/crash.py and tests/test_testing_crash.py; ruff, its own test file, 6 guard test files, 4 mutants, bandit | 05:28 | ended | 100 | done | n/a (E needs no ticket review) | 0 | finished, 138k tokens |
 | build-D-ep | builder | fable | endpoint.py: run id derivation, signature check with two secrets, WSGI app, unit tests in-process, 3 mutants | 05:30 | ended | 100 | done | review runs alongside (0 of 1 started) | 0 | finished, 131k tokens |
 | build-D-wk | builder | fable | worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants | 05:30 | ended | 100 | done | review runs alongside (0 of 1 started) | 0 (1 follow-up change, not a retry of a failure) | finished, 189k tokens |
@@ -55,7 +55,10 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| none | | | | | |
+| 11496 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 11499 | timeout 1500 uv run --all-extras --group test pytest -q -n 3 -m not li | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 11501 | uv run --all-extras --group test pytest -q -n 3 -m not live and not pe | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 11507 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -66,6 +69,10 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | 5 guard files for endpoint.py | working tree | 1 (builder) | 233 / 0 / 0 | none | done | same |
 | tests/triggers/test_worker.py | working tree | 6 to 9 (builder, after the change) | 32 / 0 / 0 each time | none | done | one earlier run failed once on a bug in a new test (timer joined before start), fixed by the builder; UNVERIFIED by me until the batch run |
 | tests/triggers/test_t5_cases.py (skeleton, another agent's file) | working tree | 1 (worker builder, not ordered) | 65 / 0 / 0, 66 skipped | none | interim | skeleton writer still running; 66 skips must be explained before this counts |
+| ruff check + ruff format --check (src tests demos tools) | a748ab3 + working tree | 1 | clean, 331 files | none | done | batch part 1 |
+| bandit -ll (triggers package, crash.py) | same | 1 | no finding, exit 0 | none | done | batch part 1 |
+| whole suite: pytest -n 3 -m 'not live and not perf' | same | 1 of 1 | running | - | running | the ONE batch run; lead baseline for main: 10821 passed, 2 failed (missing .git in the lead copy) |
+| 8 rule test files (skeleton writer) | working tree | 1 | 446 / 1 / 0 | test_no_vendor_brand_string_is_tracked: handover/BRIEF-PREAMBLE.md contains a vendor brand name (rule 15 text) | done | FAILURE is in the lead's file handover/BRIEF-PREAMBLE.md, not in core-a files: see LEAD ACTIONS |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -83,6 +90,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- handover/BRIEF-PREAMBLE.md (your file) makes the repo rule test test_no_vendor_brand_string_is_tracked FAIL on this branch: rule 15 names vendor products. It will fail in any full run of cloud/core-a. I do not edit your file: reword it or keep handover/ out of the code commits you pick
 - ESCALATIONS.md E1 to E4 need a lead word (audit event on 409 and exit after store errors; wsgiref on socket timeout; shared qualification helper in core-b's file; n8n template needs a real n8n)
 - Please write 'GO BUILD D' into ORDERS.md (I acted on your session message); ORDER 007 is not in my ORDERS.md (006 is followed by 008): tell me if I missed one
 - requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you
