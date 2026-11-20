@@ -90,7 +90,7 @@ def test_note_fallback_keeps_fields_and_logs_only_the_exception_type(tmp_path, c
             output_hash="cd" * 32,
             decision="allow",
         )
-    row = [e for e in _events(rt, run) if e.domain == "x"][0]
+    row = next(e for e in _events(rt, run) if e.domain == "x")
     assert (row.error_code, row.object_ref, row.decision) == ("kept code", "ref:1", "allow")
     assert (row.inputs_hash, row.output_hash) == ("ab" * 32, "cd" * 32)
     assert row.rule_id == "audit_event_refused"
