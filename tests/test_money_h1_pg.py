@@ -125,6 +125,44 @@ def check_b3_day_window(w):
     w.migrate()  # the next migrate seeds it again
 
 
+def check_m1_add_spend_window(w):
+    """Review m1: hadavin_add_spend has the booking-day window of reserve; a far day starts no counter row."""
+    rt = w.store(w.runtime)
+    today = today_utc()
+    for day in (today - timedelta(days=1), today, today + timedelta(days=1)):
+        rt.add_spend(AGENT, day, D(1))
+    before = (
+        w.run("SELECT count(*) FROM spend")[0][0],
+        w.run("SELECT count(*) FROM spend_month")[0][0],
+    )
+    for day in (
+        today + timedelta(days=2),
+        today - timedelta(days=2),
+        today.replace(year=today.year + 73),
+    ):
+        # the message names the argument (a fixed token), which is what the Limits clock hint keys on
+        with pytest.raises(ValueError, match="refused by the database"):
+            rt.add_spend(AGENT, day, D(1))
+        assert (
+            _sqlstate_of_call(w, "SELECT * FROM hadavin_add_spend(%s, %s, 1)", (AGENT, day))
+            == "22023"
+        )
+    assert (
+        w.run("SELECT count(*) FROM spend")[0][0],
+        w.run("SELECT count(*) FROM spend_month")[0][0],
+    ) == before
+    _set_limit(w, "max_day_skew", 0)
+    with pytest.raises(ValueError, match="refused by the database"):
+        rt.add_spend(AGENT, today + timedelta(days=1), D(1))
+    rt.add_spend(AGENT, today, D(1))
+    w.run("DELETE FROM hadavin_limits WHERE name = 'max_day_skew' RETURNING 1")
+    assert (
+        _sqlstate_of_call(w, "SELECT * FROM hadavin_add_spend(%s, %s, 1)", (AGENT, today))
+        == "HD004"
+    )  # a missing row fails closed
+    w.migrate()
+
+
 def check_m1_min_expiry_age(w):
     rt = w.store(w.runtime)
     _seed(w)
@@ -236,6 +274,7 @@ def h1_battery(w):
     check_b3_day_window(w)
     check_m1_min_expiry_age(w)
     check_n1_counters_refuse_bad_usd(w)
+    check_m1_add_spend_window(w)
     # M2 (check_m2_settle_needs_an_agent) is deferred
 
 
@@ -245,6 +284,10 @@ def test_b3_a_booking_day_outside_the_window_is_refused(w):
 
 def test_m1_a_young_hold_cannot_be_expired_nor_a_fresh_expiry_released(w):
     check_m1_min_expiry_age(w)
+
+
+def test_m1_add_spend_has_the_day_window(w):
+    check_m1_add_spend_window(w)
 
 
 def test_m2_settle_without_an_agent_is_refused(w):

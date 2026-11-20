@@ -382,6 +382,8 @@ DECLARE
     v_max_amount NUMERIC;
     v_max_decimals NUMERIC;
     v_max_id NUMERIC;
+    v_skew NUMERIC;
+    v_today DATE;
     v_month DATE;
 BEGIN
     SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
@@ -390,12 +392,19 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
     SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_skew FROM hadavin_limits l WHERE l.name = 'max_day_skew';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_day_skew missing' USING ERRCODE = 'HD004'; END IF;
 
     IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
        OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]' THEN
         RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
     END IF;
     IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) OR p_day < DATE '1970-01-01' OR p_day > DATE '9999-12-31' THEN
+        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    -- the same booking-day window as hadavin_reserve_spend (review m1): no far-day counter rows from the runtime
+    v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
+    IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
         RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
     END IF;
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
