@@ -50,7 +50,7 @@ V["UUIDHEAD"] = V["UUID"][:24]
 
 # Is G4c merged into this tree? The G4c builder sets True in the G4c commit (ticket G8 v5, section 8.1). Until then the host
 # rows are checked against `after` and rows 64 and 71 are strict xfails naming G4c.
-G4C_MERGED = False
+G4C_MERGED = True
 
 # fmt: off
 ROWS = [

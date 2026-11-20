@@ -6,9 +6,6 @@ Each mutant edits ONE guard in a temp copy of the package; the test in ``killer`
     python tests/b64_mutants.py              # all mutants; exit 1 if any is not good
     python tests/b64_mutants.py b64          # the base64 half (names start with `b64 `)
     python tests/b64_mutants.py host         # the host-name half (names start with `host `)
-
-`host` selects NOTHING before Phase 4 (no mutant of that name exists, `tests/test_host_names.py` is absent): the runner then has no result and
-the command exits 1. That is expected on this tree, not a failure of a mutant.
 """
 
 import sys
@@ -492,16 +489,25 @@ M = [
     m(
         "host v3 start look-behind",
         RD,
-        'r"(?i)(?<![\\w-])(?<![\\w-]\\.)(?<![\\w-]\\[\\.\\])(?:"',
+        'r"(?i)(?<![A-Za-z0-9_-])(?<![A-Za-z0-9_-]\\.)(?<![A-Za-z0-9_-]\\[\\.\\])(?:"',
         'r"(?i)(?<![\\w.\\-\\]])(?:"',
         H,
         "test_host_start_after_a_bracket_or_a_lone_dot",
         "TB-4.6 ",
     ),
     m(
+        "host start look-behind on Unicode word characters",
+        RD,
+        'r"(?i)(?<![A-Za-z0-9_-])(?<![A-Za-z0-9_-]\\.)(?<![A-Za-z0-9_-]\\[\\.\\])(?:"',
+        'r"(?i)(?<![\\w-])(?<![\\w-]\\.)(?<![\\w-]\\[\\.\\])(?:"',
+        H,
+        "test_host_starts_after_a_non_ascii_word_character",
+        "TB-4.13 ",
+    ),
+    m(
         "host plain ASCII look-behind",
         RD,
-        'r"(?i)(?<![\\w-])(?<![\\w-]\\.)(?<![\\w-]\\[\\.\\])(?:"',
+        'r"(?i)(?<![A-Za-z0-9_-])(?<![A-Za-z0-9_-]\\.)(?<![A-Za-z0-9_-]\\[\\.\\])(?:"',
         'r"(?i)(?<![A-Za-z0-9_-])(?:"',
         H,
         "test_host_patterns_are_linear",
