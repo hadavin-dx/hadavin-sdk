@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:52:39Z
+UPDATED_UTC: 2026-11-20T09:56:01Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,21 +7,20 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 8
-CAPACITY: load 4.1 of 4 cores, mem 0/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
-DISK: / 57G free, 18% used; git worktrees 20; 1.3G	/tmp/claude-0;280M	/root/.cache/uv;
+CAPACITY: load 2.6 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
+DISK: / 57G free, 18% used; git worktrees 21; 1.3G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only. E9(2) landed (e8ff6de2b) + fix round 1 (c4d68c6ef: error-path trade-off stated and pinned, stale docs; builder batch 422 passed); E9 result review round 2 pending. G9 (E10) and G10 (E11) tickets drafting: plan review round 1 starts when each lands. Heavy batches running: 1 (Q9 mutant run).
-PUSHED_UTC: 2026-11-20T09:51:57+00:00
+NEXT: LIVE only. Q9 landed (4fb0b5154, 6e8bb9820): 30 code-point tests + 30 mutants, textnorm 240 of 240 good, redact_mutants 89 of 93 in the builder run, 4 survivors = E13 (look-alike set compare, U+2044, slash replace, DM-1). Whole redact_mutants.py (96 with E9) running on merged HEAD (E12). G10 plan review round 1 running. G9 ticket still drafting.
+PUSHED_UTC: 2026-11-20T09:55:33+00:00
 
-(15:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:26 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ab19d791 | builder | claude-sonnet-5-5 | Q9 mutants and tests (30 code points; 3 wrong-reason + 4 surviving textnorm mutants; stale N15; both mutant lists on HEAD) | RESTARTED 09:36Z on /tmp/core-c-q9 | 09:36 | 10:10 | 30 | running | 1 | 1 | container restart 09:35Z |
 | adfc4857 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point (E10) | plan review round 1 next (max 3) | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a2db832a | drafter | claude-opus-5-5 | ticket G4 v5 (plan review round 4 findings; card-path fix) | plan review round 5 next | 09:37 | 10:10 | 0 | running | 5 | 1 | container restart 09:35Z |
 | ae8bb529 | drafter | claude-opus-5-5 | ticket G8 v3 (plan review round 2 findings; IBAN opaque-token measurement) | plan review round 3 next | 09:37 | 10:10 | 0 | running | 3 | 1 | container restart 09:35Z |
@@ -29,11 +28,12 @@ PUSHED_UTC: 2026-11-20T09:51:57+00:00
 | a6a89e42 | builder | claude-sonnet-5-5 | G7 fix round 7 (registry memory limit, actions double count, structural growth trigger, counts/figures/scripts) | G7 result review round 6 done (0 Blocker, 1+4 Major) | 09:52 | 10:25 | 1 | running | 7 | 0 | from G7-result-review-6.md; E10 fixed point waits for ticket G9 |
 | a5b7b759 | reviewer | claude-sonnet-5-5 | G10 PLAN review round 1 (implementation readiness): text-fold deadline + false-hit wording | 09:55 | 10:10 | 2 | running | 1 | 0 | max 3 rounds, then build |
 | a19f95a7 | reviewer | claude-sonnet-5-5 | G10 PLAN review round 1 (codebase): pins, callers, DeadlinePassed vs TextTooLong | 09:55 | 10:10 | 2 | running | 1 | 0 | max 3 rounds, then build |
+| acfcd4eb | reviewer | claude-sonnet-5-5 | Q9 fresh EGM result review (30 code-point tests and mutants; textnorm survivors; E13 survivors) | 09:58 | 10:12 | 2 | running | 1 | 0 | ORDER 022 Q9 condition |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| textnorm_mutants.py (Q9 builder, worktree /tmp/core-c-q9) | running 5 min | one mutant runner, 1 pytest at a time | heavy batch 1 of 2 |
+| tests/redact_mutants.py, all 96 mutants on merged HEAD (core-c, worktree /tmp/core-c-mut96) | running | timeout 40 min; writes /tmp/redact-mutants-96.txt | heavy batch 1 of 2 (E12 SUMMARY line) |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
