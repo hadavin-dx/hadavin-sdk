@@ -11,8 +11,84 @@ Written 2026-11-20 05:33 UTC from the lead's draft (inputs/draft-ticket-F-store-
 1. Argument order: reserve(agent_id, worst_usd, *, run_id=None) as in THIS draft (the lead ruled F-store wins over F-install).
 2. Per-run cost: settle_spend adds the settled amount to the run's cost (runs.cost_usd) in the SAME transaction as the counter move, when the row has a run_id and that run exists; a missing run row moves only the counters. Reason: invariant 9 of F-install (run cost equals the sum of that run's settles) then holds exactly and a repeated settle cannot add twice. Stated limit: an expired, never settled reservation is in the day and month counters but not in the run's cost.
 3. Interface (ii) contract point 10 is binding on the gate: the worst case covers system prompt, messages, tool schemas and documents at one token per byte at most, plus max_tokens of output, times the client's max_attempts. The shared helper lives in llm/common.py (F-install open question 1).
-4. Open questions of the draft: 1 raise-only after expiry YES; 2 expiry age constant 3600 s YES, with a test that it is larger than the longest call the runtime allows (to be read in the build: UNVERIFIED today); 3 overshoot audit in Limits.settle YES; 4 pg_dsn.py from the T1 branch comes in YES; 5 retention reuses the 400-day ceiling YES; 6 unknown agent stays KeyError YES.
+4. Open questions of the draft: 1 raise-only after expiry YES; 2 expiry age constant 3600 s YES, with a test that it is larger than the longest call the runtime allows (to be read in the build: UNVERIFIED today); 3 overshoot audit in Limits.settle YES; 4 pg_dsn.py from the T1 branch: WITHDRAWN in R1; 5 retention reuses the 400-day ceiling YES; 6 unknown agent stays KeyError YES.
 5. Evidence commands: uv run --all-extras --group test pytest tests/contracts/test_store.py tests/contracts/test_t1_reserve_cap.py tests/test_limits_reserve.py (PostgreSQL cases with HADAVIN_TEST_PG_DSN set; in this container PostgreSQL 16.15 as an extra signal; the run that counts is the lead's on PostgreSQL 17). Rollback: the migration is additive (one new table, one index); reverting the source leaves an unused table.
+
+
+## RESOLUTION of review round 1 (binding; where it differs from the draft text below, THIS section wins)
+Review report: tickets/F-store-review-1.md. Every Blocker and Major is answered here by a text change; none is contested.
+
+### R1. Files (answers Blocker B1). B = builder, T = test writer (a different agent). Nothing else may be written.
+| path | action | who |
+|---|---|---|
+| src/hadavin_sdk/store/migrations/0007_spend_reservations.sql | create | B |
+| src/hadavin_sdk/store/migrate.py | modify: one GRANTS row | B |
+| src/hadavin_sdk/store/protocol.py | modify: SpendCapExceeded, four methods on Store, amount check helper, missing_methods docstring | B |
+| src/hadavin_sdk/store/postgres.py, store/memory.py | modify: the four methods | B |
+| src/hadavin_sdk/models.py | modify: SpendReservation | B |
+| src/hadavin_sdk/limits.py | modify: SpendRefused, Meter, Limits.reserve, Limits.settle (charge and blocked untouched) | B |
+| src/hadavin_sdk/defaults.py | modify: RESERVATION_EXPIRE_S | B |
+| src/hadavin_sdk/runtime/tick.py | modify: step expire_reservations (last), one purge line, the step list in the module docstring | B |
+| tests/fixtures/migrations_released.json; tests/test_migration_numbers_guards.py (count 6 to 7); tests/test_p2_postgres.py (applied list); tests/test_p7_tick.py (step order pin) | modify: pins only | B |
+| tests/contracts/kinds/store_postgres.py | modify: _SplitStore sends purge_spend_reservations to the purge login (as it does for the two existing purge methods) | B |
+| CHANGELOG.md | modify: upgrade steps and behaviour changes (R9) | B |
+| tests/contracts/test_store_spend.py | create: store contract cases, both stores | T |
+| tests/contracts/test_t1_reserve_cap.py | create: T1, PostgreSQL only | T |
+| tests/test_limits_reserve.py | create: Limits.reserve and settle, every SpendRefused reason, overshoot, unreadable store, midnight with a patched clock | T |
+| tests/test_spend_reservations_pg.py | create: crash cases C1 to C5, settle from 8 connections, per-role negative tests, tick step | T |
+| tests/spend_reservation_mutants.py | create: the mutants, in the format of tests/stage_mutants.py, each with the name of the test that kills it | T |
+Not brought in from the branches: tests/pg_dsn.py, test_pg_dsn_guard.py, meter_support.py, reserve_workers.py, test_store_time_rules.py, postgres_mutants.py, meter_mutants.py and the demo conftest edit. Decision 4.4 above is withdrawn (it would edit files outside this list); the test writer may copy ideas into its own new files. Line citations of those branch files in the test plan are pointers to ideas, not to files in this tree.
+
+### R2. Who lands what (M1)
+F-store lands SpendRefused, the Meter Protocol, Limits.reserve and Limits.settle. F-install commit 3 lands only the k1b Budget changes.
+
+### R3. Per-run cost inside settle_spend (M2)
+In the settle transaction, after the claim and the two counter moves: `UPDATE runs SET cost_usd = cost_usd + %(add)s WHERE run_id = %(run)s`, only when the row has a run_id. `add` is the full actual amount on open to settled, and the full actual amount on expired to settled (an expired row never added anything to the run). Zero rows (no such run) is ignored. Stated limits: a reservation that expired and was never settled, or was settled lower after expiry, is in the day and month counters but not in the run's cost. The memory store does the same on its run dict. New invariant 13: for a run whose calls all settled before expiry, runs.cost_usd equals the sum of its settles. New mutant 20: the runs update removed. The interfaces README section 1 gets this sentence.
+
+### R4. settle result, replay and unknown id (M3)
+settle_spend returns `tuple[SpendReservation, bool]`: the stored row and `applied` (true only for the call that changed the row). Limits.settle returns max(0, row.settled_usd minus row.reserved_usd) from the STORED row (so a replay with another amount returns the first result) and writes the overshoot audit row only when applied is true and the overshoot is above zero. An unknown id raises NotFound from both Meter implementers (Limits and Budget); the gate already returns the reply when settle raises (contract point 5). F-install's "no-op for an unknown reservation" is replaced by this.
+
+### R5. The overshoot audit event (M4)
+AuditEvent(run_id=row.run_id or "-", domain="limits", operation="overshoot", principal=row.agent_id, source="meter", result="booked"), written with audit.write_outcome inside a try that swallows any exception (logged at WARNING).
+
+### R6. Limits.reserve, exact order and mapping (M5)
+1. Amount: `type(worst_usd) is Decimal`, finite, 0 <= worst_usd < 10**9; anything else (float, bool, int, None, NaN, Infinity, negative, too large) raises SpendRefused("bad_amount"). 2. `budget = self.registry.agents[agent_id].budget_usd` OUTSIDE any try: an unknown agent is a KeyError even when the stop state is on. 3. Inside one try: read the stop state (on: SpendRefused("kill_switch")); `rid = new_id("res")`; store.reserve_spend(...); return rid. 4. except SpendRefused: re-raise; except SpendCapExceeded: SpendRefused("daily_budget") or ("monthly_budget") by `which`; except Exception: SpendRefused("limits_unavailable").
+The store's own amount check is one helper in store/protocol.py used by both stores: Decimal, finite, 0 <= x < 10**9, else ValueError (so the memory store and the table CHECK agree). Limits.settle passes the store's ValueError through for a bad actual amount.
+
+### R7. Fixtures (M6, M7)
+_SplitStore routes purge_spend_reservations to the purge login (file list). The per-role tests create the portal and reset logins by hand, the way tests/test_stop_state_roles.py (step B) does; pg_schema is not changed.
+
+### R8. The row model (M8)
+SpendReservation is a frozen pydantic BaseModel with extra forbidden and exactly the nine columns; it is NOT a Shape (no schema_version). status is Literal["open", "settled", "expired"]. The generic helpers _insert, _select and _one are not used for this table; the SQL is written out.
+
+### R9. Rollback and rollout (M9)
+Rollout order: run migrate first, then deploy the code (code first makes the tick step fail and, after the install, refuses every model call as limits_unavailable). Rollback: revert only the Python; keep the 0007 file, the GRANTS row, the manifest entry and the pins (migrate refuses an applied migration without its file). CHANGELOG upgrade steps: run migrate; a custom store must add the four methods or the app refuses to start; plus the two behaviour changes already listed.
+
+### R10. Expiry age (M10)
+The test "3600 s is larger than the longest call" is dropped: no upper bound exists in config (call_timeout_s has none). Stated cost instead: a call that takes longer than 3600 seconds is charged its worst case (a late settle only raises, never lowers).
+
+### R11. Phases, each leaves the tree importable and the touched tests green (M11)
+P1 migration file, GRANTS row, manifest entry, pins. P2 SpendReservation, Protocol additions, both stores, _SplitStore. P3 limits.py. P4 tick step, purge line, docstring, CHANGELOG.
+
+### R12. One numbering for interface (ii) (M12)
+The ten contract points of interfaces/README.md section 2 are the only numbering. Points 6 and 7 of the block "INTERFACE (ii)" below (the order inside Limits.reserve, the overshoot audit) are implementation notes of THIS ticket, now R6 and R5, not contract points. Point 8 reads "at the next reserve".
+
+### R13. Nits taken
+N1 line numbers moved after steps A and B: the builder re-reads the cited places. N2 no row needed in tests/test_migration_numbers.py. N3 the .charge( hits are 2 on Limits and 9 on the demo meter, none on k1b Budget. N4 in the file list. N5 the memory store expires with `created_at <= now - age` on models.now(). N6 seed statement: `INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING` (same for spend_month); a counter row missing at settle raises RuntimeError("spend counter row missing") and rolls back; ids come from new_id("res"). N7 the overshoot and midnight tests use month cap 100.00. N8 in the file list; RESERVATION_EXPIRE_S must pass tests/test_no_hardcoded_values.py (if that test demands a config field, it becomes Config.limits-style validated config with default 3600: the builder reports which).
+
+### R14. Findings of the second reviewer (codebase-details) not already answered above
+- cb-1 (Blocker): the test "migrate refuses after a hand GRANT DELETE to the runtime role" contradicts the code: migrate does REVOKE ALL before it checks (migrate.py:188), so a direct hand grant is repaired, not refused (pinned by tests/test_k2_migrations.py:275-289). REPLACED by two tests: (a) after a hand GRANT DELETE ON spend_reservations to the runtime role, running migrate again returns no problem and the role no longer holds DELETE; (b) a runtime role that INHERITS DELETE through another role is refused (the pattern of tests/test_k5_round10_postgres.py:118-128). Mutant 17 is killed by the existing generic loop tests/test_k2_migrations.py:214-227.
+- cb-2 (run cost): R3 stands, with these additions. The runs UPDATE is written inline after the month step (add_cost cannot be called: it takes the same non-reentrant lock and raises NotFound for a missing run). CHANGE to the settle claim: an expired row is ALWAYS claimed by its first settle (status settled, settled_usd = the actual amount); the day and month counters move by max(0, actual minus reserved), so the booked amount still never goes down after expiry; the run's cost gets the full actual amount. This closes the gap "expired, later settled lower: the real cost never reaches the run". Only a reservation that is never settled stays out of the run's cost. The claim statement becomes: WHERE reservation_id = %(id)s AND status IN ('open', 'expired'). The table CHECK "status <> 'expired' OR settled_usd = reserved_usd" stays valid. Reuse: the run hunk of branch core/P4d-a2 _close (postgres.py:784 there) is the model for the inline UPDATE; "drop the run step" in the branch-mining list applies to reserve only. Contract point 9 everywhere now reads: no run cap is enforced by reserve; the settled cost is added to the run's cost.
+- cb-4: tests/test_k5_round6_contracts.py:11-31 pins missing_methods with an OldStore: added to the builder's file list (pin edit only, if it enumerates method names).
+- cb-5 (replaces R10's "bare constant"): the tick step computes the age as max(defaults.RESERVATION_EXPIRE_S, the existing stuck-run age of tick.py:100-109, which is max_steps x call_timeout_s x max_attempts + 60), so a reservation is never expired while its run could still be working. No new config field. The stated cost of R10 stays for calls outside a run.
+- cb-7: the reserve and the settle transaction each start with SET TRANSACTION ISOLATION LEVEL READ COMMITTED, and T1 asserts SHOW transaction_isolation, so a server or role default of REPEATABLE READ cannot turn into a false daily_budget refusal.
+- cb-10: the CHANGELOG behaviour list also names the two other readers of blocked: the action authorizer (agent_loop.py:716, deny limits.*) and the pre-execution recheck (agent_loop.py:790) can now refuse because another call's hold is open or expired.
+- cb-11: the purge line sits with the ceilings in purge_evidence, before the hook, so a raising hook cannot skip it.
+- cb-12: per-role tests to write are only the purge column checks and the reset and portal "no right" checks; runtime DELETE and TRUNCATE are already covered by the generic loops once the GRANTS row lands.
+- cb-14: invariant 1 holds for an amount above zero, a counter starting at 0 and no settle in between; T1 states this.
+- cb-17: CI PostgreSQL has the default 100 connections (.github/workflows/ci.yml:41, 111): T1's 51 fit as long as T1 is not run in parallel with itself.
+- cb-19: CHANGELOG.md still says the evidence migration is 0006_evidence.sql and follows a reservations migration; the real files are 0005_evidence, 0006_stop_state and (this ticket) 0007_spend_reservations. core-b corrects those CHANGELOG lines in the step B docs commit (plan-v3 A1 gave this correction to SPINE).
+- OPEN after this round (sent to the lead in ESCALATIONS.md, no round 2 by order): none of the Blockers or Majors is left without a text answer, but the answers above are NOT reviewed by a fresh reviewer, and three of them change the lead's draft design: settle returns (row, applied); an expired row is always claimed by its first settle; the expiry age is derived from the stuck-run age.
 
 ---
 # DRAFT TICKET F-store (owner: SPINE): store-backed pre-call reserve and settle
