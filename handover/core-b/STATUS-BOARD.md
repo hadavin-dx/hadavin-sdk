@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:26:46Z
+UPDATED_UTC: 2026-11-20T08:34:43Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.55 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, agents light 4 heavy 2
+CAPACITY: load 0.92 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, agents light 4 heavy 2
 DISK: / 54G free, 23% used; worktrees /tmp/core-b-wt 2.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T08:26:41Z (previous push; this board is pushed right after writing)
-IST: 13:56 IST
+PUSHED_UTC: 2026-11-20T08:34:41Z (previous push; this board is pushed right after writing)
+IST: 14:04 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -171,3 +171,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 08:05Z: started ORDER 021 minors: M3 (qualify audit/spend/reservation names, M1 runbook secrets text) in local/code-Q3, tightened weak tests (price constraint) in local/code-TW. ORDER 021 M2 (kill_switch not in current_schema message, search_path check for both logins) is migrate.py = step B = the lead's builder: left alone. Running: evidence batch 5 (whole suite, current head), provider-mark mutants. Done since 08:01: PG isolation investigation landed; release command CLEAN (review 5).
 
 08:18Z: pulled; no new order after 021; lead's step B round 2 range not on origin yet (wip/lead-fix-B-who-else still at c0d8f5ec8). A9 builder (audit_* qualification + write-path drain tests) running; evidence batch 6 follows its merge. F-install blockers unchanged (core-c).
+
+08:36Z AGENTS: none running right now (all landed). WAITING-FOR-LEAD: (1) migration number 0008 confirmation (QUESTIONS.md), (2) ruling on the three ticket drafts' open questions (P4b2: is the named class worth it; P4c: reopen ii-meter for a 7th reason run_cap; Q17: build now or ledger row), (3) the dblink demo test and BRIEF-PREAMBLE vendor string (the two remaining failures of batch 6). WAITING-FOR-CORE-C: request 3 (NO_MAP), usd_cap in SPEND_REASONS, gate honouring the mark, K5 chain; then F-install merges. Next from me: EGM plan review of the 3 drafts (sequence: reviewers one round, sonnet).
