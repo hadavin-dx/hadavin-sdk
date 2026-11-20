@@ -243,3 +243,5 @@ ABC M1 isolation pin: H2 (since 12:53Z; postgres.py _SESSION_PINS + PG test) | M
 Also running: F6 (step 6 review fixes, since 12:41Z, worktree MF6). After all land: fresh re-review of each diff, ONE evidence batch (cap 2).
 
 13:05Z requests/lead-build-1.md written for the laptop (item 1 lead-b-ts-watermark: 0009 ts CHECK validation + watermark table; item 2 lead-b-price-guard: non-fake route price guard). Builders running (sonnet): G, H1, H2 (see 12:55Z lines). Stale 07:12 rows: the AGENTS table above is history; the live list is the latest dated paragraph.
+
+12:48Z LOAD 1.6 of 4 cores. AGENTS (5 live + 2 started now): G step 4 (sonnet, MG) | H1 0011 findings (sonnet, MH1) | H2 ABC findings (sonnet, MH2) | R7 fresh review of F6 diff, read-only (sonnet, since 12:47Z) | E10 non-PG mutant batteries + unit tests (haiku, since 12:47Z, evidence/batch-10-nonpg.md). PG evidence waits for the laptop (evidence-bpg, PG 15 and 17). Reviews of H1/H2/G diffs start the moment each reports.
