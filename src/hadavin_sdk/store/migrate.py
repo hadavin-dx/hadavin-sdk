@@ -656,31 +656,77 @@ def earlier_0009_leftovers(db) -> list[str]:
     return found
 
 
+class StopTablesBusy(Exception):
+    """The validate step could not get its lock, or ran out of time (table locked by a long transaction, or very
+    large). A condition to retry, NOT a refusal: the CLI exits 75 for it, 2 for a `ConfigError`."""
+
+
+VALIDATE_LOCK_TIMEOUT = "5s"  # never queue behind a long writer and block the stop tables
+VALIDATE_STATEMENT_TIMEOUT = (
+    "60s"  # the check scans the table once; the stop tables are small (runbook)
+)
+
+
+def _validate_one(db, table: str, name: str) -> None:
+    db.execute(
+        sql.SQL("ALTER TABLE {} VALIDATE CONSTRAINT {}").format(
+            sql.Identifier(table), sql.Identifier(name)
+        )
+    )
+
+
+def settle_stop_constraints(db) -> list[tuple[str, str]]:
+    """Run by `migrate` after the files: VALIDATE (silently) every constraint of `NOT_VALID_BY_DESIGN` that is still
+    NOT VALID and whose table holds no row outside the year range, and return the ones that do (the caller warns
+    about those only). This is why 0009 itself is plain SQL with no DO block: the repo's statement lexer refuses
+    DO, and a conditional VALIDATE cannot be written without it."""
+    planted = planted_ts_rows(db)
+    for pair in not_valid_constraints(db):
+        if pair not in planted:
+            _validate_one(db, *pair)
+    return planted
+
+
 def validate_constraints(db) -> list[str]:
     """VALIDATE every constraint `not_valid_constraints` lists; return their names. Run as the table owner, as a
-    step of its own (`hadavin-sdk migrate --validate-constraints`), never inside a migration file: a planted row
-    makes it fail, naming the constraint, and the operator must deal with that row first."""
+    step of its own (`hadavin-sdk migrate --validate-constraints`): a planted row makes it fail, naming the
+    constraint, and the operator must deal with that row first. The stop tables must be in `current_schema()`
+    (else ConfigError); a lock or time limit gives `StopTablesBusy`."""
+    missing = [
+        table
+        for table, _ in NOT_VALID_BY_DESIGN
+        if not db.execute(
+            "SELECT pg_catalog.to_regclass(pg_catalog.format('%%I.%%I', pg_catalog.current_schema(), %s::text))",
+            (table,),
+        ).fetchone()[0]
+    ]
+    if missing:
+        raise ConfigError(
+            f"the stop tables are not in the schema this connection uses ({', '.join(missing)} missing): run "
+            "hadavin-sdk migrate first, and check the search_path of HADAVIN_MIGRATE_DSN"
+        )
     done = []
+    db.execute(sql.SQL("SET LOCAL lock_timeout = {}").format(sql.Literal(VALIDATE_LOCK_TIMEOUT)))
     db.execute(
-        "SET LOCAL lock_timeout = '5s'"
-    )  # never queue behind a long writer and block the stop tables
+        sql.SQL("SET LOCAL statement_timeout = {}").format(sql.Literal(VALIDATE_STATEMENT_TIMEOUT))
+    )
     for table, name in not_valid_constraints(db):
         try:
-            db.execute(
-                sql.SQL("ALTER TABLE {} VALIDATE CONSTRAINT {}").format(
-                    sql.Identifier(table), sql.Identifier(name)
-                )
-            )
+            _validate_one(db, table, name)
+        except (errors.LockNotAvailable, errors.QueryCanceled) as exc:
+            raise StopTablesBusy(
+                f"could not validate {name} on {table} ({type(exc).__name__}): the table is locked by a long "
+                f"transaction (waited {VALIDATE_LOCK_TIMEOUT}) or the scan took longer than "
+                f"{VALIDATE_STATEMENT_TIMEOUT}; nothing was changed, run it again later"
+            ) from None
         except (
             errors.CheckViolation,
             errors.InsufficientPrivilege,
-            errors.LockNotAvailable,
             errors.OperationalError,
         ) as exc:
             raise ConfigError(
                 f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
-                "2100-01-01, this login is not the table owner, or the table is locked by a long "
-                "transaction); deal with that first and run it again"
+                "2100-01-01, or this login is not the table owner); deal with that first and run it again"
             ) from None
         done.append(name)
     return done
@@ -1368,8 +1414,11 @@ def migrate(
         if left_over := earlier_0009_leftovers(db):
             raise ConfigError(
                 f"database ran an earlier unreleased 0009 ({', '.join(left_over)} still exist): drop and recreate it "
-                "(or run: DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard() CASCADE;) "
-                "and run migrate again; 0009 is unreleased, so there is no 0012 for this"
+                "(or run: DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard() CASCADE;), "
+                "then run migrate again with --accept-changed-draft 0009_stop_state_hardening (the 0009 file changed "
+                "since that database applied it; the validation of the stop-year constraints then runs by itself, "
+                "or use --validate-constraints if migrate warns of a planted row); 0009 is unreleased, so there is "
+                "no 0012 for this"
             )
         texts = {
             p: _read_migration(p) for p in files
@@ -1419,7 +1468,9 @@ def migrate(
             if notes is not None:
                 notes.append(owner_note)
         _seed_limits(db)
-        if left := planted_ts_rows(db):  # silent unless a row really is outside the range
+        if left := settle_stop_constraints(
+            db
+        ):  # validates the clean ones; warns only for a planted row
             warn = (
                 f"constraints NOT VALID because a row is outside the year range: {', '.join(n for _, n in left)}; "
                 "deal with that row, then run hadavin-sdk migrate --validate-constraints"

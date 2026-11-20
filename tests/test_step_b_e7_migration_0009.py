@@ -1,7 +1,9 @@
 """Migration 0009 (stop state hardening, E12 Medium 3, Medium 4, Low 6) against a real PostgreSQL: the reset's own
-record table is writable by the reset role only, a planted audit seq or a planted stop year is refused, the watermark
-table and the stop index exist, and `migrate` applies the file on a fresh schema and on an upgrade from 0008.
-Throwaway schema and roles with unique names, dropped after. Needs HADAVIN_TEST_PG_DSN; skipped without it."""
+record table is writable by the reset role only, a planted audit seq or a planted stop year is refused, the stop index
+exists, there is no watermark table, the stop-year constraints are added NOT VALID by the file and validated by
+`migrate` (silently when no row is bad, with one warning when one is), and `migrate` applies the file on a fresh
+schema and on an upgrade from 0008. Throwaway schema and roles with unique names, dropped after. Needs
+HADAVIN_TEST_PG_DSN; skipped without it."""
 
 from __future__ import annotations
 
@@ -193,9 +195,9 @@ def test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_witho
         db.execute("DELETE FROM kill_switch_stops WHERE ts < '2000-01-01'")
         db.execute("ALTER TABLE kill_switch_stops ENABLE TRIGGER USER")
     again: list[str] = []
-    w.migrate(notes=again)  # still NOT VALID, no bad row any more: silent
+    w.migrate(notes=again)  # no bad row any more: migrate validates it by itself, silently
     assert not any("NOT VALID" in n for n in again), again
-    assert "kill_switch_stops_ts_range" not in _validated(w)
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS
 
 
 def test_the_validate_step_validates_what_is_not_valid(w):
@@ -214,14 +216,27 @@ def test_the_validate_step_refuses_naming_the_constraint_while_a_planted_row_exi
     assert "kill_switch_stops_ts_range" not in _validated(w)
 
 
-def test_the_validate_step_gives_up_on_a_locked_table_as_a_config_error(w):
+def test_the_validate_step_gives_up_on_a_locked_table_as_a_retry_condition(w):
     make_not_valid(w, tables=("kill_switch_stops",))
     with w.admin() as blocker:
+        blocker.execute(
+            "SET idle_in_transaction_session_timeout = '40s'"
+        )  # the test cannot hang for ever
         blocker.execute("BEGIN")
         blocker.execute("LOCK TABLE kill_switch_stops IN ACCESS EXCLUSIVE MODE")
-        with pytest.raises(ConfigError, match="locked"):
+        with pytest.raises(migrate_mod.StopTablesBusy, match="locked by a long transaction"):
             migrate_mod.validate_stop_constraints(w.scoped)
         blocker.execute("ROLLBACK")
+    assert "kill_switch_stops_ts_range" not in _validated(w)  # nothing was changed
+
+
+def test_the_validate_step_refuses_when_the_stop_tables_are_not_in_the_schema():
+    empty = make_world()  # a schema with nothing in it: a wrong search_path looks exactly like this
+    try:
+        with pytest.raises(ConfigError, match="stop tables are not in the schema"):
+            migrate_mod.validate_stop_constraints(empty.scoped)
+    finally:
+        drop_world(empty)
 
 
 def test_migrate_refuses_a_database_that_ran_an_earlier_unreleased_0009(w):
@@ -273,28 +288,30 @@ def _validated_in(conn):
     return sorted(r[0] for r in rows)
 
 
-def check_real_0009_validates_clean_and_upgrades_planted(source=None):
-    """The real 0009 SQL: a clean database ends validated; a database with a planted stop ts still upgrades, the
-    constraint on the planted table stays NOT VALID and the other table's is validated."""
+def check_real_0009_then_settle(source=None):
+    """The real 0009 SQL leaves both constraints NOT VALID and never fails on a planted row; `settle_stop_constraints`
+    (what `migrate` runs next) then validates a clean table and leaves the planted one, which it reports."""
     conn, schema = raw_0009_world(source=source)
     try:
+        assert _validated_in(conn) == []
+        assert migrate_mod.settle_stop_constraints(conn) == []
         assert _validated_in(conn) == STOP_YEAR_CONSTRAINTS
     finally:
         conn.close()
         drop_raw(schema)
     conn, schema = raw_0009_world(plant_stop=True, source=source)  # must not raise
     try:
+        assert _validated_in(conn) == []
+        planted = migrate_mod.settle_stop_constraints(conn)
+        assert planted == [("kill_switch_stops", "kill_switch_stops_ts_range")]
         assert _validated_in(conn) == ["kill_switch_clears_ts_range"]
-        assert migrate_mod.planted_ts_rows(conn) == [
-            ("kill_switch_stops", "kill_switch_stops_ts_range")
-        ]
     finally:
         conn.close()
         drop_raw(schema)
 
 
-def test_the_real_0009_validates_a_clean_database_and_survives_a_planted_row():
-    check_real_0009_validates_clean_and_upgrades_planted()
+def test_the_real_0009_survives_a_planted_row_and_migrate_settles_the_constraints():
+    check_real_0009_then_settle()
 
 
 def test_the_open_stops_index_exists(w):

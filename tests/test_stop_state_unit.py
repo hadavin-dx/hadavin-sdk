@@ -349,7 +349,14 @@ def test_cli_validate_constraints_runs_only_the_validate_step(cfg_dir, monkeypat
 
 
 @pytest.mark.parametrize(
-    "extra", [["--runtime-role", "rt"], ["--no-roles"], ["--accept-admin-role", "x"]]
+    "extra",
+    [
+        ["--runtime-role", "rt"],
+        ["--no-roles"],
+        ["--accept-admin-role", "x"],
+        ["--accept-changed-draft", "0009_stop_state_hardening"],
+        ["--reset-draft", "0009_stop_state_hardening"],
+    ],
 )
 def test_cli_validate_constraints_refuses_to_be_combined_with_role_flags(
     cfg_dir, monkeypatch, extra
@@ -367,3 +374,17 @@ def test_cli_validate_constraints_refuses_to_be_combined_with_role_flags(
     monkeypatch.setattr("hadavin_sdk.store.migrate.validate_stop_constraints", boom)
     argv = ["--config", str(cfg_dir), "migrate", "--validate-constraints", *extra]
     assert cli.main(argv) == 2
+
+
+def test_cli_validate_constraints_exits_75_for_a_busy_table_not_2(cfg_dir, monkeypatch):
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+
+    def busy(*a, **k):
+        raise migrate_mod.StopTablesBusy("locked by a long transaction")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.validate_stop_constraints", busy)
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--validate-constraints"]) == 75

@@ -39,7 +39,8 @@ def no_seq_guard(t):
 
 
 def no_ts_check(t):
-    return _cut(t, "ALTER TABLE kill_switch_stops ADD CONSTRAINT", "$do$;")
+    t = _cut(t, "ALTER TABLE kill_switch_stops ADD CONSTRAINT", "NOT VALID;")
+    return _cut(t, "ALTER TABLE kill_switch_clears ADD CONSTRAINT", "NOT VALID;")
 
 
 def no_index(t):
@@ -158,8 +159,11 @@ def test_a_validate_step_that_leaves_a_constraint_not_valid_is_killed(mw, monkey
 def test_a_migrate_that_never_warns_is_killed(mw, monkeypatch):
     mw.migrate()
     monkeypatch.setattr(migrate_mod, "planted_ts_rows", lambda db: [])
-    with pytest.raises(AssertionError):
+    with pytest.raises(
+        BaseException
+    ) as err:  # never warns, so it validates the planted row: the upgrade fails
         real.test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_without_one(mw)
+    assert not isinstance(err.value, KeyboardInterrupt)
 
 
 def test_a_migrate_that_warns_on_every_not_valid_constraint_is_killed(mw, monkeypatch):
@@ -169,19 +173,30 @@ def test_a_migrate_that_warns_on_every_not_valid_constraint_is_killed(mw, monkey
         real.test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_without_one(mw)
 
 
-def test_an_unconditional_validate_inside_0009_is_killed():
-    always = SOURCE.replace(
-        "IF NOT EXISTS (SELECT 1 FROM kill_switch_stops WHERE",
-        "IF TRUE OR EXISTS (SELECT 1 FROM kill_switch_stops WHERE",
+def test_a_0009_that_validates_unconditionally_is_killed():
+    always = (
+        SOURCE + "\nALTER TABLE kill_switch_stops VALIDATE CONSTRAINT kill_switch_stops_ts_range;\n"
     )
-    assert always != SOURCE
     with pytest.raises(BaseException) as err:  # VALIDATE fails the upgrade on the planted row
-        real.check_real_0009_validates_clean_and_upgrades_planted(source=always)
+        real.check_real_0009_then_settle(source=always)
     assert not isinstance(err.value, KeyboardInterrupt)
 
 
-def test_a_0009_that_never_validates_is_killed():
-    never = _cut(SOURCE, "DO $do$", "$do$;")
-    assert never != SOURCE
+def test_a_settle_step_that_never_validates_is_killed(mw, monkeypatch):
+    monkeypatch.setattr(migrate_mod, "settle_stop_constraints", migrate_mod.planted_ts_rows)
     with pytest.raises(AssertionError):
-        real.check_real_0009_validates_clean_and_upgrades_planted(source=never)
+        real.test_a_clean_database_ends_validated_and_migrate_is_silent(mw)
+
+
+def test_a_settle_step_that_validates_a_planted_row_too_is_killed(mw, monkeypatch):
+    def everything(db):
+        for pair in migrate_mod.not_valid_constraints(db):
+            migrate_mod._validate_one(db, *pair)
+        return []
+
+    mw.migrate()
+    real.make_not_valid(mw, plant="0100-01-01 BC", tables=("kill_switch_stops",))
+    monkeypatch.setattr(migrate_mod, "settle_stop_constraints", everything)
+    with pytest.raises(BaseException) as err:  # the upgrade fails on the planted row
+        mw.migrate()
+    assert not isinstance(err.value, KeyboardInterrupt)

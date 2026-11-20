@@ -521,10 +521,13 @@ def _migrate(
     if validate_constraints and (
         no_roles
         or accepted_admin_roles
+        or accept_changed_draft
+        or reset_draft
         or any((runtime_role, portal_role, purge_role, reset_role, release_role))
     ):
         print(
-            "refused: --validate-constraints only validates; do not combine it with a role flag, --no-roles or --accept-admin-role",
+            "refused: --validate-constraints only validates; do not combine it with a role flag, --no-roles, --accept-admin-role, "
+            "--accept-changed-draft or --reset-draft",
             file=sys.stderr,
         )
         return 2
@@ -539,14 +542,22 @@ def _migrate(
             file=sys.stderr,
         )
         return 2
-    from hadavin_sdk.store.migrate import migrate, validate_stop_constraints
+    from hadavin_sdk.store.migrate import StopTablesBusy, migrate, validate_stop_constraints
     from hadavin_sdk.store.postgres import ca_file
 
     ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
     if validate_constraints:
-        done = validate_stop_constraints(
-            dsn, iam_auth=store.iam_auth, region=store.region, sslmode=store.sslmode, sslrootcert=ca
-        )
+        try:
+            done = validate_stop_constraints(
+                dsn,
+                iam_auth=store.iam_auth,
+                region=store.region,
+                sslmode=store.sslmode,
+                sslrootcert=ca,
+            )
+        except StopTablesBusy as exc:  # a condition to retry, not a refusal: exit 75, not 2
+            print(f"retry later: {exc}", file=sys.stderr)
+            return 75
         _say(f"validated: {', '.join(done) or 'nothing (none was NOT VALID)'}")
         return 0
     notes: list[str] = []
