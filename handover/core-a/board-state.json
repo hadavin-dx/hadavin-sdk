@@ -759,19 +759,6 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land"
-  },
-  {
-   "id": "rev-c-E22G12b",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c E22 perf fix (skip second redact) safety + G12b placeholder/core edge rule",
-   "started UTC": "14:10",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land"
   }
  ],
  "tests": [
@@ -1144,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:15 core-c E22+G12b reviewed (reviews/rev-c-E22G12b.md + NEW FILE handover/core-c/requests/xr-from-core-a-reviews-2.md): E22 skip is safe (no Blocker/Major; no test pins _only_encoded; the extra-character case costs the E22 amount again, unmeasured). G12b MAJOR: redact.py:1826 _place drops the clear-core sweep for words in _NOT_A_VALUE and placeholder-like cores: `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these, deliberate trade-off not recorded as a limit/no pinning test). Vacuous tests G12-18/G12-13. G13 review still running.",
   "14:10 GO taken: (1) my 6 wip branches: all reviewed fresh already (c, ci x3 rounds, b, e14, grant); core-c has ALREADY merged my c/e14/e19 work into cloud/core-c (9170baa4f, 82fb4bdc7, 9cef3450e) so the e19 branch review is moot; (2) lead-build-3 runs 1-4 delivered (evidence/c-run-1..4.md); (3) core-c head now aeb9a205e: reviewers started on G13 (bc6e2acd0 + mutants) and E22 + G12b; (4) strict_switch: 22 passed (3.12, 3.13.12, 3.13.18) in my checkout, no failure. Board every 5 min.",
   "14:16 ALL FOUR core-b reviews DONE: reviews/rev-b-G.md, rev-b-H1.md, rev-b-H2.md, rev-b-F6I1.md; summary NEW FILE handover/core-b/requests/xr-from-core-a-reviews.md (copy into cloud/core-b). No Blocker; Majors: G writer check misses column grants/caps/limits/TRIGGER for unnamed roles; H1 earlier-0011-draft DBs silently keep the old functions + day window 3x cap; H2 _release_event unsanitised + all-429 mark not narrowed for routers; F6/I1 Limits.reserve never retries (M5 store-only); plus the nothing-calls-reserve finding. Docs SECURITY.md:23/README.md:41/DECISIONS.md:62 are stale (understate the code). No agents running.",
   "14:14 rev-b-G and rev-b-H1 DONE (reviews/rev-b-G.md, rev-b-H1.md): core-b G: NO Blocker, my M2/M4 CLOSED, 2 Majors on the M7 writer check (column-level grant to an unnamed role passes: `GRANT UPDATE (usd) ON spend TO stranger` then `UPDATE spend SET usd = usd + 1`; hadavin_caps/hadavin_limits/TRIGGER not covered for unnamed roles; it is migrate-time, not startup, and --no-roles skips it). core-b H1/B3: NO Blocker, my M1 CLOSED, 2 Majors: (1) a DB that applied an earlier 0011 draft keeps the OLD reserve/expire/release and no CHECKs while the limits rows look right: migrate only warns (every dev/evidence DB needs --reset-draft; no upgrade test); (2) the day window lets a compromised runtime use D-1, D and D+1 = up to 3 day caps in one UTC day and two month caps across a month end. Plus F6/I1: ONE Major (Limits.reserve never retries: M5 store-only). Waiting for rev-b-H2.",
@@ -3667,6 +3655,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-b H2: NO Blocker; 2 Majors: _release_event missed by the audit_code sweep (actor 'Zo\u00eb'/120-char agent id -> ValidationError, fails closed), latent under-count: all-429 ProviderExhausted mark not narrowed for routers/vertex/foundry; AuditEvent crash, denylist, outbox range FIXED; owner refusal enforced (docs stale), audit_outbox DELETE / audit_checkpoints INSERT still open; reviews/rev-b-H2.md"
+  },
+  {
+   "id": "rev-c-E22G12b",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c E22 perf fix (skip second redact) safety + G12b placeholder/core edge rule",
+   "started UTC": "14:10",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-c E22: no Blocker/Major (skip safe); G12b: no Blocker, ONE Major: _place drops the core copy for NOT_A_VALUE words/placeholder-like cores so `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these; unrecorded trade-off); vacuous test nits; reviews/rev-c-E22G12b.md"
   }
  ]
 }

@@ -1,0 +1,6 @@
+# core-a -> core-c: fresh result reviews at your head aeb9a205e (read-only, static, nothing run): reports in my branch cloud/core-a handover/core-a/reviews/
+## E22 + G12b (rev-c-E22G12b.md): no Blocker
+- E22: the skip is safe (fires only when t2 is exactly ENCODED placeholders, ASCII originals, none inside t2). Nits: no test pins `_only_encoded` (only a load-sensitive timing ratio 4.1 vs limit 6.0); the 'output unchanged' check is a one-off sha not in the repo; add a field-by-field equality test vs `redact(t2, mapping=base)`; residual: any extra character (`run+"\n"`, `"x "+run`) defeats the shortcut and costs the E22 amount again: measure at 262 k.
+- G12b MAJOR (redact.py:1826 `_place`): a core is DROPPED when `_bare(full).lower()` is in `_NOT_A_VALUE` or `_placeholder_like(core)`: `password=Secret!` / `password=Token,` / `password=ABC_12!` (pattern `[A-Z][A-Z0-9]*_\d+`) / an all-caps prefix of '<LABEL>_' leave a later bare copy readable (E18 leak reopened for these): record it as a limitation (L-G12*) with a pinning test, or key the drop to the value's own placeholder shape.
+- Nits: G12-18 `set(mapping.values()) <= {value}` is vacuous when nothing is masked; G12-13 `PW not in r.text` vacuous; mutants file not run by pytest.
+## G13 (rev-c-G13.md): follows when the reviewer returns.
