@@ -24,6 +24,7 @@ from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
+from hadavin_sdk.limits import Budget
 from hadavin_sdk.llm.common import estimate_tokens
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import Reply
@@ -35,21 +36,6 @@ SYSTEM_PROMPT = (
     "evidence_ids, best first) or not_sure true (with a short reason; causes may be left out)."
 )
 RAW_LIMIT = 2000
-
-
-class Budget:
-    """A total USD cap for the whole invocation. One reply can overshoot it; the next call is refused."""
-
-    def __init__(self, limit: Decimal) -> None:
-        self.limit = limit
-        self.spent = Decimal(0)
-
-    def charge(self, usd: Decimal) -> None:
-        self.spent += usd
-
-    @property
-    def exhausted(self) -> bool:
-        return self.spent >= self.limit
 
 
 @dataclass

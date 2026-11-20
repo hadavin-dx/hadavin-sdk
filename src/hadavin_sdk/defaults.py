@@ -149,6 +149,10 @@ TRIGGER_ACK_WAIT_S_CEILING = 30.0
 # Seconds after which an open spend reservation is marked expired (its worst case stays booked). The tick step uses
 # the larger of this and the stuck-run age, so a reservation never expires while its run could still be working.
 RESERVATION_EXPIRE_S = 3600
+# Bytes added to the input of every worst-case price of a model call (llm/common.py worst_case_usd): room for what
+# an adapter adds around the prompt (JSON framing, role names, the forced-tool wrapper). Not measured against a
+# provider (UNVERIFIED); a lead may raise it.
+WORST_CASE_OVERHEAD_BYTES = 4096
 
 # --- text folding (guard/textnorm.py) ---
 # The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
