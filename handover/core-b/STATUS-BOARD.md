@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:13:47Z
+UPDATED_UTC: 2026-11-20T12:14:24Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.71 of 4 cores, mem 1/15 GB, disk 47G free, 33% used, agents light 4 heavy 2
+CAPACITY: load 1.63 of 4 cores, mem 1/15 GB, disk 47G free, 33% used, agents light 4 heavy 2
 DISK: / 47G free, 33% used; worktrees /tmp/core-b-wt 3.7G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T12:12:29Z (previous push; this board is pushed right after writing)
-IST: 17:43 IST
+PUSHED_UTC: 2026-11-20T12:13:52Z (previous push; this board is pushed right after writing)
+IST: 17:44 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -245,3 +245,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 12:09Z MERGED: C (definer tests: 3 files, 179 passed, 56 mutants) + static-test fixes + release call schema-qualified (finding F1) + F (STEP 6 operator side: limits set-cap/sync-caps/check-caps under the reset login, always refuse before any connection without reset_credential_ref, intent-first audited, exit codes 0/2/3/4/5, check-caps exit 1 on drift; tick step check_caps under the runtime login raises CapsDrift naming agent:differs/missing, no values; docs runbook+CHANGELOG with a TODO-E2 line to flip). Known: a raised-but-unsynced registry cap is also reported (cap_matches has no direction). RUNNING (sonnet): G (step 4 grants flip, since 11:49Z), E2 (reserve reads hadavin_caps, since 11:49Z); merged-tree verification of step 3 + E1 (since 11:44Z, ~60%).
 
 12:11Z VERIFICATION of step 3 + E1 on the merged tree (16 files, 26 min): 1081 passed, 41 failed: ALL one cause: E1's review fix m9 (settle raises the run cost only when runs.agent_id matches the hold's agent) broke parity with the memory store and the core-a contract tests (the model test books runs of one agent against holds of several): the 41 are 39 in test_store_spend_model.py + 2 racing-expire tests. FIXED at 12:12Z: the run-agent condition is removed from 0011 settle (parity wins; m9 is a stated residual: a compromised runtime login can inflate any run's cost); the m9 test inverted; the racing tests pass. Contract model test RERUN started (about 8 min). Lesson: fix rounds must run the contract tests (E1 did not). RUNNING: G (step 4), E2 (reserve reads the caps table).
+
+12:14Z CONTRACT MODEL TEST RERUN: 106 passed (both stores): the m9 revert fixed all 41. Steps 1-3 + step 6 operator side + E1 are green on the merged head (verification: 1081 + 41 now passing). RUNNING: G (step 4), E2 (step 6 reserve).
