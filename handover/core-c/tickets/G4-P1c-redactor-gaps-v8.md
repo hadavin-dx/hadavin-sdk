@@ -1120,6 +1120,11 @@ HOSTNAME = (
    pattern also matches the whole name up to `.local` and `_KEPT_HOST` keeps it). Stated limit L-H5, pinned by a TB-4.8 row (plain
    assert of the unchanged text) and named in SECURITY. Not changed: testing `_KEPT_HOST` on the part after the private suffix would
    mask in-cluster service names that hold `.corp`, which WARDEN reads and acts on (the reason `_KEPT_HOST` exists).
+   CHANGED in v8 (design round 7 N5): the cheaper option the reviewer asks for was weighed: mask only the labels BEFORE a kept
+   suffix when they end in a private suffix (`<HOSTNAME_1>.svc.cluster.local`). Not taken: it is the same change for WARDEN (an
+   in-cluster service name under `.corp` loses its readable head) and adds a second pattern pass; the base keeps the whole name
+   too, so L-H5 is no regression. It stays a stated limit, named in SECURITY since v7 ("a private name that goes on into
+   `.svc.cluster.local` ... is kept whole, as before G4") and pinned by TB-4.8 (MEASURED unchanged again in v8, `g4c8.py`).
 7. Java packages: `com.acme.corp.billing.Service` was `<HOSTNAME_1>.billing.Service` and becomes `<HOSTNAME_1>` (limit L-H1, an
    over-mask, pinned by TB-4.7 as a plain assert).
 
