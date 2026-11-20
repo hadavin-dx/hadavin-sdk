@@ -99,10 +99,10 @@ def test_fix3_a_refusing_store_is_retried_forever_health_503_and_the_class_is_na
             def once():
                 return [
                     r for r in caplog.records
-                    if "re-check failed (Refused)" in r.getMessage() and r.levelno == logging.WARNING
+                    if "re-check failed (StoreUnavailable)" in r.getMessage() and r.levelno == logging.WARNING
                 ]
 
-            assert len(once()) == 1  # 20 refusals, one WARNING naming the class
+            assert len(once()) == 1  # 20 refusals, one WARNING naming the class (a failed ping is StoreUnavailable)
             clock[0] += 301
             n = len(builds)
             while len(builds) < n + 5 and time.monotonic() < deadline:
