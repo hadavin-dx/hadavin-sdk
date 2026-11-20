@@ -21,3 +21,10 @@ tests/redact_mutants.py runs the baseline of its whole test list (no -m filter),
 
 ## NOT RUN
 Phase 2 whole suite, perf batch (except the one test above, run alone), mutants G9-1..24, whole-file summary line.
+
+## E17 fix (builder, 2026-11-20): perf test green, MISMATCH 1 and 2 resolved
+Try 1 (kept): in `_deep_hits` an upper bound of the characters readable on each side of an edge (out chars + what each key token adds, prefix sums over toks); a place of the anchor needing more than that is skipped, not compared, not counted; the anchor search runs only over the feasible stretch of the rule (the `len(w)` search charge stays once per (anchor, rule), so the G9-20 pin 21,027 holds; place finds charged per place found in range). Exact feasibility test, so G9-22 (x*1,100, 76 places x 30 edges) is unchanged and still raises.
+Measured: zwsp shape, 400 reps: 2,673,655 units refused -> 933,811 then 29,575 ok; 16,000 reps (the test's): refused -> ok, 1,811,011 units (2 comparisons x ~320k + searches), 3.0 s. Tries 2 and 3 (period skip, per-occurrence count) not needed.
+Proof: settle_loop + idempotent_property (not perf) 1963 passed; fuzz 6 x 10,000 seed 7: all clean, pass counts identical to ticket 9.2; corpus 1,836 inputs 0 rows differ vs /tmp/g9-base, restore failures 63=63, max units 19,318; g9_hostile rows identical to 9.4 (mentions 1,800 = 3,861,855 units, comb 1,386,769); g9_deep periodic still refused. fold_budget file incl. perf: 23 passed. Phase 1 list: 3928 passed, 3 skipped, 47 xfailed (after the mutant-search fix below, meta test 6 passed). Mutants: G9- 23 of 23 good; whole file 117 of 117 good.
+Test-side edits (not the perf test): G9-20 search text now `if (anchor, w) not in searched:` -> `if True:`; G9-16 killer docstring rewrapped (a line began with "E ", read by the runner as an error line: WRONG_REASON).
+Deviation: one batch (fold_budget) started at load 2 other pytest (my own wait loop matched the check).
