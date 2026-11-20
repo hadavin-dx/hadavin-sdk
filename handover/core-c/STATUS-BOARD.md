@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:52:41Z
+UPDATED_UTC: 2026-11-20T16:55:17Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:17Z agents 2 (G9c, DOCS6 builders), load 1.0. Root docs style round 5 (cap): 0 Blocker, 5 Major recorded (tickets/DOCS-style-review-5.md). Q18 in QUESTIONS.md asks the owner: accept docs after DOCS6 or authorise more rounds. 17:12Z agents 2 (G9c builder, docs style reviewer round 5 = cap), load 1.3. DOCS5 MERGED (3 Blocker + 5 Major of round 4: no Kn outside SECURITY, no who-recorded refs, narrowed vendor note, one status per gap with K24a/K36a/K67a/K70a/K74a/K82a, numbers checked against code); doc tests 71 passed, 1 f
+STATE: 17:23Z REAL RUNNING AGENTS 6: G9c builder, DOCS6 builder, P3 builder (gate e2e with core-b store), reviewers for G13d, G12d, G4d diffs. Load (/proc/loadavg) 1.82 1.60 2.27. Lead 16:55 orders: docs review cap = 2 rounds: NO more docs review rounds (DOCS6 fix already running will merge, then stop; open style Majors go in the ledger); P2 DONE handover/core-c/requests/for-core-b-f-install.md; P5 DONE handover/core-c/DECISION-extract.md (KEEP: 2 tests import it, nothing in src); P6 DONE handover/core-c/DECISION-textnorm-deny.md (KEEP); P4 perf at idle on the final head after merges; P1 merge as each lands. Q18 answered by the lead rule (no more docs rounds).
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 2
-CAPACITY: load 1.0 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
-DISK: / 53G free, 24% used; git worktrees 59; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+AGENTS_RUNNING: 6
+CAPACITY: load 1.8 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 6, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 61; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:52:38+00:00
+PUSHED_UTC: 2026-11-20T16:54:50+00:00
 
-(22:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:25 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -50,6 +50,10 @@ PUSHED_UTC: 2026-11-20T16:52:38+00:00
 | a6873a2f | builder | claude-sonnet-5-5 | BUILDS DOCS5: style review round 4 fixes (3 Blocker, 5 Major); /tmp/core-c-docs5 | 17:05 | 17:30 | 1 | done | 1 | 0 | docs only |
 | docs-rev5 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 5 (cap) of root docs after DOCS5 | 17:12 | 17:25 | 1 | done | 1 | 0 | EGM style |
 | docs6 | builder | claude-sonnet-5-5 | BUILDS DOCS6: round 5 fixes (0 Blocker, 5 Major); /tmp/core-c-docs6 | 17:17 | 17:40 | 1 | running | 1 | 0 | docs only |
+| p3 | builder | claude-sonnet-5-5 | P3: gate end-to-end hostile test with core-b REAL store on a scratch merge of cloud/core-b + cloud/core-c; /tmp/core-c-p3 | 17:22 | 17:55 | 1 | running | 1 | 0 | 1 PG |
+| g13d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G13d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
+| g12d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G12d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
+| g4d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G4d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
