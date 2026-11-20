@@ -1,0 +1,310 @@
+-- Money definer functions (ticket F-money-definer, option B of E13). After this migration the ONLY writers of the three
+-- money tables (spend, spend_month, spend_reservations) are the SECURITY DEFINER functions below, plus the release
+-- function of 0008. `migrate` (when roles are named) takes every write right on those tables from the runtime login and
+-- grants it EXECUTE on reserve, settle, expire and add_spend; the purge role gets EXECUTE on the purge only. The store
+-- (Python) calls these functions by their schema-qualified name; the SQL of the bookings exists in this file only.
+--
+-- THE PROMISE: a runtime login cannot lower a booked amount, except by settling an open hold it can name, once, by at most
+-- that hold's reserved amount. It cannot lower a plain charge, a settled or expired amount, forge a settled row, edit
+-- usd, or touch a row by SQL (it has no right on the tables).
+-- HONEST RESIDUAL (do not over-claim): the runtime still chooses the arguments. (1) The caps are arguments of
+-- hadavin_reserve_spend, so the runtime CAN DISABLE CAP ENFORCEMENT (an overshoot of the budget); it cannot lower a
+-- booked amount. "The budget is enforced" is NOT promised here (a caps table the runtime cannot write is the named
+-- follow-up). (2) It can settle any open hold whose id it knows to 0: the counter falls by at most that hold's reserved
+-- amount, once. (3) It can expire every open hold at any age (hadavin_expire_spend_reservations has no lower bound on
+-- the age, because the contract suite and the memory store accept 0): a self-inflicted outage, safe (holds stay booked at
+-- the reserved amount). (4) It can raise any counter by add_spend.
+--
+-- Rules every function body follows:
+--   * SECURITY DEFINER, VOLATILE (stated), NOT STRICT (a STRICT function returns NULL silently for a NULL argument, which
+--     would look like success; every NULL is an explicit error instead), no EXCEPTION block (it would open a
+--     subtransaction), no dynamic SQL (no EXECUTE, no format()): every table name is static and resolves through the pinned
+--     search path. `#variable_conflict use_column` and a table alias on every table reference: a column named like an OUT
+--     variable is never ambiguous.
+--   * Placeholder pin `SET search_path = pg_catalog, pg_temp`: `migrate` re-pins every function to
+--     pg_catalog, <this schema>, pg_temp on every run (this file cannot know the schema). pg_temp must stay LAST or a temp
+--     table of the caller shadows the money tables; pg_catalog first means no user operator or function shadows
+--     +, <=, greatest, clock_timestamp. A function body calls only pg_catalog built-ins.
+--   * Every argument is validated INSIDE (the function is the trust boundary; the Python checks are an early, friendly
+--     refusal that prove nothing): NULL, ids, NaN and infinity, scale, caps (no upper bound of the amount window: a cap
+--     of 10 to the 12th must keep working), days, ages, bounds. A bad argument is ERRCODE 22023 and the text names the
+--     parameter, never the value. The limits are read from the table hadavin_limits (written by `migrate` on every run
+--     from the constants of the package; owner only), never written as a literal here. A missing limit row is HD004: fail
+--     closed.
+--   * Error codes: HD001 cap reached (message 'day' or 'month'), HD002 reservation not found (unknown or another
+--     agent's id, the same error for both), HD003 counter row missing (the whole transaction rolls back), HD004 limit row
+--     missing, 22023 invalid argument, 23505 duplicate reservation id (native).
+--   * Lock order: the reservation row, the day counter, the month counter (the order of 0008 and of the store), so there is
+--     no lock cycle.
+-- Owner: whoever runs `migrate` (one owner for all hadavin_* functions and the money tables, checked by `migrate`). A
+-- bug in a function runs with the owner's rights, and the 0010 triggers pass the owner by design: there is no second line.
+-- Break-glass: the owner (never the runtime) repairs with direct SQL or ships a migration with CREATE OR REPLACE for the
+-- function (the pin is re-applied by the next migrate run).
+
+-- The limits the functions read. Rows (names are the interface): max_amount (exclusive upper bound of one amount),
+-- max_decimals (scale), max_id_chars, max_expiry_age. Written by `migrate` as the owner; no other role has any right.
+CREATE TABLE hadavin_limits (
+    name TEXT PRIMARY KEY,
+    value NUMERIC NOT NULL
+);
+REVOKE ALL ON hadavin_limits FROM PUBLIC;
+
+-- hadavin_reserve_spend: book the worst case of one model call on the day and month counters, in the transaction that
+-- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
+-- back with the caller's transaction). A duplicate id is the native unique_violation (23505).
+CREATE OR REPLACE FUNCTION hadavin_reserve_spend(
+    p_id TEXT, p_agent TEXT, p_day DATE, p_usd NUMERIC, p_day_cap NUMERIC, p_month_cap NUMERIC, p_run_id TEXT
+)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_amount NUMERIC;
+    v_max_decimals NUMERIC;
+    v_max_id NUMERIC;
+    v_month DATE;
+BEGIN
+    SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_amount missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_decimals FROM hadavin_limits l WHERE l.name = 'max_decimals';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+
+    IF p_id IS NULL OR pg_catalog.char_length(p_id) NOT BETWEEN 1 AND v_max_id OR p_id !~ '^[A-Za-z0-9._:-]+$' THEN
+        RAISE EXCEPTION 'invalid argument: p_id' USING ERRCODE = '22023';
+    END IF;
+    IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+       OR p_agent ~ '[\x01-\x1f\x7f-\x9f]' THEN
+        RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
+    END IF;
+    IF p_run_id IS NOT NULL AND (pg_catalog.char_length(p_run_id) NOT BETWEEN 1 AND v_max_id
+                                 OR p_run_id ~ '[\x01-\x1f\x7f-\x9f]') THEN
+        RAISE EXCEPTION 'invalid argument: p_run_id' USING ERRCODE = '22023';
+    END IF;
+    IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) THEN
+        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    -- written positively: NaN sorts above every number and Infinity is above the window, both fail this test
+    IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_usd' USING ERRCODE = '22023';
+    END IF;
+    -- a cap has no upper bound except finiteness (NOT the amount window)
+    IF p_day_cap IS NULL OR NOT (p_day_cap >= 0 AND p_day_cap < 'Infinity'::numeric)
+       OR pg_catalog.scale(p_day_cap) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_day_cap' USING ERRCODE = '22023';
+    END IF;
+    IF p_month_cap IS NULL OR NOT (p_month_cap >= 0 AND p_month_cap < 'Infinity'::numeric)
+       OR pg_catalog.scale(p_month_cap) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_month_cap' USING ERRCODE = '22023';
+    END IF;
+    v_month := pg_catalog.date_trunc('month', p_day)::date;
+
+    INSERT INTO spend_reservations (reservation_id, agent_id, day, run_id, reserved_usd)
+    VALUES (p_id, p_agent, p_day, p_run_id, p_usd);
+    INSERT INTO spend (agent_id, day, usd) VALUES (p_agent, p_day, 0) ON CONFLICT DO NOTHING;
+    -- strictly day before month: seed and book the day, then the month; a refusal raises and everything rolls back
+    UPDATE spend s SET usd = s.usd + p_usd
+     WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < p_day_cap AND s.usd + p_usd <= p_day_cap;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'day' USING ERRCODE = 'HD001';
+    END IF;
+    INSERT INTO spend_month (agent_id, month, usd) VALUES (p_agent, v_month, 0) ON CONFLICT DO NOTHING;
+    UPDATE spend_month m SET usd = m.usd + p_usd
+     WHERE m.agent_id = p_agent AND m.month = v_month AND m.usd < p_month_cap AND m.usd + p_usd <= p_month_cap;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'month' USING ERRCODE = 'HD001';
+    END IF;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_reserve_spend(TEXT, TEXT, DATE, NUMERIC, NUMERIC, NUMERIC, TEXT) FROM PUBLIC;
+
+-- hadavin_settle_spend: replace a hold by the real cost. The claim comes first (the row lock; a second caller waits,
+-- finds the row settled, claims nothing and gets the stored row back with claimed = false). settled_usd is what stays
+-- booked on the counters: the actual amount, or for a row that was expired the larger of the actual and the reserved amount
+-- (after expiry the booking never goes down). The counters move by settled - reserved on the row's own day and month,
+-- day first. The run cost is added as the actual amount (a missing run row is ignored). An unknown id or another agent's id
+-- (when p_agent is given) is HD002, the same error for both; a missing counter row is HD003. p_agent NULL means "any
+-- agent" (the documented residual).
+CREATE OR REPLACE FUNCTION hadavin_settle_spend(p_id TEXT, p_actual NUMERIC, p_agent TEXT)
+RETURNS TABLE (
+    reservation_id TEXT, agent_id TEXT, day DATE, run_id TEXT, reserved_usd NUMERIC, settled_usd NUMERIC,
+    status TEXT, created_at TIMESTAMPTZ, closed_at TIMESTAMPTZ, claimed BOOLEAN
+)
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_amount NUMERIC;
+    v_max_decimals NUMERIC;
+    v_max_id NUMERIC;
+    v_was TEXT;
+    v_delta NUMERIC;
+    rec RECORD;
+BEGIN
+    SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_amount missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_decimals FROM hadavin_limits l WHERE l.name = 'max_decimals';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+
+    IF p_id IS NULL OR pg_catalog.char_length(p_id) NOT BETWEEN 1 AND v_max_id OR p_id !~ '^[A-Za-z0-9._:-]+$' THEN
+        RAISE EXCEPTION 'invalid argument: p_id' USING ERRCODE = '22023';
+    END IF;
+    IF p_actual IS NULL OR NOT (p_actual >= 0 AND p_actual < v_max_amount) OR pg_catalog.scale(p_actual) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_actual' USING ERRCODE = '22023';
+    END IF;
+    IF p_agent IS NOT NULL AND (pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+                                OR p_agent ~ '[\x01-\x1f\x7f-\x9f]') THEN
+        RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
+    END IF;
+
+    -- the claim: the lock reads the status BEFORE the change (after a lock wait READ COMMITTED re-checks the row, so a
+    -- concurrent settle or expire cannot be misread)
+    SELECT r.status INTO v_was FROM spend_reservations r
+     WHERE r.reservation_id = p_id AND (p_agent IS NULL OR r.agent_id = p_agent) AND r.status IN ('open', 'expired')
+       FOR UPDATE;
+    IF NOT FOUND THEN
+        SELECT * INTO rec FROM spend_reservations r WHERE r.reservation_id = p_id;
+        IF NOT FOUND OR (p_agent IS NOT NULL AND rec.agent_id <> p_agent) THEN
+            RAISE EXCEPTION 'reservation not found' USING ERRCODE = 'HD002';
+        END IF;
+        reservation_id := rec.reservation_id; agent_id := rec.agent_id; day := rec.day; run_id := rec.run_id;
+        reserved_usd := rec.reserved_usd; settled_usd := rec.settled_usd; status := rec.status;
+        created_at := rec.created_at; closed_at := rec.closed_at; claimed := false;
+        RETURN NEXT;
+        RETURN;
+    END IF;
+    UPDATE spend_reservations r
+       SET status = 'settled',
+           settled_usd = CASE WHEN v_was = 'expired' THEN GREATEST(p_actual, r.reserved_usd) ELSE p_actual END,
+           closed_at = pg_catalog.clock_timestamp()
+     WHERE r.reservation_id = p_id
+    RETURNING r.* INTO rec;
+    v_delta := rec.settled_usd - rec.reserved_usd;
+    IF v_was = 'open' OR v_delta <> 0 THEN  -- an expired row that does not rise leaves the counters alone
+        UPDATE spend s SET usd = s.usd + v_delta WHERE s.agent_id = rec.agent_id AND s.day = rec.day;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'spend counter row missing' USING ERRCODE = 'HD003';
+        END IF;
+        UPDATE spend_month m SET usd = m.usd + v_delta
+         WHERE m.agent_id = rec.agent_id AND m.month = pg_catalog.date_trunc('month', rec.day)::date;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'spend counter row missing' USING ERRCODE = 'HD003';
+        END IF;
+    END IF;
+    IF rec.run_id IS NOT NULL THEN  -- the real actual amount; a missing run row is ignored
+        UPDATE runs u SET cost_usd = u.cost_usd + p_actual WHERE u.run_id = rec.run_id;
+    END IF;
+    reservation_id := rec.reservation_id; agent_id := rec.agent_id; day := rec.day; run_id := rec.run_id;
+    reserved_usd := rec.reserved_usd; settled_usd := rec.settled_usd; status := rec.status;
+    created_at := rec.created_at; closed_at := rec.closed_at; claimed := true;
+    RETURN NEXT;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_settle_spend(TEXT, NUMERIC, TEXT) FROM PUBLIC;
+
+-- hadavin_expire_spend_reservations: mark the open holds older than p_age_s seconds (database clock) expired. They stay
+-- booked at the full reserved amount: the counters do not move. Returns the number of rows.
+CREATE OR REPLACE FUNCTION hadavin_expire_spend_reservations(p_age_s INTEGER)
+RETURNS BIGINT
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_age NUMERIC;
+    n BIGINT;
+BEGIN
+    SELECT l.value INTO v_max_age FROM hadavin_limits l WHERE l.name = 'max_expiry_age';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
+    IF p_age_s IS NULL OR p_age_s < 0 OR p_age_s > v_max_age THEN
+        RAISE EXCEPTION 'invalid argument: p_age_s' USING ERRCODE = '22023';
+    END IF;
+    UPDATE spend_reservations r
+       SET status = 'expired', settled_usd = r.reserved_usd, closed_at = pg_catalog.clock_timestamp()
+     WHERE r.status = 'open'
+       AND r.created_at <= pg_catalog.clock_timestamp() - pg_catalog.make_interval(secs => p_age_s::double precision);
+    GET DIAGNOSTICS n = ROW_COUNT;
+    RETURN n;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_expire_spend_reservations(INTEGER) FROM PUBLIC;
+
+-- hadavin_purge_spend_reservations: delete the SETTLED rows closed before p_before (a settled row, or one released by
+-- 0008: settled at 0). An expired hold nobody settled is KEPT: it is still booked and a late settle must find it.
+CREATE OR REPLACE FUNCTION hadavin_purge_spend_reservations(p_before TIMESTAMPTZ)
+RETURNS BIGINT
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    n BIGINT;
+BEGIN
+    IF p_before IS NULL OR NOT pg_catalog.isfinite(p_before) THEN
+        RAISE EXCEPTION 'invalid argument: p_before' USING ERRCODE = '22023';
+    END IF;
+    DELETE FROM spend_reservations r WHERE r.status = 'settled' AND r.closed_at < p_before;
+    GET DIAGNOSTICS n = ROW_COUNT;
+    RETURN n;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_purge_spend_reservations(TIMESTAMPTZ) FROM PUBLIC;
+
+-- hadavin_add_spend: a plain charge on the day and the month counter (two upserts, day then month); returns both totals.
+CREATE OR REPLACE FUNCTION hadavin_add_spend(p_agent TEXT, p_day DATE, p_usd NUMERIC)
+RETURNS TABLE (day_usd NUMERIC, month_usd NUMERIC)
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_amount NUMERIC;
+    v_max_decimals NUMERIC;
+    v_max_id NUMERIC;
+    v_month DATE;
+BEGIN
+    SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_amount missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_decimals FROM hadavin_limits l WHERE l.name = 'max_decimals';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+
+    IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+       OR p_agent ~ '[\x01-\x1f\x7f-\x9f]' THEN
+        RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
+    END IF;
+    IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) THEN
+        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_usd' USING ERRCODE = '22023';
+    END IF;
+    v_month := pg_catalog.date_trunc('month', p_day)::date;
+
+    INSERT INTO spend AS s (agent_id, day, usd) VALUES (p_agent, p_day, p_usd)
+    ON CONFLICT (agent_id, day) DO UPDATE SET usd = s.usd + EXCLUDED.usd
+    RETURNING s.usd INTO day_usd;
+    INSERT INTO spend_month AS m (agent_id, month, usd) VALUES (p_agent, v_month, p_usd)
+    ON CONFLICT (agent_id, month) DO UPDATE SET usd = m.usd + EXCLUDED.usd
+    RETURNING m.usd INTO month_usd;
+    RETURN NEXT;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_add_spend(TEXT, DATE, NUMERIC) FROM PUBLIC;
