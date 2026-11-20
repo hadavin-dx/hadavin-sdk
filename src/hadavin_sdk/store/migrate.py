@@ -18,7 +18,7 @@ from typing import Literal
 from psycopg import errors, sql
 
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.models import MAX_SPEND_DECIMALS, MAX_SPEND_EXPONENT, MAX_SPEND_USD
+from hadavin_sdk.models import MAX_SPEND_DECIMALS, MAX_SPEND_USD
 from hadavin_sdk.store.postgres import connect, names_of
 from hadavin_sdk.store.protocol import MAX_EXPIRY_AGE_S, MAX_RESERVATION_ID_CHARS
 
@@ -221,8 +221,7 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
     found: dict[str, str] = {}
     unread: list[str] = []
     for path in paths:
-        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
-        text = re.sub(r"--[^\n]*", "", text)
+        text = _strip_sql_comments(path.read_text(encoding="utf-8"))
         for m in _ANY_CREATE.finditer(text):
             if not _SAFE_CREATE.match(text, m.start()):
                 snippet = " ".join(text[m.start() : m.start() + 40].split())
@@ -240,16 +239,106 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
     return found, unread
 
 
-_FUNCTION = re.compile(r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(hadavin_\w+)\s*\(", re.IGNORECASE)
+_FUNCTION = re.compile(
+    r'CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:"?\w+"?\s*\.\s*)?"?(hadavin_\w+)"?\s*\(',
+    re.IGNORECASE,
+)
+_TYPE_ALIASES = {
+    "int": "integer",
+    "int4": "integer",
+    "int8": "bigint",
+    "bool": "boolean",
+    "timestamp with time zone": "timestamptz",
+    "character varying": "varchar",
+    "double precision": "float8",
+}
+_MULTIWORD_TYPES = ("timestamp with time zone", "character varying", "double precision")
+
+
+def _strip_sql_comments(text: str) -> str:
+    """The text without `/* */` and `--` comments. A `--` or `/*` inside a '...' literal or a "..." identifier is
+    NOT a comment (and an apostrophe inside a comment does not open a literal). Dollar quotes are plain text here:
+    the code in them is read like the rest."""
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        if c in "'\"":
+            j = i + 1
+            while j < n:
+                if text[j] == c:
+                    if j + 1 < n and text[j + 1] == c:  # a doubled quote stays inside
+                        j += 2
+                        continue
+                    break
+                j += 1
+            out.append(text[i : j + 1])
+            i = j + 1
+        elif text.startswith("--", i):
+            j = text.find("\n", i)
+            i = n if j == -1 else j
+        elif text.startswith("/*", i):
+            j = text.find("*/", i + 2)
+            i = n if j == -1 else j + 2
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
+def _split_top_level(args: str) -> list[str]:
+    parts, depth, cur = [], 0, []
+    for ch in args:
+        if ch == "," and depth == 0:
+            parts.append("".join(cur))
+            cur = []
+            continue
+        depth += (ch == "(") - (ch == ")")
+        cur.append(ch)
+    if "".join(cur).strip():
+        parts.append("".join(cur))
+    return parts
+
+
+def _normalise_signature(name: str, types: list[str]) -> str:
+    norm = []
+    for t in types:
+        t = " ".join(t.lower().replace('"', "").split())
+        norm.append(_TYPE_ALIASES.get(t, t).replace(" ", ""))
+    return f"{name.lower()}({','.join(norm)})"
+
+
+def _signature_key(signature: str) -> str:
+    """`hadavin_x(text, numeric)` as the maps spell it, in the form `_functions_created` returns."""
+    name, _, rest = signature.partition("(")
+    return _normalise_signature(name, _split_top_level(rest.rstrip(")")))
+
+
+def _arg_type(part: str) -> str:
+    """The type of one `name type [DEFAULT ...]` argument of a CREATE FUNCTION."""
+    part = re.split(r"\bDEFAULT\b|=", part.strip(), maxsplit=1, flags=re.IGNORECASE)[0].strip()
+    tokens = part.split()
+    if tokens and tokens[0].upper() in ("IN", "OUT", "INOUT", "VARIADIC"):
+        tokens = tokens[1:]
+    rest = " ".join(tokens)
+    if len(tokens) > 1 and not any(rest.lower().startswith(t) for t in _MULTIWORD_TYPES):
+        rest = " ".join(tokens[1:])
+    return rest
 
 
 def _functions_created(paths: list[Path]) -> set[str]:
-    """Names of the hadavin_* functions the migrations create (comments left out)."""
+    """Full signatures (`name(type,type)`, lower case, no spaces) of the hadavin_* functions the migrations create
+    (comments left out; quoted and schema-qualified names are read)."""
     found: set[str] = set()
     for path in paths:
-        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
-        text = re.sub(r"--[^\n]*", "", text)
-        found |= {m.group(1).lower() for m in _FUNCTION.finditer(text)}
+        text = _strip_sql_comments(path.read_text(encoding="utf-8"))
+        for m in _FUNCTION.finditer(text):
+            depth, i = 1, m.end()
+            while i < len(text) and depth:
+                depth += (text[i] == "(") - (text[i] == ")")
+                i += 1
+            types = [_arg_type(a) for a in _split_top_level(text[m.end() : i - 1])]
+            found.add(_normalise_signature(m.group(1), types))
     return found
 
 
@@ -259,7 +348,6 @@ def money_limits() -> dict[str, int]:
     return {
         "max_amount": MAX_SPEND_USD,
         "max_decimals": MAX_SPEND_DECIMALS,
-        "max_exponent": MAX_SPEND_EXPONENT,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
     }
@@ -281,15 +369,16 @@ def check_grants(paths: list[Path]) -> list[str]:
             problems.append(
                 f"GRANTS says {name} is a {grant.kind}; the migrations create a {created[name]}"
             )
-    mapped = {sig.split("(")[0] for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS)}
+    mapped = {_signature_key(sig) for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS)}
     functions = _functions_created(paths)
     problems += [
         f"{n} (function) is created by a migration but is in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS"
         for n in sorted(functions - mapped)
     ]
     problems += [
-        f"FUNCTION_GRANTS names {n}, which no migration creates"
-        for n in sorted({sig.split("(")[0] for sig in FUNCTION_GRANTS} - functions)
+        f"FUNCTION_GRANTS names {sig}, which no migration creates"
+        for sig in sorted(FUNCTION_GRANTS)
+        if _signature_key(sig) not in functions
     ]
     return problems
 
@@ -801,18 +890,61 @@ def _owner_problems(db, named: list[str]) -> list[str]:
 
 
 def _unmapped_functions(db) -> list[str]:
-    """hadavin_* functions of the schema in neither map (a function nobody mapped gets no EXECUTE decision)."""
+    """hadavin_* functions of the schema in neither map, by FULL signature (an overload of a mapped name is
+    unmapped: it would be unpinned and open to PUBLIC)."""
     schema = db.execute("SELECT current_schema()").fetchone()[0]
-    mapped = {sig.split("(")[0] for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS)}
+    known = set()
+    for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS):
+        row = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        if row is not None:
+            known.add(row)
     return [
         sig
-        for (sig, name) in db.execute(
-            "SELECT p.oid::regprocedure::text, p.proname FROM pg_proc p JOIN pg_namespace n "
-            "ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' ORDER BY 1",
+        for (oid, sig) in db.execute(
+            "SELECT p.oid, p.oid::regprocedure::text FROM pg_proc p JOIN pg_namespace n "
+            "ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' ORDER BY 2",
             (schema,),
         ).fetchall()
-        if name not in mapped
+        if oid not in known
     ]
+
+
+def _unnamed_money_executors(db, named: list[str]) -> list[str]:
+    """Roles NOT named in this run (the owner, superusers and members of the owner are the documented exception) that
+    can EXECUTE a function of `FUNCTION_GRANTS` however they got it (a direct grant, PUBLIC, a membership), and the
+    default privileges that would hand EXECUTE to someone on every FUTURE function of the schema. Names only."""
+    problems: list[str] = []
+    sigs = list(FUNCTION_GRANTS)
+    for sig in sigs:
+        oid = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        if oid is None:
+            continue
+        if db.execute(
+            "SELECT EXISTS (SELECT 1 FROM pg_proc p, pg_catalog.aclexplode(p.proacl) a "
+            "WHERE p.oid = %s AND a.grantee = 0 AND a.privilege_type = 'EXECUTE')",
+            (oid,),
+        ).fetchone()[0]:
+            problems.append(f"PUBLIC can run {sig}")
+        for (role,) in db.execute(
+            "SELECT r.rolname FROM pg_roles r, pg_proc p WHERE p.oid = %s AND NOT r.rolsuper "
+            "AND r.oid <> p.proowner AND NOT pg_has_role(r.oid, p.proowner, 'MEMBER') "
+            "AND r.rolname <> ALL(%s::text[]) AND r.rolname !~ '^pg_' "
+            "AND has_function_privilege(r.oid, p.oid, 'EXECUTE') ORDER BY 1",
+            (oid, [n for n in named if n]),
+        ).fetchall():
+            problems.append(f"role {role} (not named in this command) can run {sig}")
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    for role, grantee in db.execute(
+        "SELECT pg_get_userbyid(d.defaclrole), COALESCE(NULLIF(a.grantee, 0)::regrole::text, 'PUBLIC') "
+        "FROM pg_default_acl d JOIN pg_namespace n ON n.oid = d.defaclnamespace, "
+        "pg_catalog.aclexplode(d.defaclacl) a WHERE n.nspname = %s AND d.defaclobjtype = 'f' "
+        "AND a.privilege_type = 'EXECUTE' AND a.grantee <> d.defaclrole",
+        (schema,),
+    ).fetchall():
+        problems.append(
+            f"default privileges of {role} in schema {schema} give EXECUTE on future functions to {grantee}"
+        )
+    return problems
 
 
 def _seed_limits(db) -> None:
@@ -820,12 +952,15 @@ def _seed_limits(db) -> None:
     functions at the next migrate). A database without 0011 has no table, and nothing is done."""
     if db.execute("SELECT to_regclass('hadavin_limits')").fetchone()[0] is None:
         return
-    for name, value in money_limits().items():
+    limits = money_limits()
+    for name, value in limits.items():
         db.execute(
             "INSERT INTO hadavin_limits (name, value) VALUES (%s, %s) "
             "ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value",
             (name, value),
         )
+    # a row nobody reads (a planted one, or a limit an older package seeded) is removed, never left to look meaningful
+    db.execute("DELETE FROM hadavin_limits WHERE name <> ALL(%s::text[])", (list(limits),))
 
 
 def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
@@ -1054,6 +1189,11 @@ def migrate(
                 "portal": portal_role,
             },
         )
+        if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
+            raise ConfigError(
+                "roles not named in this command can run the money functions, or will for future functions: "
+                + "; ".join(extra_exec[:20])
+            )
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
             if extra := _excess_privileges(db, portal_role):

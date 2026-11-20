@@ -42,7 +42,7 @@ NEEDS_PG = pytest.mark.skipif(
 )
 MF = getattr(mig, "MONEY_FUNCTIONS", ("",) * 7)
 RESERVE, SETTLE, EXPIRE, PURGE, ADD, SET_CAP, CAP_MATCHES = MF
-LIMIT_NAMES = ("max_amount", "max_decimals", "max_exponent", "max_id_chars", "max_expiry_age")
+LIMIT_NAMES = ("max_amount", "max_decimals", "max_id_chars", "max_expiry_age")
 
 
 # --- the maps (no database) ---------------------------------------------------------------------------------
@@ -158,7 +158,6 @@ def test_the_limits_come_from_the_python_constants_and_nothing_else():
     assert mig.money_limits() == {
         "max_amount": MAX_SPEND_USD,
         "max_decimals": MAX_SPEND_DECIMALS,
-        "max_exponent": MAX_SPEND_EXPONENT,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
     }
@@ -510,7 +509,7 @@ def test_the_sql_limits_equal_the_python_constants_the_validators_use(w):
     got = _limits(w)
     assert got["max_amount"] == D(MAX_SPEND_USD)
     assert got["max_decimals"] == MAX_SPEND_DECIMALS
-    assert got["max_exponent"] == MAX_SPEND_EXPONENT
+    assert "max_exponent" not in got
     assert got["max_id_chars"] == MAX_RESERVATION_ID_CHARS
     assert got["max_expiry_age"] == MAX_EXPIRY_AGE_S
 
