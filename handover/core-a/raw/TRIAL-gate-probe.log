@@ -1,0 +1,8 @@
+store: MemoryStore | audit: LocalDirSink
+gate Meter.reserve: (self, agent_id: 'str', worst_usd: 'Decimal', *, run_id: 'str | None' = None) -> 'str' | limits: (self, agent_id: 'str', worst_usd: 'Decimal', *, run_id: 'str | None' = None) -> 'str'
+gate Meter.settle : (self, reservation_id: 'str', actual_usd: 'Decimal') -> 'Decimal' | limits: (self, reservation_id: 'str', actual_usd: 'Decimal') -> 'Decimal'
+two Meter protocols: False
+Reply fields: ['cost_usd', 'input_tokens', 'latency_ms', 'model_id', 'output_tokens', 'schema_version', 'stop_reason', 'text', 'tool_calls']
+1 gate call with real Limits: ok; calls to client: 1
+spend totals before/after: (Decimal('0'), Decimal('0')) (Decimal('0.002'), Decimal('0.002'))
+2 over-cap call: SpendRefused reason = daily_budget | in gate SPEND_REASONS: True | client called: False
