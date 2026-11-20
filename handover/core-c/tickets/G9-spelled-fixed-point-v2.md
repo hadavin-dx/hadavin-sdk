@@ -44,14 +44,15 @@ returned. E10 (a) and (b) are closed for every text a call reads; the two settle
   `_spelled_sweep` (`shared` work count; its `_place_union` call), `redact` and `redact_many` (`r._may_register = True`), module constant
   `_SEP` and `import bisect`; docstrings: `_spelled_sweep` ("two OPEN limits" paragraph), `settle` (the passes and the bounds), `sweep`
   (header comment), module docstring line on overlaps.
-- src/hadavin_sdk/defaults.py: `SPELLED_MAX_PASSES = 4` after `SPELLED_MAX_WORK`; `SPELLED_MAX_WORK`'s comment (the count is per sweep CALL,
+- src/hadavin_sdk/defaults.py: `SPELLED_MAX_PASSES = 4` and `SPELLED_READBACK_REACH = 1024` (with a comment: how deep into a run of
+  placeholders an occurrence is looked for; 4.3, 11) after `SPELLED_MAX_WORK`; `SPELLED_MAX_WORK`'s comment (the count is per sweep CALL,
   shared by its passes, and counts the read-back; the "Two OPEN limits (E10)" sentence replaced).
 - src/hadavin_sdk/guard/runmap.py: docstrings only: `enforce_map` (the Trap 3 limit bullet replaced), `held_value_left` (it can now find an
   overlap and can raise `InputTooLarge` through the checker's sweep). No code change: `first` and `checker` are bare `_Redactor`s, so they
   take the gate behaviour (`_may_register` False) by default.
 - src/hadavin_sdk/guard/model_gate.py: the module docstring's overlap bullet only (7.3; `test_d8_every_test_the_module_docstring_names_exists`
   pins the test names it lists). No code (L-D1b: an optional distinct code is the gate lane's call).
-- tests/test_redact_mutants_meta.py: the pinned mutant count + 15 (section 10).
+- tests/test_redact_mutants_meta.py: the pinned mutant count + 16 (section 10).
 - tests/test_redact_settle_loop.py: the two pins replaced, the G9 block (section 7), the two ratio controls (phase 1).
 - tests/test_runmap_enforce_map.py, tests/test_model_gate.py: the two gate pins replaced, three gate tests added (section 7.3; owner of the
   gate lane approves, L-D1).
@@ -132,10 +133,10 @@ def _read_back(self, out: str, deadline: float | None, work: list[int]
                ) -> tuple[str, list[tuple[int, int, int, int, str | None]]] | None:
     """(E, segments) or None. A segment is (E start, E end, out start, out end, what): `what` None = free text, a placeholder = a token read
     back, "" = a separator. A RUN is a maximal sequence of key tokens with no free text between them. On each side where it touches free
-    text it keeps its first (left) / last (right) `self._longest - 1` characters; the WHOLE run when those two reach its length (the short
-    run: `ab<cdef>gh` against `abcdefgh`); a run that touches free text on neither side is one separator. Every piece is counted BEFORE it is
+    text it keeps its first (left) / last (right) `keep` characters (`self._longest - 1`, at most `defaults.SPELLED_READBACK_REACH`); the
+    WHOLE run when those two reach its length (the short run: `ab<cdef>gh` against `abcdefgh`); a run that touches free text on neither side is one separator. Every piece is counted BEFORE it is
     appended. None when no token is read back next to free text (nothing to check: no clock read, no work beyond the pieces)."""
-    keep = self._longest - 1
+    keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)  # how far an occurrence is looked for into a run
     mapping = self.mapping
     pieces: list[str] = []
     segs: list[tuple[int, int, int, int, str | None]] = []
@@ -214,6 +215,14 @@ def _read_back(self, out: str, deadline: float | None, work: list[int]
 - Why `_longest - 1` suffices: an occurrence that covers a readable character on one side of a run has at most `_longest - 1` characters
   inside the run; one that covers readable characters on BOTH sides covers the whole run, so the run is at most `_longest - 2` long and is
   read back whole (`lk + rk >= total`).
+- Why the REACH (1,024): found by the whole suite on the prototype. `x` x 262,143 + ` ` (tests/test_k5_fixes4.py, tools.prepare_output)
+  is ONE HIGHENTROPY token and a space; read back whole, the finder's lookahead tried the 262,143-character value at every position of a
+  periodic E: 40 s instead of 1.2 s (quadratic, and invisible to the unit count, which counts E's characters, not the regex's steps).
+  With the reach: 1.06 s (`reach.py`; 512: 0.80 s). Each side of a run then costs at most about REACH^2/2 character comparisons in the
+  finder (0.5 M), and forged keys are refused by the count first (a 2,000-character periodic secret, 1,000 forged copies: refused
+  `SpelledWorkTooMuch` in 0.03 s). The price is a stated limit: an overlap deeper than 1,024 characters into a run is not looked for
+  (11; pinned by `test_g9_an_overlap_deeper_than_the_reach_is_not_looked_for_a_stated_limit`). The body's literal sweep has the same
+  quadratic shape over FREE text (a raw periodic segment against a long periodic value), older than G9 and not changed by it.
 - E-to-`out` map: a free segment maps character for character (`out start + (E offset - E start)`); a token segment (whole value or a cut
   piece of it) maps to the WHOLE token `[out start, out end)`; a separator matches nothing (an occurrence that covers one is dropped).
 - `_longest`: `max(map(len, self._rules), default=0)`, set in `_build` (before `self._built_for = ...`) and on the cached path of
@@ -412,7 +421,7 @@ already handles a value under two rules at the gate (E5).
   read in `_build`, every 1,024 units of the spelled scan AND of the read-back (`_spend`), every 32nd free segment and before each value
   replaced. Not interrupted: one `finditer` of a finder over E, one `E.find` loop of one slow value, one `str.replace`. With no deadline (a
   bare `_Redactor.sweep(text)`): 4M units per sweep, no total bound (stated, as today).
-- Memory: E is at most `SPELLED_MAX_WORK` characters (every piece counted before it is appended; test 9 bounds the traced peak); honest
+- Memory: E is at most `SPELLED_MAX_WORK` characters, and per run at most 2 x `SPELLED_READBACK_REACH` + 1 (every piece counted before it is appended; test 9 bounds the traced peak); honest
   texts: at most len(out) + 2 x (`_longest` - 1) per run; a union adds ONE map entry (no trie node: no `_spell`).
 
 ## 5. Decisions made (drafter)
@@ -426,6 +435,7 @@ already handles a value under two rules at the gate (E5).
   values, not their substrings; v1's pieces made the chain's later lines masked but bought 3, 4 and refused passes.
 - D-6 The read-back, finder passes and unions are counted in the existing `SPELLED_MAX_WORK` (shared per sweep call), not a new limit.
 - D-7 The gate's default (L-D1) is to mask with existing placeholders; refuse one text when an identifier must restore exactly.
+- D-8 The read-back looks at most `SPELLED_READBACK_REACH` = 1,024 characters into a run of placeholders (4.3; L-D6).
 
 ## 6. Decisions for the lead (build default first)
 | id | question | default | consequence | fallback | consequence |
@@ -435,6 +445,7 @@ already handles a value under two rules at the gate (E5).
 | L-D2 | the pass bound | 4 (`SPELLED_MAX_PASSES`) | margin of 2 over the measured need | 2 | no margin; a chain through a G7 union would refuse |
 | L-D3 | work count | shared per `sweep` call | honest worst 1,029,656 units (cookie shape; 3.9x headroom) | per pass | up to 4 x 4M per sweep |
 | L-D3b | what a read-back unit is | one per character of E as built PLUS one per character per finder pass | honest worst 1.03 M | E as built only (the first finder pass free) | about 0.5 M on the cookie shape; the finder passes over E (3 groups for nested prefixes) uncounted, bounded by the deadline only |
+| L-D6 | the read-back reach | 1,024 characters | `x`x262k+space 1.06 s (base 1.2 s); overlaps deeper than 1,024 into a token not looked for | 4,096 | about 16x the worst finder cost per run side (8 M comparisons); deeper overlaps covered |
 | L-D5 | an overlap visible only in a decoded view (entities, escapes, folds) | out of G9 (views are G1/G10's) | `&#49;<IPV4_3>`, `ａbcd<SECRET_2>` stay as today | read the views back too | cost per view; not designed |
 The three gate options compared (design M4; values A, B overlap, B swept second so A's token stands and B's tail is readable):
 | option | leak | refusals | map |
@@ -449,7 +460,7 @@ whose text holds the overlap as written (`mask_refused`), and the run keeps the 
 ## 7. Acceptance tests
 ### 7.1 What is added, deleted and edited (all measured on `proto`, section 9)
 - tests/test_redact_settle_loop.py: `import tracemalloc` added after `import time`; the two pins DELETED (7.2); the two ratio controls
-  edited (7.2); the G9 block (7.4, 21 tests, appended at the end of the file: it uses the file's `R`, `SHORT`, `defaults`, `runmap`,
+  edited (7.2); the G9 block (7.4, 23 tests, appended at the end of the file: it uses the file's `R`, `SHORT`, `defaults`, `runmap`,
   `pytest`, `re`, `_stepping_clock`, `_best_cpu`, `_cookie_log`, `_copies_of`).
 - tests/test_runmap_enforce_map.py and tests/test_model_gate.py: 7.3. src/hadavin_sdk/guard/model_gate.py: its module docstring names the
   enforce test of the overlap limit (`E::test_stated_limit_partial_overlap_leaves_a_tail`; pinned by
@@ -885,7 +896,7 @@ def test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads():
 ```
 ### 7.5 Fail-before (measured: the edits of 7.1-7.4 applied to the `head` archive, tests only)
 `uv run --all-extras --group test pytest -q -n 3 -m "not perf" tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py
-tests/test_model_gate.py tests/test_redact_context_after_sweep.py` on `head`+tests: `27 failed, 443 passed`. The 27, with the reason:
+tests/test_model_gate.py tests/test_redact_context_after_sweep.py` on `head`+tests: `30 failed, 443 passed`. The 30, with the reason:
 | test | reason on the base |
 |---|---|
 | test_g9_an_overlap_completed_only_in_a_later_round_is_masked_whole | `AssertionError: xyz<BEARER_1>` (round 3 unchanged) |
@@ -901,6 +912,8 @@ tests/test_model_gate.py tests/test_redact_context_after_sweep.py` on `head`+tes
 | test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders | `assert 'x <SECRET_1>ijkl y' == 'x <SECRET_1><SECRET_2> y'` |
 | test_g9_a_redactor_that_may_not_register_refuses_an_overlap_an_identifier_must_restore | `DID NOT RAISE RedactionError` |
 | test_g9_a_sweep_that_settles_in_the_fourth_pass_is_accepted, ..._has_not_settled_after_four_passes_is_refused, test_g9_an_honest_text_settles_in_one_pass, test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built, test_g9_the_read_back_counts_its_pieces_its_finder_passes_and_its_occurrences | `AttributeError: ... has no attribute '_overlaps'` |
+| test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep | `AttributeError: ... has no attribute '_overlaps'` |
+| test_g9_an_overlap_deeper_than_the_reach_is_not_looked_for_a_stated_limit | its second assertion: `assert '<SECRET_1>TAIL1234' == '<SECRET_3>'` (the first, the limit itself, holds at the base) |
 | test_g9_through_redact_a_refusal_is_raised_not_returned | `AttributeError: type object '_Redactor' has no attribute '_overlaps'` |
 | test_g9_a_pass_that_grew_the_map_is_not_the_last, test_g9_the_read_back_reads_the_deadline, test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads | `AttributeError: ... has no attribute '_sweep_once'` |
 | test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders | `assert '<SECRET_1>ef' == '<SECRET_1><SECRET_2>'` |
@@ -910,7 +923,7 @@ tests/test_model_gate.py tests/test_redact_context_after_sweep.py` on `head`+tes
 | test_b1_a_held_back_value_cut_by_an_overlap_refuses_the_call_as_held_value_left | `DID NOT RAISE HeldValueLeft` |
 | test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses | `AttributeError: ... has no attribute '_overlaps'` (the edited control; green on the build) |
 | test_d8_every_test_the_module_docstring_names_exists | the model_gate docstring of the base names the deleted enforce pin (green once 7.3's docstring edit is in) |
-On `proto` (the design + the same test edits): the four files `472 passed` [count re-read at the end of the run, 9.5].
+On `proto` (the design + the same test edits): the four files `473 passed` (base: 449 collected; -2 settle pins, -2 gate pins, +23, +2, +3).
 
 ## 8. Phases and commands (one complete command per phase; `uptime` first, wait while the load is over 6; `-n 3` at most)
 Order: L-D1 decided BEFORE phase 1 (the gate tests change in phase 1: the gate lane's owner approves 7.3 and the model_gate docstring).
@@ -921,18 +934,18 @@ Order: L-D1 decided BEFORE phase 1 (the gate tests change in phase 1: the gate l
   with that body into `_sweep_once` unchanged.
   `uv run --all-extras --group test python handover/core-c/evidence/g9_cases.py .` -> the "base" column of section 0.
   Copy the tests of 7.1-7.4 in; `uv run --all-extras --group test pytest -q -n 3 -m "not perf" tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py tests/test_model_gate.py tests/test_redact_context_after_sweep.py`
-  -> expected red EXACTLY the 27 of 7.5 (`27 failed, 443 passed`).
+  -> expected red EXACTLY the 30 of 7.5 (`30 failed, 443 passed`).
 - Phase 1 (code: section 4 in redact.py, `SPELLED_MAX_PASSES` in defaults.py, the model_gate and runmap docstrings of 7.3; the tests are
-  already in). Command: the phase 0 pytest command -> GREEN: `472 passed`, 0 failed. Phase 1 is one commit; nothing is red at its end.
+  already in). Command: the phase 0 pytest command -> GREEN: `473 passed`, 0 failed. Phase 1 is one commit; nothing is red at its end.
   (Measured on `proto` without the test edits: `4 failed` exactly: `test_the_scan_does_not_depend_on_how_many_distinct_prefix_lengths_are_registered`,
   `test_two_overlapping_values_in_raw_text_leave_the_tail_readable_a_stated_limit`, `test_stated_limit_partial_overlap_leaves_a_tail`,
   `test_b1_stated_limit_a_partial_overlap_leaves_a_tail_in_what_is_sent`; that is why the edits come with the code.)
 - Phase 2 (the wide redactor and gate list): `uv run --all-extras --group test pytest -q -n 3 -m "not perf and not live" tests/test_redact*.py tests/test_runmap*.py tests/test_model_gate*.py tests/test_k1b*.py tests/test_s6_approvals.py tests/warden_port`
-  -> GREEN, measured on proto [9.5]. Then `uv run --all-extras --group test ruff format src tests && uv run --all-extras --group test ruff check src tests`.
+  -> GREEN: measured on proto `3417 passed, 3 skipped, 4 xfailed` (before the reach was added; the reach's own runs: 9.5). Then `uv run --all-extras --group test ruff format src tests && uv run --all-extras --group test ruff check src tests`.
 - Phase 3 (the whole suite, once, at a load under 3): `uv run --all-extras --group test pytest -q -n 3 -m "not perf and not live" tests`
   -> expected 0 failed (see 9.5 and 14 for what the drafter could and could not run). Perf: `uv run --all-extras --group test pytest -q -p no:xdist -m perf tests/test_redact_settle_loop.py tests/test_k5_perf.py tests/test_redact_fold_budget.py`.
-- Phase 4 (mutants): `uv run --all-extras --group test python tests/redact_mutants.py G9-` -> 16 rows, 15 good and G9-6 not added (section 10);
-  tests/test_redact_mutants_meta.py's pinned count +15; then the whole runner once: no new BAD.
+- Phase 4 (mutants): `uv run --all-extras --group test python tests/redact_mutants.py G9-` -> the 16 rows of section 10, all good;
+  tests/test_redact_mutants_meta.py's pinned count +16; then the whole runner once: no new BAD.
 - Phase 5 (evidence and docs): the scripts below committed under handover/core-c/evidence/ and run once each, raw output in `G9-1.md`;
   section 13's wording; ESCALATIONS E10 RESOLVED; the G7 ticket's two overlap limits replaced.
 Evidence scripts (from the drafter's scratch, each takes the tree as argv[1]; the builder fixes the import of `cost.py`'s shapes into
@@ -1002,44 +1015,53 @@ honest worst is now 1.03 M (cookie: E counted once as built and once per finder 
 The read-back alone on the cookie probe: 0.21 s against 0.10 s for a sweep of the raw text it stands for (2.1x; `rbcost.py`), 0.03 s for the
 body over the swept copies: the read-back costs about what the literal sweep cost on the raw text, which is the price of reading it again.
 ### 9.5 Suites on `proto` (the design + every test edit of section 7)
-- The four files of phases 0-1: `472 passed` [final re-run, 9.5 note]; before the test edits: `4 failed, 3391 passed, 3 skipped, 4 xfailed`
-  on the phase 2 list (the four of phase 1's note).
-- Phase 2 list after the edits: [M].
-- The whole suite (`-m "not perf and not live" -n 3 tests`): the drafter's single run was cut at 42 % (5,749 passed, 537 skipped, 6 xfailed,
-  1 failed, id not printed: the process was killed when the drafter's shell ended, before pytest's summary); a second run was not made
-  (box rule: the whole suite once). The failing id is NOT known: the builder's phase 3 is the first complete run (section 14).
-### 9.6 Mutants (`mut2.py` against the G9 tests of section 7 on proto): 15 killed, G9-6 survived (equivalent, section 10), G9-15 survived
-and was shown equivalent on 40,000 fuzz inputs (0 output differences; `diffm.py`, `PYTHONHASHSEED=0`).
+- The four files of phases 0-1: `473 passed`; on `head` with the tests: `30 failed, 443 passed` (7.5).
+- Phase 2 list, BEFORE the test edits: `4 failed, 3391 passed, 3 skipped, 4 xfailed` (the four of phase 1's note); AFTER them:
+  `3417 passed, 3 skipped, 4 xfailed`.
+- The whole suite, ONCE (`-m "not perf and not live" -n 3 tests`, 8 min 26 s; load 1 to 6.5: two subset runs of the drafter overlapped it
+  by mistake): `9 failed, 14254 passed, 561 skipped, 10 xfailed`. Three are the scratch archive's (not a git checkout):
+  `test_ci_gitleaks_scope.py::test_the_gitleaks_config_has_only_narrow_path_allowlists` and `test_repo_rules.py::test_licences_are_proprietary`
+  (`git ls-files` exit 128), `test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` (a file of the archive's handover/
+  that git would not list). SIX WERE REAL: `test_k5_fixes1.py::test_a_tool_result_is_cut_before_redaction_whatever_the_manifest_cap`,
+  `test_k5_fixes4.py::test_a_large_output_cut_at_the_window_is_not_refused_for_its_marker` and
+  `test_k5_fixes4.py::test_lengths_around_the_window_are_all_accepted[262131|262132|262133|262144]`: `InputTooLarge` (deadline), 37 to 44 s
+  each against 1.1 to 1.3 s on `head` (re-run alone at load 2.6). Cause and fix: 4.3 "Why the REACH". After the fix: those six and the four
+  files: `505 passed`; the G9 tests 23 passed. The whole suite was NOT run again after the fix (box rule: once); the builder's phase 3 is.
+### 9.6 Mutants (`mut2.py`/`mut3.py` against the G9 tests on proto; each killer run alone, its first `E` line recorded)
+16 killed (the rows of section 10, with the first `E` line as the `expect` fragment); G9-6 and G9-15 survived and are equivalent (10).
 
 ## 10. Mutants (append at the END of `M` in tests/redact_mutants.py, file `RD`, `test_file="tests/test_redact_settle_loop.py"` unless said; `old` is the text of section 4)
-| name | old | new | killer (`only_test`) |
-|---|---|---|---|
-| G9-1 one pass more than the bound | `for _ in range(defaults.SPELLED_MAX_PASSES):` | `for _ in range(defaults.SPELLED_MAX_PASSES + 1):` | test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused (`len(calls) == 4`) |
-| G9-2 the read-back removed | `        spans = self._overlaps(out, deadline, work)\n` | `        spans = []\n` | test_g9_two_overlapping_values_in_raw_text_are_masked_whole |
-| G9-3 the refusal returns the text | `    raise InputTooLarge("SpelledNotSettled")` | `    return out` | test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused (DID NOT RAISE) |
-| G9-4 the gate registers | `        if self._may_register:\n            placeholder = self._place_union` | `        if True:\n            placeholder = self._place_union` | test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders |
-| G9-5 the pieces of the read-back not counted (the count would come only after E is built, from the finder pass) | `        self._spend(work, len(piece), deadline)  # counted before it is held` | `        self._spend(work, 0, deadline)  # counted before it is held` | test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built (the traced peak, `peak < 1_000_000`) |
-| G9-7 the seeded keys not read back | `        if tok in mapping:\n` | `        if tok in mapping and int(tok[:-1].rsplit("_", 1)[1]) > 2:\n` | test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else |
-| G9-8 the union takes the first token's kind | `kind = next((k for _, k in met if k in SECRET_KINDS), _kind(toks[0][1]))` | `kind = _kind(toks[0][1])` | test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first |
-| G9-9 a weaker reverse hit reused | `if have is not None and (_kind(have) in SECRET_KINDS or kind not in SECRET_KINDS):` | `if have is not None:` | test_g9_a_union_whose_value_an_identifier_holds_gets_a_secret_placeholder_of_its_own |
-| G9-10 the union registers pieces and its written form | `self._place_union(out[start:end], kind, derived=False)` | `self._place_union(out[start:end], kind, derived=True)` | test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form |
-| G9-11 converged ignores map growth | `if not spans and len(self.mapping) == size:` | `if not spans:` | test_g9_a_pass_that_grew_the_map_is_not_the_last |
-| G9-12 a short run cut in the middle | `elif lk + rk >= total:` | `elif False:` | test_g9_a_short_run_of_tokens_is_read_back_whole |
-| G9-13 the gate masks with identifiers too | `secret = [h for h in members if _kind(h[2]) in SECRET_KINDS]` | `secret = members` | test_g9_a_redactor_that_may_not_register_refuses_an_overlap_an_identifier_must_restore |
-| G9-14 the read-back reads no clock | `if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:` | `if False:` | test_g9_the_read_back_reads_the_deadline |
-| G9-16 a finder pass not counted | `        self._spend(work, len(E), deadline)  # one finder pass over E\n` | `` | test_g9_the_read_back_counts_its_pieces_its_finder_passes_and_its_occurrences (`work == [16 + 16 + 2]`) |
+| name | old | new | killer (`only_test`) | expect (first `E` line, measured) |
+|---|---|---|---|---|
+| G9-1 one pass more than the bound | `for _ in range(defaults.SPELLED_MAX_PASSES):` | `for _ in range(defaults.SPELLED_MAX_PASSES + 1):` | test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused | `assert 5 == 4` |
+| G9-2 the read-back removed | `        spans = self._overlaps(out, deadline, work)\n` | `        spans = []\n` | test_g9_two_overlapping_values_in_raw_text_are_masked_whole | `'<SECRET_1>ijkl' == '<SECRET_3>'` |
+| G9-3 the refusal returns the text | `    raise InputTooLarge("SpelledNotSettled")` | `    return out` | test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused | `DID NOT RAISE InputTooLarge` |
+| G9-4 the gate registers | `        if self._may_register:\n            placeholder = self._place_union` | `        if True:\n            placeholder = self._place_union` | test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders | `'x <SECRET_3> y' == 'x <SECRET_1><SECRET_2> y'` |
+| G9-5 the pieces of the read-back not counted | `        self._spend(work, len(piece), deadline)  # counted before it is held` | `        self._spend(work, 0, deadline)  # counted before it is held` | test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built | `AssertionError: 49501189` (the traced peak, 49.5 MB) |
+| G9-7 the seeded keys not read back | `        if tok in mapping:\n` | `        if tok in mapping and int(tok[:-1].rsplit("_", 1)[1]) > 2:\n` | test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else | `'x <SECRET_1>ijkl y' == 'x <SECRET_3> y'` |
+| G9-8 the union takes the first token's kind | `kind = next((k for _, k in met if k in SECRET_KINDS), _kind(toks[0][1]))` | `kind = _kind(toks[0][1])` | test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first | `<IPV4_2> up' == ` |
+| G9-9 a weaker reverse hit reused | `if have is not None and (_kind(have) in SECRET_KINDS or kind not in SECRET_KINDS):` | `if have is not None:` | test_g9_a_union_whose_value_an_identifier_holds_gets_a_secret_placeholder_of_its_own | `'z<TENANT_1> y' == 'z<SECRET_3> y'` |
+| G9-10 the union registers pieces and its written form | `self._place_union(out[start:end], kind, derived=False)` | `self._place_union(out[start:end], kind, derived=True)` | test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form | `assert {'<SECRET_1>'` (the map holds the piece) |
+| G9-11 converged ignores map growth | `if not spans and len(self.mapping) == size:` | `if not spans:` | test_g9_a_pass_that_grew_the_map_is_not_the_last | `assert 1 == 2` |
+| G9-12 a short run cut in the middle | `elif lk + rk >= total:` | `elif False:` | test_g9_a_short_run_of_tokens_is_read_back_whole | `'ab<SECRET_1>gh' == '<SECRET_2>'` |
+| G9-13 the gate masks with identifiers too | `secret = [h for h in members if _kind(h[2]) in SECRET_KINDS]` | `secret = members` | test_g9_a_redactor_that_may_not_register_refuses_an_overlap_an_identifier_must_restore | `DID NOT RAISE RedactionError` |
+| G9-14 the read-back reads no clock | `if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:` | `if False:` | test_g9_the_read_back_reads_the_deadline | `DID NOT RAISE InputTooLarge` |
+| G9-16 a finder pass not counted | `        self._spend(work, len(E), deadline)  # one finder pass over E\n` | `` | test_g9_the_read_back_counts_its_pieces_its_finder_passes_and_its_occurrences | `assert [18] == [34]` |
+| G9-18 the read-back reach removed | `keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)` | `keep = self._longest - 1` | test_g9_an_overlap_deeper_than_the_reach_is_not_looked_for_a_stated_limit | `'<SECRET_3>' == '<SECRET_1>TAIL1234'` |
 NOT added: G9-6 `if any(s[4] == "" for s in covered):` -> `if False:` (a separator crossed): SURVIVED, equivalent: the separator is
 `\0`, and a rule original holding a NUL has a NUL-free alias key that the body sweeps first (`a<SECRET_9>wxyz` -> `a<SECRET_9><SECRET_1>`
 at the base and after G9; pinned in `test_g9_every_key_...`); the check stays as defence. G9-15 (a free-only occurrence counted:
 `if all(s[4] is None ...) or all(s[4] ...)` -> `if all(s[4] ...)`): SURVIVED the tests and gave 0 output differences on 40,000 fuzz
 inputs (abc and mixed, `PYTHONHASHSEED=0`): equivalent by 4.8's argument; not added (readiness minor: proven by measurement, not by reading).
-The `expect` fragment of each row is the failing assertion's text in the killer (the drafter's runner checked KILLED by the exit code and
-named the first failing test; the `expect` fragments were not run through `tools.mutation_runner`: the builder sets each from the first `E`
-line of a phase 4 dry run).
+The `expect` fragments are the first `E` line of each killer run alone on the prototype (`mut3.py`); `tools.mutation_runner` itself was
+not run on them (14). Rows keep v1's numbers where they kept their meaning; G9-6, G9-15 and G9-17 are not rows.
 
 ## 11. Stated limits after G9
 - `redact_many` across strings: a value whose head ends one string and whose tail starts the next is two texts; neither the old nor the new
   code reads across the boundary (and the gate's framing-word limit stands: a value split by a fixed framing word is not seen).
+- The reach (L-D6): an overlap deeper than `SPELLED_READBACK_REACH` (1,024) characters into a run of placeholders is not looked for
+  (two values overlapping by more than 1,024 characters, e.g. two PEM blocks sharing a long body): the tail of the second stays readable,
+  as at the base. Pinned.
 - Decoded views (L-D5): an overlap visible only after decoding (an HTML entity `&#49;<IPV4_3>`, a full-width letter `ａbcd<SECRET_2>`, an
   escape) is not read back: G9 reads the text as written and the keys' values as stored.
 - Fold and alias spellings (design Nit 1): E holds each key's STORED value; where a token stands for a spelling other than the one written
@@ -1083,8 +1105,7 @@ decoded form of the text (an HTML entity, an escape, a full-width letter), a val
 and a text returned by an earlier call before the second value was known (it is masked when the gate reads it again)."
 
 ## 14. Not verified
-- The whole suite: one run, cut at 42 % with 1 failure whose id was not printed (9.5); not re-run (box rule). The phase 2 list is the widest
-  set measured green.
+- The whole suite AFTER the reach fix (its one run was before the fix: 9.5); the phase 2 list after the fix (green before it).
 - The mutant `expect` fragments through `tools.mutation_runner` (killers measured with the drafter's runner).
 - The perf-marked files on proto (`-m perf`); the settle-loop generator's pass distribution (v1 measured 86,264 sweeps, all 1 pass, on its
   design; v2's suite run passes the generator test, the distribution was not printed).
@@ -1097,14 +1118,14 @@ and a text returned by an earlier call before the second value was known (it is 
 | R-B1 design prose only, no signatures, tuple shapes, short run, E-to-out map | TAKEN | 4.1-4.6: every function body with signature and return shape; `_overlaps` returns `(start, end, kind, masked)`; the short run read back whole (`lk + rk >= total`, test `..._short_run_...` with the reviewer's `ab<S1>gh`); the segment table is the E-to-`out` map (4.3); refused work raises from `_spend`, nothing returned |
 | R-B2 `_written` sites incomplete | TAKEN (superseded) | no written set: a token is read back when it is an exact key of the map (4.3); one test reads back a key the redactor did not write (`<SECRET_1>` given in the text); the 13 v1 hits are measured to change no output (9.2) |
 | R-B3 the D-3 test is wrong | TAKEN | measured: `10.0.0.5xqzw` -> `10.0.<SECRET_1>` (no overlap exists); replaced by an input that occurs (`host 10.100.200.5-Xyz9`, 9.1) and the reverse-weaker case; kind rule and `_place_union(union, kind, derived)` specified (4.4, 4.6) and built in the prototype |
-| R-M1 phase 1 not green | TAKEN | the test edits come with the code: phase 1 ends `472 passed`; the 4 that would be red without them are named (8) |
+| R-M1 phase 1 not green | TAKEN | the test edits come with the code: phase 1 ends `473 passed`; the 4 that would be red without them are named (8) |
 | R-M2 gate edits not specified | TAKEN | 7.3: both replacements, three new tests, the held-back rows kept and extended, names and docstrings, the model_gate docstring (d8 pins it), `held_value_left` through `_chunk` -> `mask_budget_exceeded` |
 | R-M3 hostile memory not tested | TAKEN | the count is per piece in `put` (4.3); test `..._counted_per_piece_and_refused_before_it_is_built` (limit 100,000, peak traced under 1 MB); H1 at the cap: refused at 3 MB (v1 56 MB); mutant G9-5 has a real old text |
 | R-M4 where `_longest` lives | TAKEN | recomputed from `_rules` (alias keys included) in `_build` and on the cached path; the 5-tuple unchanged; consumers listed (4.3) |
 | R-M5 rollback, settle, deadline test | TAKEN | 4.7 (no journal, a refused call drops its unions, the RunMap is written only on success); test `..._reads_the_deadline` |
 | R-M6 no command for "honest = 1 pass" | TAKEN | evidence scripts with commands and expected counts (8); corpus and fuzz re-run on 78a0c8bcf (9.2) |
 | R-M7 test bodies missing | TAKEN | 7.3-7.4 exact code; test 1 pins value and kind, not the number; `redact_many(lines)` with `lines` given; constructors explicit; the class-level stub written out; test 8's `find` given |
-| R-M8 phase commands, full suite | PARTLY TAKEN | one complete command per phase (8); the full suite was run once and cut at 42 % (1 failure, id unknown): stated, not hidden (9.5, 14) |
+| R-M8 phase commands, full suite | TAKEN | one complete command per phase (8); the full suite run once on the prototype: it found a real regression (the quadratic read-back of a long value, six k5 tests), fixed by the reach (4.3) and re-checked on those tests; three archive-only failures named (9.5) |
 | R-minor L-D1 owner and blocking | TAKEN | the gate lane approves 7.3 before phase 1 (8) |
 | R-minor D-3 build order | TAKEN | D-3 is in the build and the prototype (5) |
 | R-minor G9-7 no old/new, no killer | TAKEN | new G9-7 with text and killer (10) |
