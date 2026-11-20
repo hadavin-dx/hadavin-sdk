@@ -698,19 +698,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "n8n-drift",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "n8n README follows the code: no fallbacks, --allow-non-loopback flag, connection cap and read deadline exist, SIGTERM behaviour",
-   "started UTC": "09:18",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "drift report"
-  },
-  {
    "id": "e5-e11",
    "role": "builder (tests)",
    "model": "sonnet",
@@ -2386,6 +2373,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "17 drifts fixed in ticket D, ticket E, CRASH-MATRIX, WINDOWS-NOTES (documents follow the code, Fix log in DRIFT-REPORT.md); open: D6 (test line cites), N1-N7 (n8n README: n8n-drift running), test gaps E5/E11 (e5-e11 running); nothing run"
+  },
+  {
+   "id": "n8n-drift",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n README follows the code: no fallbacks, --allow-non-loopback flag, connection cap and read deadline exist, SIGTERM behaviour",
+   "started UTC": "09:18",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "n8n README drifts N1-N7 fixed (no fallback/ConfigError exit 2, --allow-non-loopback flag, 256-connection cap and 30 s read deadline, process stays until loop ends, header refusals); 91 template tests pass (raw/n8n-template-tests-12.log); cited line numbers not re-checked"
   }
  ]
 }

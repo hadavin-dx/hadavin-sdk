@@ -76,3 +76,12 @@ Status per drift id. "fixed in <file> by <builder> at <UTC>" means the document 
 - Other open items, not drifts of the four files: the tests named in D3 and D4 (E5, E11, in-process "asks only for listed names", `test_t5_cases.py` senders form) and the D6 test line numbers.
 
 Not verified by the builder: nothing was run; no Windows behaviour (SO_EXCLUSIVEADDRUSE effect, SIGBREAK delivery, error codes) was observed; the tests' bodies were not read beyond the lines cited; the README, n8n JSON and the history sections of the D ticket (15, 16, d-fix2 to d-fix5) were not re-checked; W05, W08 to W16 rows were only spot-checked where the report named them.
+
+- N1 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (limit 7 and the 'before you start' item 4: no fallback, ConfigError exit 2)
+- N2 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (--allow-non-loopback flag, two places)
+- N3 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (limits 1 and 10: cap 256, 30 s total deadline)
+- N4 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (limit 11: no kill after the wait; run keeps process alive, one WARNING)
+- N5 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (400 body is empty; the text is internal)
+- N6 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (400 for underscore header, second Content-Length, Transfer-Encoding)
+- N7 fixed in n8n/README-trigger.md by n8n-drift at 2026-11-20T09:19Z (SIGBREAK handled; Windows delivery stays UNVERIFIED)
+- n8n-drift: tests/triggers/test_n8n_template.py one pinned limit-10 phrase changed (same meaning: the worker's bounds vs the proxy); json files unchanged; 91 passed (raw/n8n-template-tests-12.log). Nothing was observed on a real worker or n8n.
