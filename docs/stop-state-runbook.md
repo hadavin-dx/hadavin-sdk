@@ -78,7 +78,10 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   character and no space at either end (`Admin`, `my-admin`, `user@server` are fine), compared as exact text, never
   `PUBLIC`, `none`, `session_user`, `current_user`, `*` or `%` (in any letter case), and not one of the roles migrate grants; it is left out of the CREATEROLE listing only, and is still listed when it
   holds a grant on the stop tables. Its MEMBERS are still listed (a member can `SET ROLE` to it and use its
-  CREATEROLE): vouching covers the role itself, not who may become it. Below PostgreSQL 16 the command prints the
+  CREATEROLE): vouching covers the role itself, not who may become it. A vouched role that is itself a member of a
+  LISTED role (a grantee of a stop-table right, the reset role, or a CREATEROLE role that is not accepted) is still
+  listed for that membership. Vouching for the schema owner role seeds nothing and its members are not followed: the
+  owner is outside the guarantee (see above). Below PostgreSQL 16 the command prints the
   accepted names (also when it refuses) and logs them at warning level: the record of who vouched is the CI log of
   that run. From PostgreSQL 16 the option has no effect and the command says so in one line. Use it only when you
   can say who holds that login; the other way out is `REVOKE CREATEROLE` from it or PostgreSQL 16 or later.
