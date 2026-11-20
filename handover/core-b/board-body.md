@@ -16,6 +16,7 @@ Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a439a627 | reviewer (egm-codebase-details) | fable | hostile re-read of the BUILT F-store, provider mark and trigger config code (through the review-loop skill) | 06:42 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | STANDING ORDER 016 item 4a |
 | a5f7551d | builder (tests) | fable | random-sequence model test of the reservation store on both stores (30 seeds x 200 operations); worktree P | 06:33 | +25 min | UNVERIFIED | running | none | 0 | STANDING ORDER 016 item 4b: more hostile tests for a guarantee path |
 | a6dd2beb | lookup | fable | reads core-c's gate, its enforce step and tests against my meter and install plan; writes CROSS-LANE-gate.md | 06:33 | +15 min | UNVERIFIED | running | n/a | 0 | STANDING ORDER 016 item 4c; mismatches found now are cheaper than at integration |
 | a70b774c | builder | fable | F-install: local merge of core-c's gate, then extract.py deletion, Budget meter, gate installed in run loop, judge, evals, replay, charge sites removed, docs; worktree FI | 06:22 | +45 min | UNVERIFIED | running | round 2 alongside | 0 | lead ORDER 014 GO BUILD F-install |
