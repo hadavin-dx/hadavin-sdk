@@ -2,7 +2,7 @@
  "order": "006 (002 to 005 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "ticket E lands: build E on cloud/core-a in separate 'code E:' commits (ORDER 005 item 2); ticket D lands: one EGM review round with 2 reviewers",
+ "next": "ticket E lands: start builder agent for step E ('code E:' commits); ticket D lands: write requests/001-config-triggers.md and run one EGM review round",
  "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -96,6 +96,15 @@
    "evidence file": "",
    "tries": 0,
    "reason": "allowed as soon as ticket E is written (ORDER 004 item 5)"
+  },
+  {
+   "item": "T5-SKEL",
+   "what": "T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/)",
+   "state": "RUNNING",
+   "percent": 10,
+   "evidence file": "tests/triggers/test_t5_cases.py, n8n/*.json, n8n/README-trigger.md (not yet)",
+   "tries": 1,
+   "reason": "lead message 05:27Z asks for it now; whole test module is skipped until the package exists"
   }
  ],
  "agents": [
@@ -128,7 +137,7 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 60,
+   "percent": 70,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -136,12 +145,12 @@
    "role": "builder (ticket writer, no code)",
    "what exactly it is doing": "T2-D: checks every line of the lead draft of ticket D against the code, writes tickets/D-signed-endpoint.md, gives the step H verdict",
    "expected end": "about 15 min after start",
-   "reason": "ORDER 004 item 3; only 2 agents run because the other open items (H, T3, T4, build E) each wait on one of these two tickets or on core-b's interface"
+   "reason": "ORDER 004 item 3"
   },
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 60,
+   "percent": 70,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -149,7 +158,20 @@
    "role": "builder (ticket writer, no code)",
    "what exactly it is doing": "T2-E: writes tickets/E-test-helpers.md (helpers, where they live, guard tests they could break)",
    "expected end": "about 12 min after start",
-   "reason": "ORDER 004 item 3, E is built first; only 2 agents run because the other open items (H, T3, T4, build E) each wait on one of these two tickets or on core-b's interface"
+   "reason": "ORDER 004 item 3, E is built first"
+  },
+  {
+   "id": "t5-skel",
+   "role": "builder (tests and templates, new files only)",
+   "model": "fable",
+   "what exactly it is doing": "writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only",
+   "started UTC": "05:27",
+   "expected end": "about 15 min after start",
+   "percent": 10,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "third parallel item; 3 agents now run"
   }
  ],
  "tests": [],
