@@ -335,7 +335,7 @@ M = [
         "test_r2_m4_an_identifier_kind_value_equal_to_a_tool_name_does_not_stop_the_run", "stopped the run"),
     mutant("O9 the assistant line is not recognised (code review M2)",
         '        call = _ASSISTANT_CALL.match(text) if role == "assistant" else None\n', "        call = None\n",
-        "test_r2_m2_the_fixed_word_of_the_assistant_line_is_kept_exact", "TOOL_NAME"),
+        "test_r2_m2_the_fixed_word_of_the_assistant_line_is_kept_exact", "<SECRET_1> r"),
     mutant("O10 the text after the last token or after the assistant line is not enforced",
         "        stretch(text[end:])\n", "        pass\n",
         "test_o17_6_the_assistant_line_and_the_data_are_enforced_but_the_markers_are_exact", "<IPV4_1>"),

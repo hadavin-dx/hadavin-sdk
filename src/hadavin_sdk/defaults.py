@@ -34,7 +34,11 @@ MAX_DOCUMENT_BYTES = (
 # The most one redact_text call takes, counting the text and every view the second pass scans. Measured end to end
 # (redact_untrusted at the cap, Windows laptop, 2026-11-02): "curl -u " repeated 7.2 s, a zero-width-split
 # "password=" 4.0 s, full-width 3.7 s, IP addresses 2.6 s, "password=" 1.4 s, 14,563 U+FDFA (a 262,000-character
-# view) 3.0 s. Size any timeout around ~8 s per call at the cap, not the 7 us per character a plain text costs.
+# view) 3.0 s. Since G7 fix round 2 (Linux test machine, 2026-11-20, text with a planted secret, compound tail, bank code and
+# account so every extra round runs, plus a backslash so the views run): "password=" repeated 1.9 s and "curl -u " repeated
+# 4.0 s of thread CPU through redact_untrusted at the cap, and a 100,000-character bank text 0.40 s (one pass 0.18 s). A text
+# the budget cannot cover is REFUSED (InputTooLarge); size a timeout around the budget plus one unchecked pass (~4 s), not the
+# 7 us per character a plain text costs.
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 # A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
 MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
@@ -45,16 +49,19 @@ CUT_MARGIN = 8192
 # The most CPU seconds of the calling thread (`time.thread_time()`, not the wall clock) one `redact_text` call may spend
 # before it refuses (fail closed, `InputTooLarge`): a hostile text costs 1 to 5 s at the cap (measured on the test machine,
 # 2026-11-11: up to about 5 s for a text that needs all four spellings of every line) and every extra view repeats
-# that. Checked between the stages, once per stored original in `_decoded_masks`, in the loop over the views and inside the
-# fold scan (once per pattern, per suspect line, per round, per non-ASCII stored value of the alias build, and every 4,096
-# characters of the alignment). NOT checked inside a direct pass of the pattern table, in `_views` (`neutralise`,
-# `canonical`, `composed`, `without_spacing_marks` and `undo` on the whole text), `_keep_earlier_masks`, the round in progress, the tail
-# of `_folded_line` (the fold of the body and the dry runs), `_withhold`, the `find` loop, `sweep` and the per-line fold
-# loops: one call can take the budget plus about five full pattern passes plus the sweep. `clean()` makes one call for the
-# text, one more for its tag-stripped view only when tags were there, and a check read of its result (at most 3, none when
-# pass 1 changed nothing); the check reads share ONE budget (`channel.settled`, CPU seconds since `clean` began; a card over
-# it, or a read the redactor refuses, shows `SETTLE_NOTE`). Measured 2026-11-20 on the test machine: a 174-character card 1.3 ms
-# -> 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
+# that. Checked between the stages, once per stored original in `_decoded_masks`, in the loop over the views, in the fold
+# scan (once per pattern, per suspect line, per round, per non-ASCII stored value of the alias build, and every 4,096
+# characters of the alignment) and, since G7 fix round 2, before EVERY round of `_Redactor.settle` (the pattern passes after the
+# first sweep: one round is a pass over the strings the last sweep changed plus a sweep; at most 4 rounds, then the call is
+# refused as NotSettled): a spent budget raises InputTooLarge, a round is never skipped (that would fail open). NOT checked
+# inside a direct pass of the pattern table, in `_views` (`neutralise`, `canonical`, `composed`, `without_spacing_marks` and
+# `undo` on the whole text), `_keep_earlier_masks`, the round in progress, the tail of `_folded_line` (the fold of the body and
+# the dry runs), `_withhold`, the `find` loop, `sweep` and the per-line fold loops: one call can take the budget plus one
+# full pattern pass and sweep (about 4 s for the worst measured text, see above). `clean()` makes one call for the text, one
+# more for its tag-stripped view only when tags were there, and a check read of its result (at most 3 calls, none when pass 1
+# changed nothing); the check reads share ONE budget (`channel.settled`, CPU seconds since `clean` began; a card over it, or a
+# read the redactor refuses, shows `SETTLE_NOTE`). Measured 2026-11-20 on the test machine: a 174-character card 1.3 ms ->
+# 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
 REDACT_BUDGET_S = 6.0
 
 
@@ -151,8 +158,6 @@ TEXTNORM_PINNED_PYTHON = "3.13"
 # Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call). A whole number
 # of at least 1 (guard.textnorm refuses another value when it is imported and every time a scan key is made).
 TEXTNORM_MAX_PASSES = 3
-# The Python minor version that carries the pinned Unicode data (TEXTNORM_PINNED_UNIDATA); only used in the message of UnidataMismatch.
-TEXTNORM_PINNED_PYTHON = "3.13"
 # The most scan keys one text may make (scan_keyset): 2 variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16 by
 # construction; 13 is the most a real text reaches. More than this is refused (TextTooLong), never cut off.
 TEXTNORM_SCAN_KEY_CAP = 16

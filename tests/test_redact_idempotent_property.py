@@ -21,14 +21,18 @@ The corpora (nothing is dropped from any of them; `test_the_corpus_is_what_this_
   p1c            handover/core-c/evidence/p1c_probe.py            gap1_values (short and long), gap2_cases, gap3_cases
   g7             tests/test_redact_context_after_sweep.py         SHAPES, MUST_KEEP, E5 (the shapes G7 was built on)
   constructed    this file                                        CONSTRUCTED: built to find what one extra pass misses
-Measured 2026-11-20: 1,835 inputs, 0 refused, 1 fails (constructed:0, a stated limit). With the extra pass switched
-off, 8 more fail (5 g7 shapes, 3 g7 E5); no input of the older corpora fails with or without it.
+Measured 2026-11-20 (fix round 2, with the capped fixed-point loop): 1,835 inputs, 0 refused (asserted), 0 fail. With the
+second pass switched off, 8 fail (5 g7 shapes, 3 g7 E5); with ONE extra pass (the round 1 design) `constructed:0` failed
+too; no input of the older corpora fails with or without it. The generated compositions aimed at the class (2 to 4 lines
+of key=V, glued bank code, short Bearer/Basic/authorization/sig/auth with V glued, account after code, copies) are in
+tests/test_redact_settle_loop.py, against a reference fixed-point loop.
 Not used, because they are not inputs of the redactor: tests/demo_askdata/fuzzgen.py (SQL for the demo's validator),
 tests/test_peel_run_id.py HOSTILE (run ids), tests/fixtures/textnorm_corpus.json (name pairs for the fold).
 
-An input that still fails is NOT hidden and not dropped: it is listed in KNOWN_LIMITS with its shape and runs as a
-STRICT expected failure, so it turns red the day it starts to pass. Those entries are the stated limits of the
-ticket (handover/core-c/tickets/G7-context-after-sweep.md, "For SECURITY wording").
+Property (c) is a raw-copy check that does NOT call the production sweep: no 4-character piece of an original of a secret
+kind may stand outside a placeholder in the output. (b) stays, by the redactor's own rule, for the other kinds.
+A chain that needs more rounds than the cap is a refusal (RedactionError), never a silent leak: the real corpora must
+not refuse (`test_no_input_of_the_corpora_is_refused`).
 """
 
 from __future__ import annotations
@@ -71,8 +75,8 @@ def _p1c_module():
 _V = "abcd" + "9x"
 CONSTRUCTED = [
     # 0: a chain of three. Pass 1 finds the password; its sweep frees the bank code from the letters glued to it;
-    # the extra pass finds the code; the second sweep writes the code's placeholder before the account; only a
-    # THIRD pattern pass reads the account.
+    # pass 2 finds the code; the second sweep writes the code's placeholder before the account; only a THIRD pattern
+    # pass reads the account (the capped loop runs it on the one text the second sweep changed).
     f"password={_V}\nBSB: {g7.BSB}{_V}\npaid {g7.BSB}/{g7.ACCOUNT}",
 ]
 
@@ -99,12 +103,14 @@ def _build() -> list[tuple[str, str]]:
     rng = random.Random(20261120)  # noqa: S311 - the seed the round-trip corpus was built with
     add("round-trip", [round_trip.random_text(rng) for _ in range(300)])
     add("lookalikes", round_trip.LOOKALIKES)
-    if _P1C.exists():
-        probe = _p1c_module()
-        values = probe.gap1_values()
-        add("p1c-gap1", [v[k] for v in values for k in ("short", "long")])
-        add("p1c-gap2", [text for _, _, text in probe.gap2_cases()])
-        add("p1c-gap3", [text for _, _, text in probe.gap3_cases()])
+    assert _P1C.exists(), (
+        f"the p1c probe file is missing ({_P1C}): the corpus would shrink silently"
+    )
+    probe = _p1c_module()
+    values = probe.gap1_values()
+    add("p1c-gap1", [v[k] for v in values for k in ("short", "long")])
+    add("p1c-gap2", [text for _, _, text in probe.gap2_cases()])
+    add("p1c-gap3", [text for _, _, text in probe.gap3_cases()])
     add("g7-shapes", [g7.SHAPES[k] for k in sorted(g7.SHAPES)])
     add("g7-must-keep", g7.MUST_KEEP)
     add("g7-e5", [g7.E5[k][0] for k in sorted(g7.E5)])
@@ -113,12 +119,6 @@ def _build() -> list[tuple[str, str]]:
 
 
 CORPUS = _build()
-
-# id -> the shape of an input that still fails after G7. A STRICT expected failure each: the stated limits.
-KNOWN_LIMITS: dict[str, str] = {
-    "constructed:0": "a chain of three: a value only the extra pass finds (a bank code freed by the first sweep) "
-    "is the context of a third value (the account after it); one extra pass does not reach the third",
-}
 
 
 def _free_text(out: str) -> str:
@@ -134,6 +134,23 @@ def raw_copies(out: str, mapping: dict[str, str]) -> list[str]:
         if rule is None or original not in free:
             continue
         if rule is R._EVERY_COPY or R._replace_standalone(free, original, "\x00") != free:
+            found.append(placeholder)
+    return found
+
+
+def piece_leaks(text: str, out: str, mapping: dict[str, str]) -> list[str]:
+    """(c) A check that does NOT call the production sweep or its rules: the placeholders of a secret kind with a 4-character
+    piece that stands MORE often outside a placeholder in `out` than in the input once every original of the map is cut
+    out of it (a piece such as `ecre` of `Cl5ecretV` is also in the word `secret` of the text: that is not a copy)."""
+    rest = text
+    for original in sorted(mapping.values(), key=len, reverse=True):
+        rest = rest.replace(original, "\x00")
+    free, found = _free_text(out), []
+    for placeholder, original in mapping.items():
+        if R.kind_of(placeholder) in R.SECRET_KINDS and any(
+            free.count(piece) > rest.count(piece)
+            for piece in {original[i : i + 4] for i in range(len(original) - 3)}
+        ):
             found.append(placeholder)
     return found
 
@@ -159,17 +176,15 @@ def check(text: str) -> tuple[str, list[str]]:
     raw = raw_copies(once, held)
     if raw:
         why.append(f"raw copy of {sorted({R.kind_of(p) for p in raw})} in the output")
+    pieces = piece_leaks(text, once, held)
+    if pieces:
+        why.append(f"a 4-character piece of {sorted({R.kind_of(p) for p in pieces})} in the output")
     return ("fails" if why else "ok"), why
 
 
 def _params():
     for case_id, text in CORPUS:
-        marks = (
-            [pytest.mark.xfail(strict=True, reason="stated limit: " + KNOWN_LIMITS[case_id])]
-            if case_id in KNOWN_LIMITS
-            else []
-        )
-        yield pytest.param(text, id=case_id, marks=marks)
+        yield pytest.param(text, id=case_id)
 
 
 @pytest.mark.parametrize("text", list(_params()))
@@ -193,10 +208,23 @@ def test_the_corpus_is_what_this_file_says():
     assert counts["own-shapes"] == len(port.OWN_SHAPES)
     assert counts["round12-fuzz"] == round12.CASES == 1200
     assert counts["round-trip"] == 300
-    assert counts["p1c-gap1"] == 16 and counts["p1c-gap2"] > 0 and counts["p1c-gap3"] > 0
+    assert counts["p1c-gap1"] == 16
     assert len(CORPUS) == sum(counts.values()) == EXPECTED_INPUTS
     assert len({case_id for case_id, _ in CORPUS}) == len(CORPUS)
-    assert set(KNOWN_LIMITS) <= {case_id for case_id, _ in CORPUS}
+    assert counts["p1c-gap2"] == P1C_GAP2 and counts["p1c-gap3"] == P1C_GAP3
+
+
+def test_the_piece_check_sees_a_tail_and_ignores_a_word_of_the_text():
+    mapping = {"<SECRET_1>": "ab9x", "<BEARER_1>": "ab9xqrstu"}
+    assert piece_leaks("password=ab9x Bearer ab9xqrstu", "x <SECRET_1>qrstu y", mapping) == [
+        "<BEARER_1>"
+    ]
+    assert piece_leaks("password=ab9x Bearer ab9xqrstu", "x <BEARER_1> y", mapping) == []
+    # a piece of the secret that is also a word of the text is not a copy
+    assert (
+        piece_leaks("secret and Cl5ecretV", "secret and <SECRET_1>", {"<SECRET_1>": "Cl5ecretV"})
+        == []
+    )
 
 
 def test_the_check_itself_sees_a_raw_copy_and_a_second_pass_that_changes():
@@ -221,21 +249,32 @@ def test_the_check_itself_sees_a_raw_copy_and_a_second_pass_that_changes():
     assert runmap.redact_text(old, mapping) != old
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="stated limit: a compound value that only the extra pass finds (`Bearer <SECRET_1>tail`, stored as "
-    "V+tail) is swept as the whole V+tail; where the first sweep already replaced V inside another copy, that "
-    "copy is `<SECRET_1>tail...` and the tail stays readable. The property above cannot see it: no whole "
-    "original stands raw.",
-)
-def test_limit_the_tail_of_a_compound_value_found_late_is_not_swept_from_its_other_copies():
+def test_the_tail_of_a_compound_value_found_late_is_swept_from_its_other_copies():
+    """Was a stated limit (the first sweep cut the other copy to `<SECRET_1>tail` before V+tail existed); fixed by sweeping the
+    placeholder-spelled form of a compound entry as a literal (ORDER 020 dz-2)."""
     short = "ab" + "9x"
     tail = "qrs" + "tu"
     text = f"password={short}\nBearer {short}{tail}\nnote {short}{tail}vw end"
     mapping = runmap.RunMap()
     out = runmap.redact_text(text, mapping)
-    assert mapping["<BEARER_1>"] == short + tail  # found by the extra pass, stored whole
+    assert mapping["<BEARER_1>"] == short + tail  # found by the second pass, stored whole
     assert tail not in out
 
 
-EXPECTED_INPUTS = 1835  # measured 2026-11-20: a corpus that grows or shrinks must be looked at
+def test_no_input_of_the_corpora_is_refused():
+    """The ticket says 0 refused; nothing asserted it (a refusal passes (a) and (b) vacuously)."""
+    refused = [case_id for case_id, text in CORPUS if check(text)[0] == "refused"]
+    assert refused == []
+
+
+def test_the_constructed_chain_is_one_call_and_a_chain_past_the_cap_is_a_refusal(monkeypatch):
+    mapping = runmap.RunMap()
+    out = runmap.redact_text(CONSTRUCTED[0], mapping)
+    assert g7.ACCOUNT not in out
+    monkeypatch.setattr(R, "_SETTLE_ROUNDS", 1)
+    assert check(CONSTRUCTED[0])[0] == "refused"  # never a silent leak
+
+
+EXPECTED_INPUTS = 1835
+P1C_GAP2 = 44  # the p1c probe's gap2 and gap3 cases, pinned: a probe that shrinks must be looked at
+P1C_GAP3 = 43  # measured 2026-11-20: a corpus that grows or shrinks must be looked at

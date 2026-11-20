@@ -1922,10 +1922,12 @@ def test_r2_m4_an_identifier_kind_value_equal_to_a_tool_name_does_not_stop_the_r
         {"role": "assistant", "content": f'tool {TOOL_NAME} {{"q": 1}}'},
         {"role": "user", "content": _framed("ok")},
     ]
+    stopped = False
     try:
         bound.chat(messages, system="s", route="main", tools=[{"name": TOOL_NAME}])
     except model_gate.FramingRefused:
-        pytest.fail("an identifier kind value stopped the run")
+        stopped = True
+    assert not stopped, "an identifier kind value stopped the run"
     sent = client.sent[0]["messages"]
     assert sent[0]["content"] == 'tool <TENANT_1> {"q": 1}'
     assert sent[1]["content"].split("\n")[0] == f"<<TOOL RESULT call_id={CALL_ID} tool=<TENANT_1>>>"

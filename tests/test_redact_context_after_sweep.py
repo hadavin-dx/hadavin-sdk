@@ -8,7 +8,9 @@ pattern ran. Two shapes found by runs on main, both masked only by a SECOND pass
   `Bearer <SECRET_1>xy`, which is 12 characters or more: only a second pass masked the tail. The same for BASIC
   (8 characters) and `authorization:` (8 characters).
 The fix is for the class: `redact()` and `redact_many()` run the whole pattern table once more over the swept text
-and sweep once more what that finds (`_Redactor.settle`). Never a loop: two pattern passes and two sweeps at most.
+and sweep again what that finds (`_Redactor.settle`). Round 1 of ORDER 013 was ONE extra pass; ORDER 020 MJ-B replaced it
+with a loop to a fixed point over only the strings the last sweep changed, capped at `_SETTLE_ROUNDS` (4) rounds, a
+RedactionError past the cap (tests/test_redact_settle_loop.py). The tests here are the one- and two-pass shapes.
 A text the first pass and its sweep left unchanged is not scanned again.
 The property over the repo's corpora is in tests/test_redact_idempotent_property.py.
 
@@ -273,38 +275,26 @@ def test_a_text_with_a_value_gets_exactly_one_more_pattern_pass_and_no_second_sw
     assert calls == {"find": 2, "sweep": 1}  # the second pass found nothing new: no second sweep
 
 
-def test_never_more_than_two_pattern_passes_and_two_sweeps(monkeypatch):
+def test_the_shapes_stay_within_the_cap_and_the_plain_one_is_two_passes_and_two_sweeps(monkeypatch):
     calls = _counted(monkeypatch)
     for text in [*SHAPES.values(), *(e[0] for e in E5.values())]:
         calls["find"] = calls["sweep"] = 0
         R.redact(text)
-        assert calls["find"] <= 2 and calls["sweep"] <= 2, text
+        assert calls["find"] <= 1 + R._SETTLE_ROUNDS and calls["sweep"] <= 1 + R._SETTLE_ROUNDS, (
+            text
+        )
     calls["find"] = calls["sweep"] = 0
     R.redact(DIRECT)
-    assert calls == {"find": 2, "sweep": 2}  # the second pass found the account: one more sweep
+    assert calls == {
+        "find": 2,
+        "sweep": 2,
+    }  # the second pass found the account; its sweep changed nothing: done
 
 
 def test_redact_many_scans_again_only_the_strings_that_changed(monkeypatch):
     calls = _counted(monkeypatch)
     R.redact_many(["nothing here", f"password={V}", "nor here"])
     assert calls == {"find": 4, "sweep": 3}
-
-
-def test_the_patterns_that_name_a_placeholder_are_still_these_two():
-    """Kept as a record of step 1 of ORDER 012 (the whole table runs again now, so a new one needs no list)."""
-    naming = [
-        label
-        for label, p in R.PATTERNS
-        if "_\\d+>" in p.pattern or "BANKCODE" in p.pattern or "<[A-Z]" in p.pattern
-    ]
-    assert naming == ["BANKACCT", "SECRET"]
-
-
-def _two_old_passes(text: str) -> str:
-    r = R._Redactor(None)
-    once = r.sweep(r.find(text))
-    r2 = R._Redactor(r.mapping)
-    return r2.sweep(r2.find(once))
 
 
 def test_public_signatures_are_unchanged():
@@ -316,8 +306,8 @@ def test_public_signatures_are_unchanged():
         "-> 'RedactionResult'"
     )
     assert str(inspect.signature(R.redact_many)) == (
-        "(items: 'list[str]', mapping: 'dict[str, str] | None' = None, *, near: 'tuple[str, ...]' = ()) "
-        "-> 'tuple[list[str], dict[str, str]]'"
+        "(items: 'list[str]', mapping: 'dict[str, str] | None' = None, *, near: 'tuple[str, ...]' = (), "
+        "_deadline: 'float | None' = None) -> 'tuple[list[str], dict[str, str]]'"
     )
 
 

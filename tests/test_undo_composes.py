@@ -18,7 +18,9 @@ def _nfd(s: str) -> str:
 
 # built from parts so the file holds no literal credential
 _NAME = "M\u00fc" + "ller"
-_VIET = "Vi\u1ec7" + "t" + "\u1ea4n"  # stacked marks: e + dot below + circumflex, A + circumflex + acute
+_VIET = (
+    "Vi\u1ec7" + "t" + "\u1ea4n"
+)  # stacked marks: e + dot below + circumflex, A + circumflex + acute
 _HANGUL = "\ud55c" + "\uae00"  # two precomposed syllables
 _JAMO = "\u1112\u1161\u11ab\u1100\u1173\u11af"  # the same two syllables as conjoining jamo
 

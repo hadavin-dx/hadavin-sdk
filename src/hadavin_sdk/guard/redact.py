@@ -11,6 +11,10 @@ Every string is scrubbed before it can reach the model. Patterns FIND values; a 
 the other copies of each found value - every copy of a SECRET, every standalone copy of an identifier
 (see _sweep). Strings that belong together (one incident's lines, labels, errors) are redacted as ONE
 text: a value found in any of them is masked in all of them (redact_many, second review 2026-09-30).
+A placeholder written by the sweep can change what a pattern reads (a bank code now stands before an account; a short token
+beside a known secret is long enough). So after the first sweep the table runs again over the strings the sweep changed, and
+the strings that sweep changes in turn go round again, to a fixed point with a hard cap (`_SETTLE_ROUNDS`, 4): a call that
+is still changing at the cap is refused (RedactionError), never returned half masked (G7, ORDER 020 MJ-B; see `settle`).
 
 ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
 the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on
@@ -1112,6 +1116,9 @@ class _Redactor:
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
         self.bank_near = False  # redact_many: a bank word in some string of the batch
+        # secret compound value written with a placeholder in it (`<SECRET_1>xy`, as the first sweep left it) -> its placeholder;
+        # swept as a literal before the placeholder split (see `sweep`), so another copy the first sweep already cut is not left with its tail
+        self._spelled: dict[str, str] = {}
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
             self._built_for = len(self.mapping)
@@ -1132,17 +1139,45 @@ class _Redactor:
         return out
 
     def settle(self, originals: list[str], swept: list[str]) -> list[str]:
-        """The one extra pattern pass (see the G7 note above `_has_bank_word`). `swept`: one call's strings after
-        find() and sweep(), `originals` the strings they were made from. Every string that the first pass or its
-        sweep changed goes through the whole table once more; if that finds a NEW value, every string is swept once
-        more so its other copies go too. Nothing is repeated after that: two pattern passes and two sweeps at most,
-        each linear in the text."""
-        known = len(self.mapping)
-        again = [
-            text if text == strip_ansi(original) else self.find(text)
-            for original, text in zip(originals, swept, strict=True)
+        """The pattern passes after the first sweep, to a fixed point with a hard cap (G7; ORDER 020 MJ-B).
+
+        `swept`: one call's strings after find() and sweep(), `originals` the strings they were made from. Round 1:
+        every string the first pass or its sweep changed goes through the whole table once more. If that found a
+        NEW value (the map grew) every string is swept once more, so the value's other copies go too, and only the
+        strings THAT sweep changed (a placeholder now stands where a value stood, which can change what a pattern
+        reads) go through the table again: round 2, and so on. A round that adds nothing to the map ends it. After
+        `_SETTLE_ROUNDS` rounds a text that the last sweep still changed is NOT settled: a pass 5 might have found
+        more, so the call is refused (RedactionError, nothing is shown), never returned half masked. A text that
+        needs no more passes pays nothing extra. Every round checks the call's deadline first (`InputTooLarge`,
+        never a skipped pass: that would fail open); each pass and sweep is linear in the text."""
+        cur = list(swept)
+        todo = [
+            i for i, (o, t) in enumerate(zip(originals, cur, strict=True)) if t != strip_ansi(o)
         ]
-        return [self.sweep(text) for text in again] if len(self.mapping) != known else again
+        for _ in range(_SETTLE_ROUNDS):
+            if not todo:
+                return cur
+            self._check_deadline()
+            known = len(self.mapping)
+            for i in todo:
+                cur[i] = self.find(cur[i])
+            if len(self.mapping) == known:
+                return cur
+            self._check_deadline()
+            todo = []
+            for i, text in enumerate(cur):
+                cur[i] = self.sweep(text)
+                if cur[i] != text:
+                    todo.append(i)
+        if todo:
+            from hadavin_sdk.guard.runmap import RedactionError  # runmap imports this module
+
+            raise RedactionError("NotSettled")
+        return cur
+
+    def _check_deadline(self) -> None:
+        if self._deadline is not None:
+            self._over_budget(self._deadline)
 
     def _sub_glued(self, pattern: re.Pattern[str], label: str, text: str) -> str:
         """`pattern.sub`, and a match may also start exactly where the masked one before it ended.
@@ -1575,6 +1610,8 @@ class _Redactor:
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
         self.reverse[full] = placeholder
+        if label in SECRET_KINDS and original != full and len(full) >= 4:
+            self._spelled[original] = placeholder
         if self._journal is not None:
             self._journal.append(("map", placeholder, full))
         for piece in (
@@ -1666,6 +1703,16 @@ class _Redactor:
         # 22,500 distinct values (fourth review, 2026-09-30).
         if self._built_for != len(self.mapping):
             self._build()
+        # A compound secret found late (`Bearer <SECRET_1>xy` stored as V+xy): the first sweep already cut its other copies to
+        # `<SECRET_1>xy`, which the whole value no longer matches. Its placeholder-spelled form goes first, as a literal on the
+        # text before it is split at the placeholders (dz-2, cb-M4).
+        for spelled in sorted(self._spelled, key=len, reverse=True):
+            placeholder = self._spelled[spelled]
+            if (
+                spelled in out and placeholder in self.mapping
+            ):  # a rolled-back entry is gone from the map
+                self.actions += out.count(spelled)
+                out = out.replace(spelled, placeholder)
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
@@ -1693,6 +1740,9 @@ class _Redactor:
 
 
 _MAX_NESTING = 200
+# The most rounds (a pattern pass over the strings the last sweep changed, then a sweep) `_Redactor.settle` makes after the first sweep.
+# Real chains need 1 (a bank code freed by the sweep) or 2 (a code glued to a secret, then an account after it); past this the call is refused.
+_SETTLE_ROUNDS = 4
 
 
 def _compile_uncached(pattern: str) -> re.Pattern[str]:
@@ -1886,13 +1936,19 @@ def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
 
 
 def redact_many(
-    items: list[str], mapping: dict[str, str] | None = None, *, near: tuple[str, ...] = ()
+    items: list[str],
+    mapping: dict[str, str] | None = None,
+    *,
+    near: tuple[str, ...] = (),
+    _deadline: float | None = None,
 ) -> tuple[list[str], dict[str, str]]:
     """Redact several strings as ONE text, with one placeholder namespace: a value found in any of them
     is masked in all of them. One pass left a secret found in a later line in clear in the earlier
-    ones (second review, 2026-09-30); the first pass now only finds, the second masks.
-    `near`: texts not redacted here whose bank words still count as bank context (a discussion's evidence)."""
-    r = _Redactor(mapping)
+    ones (second review, 2026-09-30); the first pass now only finds, the sweep masks, then `_Redactor.settle` runs the
+    table again over the strings the sweep changed, to a fixed point with a hard cap (RedactionError past it; see `settle`).
+    `near`: texts not redacted here whose bank words still count as bank context (a discussion's evidence).
+    `_deadline`: as for `redact` (CPU clock; InputTooLarge past it)."""
+    r = _Redactor(mapping, None, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
     found = [r.find(item) for item in items]
     return r.settle(items, [r.sweep(text) for text in found]), r.mapping

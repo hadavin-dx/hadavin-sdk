@@ -624,7 +624,9 @@ ENFORCE_MAX_TOTAL_CHARS = (
 ENFORCE_MAX_HELD = (
     256  # held-back and edge values one snapshot accepts; more is refused (planted token pieces)
 )
-ENFORCE_MAX_STEPS = 20_000  # values processed one at a time in all rounds of all texts of one call
+ENFORCE_MAX_STEPS = (
+    ENFORCE_MAX_HELD * ENFORCE_MAX_SWEEPS * 100
+)  # values processed one at a time: 100 texts, every round, every held value
 
 
 class EnforceBudget:
