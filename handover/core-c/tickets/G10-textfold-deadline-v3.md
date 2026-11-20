@@ -148,10 +148,10 @@ def _tick(deadline: float | None) -> None:
 | P3 prefix passes | `_readings` | inside `for marks, text in enumerate(texts):` after the `marks_only` skip: (a) before `nfkd = unicodedata.normalize("NFKD", text)`; (b) after `with_iota = _prefix(...)`, before `prefixes = {` | NO: (b) is read whether or not the second `_prefix` runs (`if _YPOGEGRAMMENI in nfkd`), so the count is 2 per text, fixed | 2 per text (texts = 1 or 2) per `_readings` call; `scan_holds` calls `_readings` twice per bundle (the bundle, and inside `_squeezed` -> `_views` -> `_view_pairs`) |
 | P4 per squeeze view | `_squeezed` | first statement of the body of `for view in _views(..., deadline=deadline):`. `_views` returns a finished tuple, so its own work (the `_readings` inside) is read by P3; P4 bounds the per-view `upper` / `translate` / `_NON_ALNUM.sub` | no | one per distinct view (at most 6) |
 | P5 per converge pass | `_converge` | first statement of the body of `for _ in range(passes):` | no | at most 3 per scan key, at most 16 keys |
-| P6 after the views | `scan_holds`: right after `bundle = _text_bundle(text, deadline)`; `scan_views_no_value`: right after `bundle = _text_bundle(raw, deadline)` | no | 1 |
-| P7a insertion | `scan_holds`: after `if not inserts: return False`, before `script_views = {...}` | only when the value has a script needle in the insertion band | 1 |
-| P7b per script view | `scan_holds`: first statement of `for view in script_views:` | same | one per script view |
-| P7c insertion hits | `_holds_with_one_insertion`: in BOTH `while start != -1:` loops, `hits += 1` then `if not hits % 4096: _tick(deadline)` (one counter for both halves) | every 4,096 hits | hits // 4,096 |
+| P6 after the views | `scan_holds`, `scan_views_no_value` | `scan_holds`: right after `bundle = _text_bundle(text, deadline)`; `scan_views_no_value`: right after `bundle = _text_bundle(raw, deadline)` | no | 1 |
+| P7a insertion | `scan_holds` | after `if not inserts: return False`, before `script_views = {...}` | only when the value has a script needle in the insertion band | 1 |
+| P7b per script view | `scan_holds` | first statement of `for view in script_views:` | same | one per script view |
+| P7c insertion hits | `_holds_with_one_insertion` | in BOTH `while start != -1:` loops, `hits += 1` then `if not hits % 4096: _tick(deadline)` (one counter for both halves) | every 4,096 hits | hits // 4,096 |
 The needle loop (`needle in view` over at most 31 views) gets no reading: C speed. Unread stretches by design: `_checked` (the weight, between
 P1 and P2), the value's needles (between P2 and P2b), `_without_spacing_marks` and the `_tag_texts` / `no_lm` / `no_marks` comprehensions of
 `_scan_keys` and the final `"".join` of `_scan_key` (each between two P5 or P3 readings), `_all_views` / `_pairs_from` and the script views
@@ -400,7 +400,7 @@ INJECTION_BUDGET_S = 30.0
 - :204 `    assert len(rows) == 253`; :367 `    assert behaviour + wording == len(mm.M) == 253`
 
 ## 5. Tests: new file tests/test_textnorm_deadline.py (10 tests, no conftest fixture: the mutation runner runs pytest with `--noconftest`)
-The whole file is in the drafter's scratchpad (`g10v3/files/test_textnorm_deadline.py`, 290 lines, ruff clean, 10 of 10 green on the prototype);
+The whole file is in the drafter's scratchpad (`g10v3/files/test_textnorm_deadline.py`, 293 lines after `ruff format`, ruff clean, 10 of 10 green on the prototype);
 the builder copies it. Its parts:
 - Constants: `T = "the summary of " + "жизнь " * 200 + "密的码测试"` (holds V with one Han letter
   inserted), `T2 = "密码" * 5_000` (the first half of V 5,000 times, never V), `V = "密码测试"`, and the pinned reading

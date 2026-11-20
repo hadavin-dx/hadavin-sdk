@@ -53,7 +53,7 @@ What changed from v2, in one list (each with its finding):
   E with offset 3 (g3 port hunk); a scratch row check (not pytest: `check.py`, every probe, must-keep, full-stop and at-rest row
   through `redact`, `redact_many`, `redact_text`, a second `redact_text` and `redact_untrusted`) gives v3's `after` column on
   `v3h` with 0 differences. So G7 round 7 changes nothing G8 measures. Cite table, the same names at the three commits (by name
-  first; a line is a hint):
+  first; a line is a hint; MEASURED with `git show <sha>:<file> | grep -n <name>`):
 
   | name | a5247ac4a | 93c0d08ee | 99787d5b3 |
   |---|---|---|---|
