@@ -1,0 +1,58 @@
+original sha256 c00f5d4d2ae217cc2f37113c73b5de37daf7d7a7be79e119559b0f6d2fb485d3
+
+== M1 skip the timestamp window (endpoint hands the request's own timestamp to hmac_v0.verify as now)
+verdict: CAUGHT (3 failing tests); last line: FAILED tests/triggers/test_endpoint.py::test_t5_9b_replay_after_the_window_is_401_and_inside_it_is_accepted
+  FAILED tests/triggers/test_endpoint.py::test_t5_3_timestamp_window[-301-401]
+  FAILED tests/triggers/test_endpoint.py::test_t5_3_timestamp_window[301-401]
+  FAILED tests/triggers/test_endpoint.py::test_t5_9b_replay_after_the_window_is_401_and_inside_it_is_accepted
+
+== M2 parse JSON before verifying the signature
+verdict: CAUGHT (39 failing tests); last line: FAILED tests/triggers/test_endpoint.py::test_logs_hold_neither_body_nor_signature_nor_secret
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[altered body]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[empty signature]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[missing signature]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[missing timestamp]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[no headers]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[no prefix]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[non-ascii signature]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[other timestamp]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[truncated signature]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[upper-case hex]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[v1 prefix]
+  FAILED tests/triggers/test_endpoint.py::test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[wrong secret]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[array]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[deep nesting]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[document not a string]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[document null]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[duplicate document]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[duplicate key]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[extra field]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[huge number]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[invalid utf-8]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key 129]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key angle]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key empty]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key hash]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key newline]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key not a string]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key nul]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[key slash]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[lone surrogate]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[missing document]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[missing key]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[not json]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[null]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[string]
+  FAILED tests/triggers/test_endpoint.py::test_t5_6b_malformed_and_unsigned_is_401_not_400[trailing data]
+  FAILED tests/triggers/test_endpoint.py::test_declared_length_shorter_than_the_body_signs_differently_and_is_401
+  FAILED tests/triggers/test_endpoint.py::test_any_single_byte_change_of_a_valid_request_is_401
+  FAILED tests/triggers/test_endpoint.py::test_logs_hold_neither_body_nor_signature_nor_secret
+
+== M3 drop tenant from derive_run_id
+verdict: CAUGHT (4 failing tests); last line: FAILED tests/triggers/test_endpoint.py::test_tenant_is_part_of_the_run_id_at_the_endpoint
+  FAILED tests/triggers/test_endpoint.py::test_derive_run_id_is_stable_and_has_the_run_id_shape
+  FAILED tests/triggers/test_endpoint.py::test_derive_run_id_separates_tenant_sender_and_key
+  FAILED tests/triggers/test_endpoint.py::test_derive_run_id_many_seeded_triples
+  FAILED tests/triggers/test_endpoint.py::test_tenant_is_part_of_the_run_id_at_the_endpoint
+
+restored sha256 c00f5d4d2ae217cc2f37113c73b5de37daf7d7a7be79e119559b0f6d2fb485d3 identical=True

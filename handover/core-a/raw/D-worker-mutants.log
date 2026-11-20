@@ -1,0 +1,17 @@
+original sha256 760821acefa7228c809b332aba1b197de2633f4c8ee93d575c19f7bf2ee727c0
+== M1 ack before the row exists (202 right after submit): exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_pool_full_is_503_and_a_later_retry_is_acked
+FAILED tests/triggers/test_worker.py::test_store_failing_while_waiting_for_the_row_is_503
+FAILED tests/triggers/test_worker.py::test_handle_raising_before_the_row_is_503_and_frees_the_slot
+FAILED tests/triggers/test_worker.py::test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken
+FAILED tests/triggers/test_worker.py::test_the_row_decides_not_the_exception
+5 failed, 19 passed in 1.19s
+== M2 skip the trigger_ref comparison on a hit: exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_same_key_with_another_document_is_409_and_writes_nothing
+FAILED tests/triggers/test_worker.py::test_the_row_decides_not_the_exception
+2 failed, 22 passed in 1.74s
+== M3 release the semaphore right after submit: exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_20_parallel_requests_with_distinct_keys_are_acked_or_refused
+FAILED tests/triggers/test_worker.py::test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken
+2 failed, 22 passed in 8.14s
+restored sha256 760821acefa7228c809b332aba1b197de2633f4c8ee93d575c19f7bf2ee727c0 equal=True
