@@ -15,3 +15,43 @@ FAILED tests/triggers/test_worker.py::test_20_parallel_requests_with_distinct_ke
 FAILED tests/triggers/test_worker.py::test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken
 2 failed, 22 passed in 8.14s
 restored sha256 760821acefa7228c809b332aba1b197de2633f4c8ee93d575c19f7bf2ee727c0 equal=True
+--- ROUND 2 (after the review fix: no-slot path polls the row; no in-process key table) ---
+original sha256 9191fa5c3e172b057fbe625357a555efafc9ee29bf7c121d3c7ba39b50aa0149
+== M1 ack before the row exists (202 right after submit): exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_one_key_with_two_documents_in_parallel_is_one_ack_and_one_409[1]
+FAILED tests/triggers/test_worker.py::test_one_key_with_two_documents_in_parallel_is_one_ack_and_one_409[4]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[checkout 5xx from 10.0.0.6, revision 18-expected1]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[None-expected2]
+FAILED tests/triggers/test_worker.py::test_20_parallel_requests_with_distinct_keys_are_acked_or_refused
+FAILED tests/triggers/test_worker.py::test_pool_full_is_503_and_a_later_retry_is_acked
+FAILED tests/triggers/test_worker.py::test_store_failing_while_waiting_for_the_row_is_503
+FAILED tests/triggers/test_worker.py::test_handle_raising_before_the_row_is_503_and_frees_the_slot
+FAILED tests/triggers/test_worker.py::test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken
+FAILED tests/triggers/test_worker.py::test_the_row_decides_not_the_exception
+10 failed, 22 passed in 2.37s
+== M2 skip the trigger_ref comparison on a hit: exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_same_key_with_another_document_is_409_and_writes_nothing
+FAILED tests/triggers/test_worker.py::test_one_key_with_two_documents_in_parallel_is_one_ack_and_one_409[1]
+FAILED tests/triggers/test_worker.py::test_one_key_with_two_documents_in_parallel_is_one_ack_and_one_409[4]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[checkout 5xx from 10.0.0.6, revision 18-expected1]
+FAILED tests/triggers/test_worker.py::test_the_row_decides_not_the_exception
+5 failed, 27 passed in 5.76s
+== M3 release the semaphore right after submit: exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[checkout 5xx from 10.0.0.5, revision 17-expected0]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[checkout 5xx from 10.0.0.6, revision 18-expected1]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[None-expected2]
+FAILED tests/triggers/test_worker.py::test_20_parallel_requests_with_distinct_keys_are_acked_or_refused
+FAILED tests/triggers/test_worker.py::test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken
+5 failed, 27 passed in 4.35s
+== M4 no polling when no slot is free (503 at once): exit 1: KILLED
+FAILED tests/triggers/test_worker.py::test_50_parallel_requests_with_one_key_make_one_run[1]
+FAILED tests/triggers/test_worker.py::test_50_parallel_requests_with_one_key_make_one_run[4]
+FAILED tests/triggers/test_worker.py::test_one_slot_still_answers_every_parallel_request_for_one_key
+FAILED tests/triggers/test_worker.py::test_one_key_with_two_documents_in_parallel_is_one_ack_and_one_409[1]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[checkout 5xx from 10.0.0.5, revision 17-expected0]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[checkout 5xx from 10.0.0.6, revision 18-expected1]
+FAILED tests/triggers/test_worker.py::test_no_slot_here_while_another_worker_writes_the_row[None-expected2]
+FAILED tests/triggers/test_worker.py::test_20_parallel_requests_with_distinct_keys_are_acked_or_refused
+FAILED tests/triggers/test_worker.py::test_pool_full_is_503_and_a_later_retry_is_acked
+9 failed, 23 passed in 2.98s
+restored sha256 9191fa5c3e172b057fbe625357a555efafc9ee29bf7c121d3c7ba39b50aa0149 equal=True

@@ -2,7 +2,7 @@
  "order": "006 (002 to 005 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "codebase review lands: resolve both reviews into tickets/D-review-1.md, fix ticket D text, unresolved to ESCALATIONS.md; worker and skeleton land: align skeleton with real signatures, then ONE batch run",
+ "next": "worker change and skeleton land: ONE batch run (new files, guard files, then one full pytest); ticket fix lands: push, T3 done",
  "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -73,11 +73,11 @@
   {
    "item": "T3",
    "what": "one EGM review round for ticket D (and H if written)",
-   "state": "RUNNING",
-   "percent": 55,
-   "evidence file": "tickets/D-review-1.md (not yet)",
+   "state": "RUNNING (review done, resolve written, ticket text being repaired)",
+   "percent": 80,
+   "evidence file": "tickets/D-review-1.md, ESCALATIONS.md (E1 to E4)",
    "tries": 1,
-   "reason": "implementation-readiness reviewer done: 2 Blocker, 13 Major, 8 Nit; codebase reviewer still running"
+   "reason": "round 1 of 1: 3 Blocker, 20 Major; 33 fixes, 4 escalated, 4 nits declined, 0 contested; reviewers read the ticket, not the built code"
   },
   {
    "item": "T4",
@@ -256,14 +256,27 @@
    "role": "reviewer",
    "model": "fable",
    "started UTC": "05:31",
-   "expected end": "about 10 min after start",
-   "percent": 70,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "1 of 1",
    "retries so far": 0,
    "id": "egm-codebase",
    "what exactly it is doing": "egm:egm-codebase-details checks ticket D claims against the code",
-   "reason": "ORDER 004 item 3; 6 agents run now (3 builders, 1 skeleton writer, 2 reviewers)"
+   "reason": "finished, 200k tokens: 1 Blocker, 7 Major, 10 Nit"
+  },
+  {
+   "id": "ticket-fix",
+   "role": "builder (ticket text only)",
+   "model": "fable",
+   "what exactly it is doing": "applies the 33 accepted review fixes to ticket D and writes request 001 draft 3",
+   "started UTC": "05:38",
+   "expected end": "about 12 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of 1 (resolve step)",
+   "retries so far": 0,
+   "reason": "egm-resolve output must be applied; 3 agents run (worker change, T5 skeleton, ticket fix)"
   }
  ],
  "tests": [
@@ -334,6 +347,8 @@
  ],
  "lost": [],
  "lead_actions": [
-  "Please write 'GO BUILD D' into ORDERS.md: ORDER 004 item 5 says the GO must be in that file; I acted on your message of 05:30Z (see DECISIONS)"
+  "ESCALATIONS.md E1 to E4 need a lead word (audit event on 409 and exit after store errors; wsgiref on socket timeout; shared qualification helper in core-b's file; n8n template needs a real n8n)",
+  "Please write 'GO BUILD D' into ORDERS.md (I acted on your session message)",
+  "requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you"
  ]
 }
