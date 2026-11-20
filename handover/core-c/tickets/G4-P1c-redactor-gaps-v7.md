@@ -529,12 +529,28 @@ The alphabet is `[A-Za-z0-9+/_\-]`. One `=`, two `=` or none may end a run.
      digits of any case, one `_`, then only digits (first alternative: `<cGFzc3dvcmQ_12>`). No real secret blob of the first shape
      was found: a scratch search of 3,000,000 url-safe encodings of `pwd=` + 8 random characters found none; the limit is pinned by
      a unit test of the blanking itself (TB-3.3b), not by a strict xfail (UNMEASURED as a leak).
+   - CHANGED in v7 (review round 6 design N5): that search covers natural text only. A writer who CHOOSES the text can always
+     shape a blob that passes (a marker shape, a glued prefix, L-B1, a split, L-B4): the base64 view finds what honest tools and
+     people write; it is not an adversary-proof gate, and SECURITY says so (15).
 3. WRAPPED BLOCK. Two or more consecutive lines, split on `\n`; a trailing `\r`, and spaces or tabs at both ends of a line, are
    ignored. A block must meet every rule:
    - every line holds only alphabet characters (the last may end in `=` or `==`);
-   - the first line is at least `defaults.B64_WRAP_MIN_CHARS` (16) long, and its length is a multiple of 4;
+   - the first line is at least `defaults.B64_WRAP_MIN_CHARS` (16) long (CHANGED in v7, review round 6 design M3: any length;
+     v6 also asked for a multiple of 4);
    - every line but the last has the first line's length and no `=`;
    - the last line is 1 to first-length characters, and may end in `=` or `==`.
+
+   CHANGED in v7 (review round 6 design M3). Why: `base64 -w 50/70/90` and other tools wrap at widths that are not a multiple of 4;
+   under v6 every such line was its own RUN unit, and a line that starts at an offset not a multiple of 4 decodes to bytes that are
+   not text. MEASURED with a stdlib copy of 3.2's rules (`wrap.py`; the blob is `b64("2026-11-20 deploy db_password=" + S12 +
+   " applied to the cluster after the review of the change set")`): per line, widths 16, 32, 60, 64 and 76 decode on every line;
+   widths 50, 70 and 90 leave line 2 undecodable (so part of the value stayed unread under v6); the joined block decodes and holds
+   S12 at every width. A block whose first-line length is NOT a multiple of 4 is LOOSE: its unit carries `parts`, the RUN units
+   its lines would be on their own (v6's units). The join is tried first; when it is not a hit, the parts are tried (2.5 steps 4
+   and 7). The fallback is needed: two different complete unpadded blobs of the same length on consecutive lines (27 characters
+   each, `b64("pwd=" + S12 + "abcd")` and `b64("pwd=" + S12[::-1] + "wxyz")` without `=`) form a loose block whose join does
+   NOT decode, while each line does (MEASURED, `wrap.py`). Blocks whose width is a multiple of 4 have no parts: every v6 result
+   for them stands. Cost: a loose block costs its join plus at most one decode per line.
 
    It is one top-to-bottom pass, and each line is in at most one block. A block is maximal: it ends at the first line that breaks a
    rule, and that line is included if it is a valid shorter last line (a full-length line continues the block). It is linear. The
@@ -545,15 +561,19 @@ The alphabet is `[A-Za-z0-9+/_\-]`. One `=`, two `=` or none may end a run.
 | 2 | `A16` / `B16` / `C16` | (0, 50) one block (a last line of full length is valid) |
 | 3 | `A16` / `B10` / `C16` | (0, 27) block lines 1-2; (28, 44) line 3 a RUN unit |
 | 4 | `A16` / `B20` | no block (line 2 longer): (0, 16), (17, 37) two RUN units |
-| 5 | `A15` / `B15` | no block (15 is not a multiple of 4): (0, 15), (16, 31) |
+| 5 | `A15` / `B15` | no block (CHANGED in v7: because 15 is under `B64_WRAP_MIN_CHARS`): (0, 15), (16, 31) |
 | 6 | `A16` / `B15 + "="` / `C16` | (0, 33) block lines 1-2; (34, 50) line 3 |
 | 7 | `A16` / `B8` / `C20` / `D4` | (0, 25) block lines 1-2; (26, 51) block lines 3-4 |
 | 8 | `"  " + A16 + "\r"` / `B4` | (2, 24) one block; `written` keeps the `\r` between the lines |
+| 9 (CHANGED in v7, new) | `A18` / `B18` | (0, 37) one LOOSE block; parts (0, 18), (19, 37) |
+| 10 (CHANGED in v7, new) | `A18` / `B10` | (0, 29) one LOOSE block; parts (0, 18), (19, 29) |
 
    The strings (TB-3.2, review nit "the table is symbolic"): `A16 = "QUJDREVGR0hJSktM"`, `A15 = "QUJDREVGR0hJSkt"`,
    `B4 = "TU5P"`, `B8 = "TU5PUFFS"`, `B10 = "TU5PUFFSU1"`, `B15 = "TU5PUFFSU1RVVld"`, `B16 = "TU5PUFFSU1RVVldY"`,
    `B20 = "TU5PUFFSU1RVVldYWVph"`, `C16 = "WVphYmNkZWZnaGlq"`, `C20 = "WVphYmNkZWZnaGlqa2xt"`, `D4 = "bm9w"`; each row is
-   `"\n".join(row)`. Expected `written` is `text[start:end]`.
+   `"\n".join(row)`. Expected `written` is `text[start:end]`. CHANGED in v7: `A18 = A16 + "TU"` (`"QUJDREVGR0hJSktMTU"`),
+   `B18 = "5PUFFSU1RVVldYWVph"`; rows 1-8 have no parts (widths 16), rows 9 and 10 are BY READING (derived from the rule; the v5
+   prototype that measured rows 1-8 is not rebuilt).
    Note (MEASURED): identical consecutive lines of one blob (a log that prints the same 28-character blob on 3 lines) form ONE
    block whose join is the three blobs glued; it decodes and is one `<ENCODED_n>`.
 4. A unit is a block, or a RUN that does not start inside a block. `written` is the stretch of the stripped text from the unit's first
