@@ -5,10 +5,13 @@ Written by a test-writer that did not build the code under test (session core-c;
 migration 0007 and of its `GRANTS` row is session core-b, commit 8db9c29). Style and helpers of
 tests/test_grants_negative_roles.py (imported, not copied). Two layers:
 
-(a) Pure Python, no database: the `GRANTS` row of the table compared with a hand-written second copy (`HELD`,
-    from the interface README: "runtime SELECT, INSERT, UPDATE; purge DELETE plus SELECT on status and closed_at;
-    portal and reset none"), and the migration file read for what it creates.
-(b) PostgreSQL: a migrated schema, one fresh login role per identity (runtime, portal, purge, reset) plus a
+(a) Pure Python, no database: the `GRANTS` row of the table compared with a hand-written second copy (`HELD`).
+    Since step 4 of F-money-definer (migration 0011, core-b: "the runtime login holds only SELECT on `spend` and
+    `spend_month` and nothing on `spend_reservations`; the purge login holds no table right (EXECUTE on the purge
+    function only)") NO identity holds a table right on this table: every booking is a SECURITY DEFINER function,
+    and `FUNCTION_GRANTS` says who may EXECUTE it (`EXECUTE_HELD`, the second copy of that map). The migration
+    file is read for what it creates.
+(b) PostgreSQL: a migrated schema, one fresh login role per identity (runtime, portal, purge, reset, release) plus a
     `stranger` that was never granted anything. Each role connects as itself and runs one statement per
     privilege: a cell `HELD` does not give must raise `psycopg.errors.InsufficientPrivilege`, a cell it gives
     must get past the privilege check. Then the column rights, the catalog, and statements on real rows.
@@ -58,13 +61,23 @@ COLUMNS = (
 )
 # The reviewed second copy, written by hand from the interface README (version 2.1, section 1, "Grants").
 HELD: dict[str, set[str]] = {
-    "runtime": {"SELECT", "INSERT", "UPDATE"},
+    "runtime": set(),  # was SELECT, INSERT, UPDATE before step 4: it books through the functions now
     "portal": set(),
-    "purge": {"DELETE"},
+    "purge": set(),  # was DELETE plus two readable columns before step 4: it runs the purge function now
     "reset": set(),
+    "release": set(),  # 0008: it runs the release function and appends to the audit, no money table
     "stranger": set(),
 }
-PURGE_READS = {"status", "closed_at"}  # the two columns the purge role's DELETE ... WHERE needs
+# Table-level rights on `spend_reservations` AND columns nobody reads or writes any more.
+PURGE_READS: set[str] = set()
+# The second copy of `FUNCTION_GRANTS` for the five functions that touch this table: who may EXECUTE what.
+EXECUTE_HELD: dict[str, set[str]] = {
+    "hadavin_reserve_spend": {"runtime"},
+    "hadavin_settle_spend": {"runtime"},
+    "hadavin_expire_spend_reservations": {"runtime"},
+    "hadavin_purge_spend_reservations": {"purge"},
+    "hadavin_release_expired_spend": {"release"},
+}
 COUNTERS = ("spend", "spend_month")  # what a reservation is booked on
 DAY = date(2026, 3, 10)
 
@@ -90,7 +103,7 @@ def _map_gives(role: str) -> set[str]:
 # --- (a) pure Python ---------------------------------------------------------------------------------
 
 
-def test_the_identities_are_the_four_this_file_knows():
+def test_the_identities_are_the_five_this_file_knows():
     """A new role keyword is a new identity: its denials on this table must be written here first."""
     assert _role_keywords() == set(HELD) - {"stranger"}
 
@@ -100,18 +113,33 @@ def test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more(rol
     assert _map_gives(role) == HELD[role]
 
 
-def test_the_grant_row_is_a_table_with_two_purge_columns_and_no_portal_read():
+def test_the_grant_row_is_a_table_with_no_purge_column_and_no_portal_read():
     grant = mig.GRANTS[TABLE]
     assert grant.kind == "table"
     assert grant.portal is False
     assert set(grant.purge_cols) == PURGE_READS
+    assert grant.release == ""
     assert PURGE_READS < set(COLUMNS)
 
 
-def test_nobody_may_truncate_and_only_the_purge_role_may_delete():
+def test_nobody_may_truncate_delete_insert_or_update_the_table_directly():
     assert {role for role in HELD if "TRUNCATE" in _map_gives(role)} == set()
-    assert {role for role in HELD if "DELETE" in _map_gives(role)} == {"purge"}
-    assert {role for role in HELD if _map_gives(role) & {"INSERT", "UPDATE"}} == {"runtime"}
+    assert {role for role in HELD if "DELETE" in _map_gives(role)} == set()
+    assert {role for role in HELD if _map_gives(role) & {"INSERT", "UPDATE", "SELECT"}} == set()
+
+
+def test_function_grants_say_who_may_execute_each_function_that_touches_the_table():
+    """Only the purge role purges, only the runtime books, settles and expires, only the release role releases."""
+    got: dict[str, set[str]] = {}
+    for signature, grant in mig.FUNCTION_GRANTS.items():
+        name = signature.split("(")[0]
+        if name in EXECUTE_HELD:
+            got[name] = {
+                role
+                for role in ("runtime", "portal", "purge", "reset", "release")
+                if getattr(grant, role)
+            }
+    assert got == EXECUTE_HELD
 
 
 def test_migration_0007_creates_this_one_table_and_no_sequence():
@@ -223,16 +251,16 @@ def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identitie
     assert _all_rows(dsn) == before and len(before) == 2
 
 
-@pytest.mark.parametrize("role", ["portal", "purge", "reset", "stranger"])
-def test_pg_column_rights_only_the_purge_role_reads_and_only_two_columns(identities, role):
-    """Per column: SELECT, UPDATE and INSERT as the role. The purge role reads `status` and `closed_at` and
-    nothing else; nobody but the runtime role writes a single column."""
+@pytest.mark.parametrize("role", sorted(HELD))
+def test_pg_column_rights_nobody_reads_or_writes_a_single_column(identities, role):
+    """Per column: SELECT, UPDATE and INSERT as the role. Since step 4 no identity reads or writes any column
+    of the table directly (the purge role used to read `status` and `closed_at`)."""
     from psycopg import sql
 
     dsn, names = identities
     _seed(dsn)
     table = sql.Identifier(_schema(dsn), TABLE)
-    reads = PURGE_READS if role == "purge" else set()
+    reads = PURGE_READS
     with _as(dsn, names[role]) as db:
         for column in COLUMNS:
             c = sql.Identifier(column)
@@ -246,10 +274,10 @@ def test_pg_column_rights_only_the_purge_role_reads_and_only_two_columns(identit
             _refused(db, sql.SQL("INSERT INTO {} ({}) VALUES (DEFAULT)").format(table, c))
         _refused(db, sql.SQL("SELECT * FROM {}").format(table))
         _refused(db, sql.SQL("SELECT status FROM {} FOR UPDATE").format(table))
-        if not reads:
-            _refused(db, sql.SQL("SELECT count(*) FROM {}").format(table))
-            # PostgreSQL lets a role that holds DELETE take this lock, so the purge role is not in this line
-            _refused(db, sql.SQL("LOCK TABLE {} IN ACCESS EXCLUSIVE MODE").format(table))
+        assert not reads
+        _refused(db, sql.SQL("SELECT count(*) FROM {}").format(table))
+        # no role holds DELETE any more, so the lock is refused to every identity, the purge role included
+        _refused(db, sql.SQL("LOCK TABLE {} IN ACCESS EXCLUSIVE MODE").format(table))
 
 
 def test_pg_the_catalog_agrees_for_every_role_privilege_and_column(identities):
@@ -306,9 +334,10 @@ def test_pg_the_runtime_role_cannot_remove_a_reservation(identities):
     assert _all_rows(dsn) == before
 
 
-def test_pg_the_purge_role_deletes_by_status_and_date_and_can_do_nothing_else(identities):
-    """It cannot read an amount, an agent or a run, cannot return a deleted row, cannot change or add one. Its
-    own statement (status and closed_at only) works, so the refusals above are about rights, not the login."""
+def test_pg_the_purge_role_touches_the_table_only_through_its_function(identities):
+    """Directly it can read nothing, return nothing, delete nothing, change or add nothing (every statement the
+    old test tried is still refused, now including the DELETE that used to be its one right). Its own function
+    works, so the refusals above are about rights, not the login."""
     dsn, names = identities
     open_id, closed_id = _seed(dsn)
     before = _all_rows(dsn)
@@ -318,6 +347,7 @@ def test_pg_the_purge_role_deletes_by_status_and_date_and_can_do_nothing_else(id
             f"DELETE FROM {TABLE} WHERE reservation_id = '{closed_id}'",  # noqa: S608 - an id built here
             f"DELETE FROM {TABLE} WHERE agent_id = 'a'",  # noqa: S608 - a constant table name
             f"DELETE FROM {TABLE} WHERE created_at < clock_timestamp()",  # noqa: S608 - a constant table name
+            f"DELETE FROM {TABLE} WHERE status <> 'open' AND closed_at < clock_timestamp()",  # noqa: S608 - a constant table name
             f"DELETE FROM {TABLE} WHERE status <> 'open' RETURNING *",  # noqa: S608 - a constant table name
             f"DELETE FROM {TABLE} WHERE status <> 'open' RETURNING reserved_usd",  # noqa: S608 - a constant table name
             f"UPDATE {TABLE} SET status = 'settled', settled_usd = 0, closed_at = clock_timestamp()",  # noqa: S608 - a constant table name
@@ -332,15 +362,21 @@ def test_pg_the_purge_role_deletes_by_status_and_date_and_can_do_nothing_else(id
         ):
             _refused(db, statement)
         assert _all_rows(dsn) == before
-        deleted = db.execute(
-            f"DELETE FROM {TABLE} WHERE status <> 'open' AND closed_at < clock_timestamp()"  # noqa: S608 - a constant table name
-        ).rowcount
-        db.commit()
+    from psycopg.conninfo import make_conninfo
+
+    from hadavin_sdk.models import now
+    from hadavin_sdk.store.postgres import PostgresStore, connect
+
+    store = PostgresStore(connect(make_conninfo(dsn, user=names["purge"])))
+    try:
+        deleted = store.purge_spend_reservations(now())
+    finally:
+        store._db.close()
     assert deleted == 1
     assert [row[0] for row in _all_rows(dsn)] == [open_id]  # the open reservation is still there
 
 
-@pytest.mark.parametrize("role", ["portal", "reset", "stranger"])
+@pytest.mark.parametrize("role", ["portal", "reset", "release", "stranger"])
 def test_pg_roles_with_no_grant_cannot_touch_a_reservation_or_its_counters(identities, role):
     """Real statements on real rows: no read of an amount, no closing or reopening, no removal; and no write on
     the day and month counters a reservation is booked on."""
@@ -380,7 +416,7 @@ def test_pg_roles_with_no_grant_cannot_touch_a_reservation_or_its_counters(ident
 
 def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
     """The package's own calls, each under an identity that must not make them: the purge under the runtime
-    role; reserve, settle and the sweep under the purge, the portal and the reset role."""
+    role; reserve, settle and the sweep under the purge, the portal, the reset and the release role."""
     import psycopg
     from psycopg.conninfo import make_conninfo
 
@@ -401,7 +437,7 @@ def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
             runtime.purge_spend_reservations(now())
     finally:
         runtime._db.close()
-    for role in ("purge", "portal", "reset"):
+    for role in ("purge", "portal", "reset", "release"):
         store = store_as(role)
         try:
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
@@ -409,7 +445,7 @@ def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
                     "res-" + uuid.uuid4().hex, "a", DAY, Decimal(1), day_cap=cap, month_cap=cap
                 )
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                store.settle_spend(open_id, Decimal(0))
+                store.settle_spend(open_id, Decimal(0), agent_id="a")
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
                 store.expire_spend_reservations(0)
             if role != "purge":
