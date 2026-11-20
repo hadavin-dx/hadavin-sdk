@@ -60,3 +60,7 @@ ok  KILLED       G16f the application handler takes the process environment agai
 ok  KILLED       G17a a 503 carries no Retry-After header  [test_503_carries_retry_after_and_no_other_answer_does]
 ok  KILLED       G17b a request that did not verify is logged at INFO  [test_n10_refusals_before_the_signature_are_debug_and_a_verified_reques]
 ok  KILLED       G18a no cap on the requests waiting inside start  [test_m2_a_hung_store_cannot_pile_up_request_threads]
+ok  KILLED       G18b the waiting place is not given back  [test_m2_a_place_is_given_back_after_every_answer]
+ok  KILLED       G18c serve does not close the runner  [test_serve_gives_the_previous_sigterm_handler_back]
+ok  KILLED       G18d close writes no warning for a loop still going  [test_m3_close_warns_once_when_a_loop_is_still_going]
+ok  KILLED       G18e close warns although nothing is running  [test_m3_close_with_nothing_running_is_quiet]
