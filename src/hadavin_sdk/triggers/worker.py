@@ -586,7 +586,7 @@ def serve(server: WSGIServer, runner: Any) -> int:
     except KeyboardInterrupt:
         pass
     finally:
-        _LOG.info("trigger worker: stopping, waiting for %d runs", getattr(runner, "running", 0))
+        _LOG.info("trigger worker: stopping, waiting for %d runs", runner.running)
         server.server_close()
         runner.close()
         for number, handler in previous.items():

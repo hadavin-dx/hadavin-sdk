@@ -40,8 +40,7 @@ from tests.contracts.kinds import (
     store_postgres,  # noqa: F401 - registers the postgres store kind (skipped without HADAVIN_TEST_PG_DSN)
 )
 
-endpoint = pytest.importorskip("hadavin_sdk.triggers.endpoint")
-worker = pytest.importorskip("hadavin_sdk.triggers.worker")
+from hadavin_sdk.triggers import endpoint, worker  # noqa: E402 - plain import: a broken module fails here, it does not skip
 
 S = RunState
 PATH, PREFIX = "/v1/trigger", "X-Hadavin"

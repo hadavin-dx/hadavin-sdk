@@ -31,7 +31,7 @@ from hadavin_sdk.triggers import endpoint, worker
 from hadavin_sdk.triggers.endpoint import Accepted
 from hadavin_sdk.triggers.worker import Runner
 from tests.k5_support import ScriptLLM, build_runtime, k5_cfg
-from tests.triggers.conftest import require_core_b
+from tests.triggers.conftest import require_core_b, strict
 
 AGENT, PRINCIPAL, SENDER, TENANT = "test-agent", "svc:test-agent", "sender-a", "tenant-a"
 DOCUMENT = b"checkout 5xx from 10.0.0.5, revision 17"
@@ -496,7 +496,8 @@ def test_bad_arguments_are_refused(rt):
 
 
 def test_crash_after_the_row_then_tick_ends_with_a_person(rt):
-    crash = pytest.importorskip("hadavin_sdk.testing.crash")
+    from hadavin_sdk.testing import crash
+
     req, plain = _req(), rt.store
     with crash.CrashPoints() as cp, Runner(rt, plain) as runner:
         rt.store = cp.wrap(plain, "store", ["create_run"])  # after the build, as ticket E says
@@ -751,6 +752,8 @@ import sys
 from hadavin_sdk.triggers import worker
 
 class Closes:
+    running = 0
+
     def close(self):
         print("runner closed", flush=True)
 
@@ -1170,7 +1173,7 @@ def test_serve_installs_the_break_signal_where_it_exists_and_puts_the_old_handle
             pass
 
     closed = []
-    runner = SimpleNamespace(close=lambda: closed.append(True))
+    runner = SimpleNamespace(close=lambda: closed.append(True), running=0)
     assert worker.serve(Server(), runner) == worker.EXIT_OK  # type: ignore[arg-type]
     assert (
         seen[signal.SIGTERM] is seen[signal.SIGUSR1]
@@ -1278,7 +1281,7 @@ def test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker():
         if hasattr(defaults, theirs):  # only on a tree that has core-b's defaults
             assert ours == getattr(defaults, theirs), theirs
         elif strict():
-            pytest.fail(f"HADAVIN_REQUIRE_PG=1: defaults.{theirs} is not on this tree")
+            pytest.fail(f"the strict switch is on: defaults.{theirs} is not on this tree")
 
 
 def test_the_logging_of_the_worker_is_set_on_the_triggers_logger_only():
