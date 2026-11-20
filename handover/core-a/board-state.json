@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "door-money",
-   "role": "builder in /home/user/wt/doorm",
-   "model": "sonnet",
-   "what exactly it is doing": "rev-door Majors: static per-point money end state (reservation rows, status, totals, no double booking on the retry) for RESERVES mode + RESERVES guard + documented widening limit; red proofs; second patch",
-   "started UTC": "17:35",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "rev-door Majors"
-  },
-  {
    "id": "integ3",
    "role": "builder (scratch worktree /home/user/wt/integ3, never pushed)",
    "model": "sonnet",
@@ -772,19 +759,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead 16:38"
-  },
-  {
-   "id": "rev-docs-c",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review of the 3 CHANGELOG sentence splits: meaning identical to the code, pinned phrases, markdown",
-   "started UTC": "17:55",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1157,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:58 (1) DOCS: the reviewer found one real problem in my CHANGELOG edit ('in one case' made a new exclusivity claim: the code refuses an oversize decoded view for EVERY tool result, secret or not) and I restored the original condition: wip/core-a-for-c-docs 8df581d45 is the head to merge (core-c). (2) DOOR: patch 2 landed: tests/triggers/crash_money.py asserts, per crash point, the MONEY end state (reservation rows booked/settled, open hold stays open, day total = sum of rows, a restarted run never re-books) from the call tables, plus a RESERVES wiring guard and the documented limit (the child's seeding widens max_day_skew/min_expiry_age): merged tree 455 passed (matrix+paths+postgres), cloud/core-a alone 84 passed; red proofs: retry re-reserve gives two rows, settle no-op leaves an open row. Applied to cloud/core-a and pushed with the board. Running: integ3 only.",
   "16:52 DOCS LANE (your item 1): core-c's DOCS3 commit 035c923f4 had ALREADY closed most of the round-2 findings: re-verified against the code: Blocker 1 holds; Blocker 2 holds for CHANGELOG.md lines 1-299 only (300-806 still carry P1a/P1b/G-codes/ORDER and several phrases are PINNED by tests: left); Majors 3,5,6,8,9,10 already fixed; Major 7 (sentences > 30 words) fixed by me: 3 CHANGELOG sentences split (lines 114/120/139); Major 4 (brand strings): no hit in the root docs; I removed the banned-string list from handover/core-c/evidence/DOCS3-notes.md. Branch wip/core-a-for-c-docs pushed (one commit on d53d6e7d1); table in handover/core-a/DOCS-FOR-C.md; core-c told in handover/core-c/requests/from-core-a-review.md. Fresh review rev-docs-c checks the 3 splits keep the meaning. Open: CHANGELOG 300+ cleanup, 6 nits, K50/K75/K76 re-read. Running: integ3, door-money, rev-docs-c.",
   "16:50 core-b 9b7610007 reviewed (reviews/rev-b-9b76.md; handover/core-b/requests/xr-from-core-a-3.md): no Blocker. FIXED: my NOINHERIT bypass (recursive closure over pg_auth_members: my probe, nested groups, pg_write_all_data, PUBLIC and a superuser role reachable by SET ROLE are all caught) and the all-or-nothing owner skip (now per table); TRIGGER added; 3 queries per check. NOT FIXED and WORSE: 0011_money_definer.sql edited in place AGAIN (p_day -> p_day window): an already-migrated DB keeps the old text, `_money_error` then loses the clock hint silently, check_m1_add_spend_window fails there, and the add_spend day window never reaches such DBs: needs a NEW migration or the reset-draft rule stated. d7d37db36: the B2 settle helper cannot raise; the hold stays open at the worst case on every failure path. 943a9161b: core-b's T1 has 17 tests (my wip/core-a-t1-merge e4b0c2331 has 26 with the stricter cases): compare before choosing. Running: integ3, docs-for-c, door-money.",
   "17:45 LEAD 16:38 taken, 4 agents: (1) docs-for-c (wip/core-a-for-c-docs on core-c d53d6e7d1: finds core-c's root-docs round-2 findings (2 Blockers + 7 Majors) in handover/core-c, verifies each against the CODE, fixes docs only, table in handover/core-a/DOCS-FOR-C.md; I tell core-c to merge when pushed); (2) rev-b-9b76: core-b f66eb784d (role closure, per-table owners: the answer to my rev-b-newest2 Majors 1+2) + d7d37db36 + 943a9161b; NOTE ec67808ec is DOCS ONLY (no src/tests diff): nothing to review there; core-b ALSO ported core-a's extra T1 cases itself (943a9161b): my wip/core-a-t1-merge may now duplicate it: integ3 compares; findings will go to handover/core-b/requests/xr-from-core-a-3.md; (3) integ3: dry-run 3 on core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (the heads moved from the ones you named: ec67808ec/0e33c0641 are older), plus my fix branches (contract-fix, door-merged, grants), PG16 counts, INTEGRATION-DRYRUN-2.md kept current; (4) door-money (the crash matrix money-state assertions). Load 0.1 -> expect ~4 with integ3's triggers run: heavy = 2 (integ3 triggers + door-money).",
@@ -4216,6 +4191,32 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "wip/core-a-for-c-docs pushed: core-c's DOCS3 already closed most of the round-2 findings (2 Blockers: 1 holds, 2 holds for CHANGELOG lines 1-299 only; Majors 3,5,6,8,9,10 re-verified fixed; Major 7 fixed by splitting 3 sentences at CHANGELOG.md:114/120/139; Major 4 no brand hit); DOCS3-notes.md brand list removed; DOCS-FOR-C.md; left: CHANGELOG 300+ cleanup (phrases pinned by tests), 6 nits; reviewer started on the 3 splits"
+  },
+  {
+   "id": "rev-docs-c",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the 3 CHANGELOG sentence splits: meaning identical to the code, pinned phrases, markdown",
+   "started UTC": "17:55",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "review of the 3 CHANGELOG splits: 1 MAJOR fixed ('in one case' was a NEW exclusivity claim contradicted by the code: redact_layered runs redact_untrusted on every tool result, secret or not, runmap.py:980-982; restored the original condition) at wip/core-a-for-c-docs 8df581d45; the other two splits keep the meaning; the number 262,144 is right (defaults.py:31,45); no test pins those phrases; nits: three list sentences still over 30 words"
+  },
+  {
+   "id": "door-money",
+   "role": "builder in /home/user/wt/doorm",
+   "model": "sonnet",
+   "what exactly it is doing": "rev-door Majors: static per-point money end state (reservation rows, status, totals, no double booking on the retry) for RESERVES mode + RESERVES guard + documented widening limit; red proofs; second patch",
+   "started UTC": "17:35",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "door money-state assertions: tests/triggers/crash_money.py (static per-point (reservations, settled) expectations from the call tables, not from observation) + RESERVES wiring guard + documented widening limit; red proofs (retry re-reserve -> two rows; settle no-op -> open row stays); merged tree 455 passed; core-a alone 84 passed (83 + the wiring test); branch wip/core-a-door-merged 126e4fefc; patch applied to cloud/core-a"
   }
  ]
 }

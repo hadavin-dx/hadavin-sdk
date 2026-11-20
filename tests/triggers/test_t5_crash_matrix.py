@@ -71,6 +71,13 @@ from tests.triggers.crash_launcher import (
     signed_post,
     wire_body,
 )
+from tests.triggers.crash_money import (
+    assert_end_state,
+    assert_kill_state,
+    calls_done,
+    memory_money,
+    pg_money,
+)
 from tests.triggers.test_t5_postgres import (
     DOCUMENT,
     _arm,
@@ -280,6 +287,17 @@ MEMORY_POINTS: tuple[Point, ...] = tuple(
 )
 
 
+def money_at_kill(point: Point) -> set[tuple[int, int]]:
+    """(reservations booked, settled) at the kill, from the table `HANDLE_STEPS` (NOT from a run): the
+    store calls `reserve_spend` and `settle_spend` complete before their `:after` point and not before
+    their `:before` point. The request-thread points: r1-r3 come before any reserve; r4 and r5 race the
+    loop thread, which may or may not have reserved yet (the model double waits 1 s, so never settled)."""
+    if point.id.startswith("h"):
+        number, edge = int(point.id[1:3]), point.point.rpartition(":")[2]
+        return {calls_done([step[0] for step in HANDLE_STEPS], number, edge)}
+    return {(0, 0), (1, 0)} if point.id[:2] in ("r4", "r5") else {(0, 0)}
+
+
 def _after_tick(row: str | None) -> tuple[str, str | None] | None:
     """(state, reason) after restart and tick: a cut-off run goes to a person, a final one stays."""
     if row is None:
@@ -316,6 +334,39 @@ def test_the_table_covers_every_wrapped_call_once():
     assert all(max(p.calls) <= 1 for p in POINTS)
     assert all(None in p.ack for p in POINTS)  # no point PROMISES an answer before the kill
     assert all(p.ack == (None,) for p in POINTS if p.row == (None,) or p.thread == "request")
+
+
+def test_reserves_is_what_the_loop_really_does(tmp_path):
+    """RESERVES picks the crash table. One full request through the real loop (memory store): the number of
+    `store.reserve_spend` calls must be 1 exactly when RESERVES is True, else 0. A table for the wrong booking
+    would otherwise run with crash points the child never reaches."""
+    seen: list[str] = []
+
+    class Spy:
+        def __init__(self, target):
+            self._target = target
+
+        def reserve_spend(self, *args, **kwargs):
+            seen.append("reserve_spend")
+            return self._target.reserve_spend(*args, **kwargs)
+
+        def __getattr__(self, attr):
+            return getattr(self._target, attr)
+
+    store = MemoryStore()
+    config_dir = k5_cfg(tmp_path / "w")
+    runtime, _cards = build_runtime(config_dir, CountingLLM(tmp_path / "calls", 0.0), store=store)
+    runtime.limits.store = Spy(store)
+    wsgi, runner = worker.make_app(make_trigger_app(runtime, store, ONE))
+    try:
+        status, data = _wsgi_post(wsgi, wire_body(KEY, DOCUMENT))
+        assert status in OK, (status, data)
+        assert _memory_settled(store, _run_id(SENDER, KEY)) == FINAL
+    finally:
+        runner.close()
+    assert seen == (["reserve_spend"] if RESERVES else []), (
+        f"RESERVES={RESERVES} but the loop made {len(seen)} reserve_spend call(s)"
+    )
 
 
 # --- wiring shared by the child and the memory run ---------------------------------------------------
@@ -443,6 +494,10 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
         assert json.loads(ack_data)["run_id"] == run_id
     assert row in point.row, rows
     assert all(found[:4] == identity for found in rows)
+    money_kill = (0, 0)
+    if RESERVES:  # the money at the kill: one open hold between reserve and settle, none before, settled after
+        money_kill = assert_kill_state(*pg_money(dsn, run_id), money_at_kill(point), point.id)
+        assert row is not None or money_kill == (0, 0)  # no run row, no hold
 
     expected = _after_tick(row)
     with _matrix_child(tmp_path, dsn) as child:
@@ -462,6 +517,8 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
 
     end = _rows(dsn)
     assert len(end) == 1 and end[0][:4] == identity and end[0][4] not in IN_PROGRESS
+    if RESERVES:  # an open hold stays open (no expiry step here); a retry never books a second hold
+        assert_end_state(*pg_money(dsn, run_id), money_kill, row, 1, point.id)
     total = _calls(home / "calls")
     _observe(
         "postgres",
@@ -586,6 +643,10 @@ def test_memory_raise_at_point(point: Point, tmp_path):
         assert rows and rows[0][:4] == identity
         assert json.loads(ack_data)["run_id"] == run_id
     assert row in point.row, rows
+    money_kill = (0, 0)
+    if RESERVES:
+        money_kill = assert_kill_state(*memory_money(store, run_id), money_at_kill(point), point.id)
+        assert row is not None or money_kill == (0, 0)
 
     expected = _after_tick(row)
     runtime, _cards = build_runtime(config_dir, CountingLLM(calls_file, 0.0), store=store)
@@ -608,6 +669,8 @@ def test_memory_raise_at_point(point: Point, tmp_path):
 
     end = _memory_rows(store)
     assert len(end) == 1 and end[0][:4] == identity and end[0][4] not in IN_PROGRESS
+    if RESERVES:
+        assert_end_state(*memory_money(store, run_id), money_kill, row, 1, point.id)
     total = _calls(calls_file)
     _observe(
         "memory",
