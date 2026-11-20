@@ -746,7 +746,47 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [],
+ "agents": [
+  {
+   "id": "merge-c",
+   "role": "builder in /home/user/wt/merge-c (wip/core-a-merge-c)",
+   "model": "sonnet",
+   "what exactly it is doing": "the 4 g2/g3 commits not yet in core-c: classify SUPERSEDED/APPLIES/CONFLICTS, cherry-pick what is not superseded, core-c guard tests before/after, handover/core-c/requests/from-core-a-merge.md",
+   "started UTC": "15:08",
+   "expected end": "40 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 15:02"
+  },
+  {
+   "id": "rev-lead-migrate",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "lead's wip/lead-b-migrate (caps role for hadavin_set_cap, isolation report, audit-owner refusal)",
+   "started UTC": "15:08",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 15:02"
+  },
+  {
+   "id": "rev-lead-tswm",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "lead's wip/lead-b-ts-watermark (stop-year constraints validate step, removed watermark)",
+   "started UTC": "15:08",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 15:02"
+  }
+ ],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1117,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:08 AGENTS 3 (lead 15:02 list): (1) CRASH-MATRIX part 2 is ALREADY DONE (CRASH-MATRIX.md 'Part 2: paths with a tool call, a proposal and an approval': 171 kill points on PG16 and memory, no invariant broke); (2) ORDER 017 Major B is DONE (502/503/504 and no-status = busy in the template: README l.110/118, JSON; minors earlier); (3) worker.py ALREADY reads core-b's bound reader `App.trigger_secret` (worker.py:647-650); (4) merge-c started: g2/g3 are NOT merged but 12 of their 16 commits are already in core-c by cherry-pick (git cherry): only 4 commits remain (73d624c12 G2 fix defang host token dots; 7de1c4f86, 2be153143, 7d6b5fbff G3 steps 2/4/5): the builder classifies each SUPERSEDED/APPLIES/CONFLICTS and cherry-picks only what is not superseded (a wholesale merge conflicts in 9-10 files because of the add/add of the cherry-picks); (5) reviewers on your wip/lead-b-migrate and wip/lead-b-ts-watermark started. core-c newest merge 53df94aee was already reviewed (rev-c-g8left).",
   "15:00 b-run-1 DONE (evidence/b-run-1.md, raw/b-run-1.log + b-run-1-full.log): core-b ad70e50bf on PostgreSQL 16.15 (superuser DSN): PG-gated set 23 failed, 2074 passed, 2 errors; whole suite 51 failed, 13742 passed, 1 error. 'Money battery not collected' does NOT reproduce here (212 collect). 7 test_stop_state_roles ids + test_no_reference_material match your laptop list; your test_audit_drain/spend_reservations/store_spend_ids_caps/limits_reserve ids do NOT occur on PG16 here. NEW here: 6 money_definer_mutants 'mutant pattern did not match in reserve' (stale anchors), 3 money_guard_mutants CheckViolation spend_usd_range, 2 store_spend_model seed23 expire op=0 ValueError, the writer check refusing the tests' own sb_* roles (2 setup ERRORs + 1), and in the whole suite 24 warden_port/test_audit_chain.py pydantic ValidationError for AuditEvent (not diagnosed: possibly the new field limits). Details appended to handover/core-b/requests/xr-from-core-a-reviews.md. No agents running.",
   "14:56 core-c 53df94aee reviewed (reviews/rev-c-g8left.md, appended to the core-c request file): no Blocker, no Major introduced (redact.py hunks are comments only). Pinned as 'kept' (trade-off): `call +44 20 7946 0958.Thanks` -> `<PHONE_1> 0958.Thanks` (last 4 digits readable when no space follows the full stop); G7-F4 and the ~7 s regex scan from my first review are still open. Running: cb-run1 only.",
   "14:50 AGENTS 2: cb-run1 (evidence runner: core-b PG-gated tests on my PG16 at ad70e50bf, load 3.7 of 4 because -n 3) and rev-c-g8left (fresh review of core-c 53df94aee). Newest merges found: core-c 53df94aee (only new code commit since fd1fb3e31); core-b has NO new code commit since 84fa98213. Reviews already delivered for everything older. E-door-1 README: done and reviewed (n8n/README-trigger.md 'What the sender must do: poll the run state'). No more READY items on my side: starting more agents would be invented work.",

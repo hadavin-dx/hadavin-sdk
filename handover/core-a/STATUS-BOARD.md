@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:00:42Z
+UPDATED_UTC: 2026-11-20T15:02:55Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.07 of 4 cores (1-minute average), mem 1.1/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 56G 20%; 637M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 183M /root/.cache
+AGENTS_RUNNING: 3
+CAPACITY: load 0.01 of 4 cores (1-minute average), mem 1.1/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 56G 20%; 640M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T14:57:52Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:00:48Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| merge-c | builder in /home/user/wt/merge-c (wip/core-a-merge-c) | sonnet | the 4 g2/g3 commits not yet in core-c: classify SUPERSEDED/APPLIES/CONFLICTS, cherry-pick what is not superseded, core-c guard tests before/after, handover/core-c/requests/from-core-a-merge.md | 15:08 | 40 min | 5 | running | - | 0 | lead 15:02 |
+| rev-lead-migrate | fresh independent reviewer (codebase-details), read-only | sonnet | lead's wip/lead-b-migrate (caps role for hadavin_set_cap, isolation report, audit-owner refusal) | 15:08 | 20 min | 5 | running | 1 | 0 | lead 15:02 |
+| rev-lead-tswm | fresh independent reviewer (codebase-details), read-only | sonnet | lead's wip/lead-b-ts-watermark (stop-year constraints validate step, removed watermark) | 15:08 | 15 min | 5 | running | 1 | 0 | lead 15:02 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 31575s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 31575s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 31575s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 31575s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 31575s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 31575s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 31707s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 31707s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 31707s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 31707s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 31707s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 31707s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +180,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:08 AGENTS 3 (lead 15:02 list): (1) CRASH-MATRIX part 2 is ALREADY DONE (CRASH-MATRIX.md 'Part 2: paths with a tool call, a proposal and an approval': 171 kill points on PG16 and memory, no invariant broke); (2) ORDER 017 Major B is DONE (502/503/504 and no-status = busy in the template: README l.110/118, JSON; minors earlier); (3) worker.py ALREADY reads core-b's bound reader `App.trigger_secret` (worker.py:647-650); (4) merge-c started: g2/g3 are NOT merged but 12 of their 16 commits are already in core-c by cherry-pick (git cherry): only 4 commits remain (73d624c12 G2 fix defang host token dots; 7de1c4f86, 2be153143, 7d6b5fbff G3 steps 2/4/5): the builder classifies each SUPERSEDED/APPLIES/CONFLICTS and cherry-picks only what is not superseded (a wholesale merge conflicts in 9-10 files because of the add/add of the cherry-picks); (5) reviewers on your wip/lead-b-migrate and wip/lead-b-ts-watermark started. core-c newest merge 53df94aee was already reviewed (rev-c-g8left).
 - 15:00 b-run-1 DONE (evidence/b-run-1.md, raw/b-run-1.log + b-run-1-full.log): core-b ad70e50bf on PostgreSQL 16.15 (superuser DSN): PG-gated set 23 failed, 2074 passed, 2 errors; whole suite 51 failed, 13742 passed, 1 error. 'Money battery not collected' does NOT reproduce here (212 collect). 7 test_stop_state_roles ids + test_no_reference_material match your laptop list; your test_audit_drain/spend_reservations/store_spend_ids_caps/limits_reserve ids do NOT occur on PG16 here. NEW here: 6 money_definer_mutants 'mutant pattern did not match in reserve' (stale anchors), 3 money_guard_mutants CheckViolation spend_usd_range, 2 store_spend_model seed23 expire op=0 ValueError, the writer check refusing the tests' own sb_* roles (2 setup ERRORs + 1), and in the whole suite 24 warden_port/test_audit_chain.py pydantic ValidationError for AuditEvent (not diagnosed: possibly the new field limits). Details appended to handover/core-b/requests/xr-from-core-a-reviews.md. No agents running.
 - 14:56 core-c 53df94aee reviewed (reviews/rev-c-g8left.md, appended to the core-c request file): no Blocker, no Major introduced (redact.py hunks are comments only). Pinned as 'kept' (trade-off): `call +44 20 7946 0958.Thanks` -> `<PHONE_1> 0958.Thanks` (last 4 digits readable when no space follows the full stop); G7-F4 and the ~7 s regex scan from my first review are still open. Running: cb-run1 only.
 - 14:50 AGENTS 2: cb-run1 (evidence runner: core-b PG-gated tests on my PG16 at ad70e50bf, load 3.7 of 4 because -n 3) and rev-c-g8left (fresh review of core-c 53df94aee). Newest merges found: core-c 53df94aee (only new code commit since fd1fb3e31); core-b has NO new code commit since 84fa98213. Reviews already delivered for everything older. E-door-1 README: done and reviewed (n8n/README-trigger.md 'What the sender must do: poll the run state'). No more READY items on my side: starting more agents would be invented work.
