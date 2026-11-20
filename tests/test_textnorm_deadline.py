@@ -457,21 +457,25 @@ def test_a_wait_the_cpu_clock_does_not_count_raises_at_twice_the_budget(monkeypa
         try:
             call(1.25)
         except DeadlinePassed:
-            assert clock.mono_reads == 4, (
-                f"WALL-DEADLINE: raised at wall reading {clock.mono_reads}, not 4"
-            )
+            raised = True
         else:
-            raise AssertionError("WALL-DEADLINE: a wall clock past 2x the budget did not raise")
+            raised = False
+        assert raised, "WALL-DEADLINE: a wall clock past 2x the budget did not raise"
+        assert clock.mono_reads == 4, (
+            f"WALL-DEADLINE: raised at wall reading {clock.mono_reads}, not 4"
+        )
         clock = SteppingClock(mono_step=1.0, cpu_frozen=5.0)
         monkeypatch.setattr(textnorm, "time", clock)
         try:
             call(1.75)
         except DeadlinePassed:
-            assert clock.mono_reads >= 5, (
-                f"WALL-FACTOR: a budget of 1.75 raised at wall reading {clock.mono_reads}: the wall allowance is under 2x the budget"
-            )
+            raised = True
         else:
-            raise AssertionError("WALL-FACTOR: the wall clock never ended the call")
+            raised = False
+        assert raised, "WALL-FACTOR: the wall clock never ended the call"
+        assert clock.mono_reads >= 5, (
+            f"WALL-FACTOR: a budget of 1.75 raised at wall reading {clock.mono_reads}: the wall allowance is under 2x the budget"
+        )
 
 
 def test_the_wall_clock_is_not_read_without_a_budget(monkeypatch):
