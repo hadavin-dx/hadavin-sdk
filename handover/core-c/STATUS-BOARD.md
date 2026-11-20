@@ -1,29 +1,29 @@
-UPDATED_UTC: 2026-11-20T06:04:24Z
+UPDATED_UTC: 2026-11-20T06:05:39Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 18
-ITEMS_OPEN: 9
+ITEMS_OPEN: 8
 PERCENT: 73
-AGENTS_RUNNING: 5
-CAPACITY: load 5.7 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 4; 53M	/tmp/claude-0;397M	/root/.cache/uv;
+AGENTS_RUNNING: 4
+CAPACITY: load 7.5 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 4; 58M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
-FAILED: combined tree: 2 known failing tests (producers patch for SPINE; E4 for the lead). G2: 2 inherited tests (fix running)
+FAILED: combined tree: 1 known red test (producers registry, SPINE patch). G2: 2 inherited tests (fix running)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T06:03:56+00:00
+PUSHED_UTC: 2026-11-20T06:04:25+00:00
 
-(11:34 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:35 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) G7 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:25 | 5 | running | n/a | 0 | lead GO BUILD G7 |
+| ad708163 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:25 | 5 | running | n/a | 0 | lead GO BUILD G7 |
 | aa4ceadd | builder | fable | applies the lead's code review round 1 of the gate (ORDER 011): new settle rule, map write without clear(), ast-based guard test, mutants, stated limits; main checkout | 05:56 | 06:20 | 5 | running | 1 of 3 (lead review) | 0 | ORDER 011 |
-| a7728368 | builder | fable | ORDER 010: changes the one test clause to the stricter has_mixed_script rule, pins it, writes the Unicode 15.1.0 requirement into README/CHANGELOG/ticket G; main checkout, other files than the gate agent | 05:56 | 06:10 | 5 | running | n/a | 0 | ORDER 010 decision on E4 |
+| a7728368 | builder | fable | ORDER 010: changes the one test clause to the stricter has_mixed_script rule, pins it, writes the Unicode 15.1.0 requirement into README/CHANGELOG/ticket G; main checkout, other files than the gate agent | 05:56 | 06:10 | 100 | done | n/a | 0 | finished: ORDER 010 applied (commit 9cb56b5). textnorm batch 939 passed, 0 failed; 2 mutants for the rule run and killed. Unicode: the shipped tables cannot remove the interpreter dependency (normalize, category, name still come from unicodedata). Not run: real Python 3.12, 238 of 240 mutants |
 | aa070de5 | builder | fable | code G3: ports the fold scan of core/P2d-1 (its own 14 files) onto the fold in its own worktree /tmp/core-c-g3, branch wip-g3-p2d cut from wip-g1-fold; adds the redactor action counter asked by the review; one test batch with 2 workers | 05:47 | 06:40 | 2 | running | n/a | 0 | the fold is in, so G3 can start; HEAVY at the end (tests) |
 | aed773ca | builder | fable | code G2: cherry-picks core/P1d-a (6875f27) onto main in its own worktree /tmp/core-c-g2 (local branch wip-g2-p1d-a), checks every approval path redacts before defang, adds path tests, runs its test batch with at most 2 workers | 05:43 | 06:15 | 70 | running | n/a | 0 | P1d-a picked clean onto main, path tests added (27 pass), pushed as wip/cloud-core-c/g2-p1d-a. 2 tests FAIL, both inherited from the input head itself (it ran the head to prove it). Now on fix try 1 of 2 for both; mutant script blocked by the red baseline |
 | a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
@@ -58,6 +58,7 @@ PUSHED_UTC: 2026-11-20T06:03:56+00:00
 | tests/p1d_a_mutants.py | same | 1 | 0 of 50 judged | the unmutated copy does not pass its tests | BLOCKED | baseline red because of the 2 failures above |
 | 13 files: G0, gate, fold meta/scan/round tests, producers, grants | cloud/core-c 84b46d1 (G0 + F + fold combined) | 1 | 422 passed / 2 failed / 0 errors, 13 skipped, 3 xfailed | tests/test_k5_producers.py (module not registered) and test_m16 (E4) | done | both failures known and with their owner; ruff check clean on src tests tools |
 | tests/gate_mutants.py | working tree before commit 45156c1 | 1 | 12 of 12 good; problems: [] | none | done | ORDER 008 item 1 |
+| tests/test_textnorm*.py + notices + no_hardcoded_values | cloud/core-c working tree after ORDER 010 (now 9cb56b5) | 2 | 939 passed / 0 failed | none | done | E4 closed by the lead's decision |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -73,7 +74,7 @@ PUSHED_UTC: 2026-11-20T06:03:56+00:00
 | T3 EGM review of ticket F | DONE | 100 | tickets/F-review-1.md | 1 | NOT CLEAN after the one round: 6 Blockers, 9 Majors, 7 Nits merged; resolved or assumed in tickets/F-review-1.md; one escalated (E2) |
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | DONE | 100 | evidence/F-G0-1.md | 1 | committed and pushed as "code G: G0" and "code F:"; as-built differences listed at the end of ticket F |
-| BUILD G1 fold | RUNNING (ORDER 010 fix) | 95 | evidence/G1-fold.md | 1 | fold is on cloud/core-c; the one failing clause is being changed as the lead decided |
+| BUILD G1 fold | DONE | 100 | evidence/G1-fold.md | 1 | fold on cloud/core-c, ORDER 010 clause changed and pinned, textnorm batch green (939 passed). Not run: Python 3.12, full mutant list, full suite |
 | BUILD G2 P1d-a | RUNNING | 70 | evidence/G2-p1d-a.md | 1 | built and pushed on wip/cloud-core-c/g2-p1d-a; 2 inherited failing property tests (a host keeps a linkable last dot; a glued e-mail leaves residue on the first pass) are being fixed, cap 2 more tries |
 | BUILD G3 P2d-1 port | RUNNING | 2 | evidence/G3-p2d-port.md | 1 | one builder in a worktree on top of the fold; port decisions from the review are in its brief |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT gate fixes | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | both edit guard/runmap.py in the main checkout; starts when the ORDER 011 fix agent ends |

@@ -195,3 +195,49 @@ warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be remo
 ruff check --select TID251 --ignore-noqa src demos tools  ->  All checks passed!
 ruff check --select TID251 --ignore-noqa --config 'lint.per-file-ignores = {}' --output-format concise tests/fixtures/tid251_forms | grep -c ' TID251 '  ->  6
 ```
+
+## ORDER 010 fixes
+
+Done 2026-11-20 on the fold checkout (branch cloud/core-c), Python 3.13 venv (Unicode 15.1.0). Files written: tests/test_textnorm_round1.py (one clause of the M16 test `is False` -> `is True` with a comment; one new test `test_order010_a_latin_word_carrying_a_foreign_spacing_mark_is_flagged_as_mixed_script`), README.md, CHANGELOG.md (fold entry), tickets/G-text-deltas.md (AMENDMENT 1). tests/textnorm_mutants.py and tests/test_textnorm_meta.py: NOT changed (no mutant added; counts stay 240 / 212 / 77, 228 / 12). Section 2 above is closed by this: the batch is green.
+
+Not checked: nothing was run on Python 3.12; 238 of the 240 mutants were not run; the whole repository suite was not run; the textnorm.py hash pin is untouched because textnorm.py was not edited.
+
+### `uv run --all-extras --group test ruff check tests/test_textnorm_round1.py tests/textnorm_mutants.py tests/test_textnorm_meta.py`
+```
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+exit 0
+```
+### `uv run --all-extras --group test ruff format --check` (same three files)
+```
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+3 files already formatted
+exit 0
+```
+### `uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 -m "not perf" tests/test_textnorm*.py tests/test_third_party_notices.py tests/test_no_hardcoded_values.py`
+```
+........................................................................ [ 84%]
+........................................................................ [ 92%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+939 passed in 217.62s (0:03:37)
+exit 0
+```
+### `uv run --all-extras --group test python tests/textnorm_mutants.py "mixed: rule (b) is never true" "mixed: a spacing mark splits the word"` (after the test change; baseline green, then the two mutants)
+```
+240 mutants: 228 change behaviour, 12 change only words
+ok  KILLED       mixed: rule (b) is never true  [test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a]
+ok  KILLED       mixed: a spacing mark splits the word  [test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a]
+2 of 2 good; problems: []
+
+real	6m17.414s
+user	6m2.932s
+sys	0m4.684s
+exit 0
+```
+### `key_tag` / `identity_keys` with `unicodedata.unidata_version` stubbed to 15.0.0 (venv python 3.13; for AMENDMENT 1 item 6)
+```
+pinned '' ('\u0903', '') 'alice'
+stub 15.0.0 key_tag='\ue000alg=fold5|ud=15.0.0\ue000' identity_keys(U+0903)=(tag+'\u0903', tag) identity_keys(U+200B)=(tag,) identity_key('Alice')=tag+'alice'
+key_tag() in identity_keys(U+0903): True; in identity_keys(U+200B): True; could_be_same_person(U+0903, U+200B): True; could_be_same_person(U+0903, 'a'): False
+```
