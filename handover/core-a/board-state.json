@@ -262,11 +262,11 @@
   {
    "item": "O14-3",
    "what": "switch the worker to core-b's bound reader and run the worker start test for real",
-   "state": "RUNNING",
-   "percent": 10,
-   "evidence file": "",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_main_start.py, raw/main-start-on-combined-tree.log, raw/DR2-worker-tests.log",
    "tries": 1,
-   "reason": "worker switched to core-b's bound reader as built and the start test through main on a combined scratch tree: same builder as the worker fixes"
+   "reason": "worker reads core-b's App.trigger_secret as built; real start through main on a combined scratch tree (core-b d0cac9693 + my files): 7 of 7 passed (start, signed request 2xx, SIGTERM exit 0, five start refusals with exit 2 and no secret value, only listed names asked); 66 worker tests; on my branch the file skips. LIMIT: the 'a run row exists' check is shown by a 2xx, the same run id on a repeat and a refused wrong secret, not by reading the child's memory store"
   },
   {
    "item": "O15",
@@ -329,7 +329,7 @@
    "percent": 60,
    "evidence file": "reviews/code-D-design-review-1.md",
    "tries": 1,
-   "reason": "review done; server/endpoint/crash fixes DONE by a sonnet agent (397 passed, 2 skipped, mutants 30 of 30, bandit clean; the new tests were NOT shown to fail on the old code); worker fixes and main start test still running"
+   "reason": "review done; fixes DONE and tested by sonnet agents: server/endpoint/crash (397 passed), worker (255 passed, 1 skipped; 20 new worker tests fail on the old worker: 18 of 20). A fresh second pass by an EGM reviewer is still MISSING (EGM-LEDGER)"
   },
   {
    "item": "O17-A",
@@ -370,11 +370,11 @@
   {
    "item": "O17-main",
    "what": "start-refusal test through main with a real config",
-   "state": "RUNNING (same agent as O14-3)",
-   "percent": 10,
+   "state": "DONE",
+   "percent": 100,
    "evidence file": "",
    "tries": 1,
-   "reason": "start and start-refusal through main with a real config, on a scratch tree = core-b's head + my trigger files"
+   "reason": "same as O14-3"
   },
   {
    "item": "B5b-matrix-paths",
@@ -429,6 +429,15 @@
    "evidence file": "EGM-LEDGER.md",
    "tries": 1,
    "reason": "step 1 running: two fresh reviewers on step E, started through the review-loop skill; session check at 06:44Z: get_session says model claude-sonnet-5-5 and last served claude-sonnet-5-5 (a harness line still said Fable: stale label, the record says Sonnet); the rest of the sequence waits for the builders"
+  },
+  {
+   "item": "FU-3",
+   "what": "follow-ups: Retry-After 1 on 503, rename trigger_resolve to trigger_secret in 2 test helpers and delete the old-name fallback in worker.py",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/DR3-followups-tests.log (not yet)",
+   "tries": 1,
+   "reason": "from the worker builder's report"
   }
  ],
  "agents": [
@@ -929,15 +938,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:38",
-   "percent": 3,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": "0 (restart after the Fable limit)",
    "id": "sn-wrk",
    "role": "builder",
    "what exactly it is doing": "finish worker.py fixes, switch to core-b's reader, main start test (RESUME-NOTE 2)",
-   "expected end": "about 40 min after start",
-   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "sonnet",
@@ -1016,6 +1025,19 @@
    "what exactly it is doing": "hostile design review of the same result",
    "expected end": "about 15 min",
    "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:46",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "sn-fu3",
+   "role": "builder",
+   "what exactly it is doing": "Retry-After header, reader rename, fallback removal, one test run and one mutant run",
+   "expected end": "about 15 min",
+   "reason": "follow-ups; 6 agents run"
   }
  ],
  "tests": [
@@ -1306,6 +1328,24 @@
    "first failing line": "first: fuzz layers failed because worker.py now refuses poll_s below 0.01: test value changed to 0.01 (the other agent's rule)",
    "state": "done",
    "reason": "two tests were corrected by that agent (fuzz poll value; the environment-variable test's last assertion: it compared too much); no security assertion weakened. 30 of 30 mutants, bandit clean"
+  },
+  {
+   "suite or file": "worker, process, cases, postgres, nul (6 files)",
+   "branch and SHA": "working tree",
+   "run number": "1 after the worker fixes (sonnet agent)",
+   "passed / failed / errors": "255 / 0 / 0, 1 skipped",
+   "first failing line": "none; at 06:35 14 failures were open: 50-parallel cases (the new cap counted every request: default raised 32 to 128), one outdated reader test, 9 NUL tests (the new spend warning fired for max_running 2)",
+   "state": "done",
+   "reason": "UNVERIFIED by me until the batch"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_main_start.py on a combined scratch tree (core-b d0cac9693 + my files)",
+   "branch and SHA": "scratch copy",
+   "run number": "1",
+   "passed / failed / errors": "7 / 0 / 0",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "skips on my own branch"
   }
  ],
  "restarts": [],

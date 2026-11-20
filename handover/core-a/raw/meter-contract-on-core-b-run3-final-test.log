@@ -1,0 +1,9 @@
+........................................................................ [ 27%]
+................xxx..................................................... [ 54%]
+........................................................................ [ 82%]
+..............................................                           [100%]
+=========================== short test summary info ============================
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-int] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-float] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-tuple] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+259 passed, 3 xfailed in 23.54s
