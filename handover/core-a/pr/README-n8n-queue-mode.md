@@ -1,4 +1,4 @@
-Check result (state of 2026-11-20 after ORDER 015): `n8n/README-trigger.md` ALREADY contains the queue mode statement, in the places below. No new text is needed; the file is unchanged by this part of the PR package. The root README.md needs no queue mode sentence, because no root text mentions n8n (core-b merges only the door section named in handover/core-b/requests/from-core-a-B8-text.md).
+Check result (state of 2026-11-20 after the lead's order 015): `n8n/README-trigger.md` ALREADY contains the queue mode statement, in the places below. No new text is needed; the file is unchanged by this part of the PR package. The root README.md needs no queue mode sentence, because no root text mentions n8n (core-b merges only the door section named in handover/core-b/requests/from-core-a-B8-text.md).
 The coordinator strips every `[path:line]` proof in square brackets before pasting.
 
 The statement stands as follows in the file. Do not reword it: one phrase of it is pinned by a test. [tests/triggers/test_n8n_template.py:1620]

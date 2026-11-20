@@ -1,6 +1,6 @@
 # Signed trigger door: HMAC endpoint, worker, crash helper, n8n template
 
-State of 2026-11-20 after ORDER 015, steps D and E. This replaces the first version written at about 13:00 UTC.
+State of 2026-11-20 after the lead's order 015, steps D and E. This replaces the first version written at about 13:00 UTC.
 The coordinator strips every `[path:line]` proof in square brackets before pasting. Paths are repo-relative; `integ:` means the merged tree /home/user/wt/integ (read-only). Sentences are at most 30 words. RECEIVED, WORKING and NEEDS_PERSON are run states: "stored, not started", "loop running" and "a person must look". "The tick" is the scheduled step that ends stuck runs.
 
 No PR template exists in the repo (`.github/` holds only `dependabot.yml` and `workflows/ci.yml`), so this follows the headings of the handover tickets. [.github/workflows/ci.yml:1]

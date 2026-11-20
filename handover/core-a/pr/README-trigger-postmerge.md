@@ -1,4 +1,4 @@
-# Post-merge patch for n8n/README-trigger.md (core-a; state of 2026-11-20 after ORDER 015, steps D+E)
+# Post-merge patch for n8n/README-trigger.md (core-a; state of 2026-11-20 after the lead's order 015, steps D+E)
 
 Apply AFTER core-b's `TriggerSettings` (config.py) and core-b's limits (`reserve`/`settle`) are merged. Do NOT apply on core-a alone: on this branch the `triggers` block is not in the config code, so the new text would be false there. Each block below is an exact OLD text and its exact NEW text. The OLD blocks of items 1 to 4 were checked against the current n8n/README-trigger.md of this branch (all four match as written). The coordinator strips every `[path:line]` proof in square brackets from the NEW text before pasting; `integ:` means the merged tree /home/user/wt/integ (read-only).
 

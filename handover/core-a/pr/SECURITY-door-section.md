@@ -1,4 +1,4 @@
-PASTE NOTE (B8-text, step D+E, state of 2026-11-20 after ORDER 015). Insert this section into the root SECURITY.md after "Stated limits of redaction (reviewed, not bugs)" and before "Spend limits (stated limits)". Style follows those sections: a heading, short paragraphs with a bold lead, "reviewed, not bugs" wording, sentences of at most 30 words.
+PASTE NOTE (B8-text, step D+E, state of 2026-11-20 after the lead's order 015). Insert this section into the root SECURITY.md after "Stated limits of redaction (reviewed, not bugs)" and before "Spend limits (stated limits)". Style follows those sections: a heading, short paragraphs with a bold lead, "reviewed, not bugs" wording, sentences of at most 30 words.
 The coordinator strips every `[path:line]` proof in square brackets before pasting. Paths are repo-relative; `integ:` means the merged tree /home/user/wt/integ (read-only).
 Parts that are true only on the merged tree (core-b config and limits) say so in the text. The cross-lane fixes core-b and core-c must make in their own parts of SECURITY.md are in handover/core-b/requests/from-core-a-B8-text.md.
 
