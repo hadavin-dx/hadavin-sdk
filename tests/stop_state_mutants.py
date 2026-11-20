@@ -225,10 +225,10 @@ HAND = [
         '" if new else "TRUE"', '" if new else "FALSE"',
         "test_s2_migrate_refuses_a_member_of_the_reset_role", "DID NOT RAISE"),
     mutant("S2: below 16 a CREATEROLE login is not listed", MIG,
-        'creators = "FALSE" if new else "r.rolcreaterole"', 'creators = "FALSE"',
+        'creators = "FALSE" if new else _CREATORS', 'creators = "FALSE"',
         "test_s2_below_16_a_createrole_login_that_is_not_a_superuser_is_listed", "assert [] == ["),
     mutant("S2: from 16 a CREATEROLE login with no membership is listed", MIG,
-        'creators = "FALSE" if new else "r.rolcreaterole"', 'creators = "r.rolcreaterole"',
+        'creators = "FALSE" if new else _CREATORS', 'creators = "r.rolcreaterole"',
         "test_s2_from_16_a_createrole_login_with_no_membership_is_not_listed", "sb_cq_"),
     mutant("S2: the reset role is not a base row", MIG,
         "WHERE r.rolname = %(reset)s\n                       UNION", "WHERE FALSE\n                       UNION",
@@ -260,12 +260,38 @@ HAND = [
     mutant("S2: TRIGGER on the flag is not read", MIG,
         "('kill_switch', 'TRIGGER'), ('kill_switch_stops'", "('kill_switch_stops'",
         "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
-    mutant("S2: the check passes when no relations are found (empty search_path)", MIG,
+    # One edit; two tests each kill it (an empty search_path, and a schema without the tables): one mutant, pinned
+    # on the first.
+    mutant("S2: the check passes when no relations are found", MIG,
         "    if not schema or missing or shadowed:", "    if False:",
         "test_s2_an_empty_search_path_is_refused_not_passed", "DID NOT RAISE"),
-    mutant("S2: the check passes when no relations are found (a schema without the tables)", MIG,
-        "    if not schema or missing or shadowed:", "    if False:",
-        "test_s2_a_search_path_whose_first_schema_has_no_stop_tables_is_refused_not_passed", "DID NOT RAISE"),
+    mutant("S2: a view or index with a stop table's name counts as the table", MIG,
+        "AND c.relkind IN ('r','p') \"", "AND TRUE \"",
+        "test_s2_a_view_with_a_stop_table_name_is_refused_not_passed", "DID NOT RAISE"),
+    mutant("S2: a superuser or the owner that is a member of a listed role is listed", MIG,
+        "WHERE m.member NOT IN (SELECT oid FROM outside) AND {usable}", "WHERE {usable}",
+        "test_s2_a_superuser_with_a_right_or_a_membership_is_not_listed", "assert ["),
+    mutant("S2: the allow-list is removed (an accepted CREATEROLE role is listed)", MIG,
+        " AND r.rolname::text <> ALL(%(accepted)s::text[])", "",
+        "test_s2_below_16_an_accepted_createrole_role_is_not_listed_and_another_one_still_is", "assert ["),
+    mutant("S2: the allow-list is applied to grants too", MIG,
+        "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv
+",
+        "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv
+"
+        "      AND a.grantee NOT IN (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname::text = ANY(%(accepted)s::text[]))
+",
+        "test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_listed", "assert ["),
+    mutant("S2: the allow-list names are not validated", MIG,
+        "not _ROLE.fullmatch(a) or a in _FORBIDDEN_ROLES for a in accepted", "False for a in accepted",
+        "test_s2_an_accepted_role_name_that_is_not_one_plain_role_is_refused_before_any_connection", "accepted_admin_roles must be plain"),
+    mutant("S2: the allow-list may name a role the command grants", MIG,
+        "    if overlap := sorted(set(accepted) & set(named)):", "    if False:",
+        "test_s2_an_accepted_role_that_is_also_a_named_role_is_refused", "DID NOT RAISE"),
+    mutant("tests: migrate does not take the shared server gate", "tests/conftest.py",
+        '            mp.setattr(mod, "migrate", patched)', "            pass",
+        "test_the_server_gate_holds_every_migrate_while_another_session_holds_it_exclusively",
+        "migrate ran while another session held"),
     mutant("S2: the check passes when one relation is missing", MIG,
         "    if not schema or missing or shadowed:", "    if not schema or shadowed:",
         "test_s2_one_missing_stop_table_is_refused_not_passed", "DID NOT RAISE"),
@@ -338,11 +364,8 @@ ALSO = {
 }  # fmt: skip
 
 # Mutants no test can kill; (name, file, reason). Printed, never run.
-EQUIVALENT: list[tuple[str, str, str]] = [
-    ("S2: grantee 0 (PUBLIC) is followed as a role (`WHERE grantee <> 0` removed)", MIG,
-     ("role oid 0 does not exist: it is in `can` but matches no pg_roles row and no pg_auth_members row, and "
-      "PUBLIC is listed by its own branch (test_s2_a_grant_to_public_is_listed_as_public)")),
-]  # fmt: skip
+# (None now: the one that was here was a dead filter, `WHERE grantee <> 0`, and the filter was deleted.)
+EQUIVALENT: list[tuple[str, str, str]] = []
 
 # Mutants of one PostgreSQL branch: run on a server of that branch only (the other branch is dead code there and the
 # mutant would survive). Run the list on a 15 and on a 17 server; every mutant is then KILLED on one of the two.
@@ -356,6 +379,7 @@ LT16 = {
     "S2: a dropped column is counted",  # PostgreSQL 15 keeps the ACL of a dropped column, 17 clears it
     "S2: below 16 a membership is not counted",
     "S2: below 16 a CREATEROLE login is not listed",
+    "S2: the allow-list is removed (an accepted CREATEROLE role is listed)",
 }
 
 
@@ -388,10 +412,11 @@ def run_by_hand(only: list[str]) -> int:
     if dirty.strip():
         print("refused: a target file has uncommitted changes:\n" + dirty)
         return 1
-    bad, clean = 0, {}
+    bad, clean, tally = 0, {}, {}
     version = _server_version()
     for m in chosen:
         if (m.name in GE16 and version < 160000) or (m.name in LT16 and version >= 160000):
+            tally["N/A"] = tally.get("N/A", 0) + 1
             print(
                 f"N/A      | {m.name} | needs the other PostgreSQL branch (this is {version}) | {m.only_test}",
                 flush=True,
@@ -426,9 +451,15 @@ def run_by_hand(only: list[str]) -> int:
             else:
                 verdict = "KILLED"
         bad += verdict != "KILLED"
+        key = verdict.split(" ")[0]
+        tally[key] = tally.get(key, 0) + 1
         print(f"{verdict:8} | {m.name} | {m.file} | {m.only_test}", flush=True)
     for name, file, reason in EQUIVALENT if not only else []:
+        tally["EQUIVALENT"] = tally.get("EQUIVALENT", 0) + 1
         print(f"EQUIVALENT | {name} | {file} | {reason}", flush=True)
+    counts = " ".join(f"{k}={tally.get(k, 0)}" for k in ("KILLED", "N/A", "EQUIVALENT", "SURVIVED"))
+    other = sum(v for k, v in tally.items() if k not in ("KILLED", "N/A", "EQUIVALENT", "SURVIVED"))
+    print(f"SUMMARY server={version} mutants={len(chosen)} {counts} OTHER={other}", flush=True)
     return bad
 
 

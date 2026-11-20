@@ -7,6 +7,7 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +17,8 @@ from psycopg import sql
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.postgres import connect
+
+_LOG = logging.getLogger("hadavin_sdk.store")
 
 MIGRATIONS = Path(__file__).parent / "migrations"
 
@@ -300,7 +303,7 @@ WITH RECURSIVE want(relname, priv) AS (
 ), outside AS (
     SELECT relowner AS oid FROM rel UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolsuper
 ), can AS (
-    SELECT s.oid FROM (SELECT grantee AS oid FROM acl WHERE grantee <> 0
+    SELECT s.oid FROM (SELECT grantee AS oid FROM acl
                        UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = %(reset)s
                        UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE {creators}) s
     WHERE s.oid NOT IN (SELECT oid FROM outside)
@@ -315,6 +318,10 @@ SELECT name FROM (
     WHERE r.oid IN (SELECT oid FROM can) AND r.rolname IS DISTINCT FROM %(reset)s
 ) found ORDER BY pos, name
 """
+
+
+# Below PostgreSQL 16: every non-superuser CREATEROLE login of the server, except the roles the operator vouches for.
+_CREATORS = "(r.rolcreaterole AND r.rolname::text <> ALL(%(accepted)s::text[]))"
 
 
 def _check_stop_relations(db) -> None:
@@ -351,7 +358,9 @@ def _check_stop_relations(db) -> None:
         )
 
 
-def who_else_can_clear(db, reset_role: str | None) -> list[str]:
+def who_else_can_clear(
+    db, reset_role: str | None, accepted_admin_roles: tuple[str, ...] = ()
+) -> list[str]:
     """Who, besides the reset role, could clear or defeat a stop IN THIS SCHEMA, read from the grants on this
     schema's `kill_switch` (UPDATE, DELETE, TRUNCATE), `kill_switch_clears` (INSERT) and the three stop tables
     (TRIGGER) only, so roles of other schemas or applications on the same server never change the answer. It
@@ -359,9 +368,13 @@ def who_else_can_clear(db, reset_role: str | None) -> list[str]:
     something else: nothing to read is never a pass. Listed: every role those relations grant such a right to
     (table or column grant; `PUBLIC` is listed as PUBLIC), every role that is a member, directly or through other
     roles, with or without inheritance (a NOINHERIT member can SET ROLE), of such a role or of the reset role, and
-    the roles that can hand themselves the reset role: below PostgreSQL 16 every non-superuser with CREATEROLE;
-    from 16 a membership counts when its SET, INHERIT or ADMIN option is true, so the holder of the ADMIN option
-    on the reset role (the login that created it has it) is listed.
+    the roles that can hand themselves the reset role: below PostgreSQL 16 every non-superuser with CREATEROLE
+    (except the roles the operator vouches for in `accepted_admin_roles`: they are left out of THIS listing only,
+    never from a grant on the stop tables, never from a membership, never the reset role); from 16 a membership
+    counts when its SET, INHERIT or ADMIN option is true, so the holder of the ADMIN option on the reset role (the
+    login that created it has it) is listed. The listing is conservative: `usable` is judged per membership, not
+    along the whole path, so a role whose chain mixes INHERIT-only and SET-only links is listed although it
+    cannot reach the right (a rare, harmless false refusal).
 
     Outside the guarantee, never listed and never followed: the reset role itself, the owner of the relations
     (it can DROP and recreate them), superusers, managed-database admin roles that are not superusers
@@ -377,9 +390,10 @@ def who_else_can_clear(db, reset_role: str | None) -> list[str]:
         "SELECT pg_catalog.current_setting('server_version_num')::int >= 160000"
     ).fetchone()[0]
     usable = "(m.inherit_option OR m.set_option OR m.admin_option)" if new else "TRUE"
-    creators = "FALSE" if new else "r.rolcreaterole"
+    creators = "FALSE" if new else _CREATORS
     query = _CAN_CLEAR.format(usable=usable, creators=creators)
-    return [r[0] for r in db.execute(query, {"reset": reset_role}).fetchall()]
+    params = {"reset": reset_role, "accepted": list(accepted_admin_roles)}
+    return [r[0] for r in db.execute(query, params).fetchall()]
 
 
 def _excess_privileges(db, role: str) -> list[str]:
@@ -411,12 +425,17 @@ def migrate(
     region: str | None = None,
     sslmode: str | None = None,
     sslrootcert: str | None = None,
+    accepted_admin_roles: tuple[str, ...] = (),
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. With `reset_role`, what `Grant.reset` lists: clear stops, turn the
     old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
-    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
+    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database.
+    `accepted_admin_roles`: plain role names the operator vouches for (cannot grant the reset role to itself; for
+    example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
+    nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
+    them. It needs named roles, and a name that is also a named role is refused."""
     roles = (runtime_role, portal_role, purge_role, reset_role)
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
@@ -424,6 +443,15 @@ def migrate(
     named = [r for r in roles if r is not None]
     if len(set(named)) != len(named):
         raise ConfigError("the runtime, portal, purge and reset roles must be different roles")
+    accepted = tuple(accepted_admin_roles)
+    if isinstance(accepted_admin_roles, str) or any(
+        not _ROLE.fullmatch(a) or a in _FORBIDDEN_ROLES for a in accepted
+    ):
+        raise ConfigError(f"accepted_admin_roles must be plain database role names: {accepted_admin_roles!r}")
+    if accepted and not named:
+        raise ConfigError("accepted_admin_roles is only read when roles are named: it changes the who-else check")
+    if overlap := sorted(set(accepted) & set(named)):
+        raise ConfigError(f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}")
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
@@ -486,12 +514,20 @@ def migrate(
                 raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
-        if named and (others := who_else_can_clear(db, reset_role)):
+        if accepted:
+            _LOG.warning(
+                "migrate: administrator roles accepted by the operator, NOT checked as able to clear a stop "
+                "(below PostgreSQL 16 only; a grant on the stop tables still lists them): %s",
+                ", ".join(accepted),
+            )
+        if named and (others := who_else_can_clear(db, reset_role, accepted)):
             raise ConfigError(
                 "roles other than the reset role could clear a stop (a right on kill_switch or "
                 "kill_switch_clears, or membership in a role that holds one): "
                 + ", ".join(others[:20])
                 + ". Name the runtime, portal, purge and reset roles in ONE migrate command, and revoke the "
-                "right or the membership of any other role"
+                "right or the membership of any other role. Below PostgreSQL 16 a role listed only because it holds "
+                "CREATEROLE can be named with accepted_admin_roles (command line: --accept-admin-role) when you "
+                "vouch that it cannot grant the reset role to itself (see docs/stop-state-runbook.md)"
             )
     return applied
