@@ -1,0 +1,18 @@
+core-b head a11ab513289315b6d83c95338cceff9ffda12ec6
+core-c head 613611e2535522e48a161721633ce013363f9c6c
+== sha256
+82b8bf40490523a023bc53edeb9e42b8b8b3dfc56d5a14452fda4ce10d2a36fa  tests/test_trigger_config.py
+5d5da81417f89b2f4f0e9a84772b15d85b3e73e2847c6b81d866a4c1020171b1  tests/contracts/test_store_spend_reservations.py
+80b5a1cbf7e907a51c00bd9fb1cd75151979db1b6285279dd7a12eab65e41a54  tests/contracts/test_t1_reserve_cap.py
+ee09d9decfa19d9afb2f242ccc3df4a0fd1e0e052e6a65b55cb2710cd69c6a3f  tests/contracts/test_meter.py
+1c6bb688dec8aaa9bc9c8bb5976e50624b6eb01ef462b602d62d832f8167f69d  tests/contracts/test_model_gate_contract.py
+cbaa2097215ff9c68b93c8a3fe0cee1c244d0504baed0b1824b97f0dbc82f4a4  tests/test_redact_idempotence_property.py
+== import path core-b
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev-b/src/hadavin_sdk/__init__.py
+== pytest core-b
+......s................................................................. [ 10%]
+..........................................................ss...ss...ss.. [ 20%]
+.ss...ss....s......................................ssssssss............. [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 50%]
+...................................................
