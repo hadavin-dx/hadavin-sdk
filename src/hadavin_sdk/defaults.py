@@ -169,6 +169,14 @@ STORE_LOCK_TIMEOUT_MS = 10000
 # Rows of audit_outbox read and drained per reconcile (one tick): a big backlog is drained over several ticks, so a
 # tick stays short and holds a bounded number of bodies in memory.
 AUDIT_DRAIN_BATCH = 500
+# Inline flush of events parked in memory: a transient failure is retried up to this many times in one flush, with
+# a sleep of BACKOFF_S doubling each time and never above BACKOFF_MAX_S; then the event stays parked (never dropped).
+AUDIT_FLUSH_ATTEMPTS = 3
+AUDIT_FLUSH_BACKOFF_S = 0.05
+AUDIT_FLUSH_BACKOFF_MAX_S = 0.5
+# An outbox row refused for a PERMANENT reason (not 42501) on this many consecutive ticks (counted per process) is
+# renamed to the quarantine prefix: still readable, never deleted, skipped by later reads.
+AUDIT_QUARANTINE_AFTER_TICKS = 3
 # SQLSTATE prefixes the audit chain counts as a PERMANENT refusal (waiting never helps): class 22 data, class 23
 # integrity, 42501 missing grant, 54000 limit exceeded. Every other database error is transient and is retried.
 AUDIT_PERMANENT_SQLSTATES = ("22", "23", "42501", "54000")

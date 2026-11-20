@@ -31,6 +31,7 @@ import logging
 import re
 import sqlite3
 import threading
+import time
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -247,6 +248,8 @@ class ChainAudit:
         signer: Signer | None = None,
         anchor: Any = None,
         checkpoint_every: int = 100,
+        drain_batch: int | None = None,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._db, self.signer, self.anchor = db, signer, anchor
         # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
@@ -257,6 +260,11 @@ class ChainAudit:
                 "audit anchor put() takes no alg/key_label: its objects will not verify offline"
             )
         self.checkpoint_every = checkpoint_every
+        self.drain_batch = drain_batch if drain_batch is not None else defaults.AUDIT_DRAIN_BATCH
+        self._sleep = sleep
+        # Consecutive ticks an outbox row was refused for a permanent reason, by row id. In memory, per process: a
+        # process that lives for one tick never reaches AUDIT_QUARANTINE_AFTER_TICKS (the row stays, counted).
+        self._fail_ticks: dict[str, int] = {}
         # Last resort when even the outbox table cannot be written (the database is down): drained by the next
         # successful write of this process and by reconcile. In-process only: lost if the process exits first.
         self._pending: list[AuditEvent] = []
@@ -359,8 +367,14 @@ class ChainAudit:
         try:
             with self._flush_lock:
                 while self._pending:
-                    failed = self._drain(self._pending[0])
+                    failed = self._drain_with_backoff(self._pending[0])
                     if failed is not None and not _is_permanent(failed):
+                        _LOG.warning(
+                            "audit pending flush: event stays parked after %d attempts (%s), total=%d",
+                            defaults.AUDIT_FLUSH_ATTEMPTS,
+                            type(failed).__name__,
+                            len(self._pending),
+                        )
                         self._transient_stuck = not _is_outage(failed)
                         break
                     event = self._pending.pop(
@@ -384,6 +398,21 @@ class ChainAudit:
             )
         return done
 
+    def _drain_with_backoff(self, event: AuditEvent) -> Exception | None:
+        """`_drain` with up to AUDIT_FLUSH_ATTEMPTS tries on a TRANSIENT failure, sleeping AUDIT_FLUSH_BACKOFF_S
+        doubling, capped at AUDIT_FLUSH_BACKOFF_MAX_S. A permanent failure is returned at once. Returns the last
+        failure; the caller keeps the event parked."""
+        delay = defaults.AUDIT_FLUSH_BACKOFF_S
+        failed = None
+        for attempt in range(defaults.AUDIT_FLUSH_ATTEMPTS):
+            failed = self._drain(event)
+            if failed is None or _is_permanent(failed):
+                return failed
+            if attempt + 1 < defaults.AUDIT_FLUSH_ATTEMPTS:
+                self._sleep(min(delay, defaults.AUDIT_FLUSH_BACKOFF_MAX_S))
+                delay *= 2
+        return failed
+
     def reconcile(self) -> int:
         """Write parked events to the chain; returns how many. Memory events and the outbox rows of this tick
         (at most `defaults.AUDIT_DRAIN_BATCH`, oldest first) are merged into ONE order: `event.ts`, then
@@ -393,7 +422,7 @@ class ChainAudit:
         removes it (handover tickets/A-audit-drain.md); a row or memory event still refused for a transient
         reason that is not an outage (timeout, lock wait); a failed delete. A plain outage (database unreachable)
         is quiet: retried next time. Reading the outbox fails the step for every error except an outage."""
-        r = self._drain_pass()
+        r = self._drain_pass(tick=True)
         if r.select_error is not None:
             if _is_outage(r.select_error):
                 return r.done  # the database is still down: retried next time
@@ -430,11 +459,12 @@ class ChainAudit:
         if problems:
             _LOG.warning(
                 "audit outbox: drained=%d unreadable=%d not_writable=%d not_deleted=%d (kept) "
-                "quarantined_earlier=%d deferred=%d",
+                "quarantined_now=%d quarantined_earlier=%d deferred=%d",
                 r.done,
                 r.unreadable,
                 r.not_writable,
                 r.not_deleted,
+                r.marked,
                 earlier,
                 r.deferred,
             )
@@ -454,7 +484,7 @@ class ChainAudit:
             f"ORDER BY ({ts} IS NULL), {ts}, event_id LIMIT ? OFFSET ?"
         )
 
-    def _drain_pass(self, retry_refused: bool = True) -> _Pass:
+    def _drain_pass(self, retry_refused: bool = True, tick: bool = False) -> _Pass:
         """One bounded drain pass: parked memory events and one batch of outbox rows, merged and sorted by
         (ts, event_id). Holds the flush lock. Never raises: a failed read is returned in `select_error`."""
         r = _Pass()
@@ -466,8 +496,8 @@ class ChainAudit:
             # Rows that are not readable never use a slot of the batch: the read pages on until it holds
             # `AUDIT_DRAIN_BATCH` readable rows or the table is exhausted.
             seen = good = 0
-            while good < defaults.AUDIT_DRAIN_BATCH:
-                want = defaults.AUDIT_DRAIN_BATCH - good
+            while good < self.drain_batch:
+                want = self.drain_batch - good
                 try:
                     page = self._db.run(
                         self._outbox_sql(), (defaults.AUDIT_QUARANTINE_PREFIX + "%", want, seen)
@@ -491,19 +521,22 @@ class ChainAudit:
                     break
             items.sort(key=lambda it: (_sort_ts(it[0]), it[0].event_id))
             for event, row_id in items:
-                if self._drain_item(event, row_id, r):
+                if self._drain_item(event, row_id, r, tick):
                     break  # a transient refusal stops the pass: nothing newer is written past it
             if r.select_error is None and not seen:
                 self._outbox_dirty = False
         return r
 
-    def _drain_item(self, event: AuditEvent, row_id: str | None, r: _Pass) -> bool:
+    def _drain_item(
+        self, event: AuditEvent, row_id: str | None, r: _Pass, tick: bool = False
+    ) -> bool:
         """Drain one item. True when the pass must stop here (a transient refusal)."""
         failed = self._drain(event)
         if failed is None:
             if row_id is None:
                 self._pending.remove(event)
             else:
+                self._fail_ticks.pop(row_id, None)
                 try:
                     self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
                 except Exception:  # noqa: BLE001 - in the chain; the next drain dedupes and deletes
@@ -518,8 +551,11 @@ class ChainAudit:
             else:
                 r.not_writable += 1
                 # A missing grant (42501) is mended by the operator and then every row drains: no quarantine.
-                if getattr(failed, "sqlstate", None) != "42501":
-                    r.marked += self._quarantine(event, row_id)
+                if getattr(failed, "sqlstate", None) != "42501" and tick:
+                    n = self._fail_ticks[row_id] = self._fail_ticks.get(row_id, 0) + 1
+                    if n >= defaults.AUDIT_QUARANTINE_AFTER_TICKS:
+                        r.marked += self._quarantine(event, row_id)
+                        self._fail_ticks.pop(row_id, None)
             return False
         if row_id is None:
             self._transient_stuck = not _is_outage(failed)
@@ -842,4 +878,10 @@ def build(settings, deps) -> ChainAudit:
     if deps.anchor is not None and deps.signer is None:
         raise ConfigError("audit chain: an anchor needs a signer (backends.signer)")
     # The anchor is its own capability (backends.anchor), built before the audit and handed in through Deps.
-    return ChainAudit(db, deps.signer, deps.anchor, settings.checkpoint_every)
+    return ChainAudit(
+        db,
+        deps.signer,
+        deps.anchor,
+        settings.checkpoint_every,
+        getattr(settings, "drain_batch", None),
+    )

@@ -203,6 +203,9 @@ class GcsRetentionLockSettings(_AnchorSettings):
 
 class ChainSettings(KindSettings):
     checkpoint_every: int = Field(default=100, ge=1)
+    # Outbox rows drained per tick; absent = defaults.AUDIT_DRAIN_BATCH (this module imports nothing of ours, so the
+    # default is applied by audit/chain.py `build`). Bounds: 1 to 5000.
+    drain_batch: int | None = Field(default=None, ge=1, le=5000)
 
 
 class _SignerSettings(KindSettings):
