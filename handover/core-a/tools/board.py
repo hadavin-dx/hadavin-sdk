@@ -113,8 +113,11 @@ def main() -> int:
     sh(["git", "add", "handover/core-a"])
     rc, out = sh(["git", "commit", "-q", "-m", f"board {now}"])
     for attempt in (1, 2, 3):
-        rc, out = sh(["git", "pull", "--rebase", "-q", "origin", BRANCH], timeout=90)
-        if rc == 0:
+        # Push first; pull --rebase only when the remote moved. A builder editing a file at that moment
+        # makes the rebase refuse (unstaged change): the next try or the next board picks it up.
+        rc, out = sh(["git", "push", "-q", "origin", BRANCH], timeout=90)
+        if rc != 0:
+            sh(["git", "pull", "--rebase", "-q", "origin", BRANCH], timeout=90)
             rc, out = sh(["git", "push", "-q", "origin", BRANCH], timeout=90)
         if rc == 0:
             LAST_PUSH.parent.mkdir(parents=True, exist_ok=True)

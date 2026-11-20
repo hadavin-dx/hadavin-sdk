@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:33:34Z
+UPDATED_UTC: 2026-11-20T05:33:43Z
 SESSION: core-a
 ORDER: 006 (002 to 005 standing)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 14
 ITEMS_OPEN: 8
 PERCENT: 54
 AGENTS_RUNNING: 6
-CAPACITY: load 0.46 of 4 cores (1-minute average), mem 0.7/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.39 of 4 cores (1-minute average), mem 0.6/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.2G 60G 14%; 248M /home/user/hadavin-sdk; 39M /tmp/claude-0; 130M /root/.cache
 INTERRUPTED: none
 FAILED: none
@@ -52,9 +52,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 4567 | timeout 300 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 4570 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 4573 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 0s ago | running | matched by name in ps |
+| none | | | | | |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
