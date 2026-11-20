@@ -1551,7 +1551,7 @@ def test_s2_a_vouched_role_that_is_a_member_of_a_listed_role_is_listed(w):
     (case 1), or of a CREATEROLE role that is not accepted (case 2, below 16), is listed for the membership."""
     with _server_wide_createrole(w, 2) as (b, p2):
         below = _below_16(w)
-        p = w.new_role("pu", "NOLOGIN")
+        p = w.new_role("pq", "NOLOGIN")
         w.grant("GRANT UPDATE ON kill_switch TO {}", p)
         w.grant("GRANT {} TO {}", p, b)
         assert _who(w.scoped, w.reset, (b,)) == sorted([b, p] + ([p2] if below else []))
