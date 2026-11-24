@@ -681,8 +681,8 @@ def earlier_0009_leftovers(db) -> list[str]:
 
 
 class StopTablesBusy(Exception):
-    """The validate step could not get its lock, or ran out of time (table locked by a long transaction, or very
-    large). A condition to retry, NOT a refusal: the CLI exits 75 for it, 2 for a `ConfigError`."""
+    """The validate step could not get its lock or ran out of time (table locked by a long transaction, or very
+    large), or any other step of `migrate` waited for a lock longer than the limit. A condition to retry, NOT a refusal: the CLI exits 75 for it, 2 for a `ConfigError`."""
 
 
 VALIDATE_LOCK_TIMEOUT = "5s"  # never queue behind a long writer and block the stop tables
@@ -703,8 +703,9 @@ def _validate_one(db, table: str, name: str) -> None:
 def _stop_timeouts(db, lock_only: bool = False):
     """Set the lock and statement timeouts for the validation step only (`set_config(..., true)`, the same effect
     as `SET LOCAL`), and put the transaction's previous values back afterwards, also when the step raises
-    (`migrate` runs the step inside its one transaction: the grant and function steps after it must not inherit a
-    5 second lock limit). After a DATABASE error the transaction is aborted and refuses any statement: the restore
+    (`migrate` runs the step inside its one transaction: the grant and function steps after it must not inherit
+    the 60 second statement limit). `lock_only=True` sets the lock limit alone and leaves the statement limit as it
+    was: `migrate` holds it from its advisory lock to just before its commit. After a DATABASE error the transaction is aborted and refuses any statement: the restore
     is skipped then (the caller rolls back) so the original error is never replaced by InFailedSqlTransaction."""
     names = ("lock_timeout", "statement_timeout")
     old = [db.execute("SELECT pg_catalog.current_setting(%s)", (n,)).fetchone()[0] for n in names]
@@ -727,7 +728,7 @@ def _stop_timeouts(db, lock_only: bool = False):
 
 def _busy(exc: BaseException, what: str) -> StopTablesBusy:
     return StopTablesBusy(
-        f"could not {what} ({type(exc).__name__}): the table is locked by a long transaction (waited "
+        f"could not {what} ({type(exc).__name__}): a table or catalog row is locked by a long transaction (waited "
         f"{VALIDATE_LOCK_TIMEOUT}), the scan took longer than {VALIDATE_STATEMENT_TIMEOUT}, or the connection "
         "failed; nothing was changed, run it again later"
     )
@@ -1428,6 +1429,28 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
             )
 
 
+@contextlib.contextmanager
+def _one_migrate_with_a_lock_limit(db):
+    """Everything `migrate` does in its transaction runs inside this: first the advisory lock, waited for WITHOUT a
+    limit (a second `migrate` waits for the first; `lock_timeout` applies to advisory waits too, so a limit set
+    earlier would end that wait), then the lock limit alone (no statement limit: a file may build an index for
+    minutes) until just before the commit. One span, because the files take ACCESS EXCLUSIVE on the stop tables and
+    hold it to the commit: any later unlimited lock wait (a GRANT, REVOKE or ALTER FUNCTION behind another session's
+    uncommitted change of the same catalog row, a check that reads a locked table) would hang while every stop read
+    and write queues behind it. The ledger steps before the files hold no stop-table lock yet, but they can wait too
+    (ALTER TABLE or a read of schema_migrations behind a long transaction) and nothing is gained by waiting, so the
+    limit covers them as well. A lock wait over the limit is `StopTablesBusy` (exit 75): the transaction is aborted,
+    the restore is skipped and the caller rolls everything back."""
+    db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+    try:
+        with _stop_timeouts(db, lock_only=True):
+            yield
+    except errors.LockNotAvailable as exc:
+        raise _busy(
+            exc, "get a lock that the ledger, a migration file, a grant or a check step needs"
+        ) from None
+
+
 def migrate(
     dsn: str,
     *,
@@ -1511,8 +1534,8 @@ def migrate(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
         ) as db,
         db.transaction(),
+        _one_migrate_with_a_lock_limit(db),
     ):
-        db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
         _ensure_ledger(db)
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
@@ -1539,23 +1562,16 @@ def migrate(
             _reset_draft(db, reset_draft, files)
             done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
-        try:
-            # a lock limit, set only now that the advisory lock is held (a limit before it would end the wait for
-            # another migrate) and only for the file loop: an ACCESS EXCLUSIVE wait behind a long reader would
-            # otherwise queue for ever, and every stop read and write queues behind it
-            with _stop_timeouts(db, lock_only=True):
-                for path in files:
-                    if path.stem in done:
-                        continue
-                    text, digest = texts[path]
-                    db.execute(text)  # a file shipped in this package
-                    db.execute(
-                        "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
-                        (path.stem, digest),
-                    )
-                    applied.append(path.stem)
-        except errors.LockNotAvailable as exc:
-            raise _busy(exc, "get the table lock a migration file needs") from None
+        for path in files:
+            if path.stem in done:
+                continue
+            text, digest = texts[path]
+            db.execute(text)  # a file shipped in this package
+            db.execute(
+                "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                (path.stem, digest),
+            )
+            applied.append(path.stem)
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
         for a in named:
             for b in named:

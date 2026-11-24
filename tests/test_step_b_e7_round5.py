@@ -108,12 +108,20 @@ def _at_0008(up, monkeypatch):
         up.migrate()
 
 
+def own_advisory_key(monkeypatch):
+    """Give this scenario an advisory key of its own. Every `migrate` on the server shares ONE key, so under
+    pytest-xdist a migrate of another test can hold it while this scenario's blocker runs towards its idle timeout
+    (the wait for that key has no limit, on purpose); the key itself is not what these scenarios test."""
+    monkeypatch.setattr(migrate_mod, "_LOCK", uuid.uuid4().int >> 66)
+
+
 def busy_file_scenario(monkeypatch, cfg_dir=None):
     """A long reader holds a lock on a stop table while an upgrade needs ACCESS EXCLUSIVE on it: `migrate` must give
     up with StopTablesBusy (exit 75 on the CLI) within the lock limit and apply nothing, not queue behind the reader."""
     up = make_world()
     try:
         _at_0008(up, monkeypatch)
+        own_advisory_key(monkeypatch)
         before = up.run("SELECT count(*) FROM schema_migrations")[0][0]
         with up.admin() as blocker:
             blocker.execute(
@@ -285,18 +293,18 @@ VALIDATE_MAP = (
 )
 FILE_LOOP = "with _stop_timeouts(db, lock_only=True):"
 LOCK_MAP = "except errors.LockNotAvailable as exc:"
-ADVISORY = '        db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))\n'
+ADVISORY = '    db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))\n'
 EXCESS_TARGET = "target = _qualified("
 SEED_INSERT = '.format(_in_schema(db, "hadavin_limits")),\n            (name, value),'
 
 
 def _killed(fn, *args):
-    with pytest.raises(BaseException) as err:  # noqa: PT011
+    with pytest.raises(BaseException) as err:
         fn(*args)
     assert not isinstance(err.value, KeyboardInterrupt)
-    print(
-        f"  killed by {type(err.value).__name__}: {str(err.value)[:100]!r}"
-    )  # seen with -s in the raw logs
+    print(  # seen with -s in the raw logs: which check killed the mutant, and how
+        f"  KILLED by {fn.__name__}: {type(err.value).__name__}: {str(err.value)[:100]!r}"
+    )
 
 
 TIMEOUT_MUTANTS = [
@@ -380,7 +388,7 @@ def test_mutants_of_the_file_loop_lock_limit_are_killed(monkeypatch):
 
 
 def test_a_limit_set_before_the_advisory_lock_is_killed_by_the_wait_test(w, monkeypatch):
-    early = "        db.execute(\"SELECT set_config('lock_timeout', '5s', true)\")\n" + ADVISORY
+    early = "    db.execute(\"SELECT set_config('lock_timeout', '5s', true)\")\n" + ADVISORY
     with mutated(ADVISORY, early), monkeypatch.context() as m:
         m.setattr(e7, "migrate", migrate_mod.migrate)
         _killed(advisory_wait_scenario, w)
