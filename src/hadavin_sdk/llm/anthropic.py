@@ -7,16 +7,19 @@ Needs ``hadavin-sdk[anthropic]``.
 
 Three things this kind does to the whole process, for whoever runs it:
 
-1. Before every attempt of every call it holds three loggers, and only these three: ``anthropic``,
-   ``httpcore2`` and ``google.auth``. Each is set to WARNING if its level is lower or not set, and every logger
-   below them that has a level under WARNING is set to NOTSET, so that it inherits. DEBUG or INFO output of
-   those three libraries cannot be switched on while this kind is in use, for other code in the process
-   either: a level set between two attempts is undone before the next attempt. A filter on each of these
-   loggers also drops every record below WARNING logged on it, whatever its level is at that moment (another
-   thread may raise it between our check and the SDK's log call), so a handler attached to one of them
-   receives nothing below WARNING either. What this does not cover: a logger of these libraries that we do
-   not name, first created by another thread after our last check and set to DEBUG before it logs; and a
-   host that removes the filter from a logger.
+1. It holds three loggers, and only these three: ``anthropic``, ``httpcore2`` and ``google.auth``. From the
+   import of this module, and again before every attempt of every call, each is set to WARNING if its level is
+   lower or not set, and every logger below them that has a level under WARNING is set to NOTSET, so that it
+   inherits. DEBUG or INFO output of those three libraries cannot be switched on while this kind is in use,
+   for other code in the process either: a level set between two attempts is undone before the next attempt.
+   A filter, attached from the import of this module for the life of the process, also drops every record
+   below WARNING logged on each of these loggers, whatever its level is at that moment (another thread may
+   raise it between our check and the SDK's log call), so a handler attached to one of them receives nothing
+   below WARNING either. The loggers we name are created early for this; a host logging configuration loaded
+   later with ``disable_existing_loggers`` therefore disables them (they then log nothing at all). What this
+   does not cover: a logger of these libraries that we do not name, first created after our last check by any
+   thread (the calling thread included): it has no filter until the next check and follows its parent's
+   level; and a host that removes the filter from a logger (it is attached again at the next check).
 2. The HTTP client's logger (``httpx2``) is not held. Whenever it is at INFO or lower it writes one line per
    request: method, full URL, HTTP version, status. That is the case when the host's own logging set-up puts
    the root logger at INFO or DEBUG (an ordinary set-up), or when ``ANTHROPIC_LOG`` is ``debug`` or ``info``.
@@ -60,17 +63,27 @@ API_BASE_URL = "https://api.anthropic.com"
 QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
 
 # The loggers below them that do the logging, made to exist by the first sweep so that they carry the filter
-# before they are first used. anthropic._base_client needs no entry: importing the SDK creates it
-# (__init__.py:18 imports _client, which imports _base_client at _client.py:31 in 2.1.0, :29 in 2.9.0). The
-# httpcore2 loggers appear only when an HTTP client is built and the google-auth one only at the first token
-# request, which is inside an attempt, after our sweep (checked by running both SDK versions, 2026-11-24).
+# before they are first used: every logger name in the installed httpcore2 (2.16.2) and in google-auth's
+# transport package (2.62.0), kept complete by a drift test in tests/test_p5_llm.py. The transports log the
+# full request and response through one helper (_helpers.py:410); the SDK uses requests, a host may use the
+# others. anthropic._base_client needs no entry: importing the SDK creates it (__init__.py:18 imports _client,
+# which imports _base_client at _client.py:31 in 2.1.0, :29 in 2.9.0). The httpcore2 loggers appear only when
+# an HTTP client is built, and google-auth is imported by the SDK only inside the first attempt, which is why
+# client() imports it at build time on Vertex (checked by running both SDK versions, 2026-11-24).
 _LOGGING_CHILDREN = (
     "httpcore2.connection",
     "httpcore2.http11",
     "httpcore2.http2",
     "httpcore2.proxy",
     "httpcore2.socks",
+    "google.auth.transport._aiohttp_requests",
+    "google.auth.transport._custom_tls_signer",
+    "google.auth.transport._http_client",
+    "google.auth.transport._mtls_helper",
+    "google.auth.transport.grpc",
+    "google.auth.transport.mtls",
     "google.auth.transport.requests",
+    "google.auth.transport.urllib3",
 )
 
 
@@ -82,7 +95,9 @@ class _BelowWarning(logging.Filter):
         return record.levelno >= logging.WARNING
 
 
-BELOW_WARNING = _BelowWarning()  # one instance: Logger.addFilter adds the same object only once
+# One instance: Logger.addFilter skips an object that is already attached. Two threads sweeping at the same
+# moment could attach it twice, which is harmless: it only drops.
+BELOW_WARNING = _BelowWarning()
 
 # Environment variables that reach the client whatever arguments we pass, refused on every platform:
 # ANTHROPIC_CUSTOM_HEADERS adds its headers to every request of the API and Foundry clients (_client.py:250 in
@@ -204,6 +219,14 @@ def client(settings: Any, key: str | None) -> Any:
     }
     try:
         if settings.platform == "vertex":
+            # google-auth now, not inside the first attempt where the SDK would import it: its loggers exist
+            # and carry the filter before anything is sent. Missing: the SDK names the extra to install.
+            try:
+                import google.auth
+                import google.auth.transport.requests  # noqa: F401 - imported for its loggers
+            except ImportError:
+                pass
+            _quiet()
             # No key: the workload's Google identity (see the docstring).
             return anthropic.AnthropicVertex(
                 region=settings.region,

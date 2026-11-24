@@ -5,6 +5,8 @@ import json
 import logging
 import re
 import ssl
+import subprocess
+import sys
 import urllib.error
 from email.message import Message
 from pathlib import Path
@@ -755,19 +757,90 @@ def test_the_filter_is_attached_once_however_often_the_guard_runs():
         assert logging.getLogger(name).filters.count(mod.BELOW_WARNING) == 1, name
 
 
+# Written out here: every logger name in the installed httpcore2 package and in google-auth's transport package.
+_MADE_TO_EXIST = [
+    "httpcore2.connection",
+    "httpcore2.http11",
+    "httpcore2.http2",
+    "httpcore2.proxy",
+    "httpcore2.socks",
+    "google.auth.transport._aiohttp_requests",
+    "google.auth.transport._custom_tls_signer",
+    "google.auth.transport._http_client",
+    "google.auth.transport._mtls_helper",
+    "google.auth.transport.grpc",
+    "google.auth.transport.mtls",
+    "google.auth.transport.requests",
+    "google.auth.transport.urllib3",
+]
+
+
+def test_every_logger_of_the_http_library_and_of_google_auths_transports_is_made_to_exist():
+    """Drift, by source: a later httpcore2 or google-auth that adds a logger name fails here until the name is
+    in the module's list (and so carries the filter before its first use)."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    httpcore2 = pytest.importorskip("httpcore2", reason="needs extra anthropic")
+    transport = pytest.importorskip("google.auth.transport", reason="needs extra anthropic")
+    found = set()
+    for package in (httpcore2, transport):
+        root = Path(package.__file__).parent
+        for path in root.rglob("*.py"):
+            module = ".".join([package.__name__, *path.relative_to(root).with_suffix("").parts])
+            source = path.read_text(encoding="utf-8")
+            for name in re.findall(r"getLogger\(\s*([\w.\"']+)\s*\)", source):
+                found.add(
+                    module.removesuffix(".__init__") if name == "__name__" else name.strip("\"'")
+                )
+    assert len(found) >= 13  # the scan found both packages
+    assert sorted(mod._LOGGING_CHILDREN) == sorted(_MADE_TO_EXIST)
+    missing = sorted(found - set(_MADE_TO_EXIST))
+    assert not missing, (
+        f"loggers {missing} of the installed httpcore2 or google-auth are not in _LOGGING_CHILDREN in "
+        "src/hadavin_sdk/llm/anthropic.py: add them there and to _MADE_TO_EXIST here"
+    )
+
+
+def test_on_vertex_every_google_auth_logger_carries_the_filter_before_the_first_attempt():
+    """A fresh process: the vertex client is built and nothing is sent. google-auth is imported at build time
+    (the SDK would import it only inside the first attempt), so its loggers exist and carry the filter."""
+    pytest.importorskip("anthropic", reason="needs extra anthropic")
+    pytest.importorskip("google.auth", reason="needs extra anthropic")
+    code = """
+import json, logging, sys
+from hadavin_sdk.backends.factory import make
+from hadavin_sdk.backends.table import AnthropicSettings
+from hadavin_sdk.llm import anthropic as mod
+from tests.contracts.kinds.builtin import ROUTES
+make("llm", AnthropicSettings(kind="anthropic", platform="vertex", project_id="p-1", region="global"), routes=ROUTES)
+below = {n: l for n, l in logging.root.manager.loggerDict.items()
+         if n.startswith("google.auth.") and isinstance(l, logging.Logger)}
+print(json.dumps({
+    "imported": "google.auth.transport.requests" in sys.modules and "google.auth._default" in sys.modules,
+    "count": len(below),
+    "unfiltered": sorted(n for n, l in below.items() if mod.BELOW_WARNING not in l.filters),
+}))
+"""
+    done = subprocess.run(  # noqa: S603 - this interpreter, a fixed script
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=Path(__file__).parent.parent,
+    )
+    seen = json.loads(done.stdout.strip().splitlines()[-1])
+    assert seen["imported"] is True
+    assert seen["count"] > len(
+        [n for n in _MADE_TO_EXIST if n.startswith("google.")]
+    )  # more than the named
+    assert seen["unfiltered"] == []
+
+
 def test_the_loggers_that_log_exist_and_carry_the_filter_before_their_first_use():
     """The HTTP library's loggers appear only when a client is built and google-auth's only at the first token
     request, inside an attempt: the guard makes them exist first, so none is ever without the filter."""
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
     mod._guard()
-    for name in (
-        "httpcore2.connection",
-        "httpcore2.http11",
-        "httpcore2.http2",
-        "httpcore2.proxy",
-        "httpcore2.socks",
-        "google.auth.transport.requests",
-    ):
+    for name in _MADE_TO_EXIST:
         logger = logging.root.manager.loggerDict.get(name)
         assert isinstance(logger, logging.Logger), name
         assert mod.BELOW_WARNING in logger.filters, name
@@ -808,19 +881,17 @@ def test_the_sdks_own_log_switch_puts_no_prompt_in_a_log(caplog, monkeypatch, pl
 def _env_names(source):
     """Every ANTHROPIC_ name in a source text, and every name it reads from the environment: through os.getenv
     or os.environ under any import alias, or held in an ENV_ constant."""
-    readers = {
-        "getenv",
-        "environ",
-    }  # also reached as os.getenv, o.environ: the prefix does not matter
+    aliases = set()
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.ImportFrom) and node.module == "os":
-            readers |= {
+            aliases |= {
                 a.asname for a in node.names if a.asname and a.name in ("getenv", "environ")
             }
-    read = "|".join(sorted(map(re.escape, readers)))
+    # getenv and environ without a word boundary: os.getenv, o.environ and a wrapper such as _getenv all match.
+    read = "|".join(["getenv", "environ", *(rf"\b{re.escape(alias)}" for alias in sorted(aliases))])
     patterns = [
         r"\bANTHROPIC_[A-Z0-9_]*[A-Z0-9]\b",
-        rf"\b(?:{read})(?:\.get)?\s*[\(\[]\s*[\"'](\w+)[\"']",
+        rf"(?:{read})(?:\.get)?\s*[\(\[]\s*[\"'](\w+)[\"']",
         r"\bENV_\w+\s*=\s*[\"'](\w+)[\"']",  # a name held in a constant and read through it
     ]
     return {name for pattern in patterns for name in re.findall(pattern, source)}
@@ -836,6 +907,9 @@ e["ALIAS_SUBSCRIPT"]
 e.get("ALIAS_GET")
 o.getenv("MODULE_ALIAS_GETENV")
 o.environ["MODULE_ALIAS_ENVIRON"]
+_getenv("WRAPPED_GETENV")
+my_environ["WRAPPED_ENVIRON"]
+xe["NOT_READ_BY_ALIAS_E"]
 not_a_reader("NOT_AN_ENV_NAME")
 """
     assert _env_names(source) == {
@@ -844,6 +918,8 @@ not_a_reader("NOT_AN_ENV_NAME")
         "ALIAS_GET",
         "MODULE_ALIAS_GETENV",
         "MODULE_ALIAS_ENVIRON",
+        "WRAPPED_GETENV",  # a wrapper whose name ends in getenv or environ is still seen
+        "WRAPPED_ENVIRON",
     }
 
 
