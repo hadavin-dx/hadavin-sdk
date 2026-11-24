@@ -116,4 +116,3 @@ def test_an_endpoint_in_the_shared_aws_config_file_is_ignored(monkeypatch, tmp_p
     monkeypatch.setattr(boto3, "client", lambda *a, **kw: made.append(real(*a, **kw)) or made[-1])
     signer_aws.build(SimpleNamespace(region=REGION, key_id="k"), None)
     assert made[0].meta.endpoint_url == f"https://kms.{REGION}.amazonaws.com"
-    monkeypatch.setattr(boto3, "DEFAULT_SESSION", None)  # no session of this test for the next one

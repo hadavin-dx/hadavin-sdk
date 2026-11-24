@@ -638,6 +638,27 @@ def test_a_level_stricter_than_warning_is_left_alone(name):
         mod._guard()
 
 
+@pytest.mark.parametrize("pinned, child", [(pinned, kids[0]) for pinned, kids in QUIET.items()])
+def test_a_quiet_logger_with_no_level_of_its_own_is_held_under_a_root_at_debug(pinned, child):
+    """The ordinary dangerous state: the host's root logger at DEBUG and the library's logger never touched."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    root, parent, kid = logging.getLogger(), logging.getLogger(pinned), logging.getLogger(child)
+    root_level = root.level
+    try:
+        root.setLevel(logging.DEBUG)
+        parent.setLevel(logging.NOTSET)
+        kid.setLevel(logging.NOTSET)
+        assert (
+            kid.getEffectiveLevel() == logging.DEBUG
+        )  # the control: both inherit the root's level
+        mod._guard()
+        assert parent.getEffectiveLevel() >= logging.WARNING
+        assert kid.getEffectiveLevel() >= logging.WARNING
+    finally:
+        root.setLevel(root_level)
+        mod._guard()
+
+
 @pytest.mark.parametrize(
     "pinned, child", [(pinned, child) for pinned, children in QUIET.items() for child in children]
 )

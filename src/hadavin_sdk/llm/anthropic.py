@@ -7,12 +7,16 @@ Needs ``hadavin-sdk[anthropic]``.
 
 Three things this kind does to the whole process, for whoever runs it:
 
-1. Before every attempt of every call it sets the loggers ``anthropic``, ``httpcore2`` and ``google.auth``, and
-   every logger below them, to WARNING wherever a level below WARNING is set. DEBUG or INFO output of those three
-   libraries cannot be switched on while this kind is in use, for other code in the process either.
-2. With ``ANTHROPIC_LOG`` set to ``debug`` or ``info``, the HTTP client's logger (``httpx2``) writes one line
-   per request: method, full URL, HTTP version, status. No key, header or body; on Vertex the URL holds the
-   project id, the region and the model id, on Foundry the resource name.
+1. Before every attempt of every call it holds three loggers, and only these three: ``anthropic``,
+   ``httpcore2`` and ``google.auth``. Each is set to WARNING if its level is lower or not set, and every logger
+   below them that has a level under WARNING is set to NOTSET, so that it inherits. DEBUG or INFO output of
+   those three libraries cannot be switched on while this kind is in use, for other code in the process
+   either: a level set between two attempts is undone before the next attempt.
+2. The HTTP client's logger (``httpx2``) is not held. Whenever it is at INFO or lower it writes one line per
+   request: method, full URL, HTTP version, status. That is the case when the host's own logging set-up puts
+   the root logger at INFO or DEBUG (an ordinary set-up), or when ``ANTHROPIC_LOG`` is ``debug`` or ``info``.
+   The line holds no key, header or body; on Vertex the URL holds the project id, the region and the model
+   id, on Foundry the resource name.
 3. Tracing by the SDK is fixed: spans carry no request or response content and the SDK adds no trace header to
    the request, so the host's trace context is not sent to the model provider. Neither can be changed by an
    environment variable.
