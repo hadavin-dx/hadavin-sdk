@@ -11,10 +11,10 @@ from typing import Any, Literal
 
 # The extra: a missing install fails at start-up with the hint (backends.make).
 import boto3
-from botocore.config import Config
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
+from hadavin_sdk import aws_client
 from hadavin_sdk.audit.signer import probe
 from hadavin_sdk.errors import ConfigError
 
@@ -50,6 +50,6 @@ class KmsSigner:
 
 def build(settings, deps) -> KmsSigner:
     # Checkpoints are signed inline every N audit rows: bounded, not botocore's 60 s defaults.
-    config = Config(connect_timeout=3, read_timeout=5, retries={"total_max_attempts": 2})
+    config = aws_client.config(connect_timeout=3, read_timeout=5, retries={"total_max_attempts": 2})
     client = boto3.client("kms", region_name=settings.region, config=config)
     return probe(KmsSigner(settings.key_id, client), "signer aws_kms")

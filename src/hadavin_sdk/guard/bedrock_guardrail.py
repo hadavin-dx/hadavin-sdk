@@ -16,8 +16,8 @@ from __future__ import annotations
 from typing import Any
 
 import boto3  # the extra: a missing install fails at start-up with the hint (backends.make)
-from botocore.config import Config
 
+from hadavin_sdk import aws_client
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import Verdict
@@ -29,13 +29,12 @@ def _client(service: str, region: str) -> Any:
     return boto3.client(
         service,
         region_name=region,
-        config=Config(
+        # aws_client.config: AWS_ENDPOINT_URL(_BEDROCK_RUNTIME) would send the screened text to another host.
+        config=aws_client.config(
             connect_timeout=5,
             read_timeout=10,
             # total_max_attempts counts the first request: one retry for a blip, then the run is flagged.
             retries={"total_max_attempts": 2, "mode": "standard"},
-            # AWS_ENDPOINT_URL(_BEDROCK_RUNTIME) would send the screened text to another host.
-            ignore_configured_endpoint_urls=True,
         ),
     )
 

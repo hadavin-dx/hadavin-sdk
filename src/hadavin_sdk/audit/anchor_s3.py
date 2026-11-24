@@ -19,9 +19,9 @@ from typing import Any
 
 # The extra: a missing install fails at start-up with the hint (backends.make).
 import boto3
-from botocore.config import Config
 from botocore.exceptions import ClientError
 
+from hadavin_sdk import aws_client
 from hadavin_sdk.audit import anchors
 
 PREFIX = anchors.PREFIX
@@ -85,7 +85,8 @@ def build(settings, deps) -> S3Anchor:
     """`backends.anchor: {kind: s3_object_lock, ...}`; `endpoint_url` for MinIO / Ceph RGW (Object Lock on; the
     store must accept conditional puts (`If-None-Match: *`) and SHA-256 checksums: older Ceph releases do not)."""
     # Anchors are written inline every N audit rows: a slow S3 must cost seconds, not botocore's 60 s defaults.
-    config = Config(connect_timeout=3, read_timeout=5, retries={"total_max_attempts": 2})
+    # aws_client.config: only the validated `endpoint_url` setting moves the endpoint, never the environment.
+    config = aws_client.config(connect_timeout=3, read_timeout=5, retries={"total_max_attempts": 2})
     client = boto3.client(
         "s3", region_name=settings.region, endpoint_url=settings.endpoint_url, config=config
     )

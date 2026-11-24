@@ -1,6 +1,7 @@
 """Slice 2 P5: the llm kinds' wiring outside the contract suite (design 4.3, 12.10)."""
 
 import json
+import logging
 import re
 import ssl
 import urllib.error
@@ -24,6 +25,7 @@ from hadavin_sdk.registry import load_registry
 from tests.contracts.kinds.builtin import ROUTES
 from tests.contracts.kinds.llm_wire import KEY, AnthropicWire, GeminiWire, OpenAICompatWire
 from tests.contracts.test_llm import CALL, SCHEMA
+from tests.fixtures.http_fake import fixture
 from tests.test_s5_runtime import build
 
 
@@ -291,17 +293,19 @@ def test_each_anthropic_platform_calls_its_own_path_with_its_key(platform, suffi
         wire.close()
 
 
-def test_a_foundry_resource_in_the_environment_is_a_config_error(monkeypatch):
+def test_a_foundry_resource_in_the_environment_never_moves_the_request(monkeypatch):
+    """Exactly two outcomes: the SDK refuses the variable beside our base URL (before 2.7.0), or it ignores the
+    variable and the request goes to the configured resource (2.7.0 and later)."""
     pytest.importorskip("anthropic", reason="needs extra anthropic")
     monkeypatch.setenv("ANTHROPIC_FOUNDRY_RESOURCE", "elsewhere")
-    settings = AnthropicSettings(
-        kind="anthropic",
-        platform="foundry",
-        resource="acme",
-        api_key_secret_name="a",  # noqa: S106 - a name
-    )
-    with pytest.raises(ConfigError, match="foundry"):
-        make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
+    try:
+        llm = _anthropic_llm("foundry")
+    except ConfigError as refused:
+        assert "foundry" in str(refused) and "resource" in str(refused)
+        assert "elsewhere" not in str(refused)
+    else:
+        sent = _call(llm, "foundry")
+        assert sent.url.host == "acme.services.ai.azure.com" and "elsewhere" not in str(sent.url)
 
 
 # --- the endpoint and the identity come from the configuration, never from the environment ----------
@@ -311,11 +315,21 @@ _PLATFORMS = {
     "vertex": {"project_id": "p-1", "region": "global"},
     "foundry": {"api_key_secret_name": "a", "resource": "acme"},
 }
-_API_REFUSED = [
+_HOSTS = {
+    "api": "api.anthropic.com",
+    "vertex": "aiplatform.googleapis.com",
+    "foundry": "acme.services.ai.azure.com",
+}
+# The three lists are written out here, not read from llm/anthropic.py: an entry dropped there fails a case.
+# Refused at start and on every call, on every platform: they reach the client whatever we pass.
+REFUSED = ["ANTHROPIC_CUSTOM_HEADERS"]
+# Refused too (second net): they make the SDK write request or response content to logs or traces.
+CONTENT_REFUSED = ["ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE"]
+# Not refused, and must not reach the client: the SDK reads them, our arguments win.
+_API_IGNORED = [
     "ANTHROPIC_BASE_URL",
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_AUTH_TOKEN",
-    "ANTHROPIC_CUSTOM_HEADERS",
     "ANTHROPIC_PROFILE",
     "ANTHROPIC_CONFIG_DIR",
     "ANTHROPIC_IDENTITY_TOKEN",
@@ -326,33 +340,36 @@ _API_REFUSED = [
     "ANTHROPIC_WORKSPACE_ID",
     "ANTHROPIC_SCOPE",
 ]
-_FOUNDRY_REFUSED = [
-    *_API_REFUSED,
-    "ANTHROPIC_FOUNDRY_API_KEY",
-    "ANTHROPIC_FOUNDRY_RESOURCE",
-    "ANTHROPIC_FOUNDRY_BASE_URL",
-]
-_VERTEX_REFUSED = [
-    "ANTHROPIC_VERTEX_BASE_URL",
-    "ANTHROPIC_VERTEX_PROJECT_ID",
-    "CLOUD_ML_REGION",
-    "ANTHROPIC_CUSTOM_HEADERS",
-]
-# Written out here, not read from the table in llm/anthropic.py: an entry dropped from the table fails a case.
-REFUSED = [
-    *(("api", n) for n in _API_REFUSED),
-    *(("foundry", n) for n in _FOUNDRY_REFUSED),
-    *(("vertex", n) for n in _VERTEX_REFUSED),
-]
+MUST_NOT_REACH = {
+    "api": _API_IGNORED,
+    "foundry": [
+        *_API_IGNORED,
+        "ANTHROPIC_FOUNDRY_API_KEY",
+        "ANTHROPIC_FOUNDRY_RESOURCE",
+        "ANTHROPIC_FOUNDRY_BASE_URL",
+    ],
+    "vertex": ["ANTHROPIC_VERTEX_BASE_URL", "ANTHROPIC_VERTEX_PROJECT_ID", "CLOUD_ML_REGION"],
+}
+_IGNORED_NAMES = sorted({n for names in MUST_NOT_REACH.values() for n in names})
 # Names in the SDK's source that are no endpoint or identity of the three clients we build, with the reason.
 _NOT_OURS = {
     "ANTHROPIC_API_VERSION": "a constant in the SDK, not an environment variable",
     "ANTHROPIC_WEBHOOK_SIGNING_KEY": "checks webhooks we do not receive; sent nowhere",
-    "ANTHROPIC_OPEN_TELEMETRY": "tracing: only the value false is read, and it turns spans off",
-    "ANTHROPIC_OPEN_TELEMETRY_PROPAGATION": "tracing: only false is read, and it stops the trace header",
-    "ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES": "tracing: a size cap, no content without content mode",
     "DEFER_PYDANTIC_BUILD": "model build timing",
-    "APPDATA": "where a profile file is looked for; ANTHROPIC_PROFILE and ANTHROPIC_CONFIG_DIR are refused",
+    "APPDATA": "where a profile file is looked for; a profile is never used when a credential is passed",
+    **dict.fromkeys(
+        [
+            "ANTHROPIC_OPEN_TELEMETRY",
+            "ANTHROPIC_OPEN_TELEMETRY_PROPAGATION",
+            "ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES",
+        ],
+        "tracing: not read at all, because llm/anthropic.py passes the tracing option explicitly",
+    ),
+    **dict.fromkeys(
+        ["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR"],
+        "the host's proxy and certificate settings stay the host's, as for every model client of this "
+        "package (guard/http.py); read by the HTTP library, not by the SDK",
+    ),
     **dict.fromkeys(
         [
             "ANTHROPIC_AWS_API_KEY",
@@ -377,100 +394,145 @@ _NOT_OURS = {
         "read only by SDK clients llm/anthropic.py never builds (AWS, Bedrock, Google Cloud, environments)",
     ),
 }
-# Variables that make the SDK write request or response content to logs or traces: refused on every platform.
-CONTENT_REFUSED = ["ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE"]
 _STRAY = "x-stray: stray-marker"  # reads as a header line, and shows in a URL, key or project if one is taken
-
-
-@pytest.fixture
-def no_endpoint_env(monkeypatch):
-    pytest.importorskip("anthropic", reason="needs extra anthropic")
-    for name in [*(n for _, n in REFUSED), *CONTENT_REFUSED]:
-        monkeypatch.delenv(name, raising=False)
+_BASELINE: dict[str, tuple] = {}
 
 
 def _anthropic_llm(platform):
+    pytest.importorskip("anthropic", reason="needs extra anthropic")
     settings = AnthropicSettings(kind="anthropic", platform=platform, **_PLATFORMS[platform])
     return make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
 
 
-def _reached(client):
-    """Everything about a built client that says where it sends and as whom."""
-    names = ("base_url", "default_headers", "_custom_headers", "auth_headers")
-    names += ("api_key", "auth_token", "credentials", "project_id", "region")
-    return " ".join(repr(getattr(client, n, None)) for n in names)
+def _call(llm, platform, call=CALL, sent=None):
+    """One call of an llm built by make(): the request the SDK would put on the wire is caught at the HTTP
+    library's transport and answered from the recorded fixture, so the real, configured host is in it."""
+    httpx2 = pytest.importorskip("httpx2", reason="needs extra anthropic")
+    sent = [] if sent is None else sent
+
+    def answer(request):
+        sent.append(request)
+        return httpx2.Response(200, json=fixture("anthropic", "text")["body"])
+
+    http = httpx2.Client(transport=httpx2.MockTransport(answer))
+    llm._client = llm._client.with_options(http_client=http)
+    if platform == "vertex":
+        llm._client.access_token = KEY  # the tests have no Google identity
+    llm.chat(**call)
+    return sent[0]
 
 
-def test_the_refused_list_is_the_table():
+def _wire(request):
+    """What decides where a request goes and as whom: URL, every header, body."""
+    return str(request.url), sorted(request.headers.items()), request.content
+
+
+def test_the_lists_are_the_tables():
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
-    table = sorted((p, n) for p, names in mod.ENDPOINT_ENV.items() for n in names)
-    assert table == sorted(REFUSED)
+    assert sorted(mod.REFUSED_ENV) == sorted(REFUSED)
     assert sorted(mod.CONTENT_ENV) == sorted(CONTENT_REFUSED)
+    assert {p: sorted(n) for p, n in mod.IGNORED_ENV.items()} == {
+        p: sorted(n) for p, n in MUST_NOT_REACH.items()
+    }
 
 
-@pytest.mark.parametrize("platform, name", REFUSED)
-@pytest.mark.parametrize("value", [_STRAY, ""])
-def test_an_endpoint_or_identity_variable_in_the_environment_is_refused(
-    no_endpoint_env, monkeypatch, platform, name, value
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+@pytest.mark.parametrize("name", [*REFUSED, *CONTENT_REFUSED])
+@pytest.mark.parametrize("value", [_STRAY, "debug", "content", ""])
+def test_a_variable_that_reaches_the_client_or_the_logs_is_refused(
+    monkeypatch, platform, name, value
 ):
     monkeypatch.setenv(name, value)
     with pytest.raises(ConfigError) as refused:
         _anthropic_llm(platform)
-    message = str(refused.value)
-    assert (
-        name in message and platform in message and "stray" not in message
+    assert name in str(refused.value) and "stray" not in str(
+        refused.value
     )  # the name, never the value
 
 
-@pytest.mark.parametrize("platform", list(_PLATFORMS))
-@pytest.mark.parametrize("name", CONTENT_REFUSED)
-@pytest.mark.parametrize("value", ["debug", "content", "stray-off", ""])
-def test_a_variable_that_puts_content_in_logs_or_traces_is_refused(
-    no_endpoint_env, monkeypatch, platform, name, value
-):
-    monkeypatch.setenv(name, value)
+def test_one_error_names_every_refused_variable_and_what_stays_with_the_host(monkeypatch):
+    for name in [*REFUSED, *CONTENT_REFUSED]:
+        monkeypatch.setenv(name, _STRAY)
     with pytest.raises(ConfigError) as refused:
-        _anthropic_llm(platform)
+        _anthropic_llm("api")
     message = str(refused.value)
-    assert (
-        name in message and platform in message and "stray" not in message
-    )  # any value, never shown
-
-
-@pytest.mark.parametrize(
-    "platform, name",
-    [
-        ("api", "CLOUD_ML_REGION"),
-        ("vertex", "ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES"),
-        ("vertex", "ANTHROPIC_FOUNDRY_RESOURCE"),
-        ("foundry", "ANTHROPIC_VERTEX_BASE_URL"),
-        ("api", "HADAVIN_UNRELATED"),
-    ],
-)
-def test_a_variable_the_platform_does_not_read_is_fine(
-    no_endpoint_env, monkeypatch, platform, name
-):
-    monkeypatch.setenv(name, _STRAY)
-    assert "stray" not in _reached(_anthropic_llm(platform)._client)
+    assert all(name in message for name in [*REFUSED, *CONTENT_REFUSED])
+    assert "except the host's proxy and certificate settings" in message and "stray" not in message
 
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
-def test_no_variable_outside_a_platforms_list_reaches_its_client(
-    no_endpoint_env, monkeypatch, platform
-):
-    """Drift, by behaviour: the SDK began to read a variable on a platform whose list does not have it
-    (2.9.0 did so with ANTHROPIC_CUSTOM_HEADERS on Vertex)."""
-    listed = {n for p, n in REFUSED if p == platform}
-    for name in sorted({n for _, n in REFUSED} - listed):
-        with monkeypatch.context() as env:
-            env.setenv(name, _STRAY)
-            assert "stray" not in _reached(_anthropic_llm(platform)._client), (
-                f"the anthropic SDK now uses {name} on platform {platform}: "
-                "add it to ENDPOINT_ENV in src/hadavin_sdk/llm/anthropic.py and to REFUSED here"
-            )
+def test_a_headers_variable_set_after_start_is_refused_on_the_next_call(monkeypatch, platform):
+    llm, sent = _anthropic_llm(platform), []
+    _call(llm, platform, sent=sent)
+    monkeypatch.setenv("ANTHROPIC_CUSTOM_HEADERS", _STRAY)
+    with pytest.raises(ConfigError, match="ANTHROPIC_CUSTOM_HEADERS"):
+        llm.chat(**CALL)
+    assert len(sent) == 1  # the second call sent nothing
 
 
-def test_the_sdk_names_no_variable_the_table_does_not_know():
+def test_a_platform_without_a_table_row_is_a_config_error():
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    settings = AnthropicSettings(kind="anthropic", platform="api", **_PLATFORMS["api"])
+    with pytest.raises(ConfigError, match="unknown platform"):
+        mod.client(settings.model_copy(update={"platform": "elsewhere"}), KEY)
+
+
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+@pytest.mark.parametrize("name", [*_IGNORED_NAMES, "HADAVIN_UNRELATED"])
+def test_a_variable_the_sdk_reads_never_reaches_the_request(monkeypatch, platform, name):
+    """Drift, by behaviour: each endpoint or identity variable set to a marker, on each platform, and one call.
+    The request is the configured one: same URL, same headers, same body as with a clean environment. An SDK
+    upgrade that lets a variable win over our argument fails here."""
+    if platform not in _BASELINE:
+        _BASELINE[platform] = _wire(_call(_anthropic_llm(platform), platform))
+    monkeypatch.setenv(name, _STRAY)
+    try:
+        llm = _anthropic_llm(platform)
+    except ConfigError as refused:
+        # The one refusal the SDK itself makes (before 2.7.0), mapped by llm/anthropic.py: nothing is sent.
+        assert (platform, name) == ("foundry", "ANTHROPIC_FOUNDRY_RESOURCE")
+        assert "stray" not in str(refused)
+        return
+    sent = _call(llm, platform)
+    hint = f"the anthropic SDK now lets {name} change the {platform} request: see IGNORED_ENV in llm/anthropic.py"
+    assert "stray" not in repr(_wire(sent)), hint
+    assert _wire(sent) == _BASELINE[platform], hint
+    assert sent.url.scheme == "https" and sent.url.host == _HOSTS[platform], hint
+    assert any(KEY in value for value in sent.headers.values()), (
+        hint
+    )  # the SDK picks the header name
+
+
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+def test_traces_carry_no_content_whatever_the_environment_says(monkeypatch, platform):
+    """The tracing option is passed explicitly, so the SDK reads none of its tracing variables. Our own refusal
+    of the content-mode variable is switched off here to show the first net alone."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    monkeypatch.setattr(mod, "CONTENT_ENV", ())
+    monkeypatch.setenv("ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE", "content")
+    client = _anthropic_llm(platform)._client
+    for built in (client, client.with_options(timeout=3.0)):  # a call uses such a copy
+        assert built._open_telemetry["traces"]["content_mode"] == "metadata_only"
+
+
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+def test_a_prompt_or_a_key_never_reaches_a_log_at_debug(caplog, platform):
+    """A host that logs everything at DEBUG, and even sets the SDK's own logger to DEBUG after start."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    caplog.set_level(logging.DEBUG)  # the root logger
+    llm = _anthropic_llm(platform)
+    for name in mod.QUIET_LOGGERS:
+        logging.getLogger(name).setLevel(logging.DEBUG)
+    prompt = "prompt-marker-" + "7f3a"
+    _call(llm, platform, call={**CALL, "messages": [{"role": "user", "content": prompt}]})
+    logged = " ".join(r.getMessage() + repr(vars(r)) for r in caplog.records)
+    assert prompt not in logged and KEY not in logged
+    assert all(
+        logging.getLogger(n).getEffectiveLevel() >= logging.WARNING for n in mod.QUIET_LOGGERS
+    )
+
+
+def test_the_sdk_names_no_variable_the_tables_do_not_know():
     """Drift, by source: every ANTHROPIC_ name, and every name read from the environment, in the installed SDK."""
     anthropic = pytest.importorskip("anthropic", reason="needs extra anthropic")
     patterns = [
@@ -483,11 +545,13 @@ def test_the_sdk_names_no_variable_the_table_does_not_know():
         source = path.read_text(encoding="utf-8")
         for pattern in patterns:
             found.update(re.findall(pattern, source))
-    assert len(found) > 20  # the scan found the SDK's source
-    unknown = sorted(found - {n for _, n in REFUSED} - set(CONTENT_REFUSED) - set(_NOT_OURS))
+    listed = {*REFUSED, *CONTENT_REFUSED, *_IGNORED_NAMES}
+    assert listed <= found, f"listed here but named nowhere in the SDK: {sorted(listed - found)}"
+    unknown = sorted(found - listed - set(_NOT_OURS))
     assert not unknown, (
-        f"anthropic {anthropic.__version__} names {unknown}, unknown to ENDPOINT_ENV in "
-        "src/hadavin_sdk/llm/anthropic.py: read what each does in the SDK, then add it to ENDPOINT_ENV and "
-        "REFUSED (endpoint or identity of api, vertex or foundry), to CONTENT_ENV and CONTENT_REFUSED (a logging "
-        "or tracing switch that can write request or response content), or to _NOT_OURS with the reason"
+        f"anthropic {anthropic.__version__} names {unknown}, unknown to src/hadavin_sdk/llm/anthropic.py: read "
+        "what each does in the SDK, then add it to REFUSED_ENV (reaches the client whatever we pass), to "
+        "CONTENT_ENV (a logging or tracing switch that can write request or response content), to IGNORED_ENV "
+        "(an endpoint or identity name that loses to our argument) and to the same list here, or to _NOT_OURS "
+        "with the reason"
     )

@@ -13,6 +13,7 @@ from typing import Any
 
 import boto3  # the extra: a missing install fails at start-up with the hint (backends.make)
 
+from hadavin_sdk import aws_client
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
 from hadavin_sdk.errors import ConfigError
 
@@ -39,5 +40,6 @@ class SecretsManagerProvider(CachedSecrets):
 
 
 def build(settings, deps) -> SecretsManagerProvider:
-    client = boto3.client("secretsmanager", region_name=settings.region)
+    # aws_client.config: AWS_ENDPOINT_URL would send the signed request for a secret to another host.
+    client = boto3.client("secretsmanager", region_name=settings.region, config=aws_client.config())
     return SecretsManagerProvider(client, settings.ttl_s)

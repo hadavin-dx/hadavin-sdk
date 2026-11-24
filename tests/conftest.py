@@ -20,12 +20,16 @@ _ISOLATED = (
     "AWS_DEFAULT_PROFILE",
     "AWS_SESSION_TOKEN",
     "AWS_WEB_IDENTITY_TOKEN_FILE",
+    "CLOUD_ML_REGION",  # read by the anthropic SDK's Vertex client
 )
 _ISOLATED_PREFIXES = (
     "AWS_ENDPOINT_URL",
     "AWS_CONTAINER_CREDENTIALS_",
     "GOOGLE_APPLICATION_CREDENTIALS",
     "AZURE_",
+    # Every variable of the anthropic SDK: llm/anthropic.py refuses some at start, and the tests that set one
+    # to a marker start from none (review 2026-11-24: the suite failed on a machine that exported one).
+    "ANTHROPIC_",
 )
 for _name in [n for n in os.environ if n in _ISOLATED or n.startswith(_ISOLATED_PREFIXES)]:
     os.environ.pop(_name, None)

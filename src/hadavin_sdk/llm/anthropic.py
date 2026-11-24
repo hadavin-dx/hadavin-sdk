@@ -9,6 +9,7 @@ Needs ``hadavin-sdk[anthropic]``.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import time
@@ -23,6 +24,82 @@ from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
 
+# Loggers that can carry a request body, a header value or a credential at DEBUG, held at WARNING whatever the
+# host's root level or ANTHROPIC_LOG says (read in the installed sources on 2026-11-24):
+#   anthropic     the SDK logs "Request options", body included (_base_client.py:598-613 in 2.1.0, :603-617 in
+#                 2.9.0); every SDK logger is a child of this one, and none has a level of its own
+#   httpcore2     the HTTP library logs the response's header values (httpcore2 2.16.2 _sync/http11.py:90-103)
+#   google.auth   the Vertex token request is logged with its body and headers (google-auth 2.62.0
+#                 _helpers.py:410-443, called from transport/requests.py:272)
+# httpx2 logs only the request line (method, URL, status) and is left alone.
+QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
+
+# Environment variables that reach the client whatever arguments we pass, refused on every platform:
+# ANTHROPIC_CUSTOM_HEADERS adds its headers to every request of the API and Foundry clients (_client.py:250 in
+# 2.1.0 and 2.9.0) and of the Vertex client from SDK 2.7.0 (lib/_env.py:9 in 2.9.0), and is read again on every
+# call. Read in the installed sources of anthropic 2.1.0, 2.4.0 and 2.9.0 on 2026-11-24.
+REFUSED_ENV = ("ANTHROPIC_CUSTOM_HEADERS",)
+
+# Second net behind QUIET_LOGGERS and the explicit tracing option: variables that make the SDK write request or
+# response content to the process log or to trace spans. Any set value is refused, harmful or not (fail closed):
+# ANTHROPIC_LOG=debug (_utils/_logs.py:17-18) and ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE=content
+# (_tracing.py:111 in 2.1.0, :205 in 2.9.0).
+CONTENT_ENV = ("ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE")
+
+# Environment variables the SDK reads for a client's endpoint or identity and that MUST NOT REACH THE CLIENT:
+# every one loses to the argument we pass, in 2.1.0, 2.4.0 and 2.9.0. They are not refused (cloud run-times and
+# other clients in the same process set them); tests/test_p5_llm.py sets each to a marker on each platform, makes
+# one call and fails if the request differs from the configured one, which is what stops an SDK upgrade that
+# changes the precedence. The SDK itself refuses ANTHROPIC_FOUNDRY_RESOURCE beside a base URL before 2.7.0.
+_API_ENV = (
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_PROFILE",
+    "ANTHROPIC_CONFIG_DIR",
+    "ANTHROPIC_IDENTITY_TOKEN",
+    "ANTHROPIC_IDENTITY_TOKEN_FILE",
+    "ANTHROPIC_FEDERATION_RULE_ID",
+    "ANTHROPIC_ORGANIZATION_ID",
+    "ANTHROPIC_SERVICE_ACCOUNT_ID",
+    "ANTHROPIC_WORKSPACE_ID",
+    "ANTHROPIC_SCOPE",
+)
+IGNORED_ENV: dict[str, tuple[str, ...]] = {
+    "api": _API_ENV,
+    "foundry": (  # the Foundry client is a subclass of the API client and runs its constructor too
+        *_API_ENV,
+        "ANTHROPIC_FOUNDRY_API_KEY",
+        "ANTHROPIC_FOUNDRY_RESOURCE",
+        "ANTHROPIC_FOUNDRY_BASE_URL",
+    ),
+    "vertex": ("ANTHROPIC_VERTEX_BASE_URL", "ANTHROPIC_VERTEX_PROJECT_ID", "CLOUD_ML_REGION"),
+}
+
+# Given explicitly, so the SDK reads none of its tracing variables (_tracing.py:74-79 in 2.1.0, :168-173 in
+# 2.9.0): spans, if the host has set tracing up, carry no request or response content.
+_NO_CONTENT_TRACES = {"traces": {"content_mode": "metadata_only"}}
+
+
+def _quiet() -> None:
+    for name in QUIET_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+
+_quiet()  # at import: the loggers are quiet before anything can be sent
+
+
+def _guard() -> None:
+    """Before a client is built and before every call (the SDK rebuilds its client, and re-reads the environment,
+    on each call). Names only: a variable's value is never read."""
+    _quiet()
+    if stray := [name for name in (*REFUSED_ENV, *CONTENT_ENV) if name in os.environ]:
+        raise ConfigError(
+            f"backend llm 'anthropic': unset the environment variable(s) {', '.join(stray)}: they add headers "
+            "to every request or write request and response content to logs or traces. The endpoint and the "
+            "credential come from the configuration, except the host's proxy and certificate settings"
+        )
+
 
 def _vertex_base_url(region: str) -> str:
     """As the SDK derives it. Passed explicitly because, given none, the SDK reads ANTHROPIC_VERTEX_BASE_URL
@@ -34,69 +111,27 @@ def _vertex_base_url(region: str) -> str:
     return f"https://{region}-aiplatform.googleapis.com/v1"
 
 
-# Every environment variable the anthropic SDK reads for a client's endpoint or identity, per platform. The SDK's
-# rule for "our argument or the variable" moved between releases (2.9.0 stopped refusing ANTHROPIC_FOUNDRY_RESOURCE
-# beside a base URL and began to send ANTHROPIC_CUSTOM_HEADERS on Vertex), so the refusal is ours, not the SDK's.
-# Read from the installed source of anthropic 2.1.0, 2.4.0 and 2.9.0 on 2026-11-24: _client.py,
-# lib/credentials/_constants.py, lib/foundry.py, lib/vertex/_client.py, lib/_env.py. A newer SDK that reads a
-# name missing here fails tests/test_p5_llm.py (the drift tests). Vertex identity is the workload's own Google
-# identity (ADC, read by google-auth), which is the configured credential and is not listed.
-_API_ENV = (
-    "ANTHROPIC_BASE_URL",
-    "ANTHROPIC_API_KEY",
-    "ANTHROPIC_AUTH_TOKEN",
-    "ANTHROPIC_CUSTOM_HEADERS",  # sent on every request, in every version read
-    "ANTHROPIC_PROFILE",
-    "ANTHROPIC_CONFIG_DIR",
-    "ANTHROPIC_IDENTITY_TOKEN",
-    "ANTHROPIC_IDENTITY_TOKEN_FILE",
-    "ANTHROPIC_FEDERATION_RULE_ID",
-    "ANTHROPIC_ORGANIZATION_ID",
-    "ANTHROPIC_SERVICE_ACCOUNT_ID",
-    "ANTHROPIC_WORKSPACE_ID",
-    "ANTHROPIC_SCOPE",
-)
-ENDPOINT_ENV: dict[str, tuple[str, ...]] = {
-    "api": _API_ENV,
-    "foundry": (  # the Foundry client is a subclass of the API client and runs its constructor too
-        *_API_ENV,
-        "ANTHROPIC_FOUNDRY_API_KEY",
-        "ANTHROPIC_FOUNDRY_RESOURCE",
-        "ANTHROPIC_FOUNDRY_BASE_URL",
-    ),
-    "vertex": (
-        "ANTHROPIC_VERTEX_BASE_URL",
-        "ANTHROPIC_VERTEX_PROJECT_ID",
-        "CLOUD_ML_REGION",
-        "ANTHROPIC_CUSTOM_HEADERS",  # read on Vertex from 2.9.0
-    ),
-}
-
-# Environment variables that make the anthropic SDK write request or response content (what a client sent, what
-# the model answered) to the process log or to trace spans, on every platform. Any set value is refused, harmful
-# or not (fail closed): ANTHROPIC_LOG=debug logs each request's options, body included (_utils/_logs.py:17-18 and
-# _base_client.py:600 in 2.1.0, :605 in 2.9.0); ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE=content adds the
-# content to spans (_tracing.py:111 in 2.1.0, :205 in 2.9.0). Read from the installed source on 2026-11-24.
-CONTENT_ENV = ("ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE")
-
-
 def client(settings: Any, key: str | None) -> Any:
-    # Set at all is refused, whatever the value: the name is reported, the value is never read.
-    if stray := [name for name in ENDPOINT_ENV[settings.platform] if name in os.environ]:
-        raise ConfigError(
-            f"backend llm 'anthropic' ({settings.platform}): unset the environment variable(s) "
-            f"{', '.join(stray)}: the endpoint and the credential come from the configuration only"
-        )
-    if stray := [name for name in CONTENT_ENV if name in os.environ]:
-        raise ConfigError(
-            f"backend llm 'anthropic' ({settings.platform}): unset the environment variable(s) "
-            f"{', '.join(stray)}: they can make the SDK write request or response content to logs or traces"
-        )
-    common = {"timeout": settings.call_timeout_s, "max_retries": 0}
+    """The SDK client for ``settings.platform``, with every endpoint and credential argument given explicitly.
+
+    What stays with the host by design: its proxy and certificate settings (HTTPS_PROXY, SSL_CERT_FILE and the
+    like, as for every model client of this package), and on Vertex the identity: Google's application default
+    credentials are chosen by the host environment (the file GOOGLE_APPLICATION_CREDENTIALS names, else the
+    gcloud user's file, else the machine's metadata server), so whoever sets those variables chooses as whom the
+    request is signed. The project, the region and the host it is sent to still come from the configuration.
+    """
+    _guard()
+    if settings.platform not in IGNORED_ENV:
+        raise ConfigError(f"backend llm 'anthropic': unknown platform {settings.platform!r}")
+    common = {
+        "timeout": settings.call_timeout_s,
+        "max_retries": 0,
+        "open_telemetry": _NO_CONTENT_TRACES,
+    }
     try:
         if (
             settings.platform == "vertex"
-        ):  # Google credentials from the workload's identity (ADC), no key
+        ):  # no key: the workload's Google identity (see the docstring)
             return anthropic.AnthropicVertex(
                 region=settings.region,
                 project_id=settings.project_id,
@@ -110,9 +145,8 @@ def client(settings: Any, key: str | None) -> Any:
                 **common,
             )
         return anthropic.Anthropic(api_key=key, base_url=API_BASE_URL, **common)
-    except (
-        ValueError
-    ) as exc:  # second net: the SDK's own refusals (the first is ENDPOINT_ENV above)
+    except ValueError as exc:
+        # Second net: the SDK's own refusals (before 2.7.0, ANTHROPIC_FOUNDRY_RESOURCE beside our base URL).
         raise ConfigError(f"backend llm 'anthropic' ({settings.platform}): {exc}") from exc
 
 
@@ -178,6 +212,7 @@ class AnthropicLLM(NetworkLLM):
             request["tools"] = specs
         if forced:
             request["tool_choice"] = {"type": "tool", "name": forced}
+        _guard()
         started = time.monotonic()
         got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
         return reply(

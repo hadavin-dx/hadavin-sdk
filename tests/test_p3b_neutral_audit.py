@@ -278,10 +278,11 @@ def test_rds_iam_signs_in_through_store_auth_aws(monkeypatch):
     assert postgres.password_source(False, None) is None
     password = postgres.password_source(True, "region-x")
     assert password("db.example", 5432, "rt") == "token-from-iam"
-    assert calls == [
-        ("rds", {"region_name": "region-x"}),
-        {"DBHostname": "db.example", "Port": 5432, "DBUsername": "rt"},
-    ]
+    (service, kw), token_call = calls
+    assert (service, kw["region_name"]) == ("rds", "region-x")
+    assert sorted(kw) == ["config", "region_name"]
+    assert kw["config"].ignore_configured_endpoint_urls is True  # hadavin_sdk.aws_client.config
+    assert token_call == {"DBHostname": "db.example", "Port": 5432, "DBUsername": "rt"}
 
 
 def test_rds_iam_without_the_aws_extra_names_the_pip_install(monkeypatch):
