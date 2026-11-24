@@ -1,6 +1,8 @@
 """The one botocore ``Config`` every AWS client of this package is built with (`pip install hadavin-sdk[aws]`).
 
-A helper of the AWS kinds, not a kind: it exists so that no AWS client takes its endpoint from the environment.
+A helper of the AWS kinds, not a kind: it exists so that no AWS client takes its endpoint URL from the
+environment. Only the endpoint URL: the FIPS and dual-stack variables (AWS_USE_FIPS_ENDPOINT,
+AWS_USE_DUALSTACK_ENDPOINT) still choose between AWS's own endpoints and are left to the host.
 """
 
 from __future__ import annotations

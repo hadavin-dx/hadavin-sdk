@@ -324,7 +324,13 @@ _HOSTS = {
 # Refused at start and on every call, on every platform: they reach the client whatever we pass.
 REFUSED = ["ANTHROPIC_CUSTOM_HEADERS"]
 # Refused too (second net): they make the SDK write request or response content to logs or traces.
-CONTENT_REFUSED = ["ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE"]
+CONTENT_REFUSED = ["ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE"]
+# Loggers held quiet, and for each the children that log a body, a header value or a token request.
+QUIET = {
+    "anthropic": ["anthropic._base_client"],
+    "httpcore2": ["httpcore2.http11", "httpcore2.proxy"],
+    "google.auth": ["google.auth.transport.requests"],
+}
 # Not refused, and must not reach the client: the SDK reads them, our arguments win.
 _API_IGNORED = [
     "ANTHROPIC_BASE_URL",
@@ -356,6 +362,7 @@ _NOT_OURS = {
     "ANTHROPIC_API_VERSION": "a constant in the SDK, not an environment variable",
     "ANTHROPIC_WEBHOOK_SIGNING_KEY": "checks webhooks we do not receive; sent nowhere",
     "DEFER_PYDANTIC_BUILD": "model build timing",
+    "ANTHROPIC_LOG": "the SDK log switch: not refused, the loggers it turns on are held quiet (tested)",
     "APPDATA": "where a profile file is looked for; a profile is never used when a credential is passed",
     **dict.fromkeys(
         [
@@ -394,7 +401,14 @@ _NOT_OURS = {
         "read only by SDK clients llm/anthropic.py never builds (AWS, Bedrock, Google Cloud, environments)",
     ),
 }
-_STRAY = "x-stray: stray-marker"  # reads as a header line, and shows in a URL, key or project if one is taken
+_STRAY = "x-stray: stray-marker"  # a well-formed header line, for the headers variable
+
+
+def _marker(name):
+    """A well-formed value for the kind of variable: a URL for a base URL, a plain word otherwise."""
+    return "https://stray-marker.example/" if name.endswith("BASE_URL") else "stray-marker"
+
+
 _BASELINE: dict[str, tuple] = {}
 
 
@@ -431,6 +445,7 @@ def test_the_lists_are_the_tables():
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
     assert sorted(mod.REFUSED_ENV) == sorted(REFUSED)
     assert sorted(mod.CONTENT_ENV) == sorted(CONTENT_REFUSED)
+    assert sorted(mod.QUIET_LOGGERS) == sorted(QUIET)
     assert {p: sorted(n) for p, n in mod.IGNORED_ENV.items()} == {
         p: sorted(n) for p, n in MUST_NOT_REACH.items()
     }
@@ -458,6 +473,8 @@ def test_one_error_names_every_refused_variable_and_what_stays_with_the_host(mon
     message = str(refused.value)
     assert all(name in message for name in [*REFUSED, *CONTENT_REFUSED])
     assert "except the host's proxy and certificate settings" in message and "stray" not in message
+    # No overclaim: on Vertex the credential is the host's Google identity, not a configured key.
+    assert "credential come from the configuration" not in message and "on vertex" in message
 
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
@@ -468,6 +485,30 @@ def test_a_headers_variable_set_after_start_is_refused_on_the_next_call(monkeypa
     with pytest.raises(ConfigError, match="ANTHROPIC_CUSTOM_HEADERS"):
         llm.chat(**CALL)
     assert len(sent) == 1  # the second call sent nothing
+
+
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+def test_a_headers_variable_set_during_a_call_stops_the_next_attempt(monkeypatch, platform):
+    """The check runs inside each retried attempt, not once before the retries."""
+    httpx2 = pytest.importorskip("httpx2", reason="needs extra anthropic")
+    llm, sent = _anthropic_llm(platform), []
+
+    def drop(
+        request,
+    ):  # the first attempt fails in a retryable way, and the variable appears meanwhile
+        sent.append(request)
+        monkeypatch.setenv("ANTHROPIC_CUSTOM_HEADERS", _STRAY)
+        raise httpx2.ConnectError("connection dropped", request=request)
+
+    http = httpx2.Client(transport=httpx2.MockTransport(drop))
+    llm._client = llm._client.with_options(http_client=http)
+    if platform == "vertex":
+        llm._client.access_token = KEY
+    llm._sleep = lambda seconds: None
+    assert llm.max_attempts > 1
+    with pytest.raises((ConfigError, ProviderError), match="ANTHROPIC_CUSTOM_HEADERS") as refused:
+        llm.chat(**CALL)
+    assert len(sent) == 1 and "stray" not in str(refused.value)  # no second attempt was sent
 
 
 def test_a_platform_without_a_table_row_is_a_config_error():
@@ -485,7 +526,7 @@ def test_a_variable_the_sdk_reads_never_reaches_the_request(monkeypatch, platfor
     upgrade that lets a variable win over our argument fails here."""
     if platform not in _BASELINE:
         _BASELINE[platform] = _wire(_call(_anthropic_llm(platform), platform))
-    monkeypatch.setenv(name, _STRAY)
+    monkeypatch.setenv(name, _marker(name))
     try:
         llm = _anthropic_llm(platform)
     except ConfigError as refused:
@@ -504,32 +545,82 @@ def test_a_variable_the_sdk_reads_never_reaches_the_request(monkeypatch, platfor
 
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
-def test_traces_carry_no_content_whatever_the_environment_says(monkeypatch, platform):
-    """The tracing option is passed explicitly, so the SDK reads none of its tracing variables. Our own refusal
-    of the content-mode variable is switched off here to show the first net alone."""
+def test_traces_carry_no_content_and_no_trace_header_whatever_the_environment_says(
+    monkeypatch, platform
+):
+    """The tracing option is passed explicitly, so the SDK reads none of its tracing variables: no content in
+    spans, and the host's trace context is not sent to the model provider. Our own refusal of the content-mode
+    variable is switched off here to show the first net alone."""
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
     monkeypatch.setattr(mod, "CONTENT_ENV", ())
     monkeypatch.setenv("ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE", "content")
+    monkeypatch.setenv("ANTHROPIC_OPEN_TELEMETRY_PROPAGATION", "true")
     client = _anthropic_llm(platform)._client
     for built in (client, client.with_options(timeout=3.0)):  # a call uses such a copy
         assert built._open_telemetry["traces"]["content_mode"] == "metadata_only"
+        assert built._open_telemetry["propagation"] is False
+
+
+def _logged(caplog):
+    return " ".join(r.getMessage() + repr(vars(r)) for r in caplog.records)
+
+
+def _prompt_call(llm, platform):
+    prompt = "prompt-marker-" + "7f3a"
+    _call(llm, platform, call={**CALL, "messages": [{"role": "user", "content": prompt}]})
+    return prompt
 
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
 def test_a_prompt_or_a_key_never_reaches_a_log_at_debug(caplog, platform):
-    """A host that logs everything at DEBUG, and even sets the SDK's own logger to DEBUG after start."""
-    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    """A host that logs everything at DEBUG and, after start, sets the libraries' loggers to DEBUG too: the
+    parents and the children that do the logging (the SDK logs bodies on anthropic._base_client)."""
     caplog.set_level(logging.DEBUG)  # the root logger
     llm = _anthropic_llm(platform)
-    for name in mod.QUIET_LOGGERS:
+    names = [*QUIET, *(child for children in QUIET.values() for child in children)]
+    for name in names:
         logging.getLogger(name).setLevel(logging.DEBUG)
-    prompt = "prompt-marker-" + "7f3a"
-    _call(llm, platform, call={**CALL, "messages": [{"role": "user", "content": prompt}]})
-    logged = " ".join(r.getMessage() + repr(vars(r)) for r in caplog.records)
-    assert prompt not in logged and KEY not in logged
-    assert all(
-        logging.getLogger(n).getEffectiveLevel() >= logging.WARNING for n in mod.QUIET_LOGGERS
-    )
+    prompt = _prompt_call(llm, platform)
+    assert prompt not in _logged(caplog) and KEY not in _logged(caplog)
+    assert all(logging.getLogger(n).getEffectiveLevel() >= logging.WARNING for n in names)
+
+
+@pytest.mark.parametrize(
+    "pinned, child", [(pinned, child) for pinned, children in QUIET.items() for child in children]
+)
+def test_a_debug_record_on_a_child_of_each_quiet_logger_is_dropped(pinned, child):
+    """Per library, with the handler on the logger itself: a level a host sets on the child must not win."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    seen, logger = [], logging.getLogger(child)
+    handler = logging.Handler(level=logging.DEBUG)
+    handler.emit = seen.append
+    logger.addHandler(handler)
+    try:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("a body, a header value or a token request")
+        assert len(seen) == 1  # the control: without the guard the record is written
+        mod._guard()
+        logger.debug("a body, a header value or a token request")
+        assert len(seen) == 1, f"{child} still logs at DEBUG: {pinned} must be in QUIET_LOGGERS"
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(logging.NOTSET)
+
+
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+def test_the_sdks_own_log_switch_puts_no_prompt_in_a_log(caplog, monkeypatch, platform):
+    """ANTHROPIC_LOG=debug is not refused: what the SDK does with it at import is undone by the guard."""
+    anthropic_logs = pytest.importorskip("anthropic._utils._logs", reason="needs extra anthropic")
+    caplog.set_level(logging.DEBUG)
+    monkeypatch.setenv("ANTHROPIC_LOG", "debug")
+    try:
+        anthropic_logs.setup_logging()  # what importing the SDK does with the variable
+        assert logging.getLogger("anthropic").level == logging.DEBUG  # the control
+        llm = _anthropic_llm(platform)  # not refused
+        prompt = _prompt_call(llm, platform)
+        assert prompt not in _logged(caplog) and KEY not in _logged(caplog)
+    finally:
+        logging.getLogger("httpx2").setLevel(logging.NOTSET)
 
 
 def test_the_sdk_names_no_variable_the_tables_do_not_know():
@@ -551,7 +642,7 @@ def test_the_sdk_names_no_variable_the_tables_do_not_know():
     assert not unknown, (
         f"anthropic {anthropic.__version__} names {unknown}, unknown to src/hadavin_sdk/llm/anthropic.py: read "
         "what each does in the SDK, then add it to REFUSED_ENV (reaches the client whatever we pass), to "
-        "CONTENT_ENV (a logging or tracing switch that can write request or response content), to IGNORED_ENV "
+        "CONTENT_ENV (a tracing switch that can write request or response content), to IGNORED_ENV "
         "(an endpoint or identity name that loses to our argument) and to the same list here, or to _NOT_OURS "
         "with the reason"
     )

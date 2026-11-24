@@ -5,6 +5,7 @@ prompt) to another host. The two Bedrock clients have their own cases in tests/w
 test_bedrock_provider_r16.py and tests/test_p6_detectors.py; here are the helper and the other four.
 """
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -18,6 +19,27 @@ from hadavin_sdk.store import auth_aws
 
 REGION = "contract-region-1"
 EVIL = "http://evil.example"
+SRC = Path(aws_client.__file__).parent
+
+
+def test_only_the_six_aws_kind_modules_use_the_helper():
+    users = {
+        path.relative_to(SRC).as_posix()
+        for path in SRC.rglob("*.py")
+        if "aws_client" in path.read_text(encoding="utf-8") and path.name != "aws_client.py"
+    }
+    assert users == {
+        "actions/secrets_aws.py",
+        "audit/anchor_s3.py",
+        "audit/signer_aws.py",
+        "guard/bedrock_guardrail.py",
+        "llm/bedrock.py",
+        "store/auth_aws.py",
+    }
+    # ... and each of them builds its client with it: no boto3 client in src without the helper's config.
+    for name in users:
+        source = (SRC / name).read_text(encoding="utf-8")
+        assert source.count("boto3.client(") == source.count("aws_client.config(") == 1, name
 
 
 @pytest.fixture

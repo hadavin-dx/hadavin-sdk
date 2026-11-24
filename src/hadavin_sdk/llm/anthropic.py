@@ -24,13 +24,15 @@ from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
 
-# Loggers that can carry a request body, a header value or a credential at DEBUG, held at WARNING whatever the
-# host's root level or ANTHROPIC_LOG says (read in the installed sources on 2026-11-24):
-#   anthropic     the SDK logs "Request options", body included (_base_client.py:598-613 in 2.1.0, :603-617 in
-#                 2.9.0); every SDK logger is a child of this one, and none has a level of its own
-#   httpcore2     the HTTP library logs the response's header values (httpcore2 2.16.2 _sync/http11.py:90-103)
-#   google.auth   the Vertex token request is logged with its body and headers (google-auth 2.62.0
-#                 _helpers.py:410-443, called from transport/requests.py:272)
+# Loggers that can carry a request body, a header value or a credential at DEBUG, held at WARNING together with
+# every logger below them, whatever level the host's root, the host's logging config or ANTHROPIC_LOG gives them
+# (read in the installed sources on 2026-11-24). The logging is done by child loggers:
+#   anthropic     anthropic._base_client (_base_client.py:133 in 2.1.0, :134 in 2.9.0) logs "Request options",
+#                 body included (:598-613 in 2.1.0, :603-618 in 2.9.0); every SDK logger is below this name
+#   httpcore2     httpcore2.http11 logs the response's header values (httpcore2 2.16.2 _sync/http11.py:27,
+#                 :90-103); httpcore2.proxy and the other children are held with it
+#   google.auth   google.auth.transport.requests logs the Vertex token request with its body and headers
+#                 (google-auth 2.62.0 transport/requests.py:47, :272; _helpers.py:410-443)
 # httpx2 logs only the request line (method, URL, status) and is left alone.
 QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
 
@@ -40,11 +42,11 @@ QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
 # call. Read in the installed sources of anthropic 2.1.0, 2.4.0 and 2.9.0 on 2026-11-24.
 REFUSED_ENV = ("ANTHROPIC_CUSTOM_HEADERS",)
 
-# Second net behind QUIET_LOGGERS and the explicit tracing option: variables that make the SDK write request or
-# response content to the process log or to trace spans. Any set value is refused, harmful or not (fail closed):
-# ANTHROPIC_LOG=debug (_utils/_logs.py:17-18) and ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE=content
-# (_tracing.py:111 in 2.1.0, :205 in 2.9.0).
-CONTENT_ENV = ("ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE")
+# Second net behind the explicit tracing option: the variable that makes the SDK add request and response
+# content to trace spans (_tracing.py:111 in 2.1.0, :205 in 2.9.0). Any set value is refused (fail closed).
+# ANTHROPIC_LOG is not refused: all it does is set log levels at import (_utils/_logs.py:17-22), which the guard
+# undoes before every attempt.
+CONTENT_ENV = ("ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE",)
 
 # Environment variables the SDK reads for a client's endpoint or identity and that MUST NOT REACH THE CLIENT:
 # every one loses to the argument we pass, in 2.1.0, 2.4.0 and 2.9.0. They are not refused (cloud run-times and
@@ -77,11 +79,19 @@ IGNORED_ENV: dict[str, tuple[str, ...]] = {
 }
 
 # Given explicitly, so the SDK reads none of its tracing variables (_tracing.py:74-79 in 2.1.0, :168-173 in
-# 2.9.0): spans, if the host has set tracing up, carry no request or response content.
-_NO_CONTENT_TRACES = {"traces": {"content_mode": "metadata_only"}}
+# 2.9.0): spans, if the host has set tracing up, carry no request or response content, and the host's trace
+# context is not sent to the model provider (propagation off). The host cannot change either by environment.
+_NO_CONTENT_TRACES = {"propagation": False, "traces": {"content_mode": "metadata_only"}}
 
 
 def _quiet() -> None:
+    """The quiet loggers at WARNING, and no level of its own on any logger below them (a level a host sets on a
+    child, such as anthropic._base_client, would win over the parent's). Children made later are caught by the
+    next run: this runs at import and before every attempt."""
+    below = tuple(f"{name}." for name in QUIET_LOGGERS)
+    for name, logger in list(logging.root.manager.loggerDict.items()):
+        if name.startswith(below) and isinstance(logger, logging.Logger):
+            logger.setLevel(logging.NOTSET)
     for name in QUIET_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
 
@@ -90,14 +100,15 @@ _quiet()  # at import: the loggers are quiet before anything can be sent
 
 
 def _guard() -> None:
-    """Before a client is built and before every call (the SDK rebuilds its client, and re-reads the environment,
-    on each call). Names only: a variable's value is never read."""
+    """Before a client is built and before every attempt of every call (the SDK rebuilds its client, and re-reads
+    the environment, on each one). Names only: a variable's value is never read."""
     _quiet()
     if stray := [name for name in (*REFUSED_ENV, *CONTENT_ENV) if name in os.environ]:
         raise ConfigError(
             f"backend llm 'anthropic': unset the environment variable(s) {', '.join(stray)}: they add headers "
-            "to every request or write request and response content to logs or traces. The endpoint and the "
-            "credential come from the configuration, except the host's proxy and certificate settings"
+            "to every request or write request and response content to traces. The endpoint, and on api and "
+            "foundry the key, come from the configuration, except the host's proxy and certificate settings; "
+            "on vertex the host's Google identity signs the request"
         )
 
 
@@ -117,8 +128,9 @@ def client(settings: Any, key: str | None) -> Any:
     What stays with the host by design: its proxy and certificate settings (HTTPS_PROXY, SSL_CERT_FILE and the
     like, as for every model client of this package), and on Vertex the identity: Google's application default
     credentials are chosen by the host environment (the file GOOGLE_APPLICATION_CREDENTIALS names, else the
-    gcloud user's file, else the machine's metadata server), so whoever sets those variables chooses as whom the
-    request is signed. The project, the region and the host it is sent to still come from the configuration.
+    gcloud user's file, else the machine's metadata server, which GCE_METADATA_HOST can point elsewhere), so
+    whoever sets those variables chooses as whom the request is signed. The project, the region and the host it
+    is sent to still come from the configuration.
     """
     _guard()
     if settings.platform not in IGNORED_ENV:
@@ -129,9 +141,8 @@ def client(settings: Any, key: str | None) -> Any:
         "open_telemetry": _NO_CONTENT_TRACES,
     }
     try:
-        if (
-            settings.platform == "vertex"
-        ):  # no key: the workload's Google identity (see the docstring)
+        if settings.platform == "vertex":
+            # No key: the workload's Google identity (see the docstring).
             return anthropic.AnthropicVertex(
                 region=settings.region,
                 project_id=settings.project_id,
@@ -171,6 +182,12 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+def detail(exc: BaseException) -> str:
+    """The guard's own refusal inside a retried attempt keeps its text (it names variables, never values); an
+    SDK message is never passed on (it can quote the request)."""
+    return str(exc) if isinstance(exc, ConfigError) else ""
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
@@ -185,6 +202,7 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    detail = staticmethod(detail)
 
     def __init__(
         self,
@@ -223,7 +241,9 @@ class AnthropicLLM(NetworkLLM):
         )
 
     def _current(self) -> Any:
-        """The client with today's key: the platform secret is read per call, so rotation needs no restart."""
+        """The client with today's key: the platform secret is read per call, so rotation needs no restart.
+        Called inside every retried attempt, so the guard runs before each one."""
+        _guard()
         return self._client.with_options(api_key=self._key()) if self._key else self._client
 
     @staticmethod
