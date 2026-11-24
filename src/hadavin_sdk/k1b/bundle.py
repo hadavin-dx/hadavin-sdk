@@ -304,9 +304,8 @@ def load_bundle(path: Path) -> Bundle:
             chunks = _chunks(_text(case, path, rel))
             ids.update(f"{rel}#{i}" for i in range(len(chunks)))
             runbooks.append((rel, chunks))
-        elif _FILE_RES["meta"].fullmatch(rel):
-            if rel[: -len(META_SUFFIX)] + ".md" not in listed:
-                raise _fail(case, f"{rel} has no runbook beside it")
+        elif _FILE_RES["meta"].fullmatch(rel) and rel[: -len(META_SUFFIX)] + ".md" not in listed:
+            raise _fail(case, f"{rel} has no runbook beside it")
     deploys: list[dict[str, Any]] = []
     if "deploys.json" in listed:
         raw = _load_json(case, path, "deploys.json")
