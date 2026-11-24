@@ -348,11 +348,9 @@ REFUSED = [
 _NOT_OURS = {
     "ANTHROPIC_API_VERSION": "a constant in the SDK, not an environment variable",
     "ANTHROPIC_WEBHOOK_SIGNING_KEY": "checks webhooks we do not receive; sent nowhere",
-    "ANTHROPIC_LOG": "the SDK's log level",
-    "ANTHROPIC_OPEN_TELEMETRY": "tracing switch",
-    "ANTHROPIC_OPEN_TELEMETRY_PROPAGATION": "tracing switch",
-    "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE": "tracing switch",
-    "ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES": "tracing switch",
+    "ANTHROPIC_OPEN_TELEMETRY": "tracing: only the value false is read, and it turns spans off",
+    "ANTHROPIC_OPEN_TELEMETRY_PROPAGATION": "tracing: only false is read, and it stops the trace header",
+    "ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES": "tracing: a size cap, no content without content mode",
     "DEFER_PYDANTIC_BUILD": "model build timing",
     "APPDATA": "where a profile file is looked for; ANTHROPIC_PROFILE and ANTHROPIC_CONFIG_DIR are refused",
     **dict.fromkeys(
@@ -379,13 +377,15 @@ _NOT_OURS = {
         "read only by SDK clients llm/anthropic.py never builds (AWS, Bedrock, Google Cloud, environments)",
     ),
 }
+# Variables that make the SDK write request or response content to logs or traces: refused on every platform.
+CONTENT_REFUSED = ["ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE"]
 _STRAY = "x-stray: stray-marker"  # reads as a header line, and shows in a URL, key or project if one is taken
 
 
 @pytest.fixture
 def no_endpoint_env(monkeypatch):
     pytest.importorskip("anthropic", reason="needs extra anthropic")
-    for _, name in REFUSED:
+    for name in [*(n for _, n in REFUSED), *CONTENT_REFUSED]:
         monkeypatch.delenv(name, raising=False)
 
 
@@ -405,6 +405,7 @@ def test_the_refused_list_is_the_table():
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
     table = sorted((p, n) for p, names in mod.ENDPOINT_ENV.items() for n in names)
     assert table == sorted(REFUSED)
+    assert sorted(mod.CONTENT_ENV) == sorted(CONTENT_REFUSED)
 
 
 @pytest.mark.parametrize("platform, name", REFUSED)
@@ -421,10 +422,26 @@ def test_an_endpoint_or_identity_variable_in_the_environment_is_refused(
     )  # the name, never the value
 
 
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+@pytest.mark.parametrize("name", CONTENT_REFUSED)
+@pytest.mark.parametrize("value", ["debug", "content", "stray-off", ""])
+def test_a_variable_that_puts_content_in_logs_or_traces_is_refused(
+    no_endpoint_env, monkeypatch, platform, name, value
+):
+    monkeypatch.setenv(name, value)
+    with pytest.raises(ConfigError) as refused:
+        _anthropic_llm(platform)
+    message = str(refused.value)
+    assert (
+        name in message and platform in message and "stray" not in message
+    )  # any value, never shown
+
+
 @pytest.mark.parametrize(
     "platform, name",
     [
         ("api", "CLOUD_ML_REGION"),
+        ("vertex", "ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES"),
         ("vertex", "ANTHROPIC_FOUNDRY_RESOURCE"),
         ("foundry", "ANTHROPIC_VERTEX_BASE_URL"),
         ("api", "HADAVIN_UNRELATED"),
@@ -467,9 +484,10 @@ def test_the_sdk_names_no_variable_the_table_does_not_know():
         for pattern in patterns:
             found.update(re.findall(pattern, source))
     assert len(found) > 20  # the scan found the SDK's source
-    unknown = sorted(found - {n for _, n in REFUSED} - set(_NOT_OURS))
+    unknown = sorted(found - {n for _, n in REFUSED} - set(CONTENT_REFUSED) - set(_NOT_OURS))
     assert not unknown, (
         f"anthropic {anthropic.__version__} names {unknown}, unknown to ENDPOINT_ENV in "
         "src/hadavin_sdk/llm/anthropic.py: read what each does in the SDK, then add it to ENDPOINT_ENV and "
-        "REFUSED (endpoint or identity of api, vertex or foundry) or to _NOT_OURS with the reason"
+        "REFUSED (endpoint or identity of api, vertex or foundry), to CONTENT_ENV and CONTENT_REFUSED (a logging "
+        "or tracing switch that can write request or response content), or to _NOT_OURS with the reason"
     )

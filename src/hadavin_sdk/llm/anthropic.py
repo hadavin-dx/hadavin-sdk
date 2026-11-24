@@ -72,6 +72,13 @@ ENDPOINT_ENV: dict[str, tuple[str, ...]] = {
     ),
 }
 
+# Environment variables that make the anthropic SDK write request or response content (what a client sent, what
+# the model answered) to the process log or to trace spans, on every platform. Any set value is refused, harmful
+# or not (fail closed): ANTHROPIC_LOG=debug logs each request's options, body included (_utils/_logs.py:17-18 and
+# _base_client.py:600 in 2.1.0, :605 in 2.9.0); ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE=content adds the
+# content to spans (_tracing.py:111 in 2.1.0, :205 in 2.9.0). Read from the installed source on 2026-11-24.
+CONTENT_ENV = ("ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE")
+
 
 def client(settings: Any, key: str | None) -> Any:
     # Set at all is refused, whatever the value: the name is reported, the value is never read.
@@ -79,6 +86,11 @@ def client(settings: Any, key: str | None) -> Any:
         raise ConfigError(
             f"backend llm 'anthropic' ({settings.platform}): unset the environment variable(s) "
             f"{', '.join(stray)}: the endpoint and the credential come from the configuration only"
+        )
+    if stray := [name for name in CONTENT_ENV if name in os.environ]:
+        raise ConfigError(
+            f"backend llm 'anthropic' ({settings.platform}): unset the environment variable(s) "
+            f"{', '.join(stray)}: they can make the SDK write request or response content to logs or traces"
         )
     common = {"timeout": settings.call_timeout_s, "max_retries": 0}
     try:
