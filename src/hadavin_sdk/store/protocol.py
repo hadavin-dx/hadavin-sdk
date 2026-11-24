@@ -300,7 +300,7 @@ class Store(Protocol):
         not a stop, or is already cleared, is ignored). Any other stop, one set after `open_stops` was read, stays
         open and the switch reads ON. On Postgres only the reset role may (the runtime role is refused), and the same
         transaction records the reset (`kill_switch_resets`: the ids really cleared, `audit_seq` when known, else
-        NULL) and moves the watermark. The memory store keeps no such record."""
+        NULL). The memory store keeps no such record."""
         ...
 
     def get_tick_state(self, step: str) -> TickState | None: ...

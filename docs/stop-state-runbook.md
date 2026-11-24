@@ -50,11 +50,10 @@ against the runtime, reset and purge secrets.
 ### What a reset records (migration 0009, B8)
 In the same transaction as the clears, the reset (the reset login only) inserts one row into `kill_switch_resets`
 (`by`, `at`, `cleared_ids` = the ids it really cleared, `audit_seq` = the audit chain seq of its intent when the store
-knows it, otherwise NULL: the chain returns an event id, not a seq) and moves `kill_switch_watermark.through` to the
-newest cleared stop time (never lower). This record survives if the audit row is lost. The runtime login holds nothing
-on `kill_switch_resets` and only SELECT on the watermark. Read it as the database owner:
+knows it, otherwise NULL: the chain returns an event id, not a seq). This record survives if the audit row is lost. The runtime login holds nothing
+on `kill_switch_resets`. Read it as the database owner:
 `SELECT at, "by", cardinality(cleared_ids), audit_seq FROM kill_switch_resets ORDER BY at;`.
-The gate read does NOT hide stops below the watermark: a stop with an old `ts` (planted, or hand-inserted after a reset)
+There is no time watermark, so the gate read hides no stop: a stop with an old `ts` (planted, or hand-inserted after a reset)
 that has no clear still reads as ON. The read compares `count(kill_switch_stops)` with `count(kill_switch_clears)`
 (every clear names one distinct stop, so a surplus of stops means an open stop; both are index-only counts, about
 tens of milliseconds for 200000 rows) and only then looks for the oldest open stop.
@@ -321,15 +320,66 @@ synced is the safe direction (the agent is refused at the lower table value) but
 Residual: the audit line is written by the CLI, not by the function, so a stolen caps login can call `hadavin_set_cap`
 directly with no audit line (the same is true of `release-expired`). Keep the caps login off the runtime machines.
 
-## After the upgrade to 0009: validate the stop-year constraints
-0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` as NOT VALID: every new row is checked, rows
-already there are not, so the upgrade cannot fail on a database holding a planted `ts` (the stop tables are
-append-only, such a row cannot be deleted below a superuser). Later, once you have looked for such rows (`SELECT id, ts
-FROM kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), run as
-the owner `ALTER TABLE kill_switch_stops VALIDATE CONSTRAINT kill_switch_stops_ts_range;` and `ALTER TABLE
-kill_switch_clears VALIDATE CONSTRAINT kill_switch_clears_ts_range;`. VALIDATE fails naming the constraint while a bad
-row exists. The migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the
-index build.
+## After the upgrade to 0009: the stop-year constraints
+0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` (a `ts` between 2000-01-01 and 2100-01-01)
+NOT VALID and never runs `ALTER TABLE ... VALIDATE CONSTRAINT` itself (a conditional validation needs a DO block, which the repo's statement lexer
+refuses). Right after the files, every `migrate` run validates each constraint whose table holds no row outside the
+range, silently. A clean database therefore ends validated. A database that already holds a planted `ts` (the stop
+tables are append-only, such a row cannot be deleted below a superuser) still upgrades, keeps that constraint NOT
+VALID, and every `migrate` run prints one warning naming it while the row exists. Look for the rows (`SELECT id, ts FROM
+kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), deal with
+them, then validate: the next `migrate` does it by itself, or run as the owner `hadavin-sdk migrate
+--validate-constraints` (only validates; it cannot be combined with a role flag, `--no-roles`, `--accept-admin-role`,
+`--accept-changed-draft` or `--reset-draft`; it needs the stop tables in the schema of HADAVIN_MIGRATE_DSN).
+Timeouts and exit codes. The 5-second lock wait and 60-second statement limit (`VALIDATE_LOCK_TIMEOUT`,
+`VALIDATE_STATEMENT_TIMEOUT` in `store/migrate.py`) apply to the validation step, in both places it runs:
+`migrate --validate-constraints`, and the settle step at the end of the file loop of every plain `migrate` (set with
+`set_config(..., true)`, the same effect as `SET LOCAL`, and put back after the step). The 5-second LOCK wait also
+applies to everything else a plain `migrate` does, from the moment it holds its advisory lock until it commits (the
+commit ends the limit): the ledger steps, the migration files, and the grant, revoke, ALTER FUNCTION and check steps after them. It
+covers every lock wait of every statement there, on any table or catalog row (not only the ACCESS EXCLUSIVE locks of
+ADD CONSTRAINT and the index build); the statement limit does not apply outside the validation step. Before the
+advisory lock there is NO limit, on purpose: a second `migrate` waits for the first on a transaction-level advisory
+lock, and a lock limit (PostgreSQL applies `lock_timeout` to advisory-lock waits too) would kill that wait. `migrate`
+sets `lock_timeout` to 0 for that wait itself, so a default of the role, the database or the DSN does not end it. A
+migration file may not set `lock_timeout` or `statement_timeout` (nor any other setting): `migrate` owns both limits,
+and the statement lexer refuses such a file (the check of every shipped file fails, and so does the hand recipe). Both
+limits are constants in the code on purpose (safety limits of an operator tool): there is no config key and no flag
+for them. Exit codes (the same in both places, except where a line says otherwise):
+- 75 (retry later, not a refusal): a lock wait over 5 seconds (in the ledger steps, a migration file, the validation
+  step, or the grant and check steps), a scan over 60 seconds in the validation step, or a connection lost anywhere
+  INSIDE the validation step (its setup, its catalog read, the VALIDATE statement, its restore). A plain `migrate`
+  rolls back as a whole (nothing is applied, run it again); a role setting it would have changed is reported
+  (`changed: ...`) only after the commit, so never for a run that ends in 75 or 2.
+- 2 (refusal): a row outside the range (for `--validate-constraints` only: in a plain `migrate` such a row is the
+  warning above and the exit is 0), a login that is not the table owner (also when it only fails to read the stop
+  tables), stop tables not found in the schema, or a flag combination that is not allowed.
+- 3 (any other error, as for every command): including a connection that cannot be opened or is lost outside the
+  validation step (opening the connection, the ledger steps, the file loop, the grants and checks, the commit; for
+  `--validate-constraints` the commit too), and a statement cancel or a deadlock in a migration file. Nothing is kept
+  of a failed `migrate`: it is one transaction. `migrate` has no
+  connectivity code of its own (4 is the code of the commands that read or write the stop state, `limits stop`,
+  `limits reset` and the like, when the store is down): a migrate run that cannot reach the database is a failed
+  deployment step, not a state of the stop, so it exits 3 like every other uncaught error of the command.
+- 0: done.
+The 60-second limit assumes small stop tables (they hold one row per stop and per clear; not measured for millions
+of rows); on a far larger table raise `VALIDATE_STATEMENT_TIMEOUT` and say so in the change record. Locks: the
+migration takes a brief ACCESS EXCLUSIVE lock on the stop tables for the ADD CONSTRAINT and the index build, and
+because `migrate` runs every file in ONE transaction it holds that lock until the whole run commits (the settle,
+grants and checks). The wait for that lock, and every later lock wait while it is held, is limited to 5 seconds (see
+above): behind a long transaction `migrate` gives up with exit 75 and nothing applied, instead of queueing for ever
+(while it queues, every stop read and write behind it waits too). Still stop the runtimes (or at least their stop-table readers) before the
+upgrade, and check for old transactions (`pg_stat_activity`), so the run does not have to be repeated.
+
+0009 has no watermark table (nothing read it). A database that ran an EARLIER, unreleased 0009 still has
+`kill_switch_watermark` and `hadavin_watermark_guard()`: `migrate` refuses it with a message saying so. Steps:
+(1) as the owner `DROP TABLE kill_switch_watermark CASCADE; DROP FUNCTION hadavin_watermark_guard() CASCADE;`;
+(2) run `migrate` with the same role flags plus `--accept-changed-draft 0009_stop_state_hardening` (the 0009 file
+changed since that database applied it, so migrate warns of the difference until the new checksum is accepted; the
+database then matches the file); the stop-year constraints are validated by that run. Do NOT use `--reset-draft 0009_...`
+for this: it deletes the ledger rows of 0009 and every later file and applies them again, which fails on the tables
+they already made unless you drop all of those first (the safe choice then is a new database). The leftover check runs
+before `--reset-draft`, so the leftovers must be dropped first in any case. There is no 0012: 0009 is unreleased.
 
 ## Going back to the release before the stop state
 The change of meaning cannot be undone by code alone: old code does not read `kill_switch_stops`, and its stop needs
