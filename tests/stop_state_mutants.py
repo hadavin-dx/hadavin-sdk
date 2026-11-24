@@ -22,6 +22,7 @@ map, or ``migrate`` refuses the mutant before any test runs) names the further e
 and put back with the mutant. ``EQUIVALENT`` lists mutants that no test can kill, with the reason; they are printed,
 never run."""
 
+import hashlib
 import os
 import subprocess
 import sys
@@ -42,6 +43,7 @@ MIG = "src/hadavin_sdk/store/migrate.py"
 PG = "src/hadavin_sdk/store/postgres.py"
 CLI = "src/hadavin_sdk/cli.py"
 SQL = "src/hadavin_sdk/store/migrations/0006_stop_state.sql"
+MANIFEST = "src/hadavin_sdk/store/migrations_released.json"
 LOOP = "src/hadavin_sdk/runtime/agent_loop.py"
 APP = "src/hadavin_sdk/app.py"
 SECN = "src/hadavin_sdk/secret_name.py"
@@ -60,16 +62,15 @@ N2 = "test_n2_a_reset_by_the_reset_login_reads_off"
 N3 = "test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset"
 OWNER = "test_the_owner_is_refused_by_the_append_only_trigger"
 RESET_BODY = (
-    '        self.audit.write_intent(self._event(False, by, "reset"))\n'
+    "        self.audit.write_intent(event)\n"
     "        try:\n"
-    "            self.store.set_kill_switch(KillSwitch(on=False, by=by))\n"
-    "        except Exception:\n"
-    '            self.audit.write_outcome(self._event(True, by, "reset_failed"))\n'
-    "            raise\n"
+    "            self.store.clear_stops(by, ids)\n"
 )
 CLEAR_FIRST = (
-    "        self.store.set_kill_switch(KillSwitch(on=False, by=by))\n"
-    '        self.audit.write_intent(self._event(False, by, "reset"))\n'
+    "        self.store.clear_stops(by, ids)\n"
+    "        self.audit.write_intent(event)\n"
+    "        try:\n"
+    "            pass\n"
 )
 E6 = "test_e6_a_deleted_flag_row_reads_on_and_a_reset_fails_loudly_and_stays_on"
 S1 = "test_s1_temporary_tables_on_the_runtime_connection_do_not_hide_an_open_stop"
@@ -142,7 +143,7 @@ HAND = [
     mutant("migrate: effective_problems is not run for the reset role", MIG,
         'if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):',
         "if bad := []:",
-        "test_migrate_refuses_a_public_right_the_reset_role_would_inherit", "DID NOT RAISE"),
+        "test_migrate_refuses_a_public_right_the_reset_role_would_inherit", "Regex pattern did not match"),
     mutant("migrate: reset_role is left out of the named roles", MIG,
         "    named = [r for r in roles if r is not None]",
         "    named = [r for r in roles[:3] if r is not None]",
@@ -151,10 +152,11 @@ HAND = [
         " or role in _FORBIDDEN_ROLES", "",
         "test_h4_a_role_name_that_is_not_one_plain_role_is_refused_before_any_connection", "ConfigError"),
     mutant("read: the NOT EXISTS is dropped (a cleared stop still counts)", PG,
-        '\'SELECT s."by", s.ts FROM {stops} s WHERE NOT EXISTS \'\n'
-        '                    "(SELECT 1 FROM {clears} c WHERE c.stop_id = s.id) ORDER BY',
-        '\'SELECT s."by", s.ts FROM {stops} s \'\n                    "ORDER BY',
-        N2, "assert True is False"),
+        '                        \'SELECT s."by", s.ts FROM {stops} s WHERE NOT EXISTS \'\n'
+        '                        "(SELECT 1 FROM {clears} c WHERE c.stop_id = s.id) ORDER BY s.ts, s.id LIMIT 1"',
+        '                        \'SELECT s."by", s.ts FROM {stops} s \'\n'
+        '                        "ORDER BY s.ts, s.id LIMIT 1"',
+        N2, "assert (True, 'ops:a') == (True, 'ops:later')"),
     mutant("read: open stops are ignored", PG,
         "        if stop is not None:\n", "        if False:\n",
         "test_n1_a_stop_by_the_runtime_login_reads_on_from_a_second_connection", "assert (False"),
@@ -530,12 +532,12 @@ HAND = [
         "        if reset_ref and _same_login(secrets, reset_ref, [b.store.dsn_secret_name]):", "        if False:",
         "test_a_reset_ref_holding_the_same_login_under_another_name_is_refused", "assert", test=E5B),
     mutant("cli: the still-ON reset exits 0", CLI,
-        '"a second reset erases that stop too.",\n            file=sys.stderr,\n        )\n        return 2',
-        '"a second reset erases that stop too.",\n            file=sys.stderr,\n        )\n        return 0',
+        '            + shown,\n            file=sys.stderr,\n        )\n        return 2\n    print(f"kill switch OFF',
+        '            + shown,\n            file=sys.stderr,\n        )\n        return 0\n    print(f"kill switch OFF',
         "test_reset_exits_2_and_says_still_on_when_the_read_back_is_on", "assert", test=UNIT),
     mutant("cli: the still-ON message does not warn against a second reset", CLI,
-        '"have just set it, or an older flag is on. Check the stop reason with them before resetting again: "',
-        '"have just set it, or an older flag is on. "',
+        'Check the "\n            "stop reason with them before resetting again: the next reset clears every stop it lists."',
+        'Check the "\n            "stop reason with them."',
         "test_a_reset_that_finds_the_switch_on_does_not_say_reset_again", "assert", test=E5B),
     mutant("cli: the still-ON message does not say who set it", CLI,
         "            f\"set by {state.by!r} at {state.ts.isoformat()}\"", "            \"set by someone unknown\"",
@@ -554,7 +556,8 @@ HAND = [
         "        return 4 if is_connectivity_error(exc) else 2\n    if state.on:", "        return 4\n    if state.on:",
         "test_reset_exits_2_when_the_read_back_is_answered_with_an_error", "assert", test=UNIT),
     mutant("cli: a clean reset does not exit 0", CLI,
-        '    print(f"kill switch OFF (by {by})")\n    return 0', '    print(f"kill switch OFF (by {by})")\n    return 1',
+        '    print(f"kill switch OFF (by {by}; cleared {len(cleared)} stop(s))")\n    return 0',
+        '    print(f"kill switch OFF (by {by}; cleared {len(cleared)} stop(s))")\n    return 1',
         "test_reset_exits_0_and_says_off_only_after_reading_off", "assert", test=UNIT),
     mutant("loop: the limits_unavailable hunk is removed (recheck)", LOOP,
         '            return "recheck.limits_unavailable"\n', "            raise\n",
@@ -625,6 +628,7 @@ def run_by_hand(only: list[str]) -> int:
         return 1
     chosen = [m for m in HAND if not only or any(text in m.name for text in only)]
     targets = {m.file for m in chosen} | {f for m in chosen for f, _, _ in ALSO.get(m.name, [])}
+    targets.add(MANIFEST)
     dirty = subprocess.run(  # noqa: S603 - fixed arguments
         ["git", "status", "--porcelain", "--", *sorted(targets)],  # noqa: S607 - git from PATH
         cwd=ROOT, capture_output=True, text=True, check=True,
@@ -646,11 +650,19 @@ def run_by_hand(only: list[str]) -> int:
         edits = [(m.file, m.old, m.new), *ALSO.get(m.name, [])]
         before = {f: (ROOT / f).read_bytes() for f, _, _ in edits}
         after = {f: data.decode("utf-8") for f, data in before.items()}
+        sql_files = sorted({f for f, _, _ in edits if f.endswith(".sql")})
+        if sql_files:  # migrate refuses a released file whose hash is not the manifest's: the mutant carries its own
+            before[MANIFEST] = (ROOT / MANIFEST).read_bytes()
+            after[MANIFEST] = before[MANIFEST].decode("utf-8")
         missing = []
         for f, old, new in edits:
             if old not in after[f]:
                 missing.append(f)
             after[f] = after[f].replace(old, new)
+        for f in sql_files:
+            old_h = hashlib.sha256(before[f].replace(b"\r\n", b"\n")).hexdigest()
+            new_h = hashlib.sha256(after[f].encode("utf-8").replace(b"\r\n", b"\n")).hexdigest()
+            after[MANIFEST] = after[MANIFEST].replace(old_h, new_h)
         key = (m.test_file, killer)
         if key not in clean:
             clean[key] = _killer(killer, m.test_file)[0] == 0

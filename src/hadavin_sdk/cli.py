@@ -100,6 +100,16 @@ def _money(text: str) -> Decimal:
     return d
 
 
+def _unreleased_range() -> str:
+    try:  # migrate needs the postgres extra; the help must work without it
+        from hadavin_sdk.store.migrate import UNRELEASED_MIGRATIONS
+    except ImportError:
+        return "the unreleased ones"
+
+    nums = sorted(v[:4] for v in UNRELEASED_MIGRATIONS)
+    return f"{nums[0]}-{nums[-1]}" if nums else "none now"
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
     try:
@@ -191,6 +201,18 @@ def _main(argv: list[str] | None = None) -> int:
         help="below PostgreSQL 16: a CREATEROLE role you vouch for (it cannot grant the reset role to itself); "
         "repeat for several; named in the output and logged; never excuses a grant on the stop tables",
     )
+    mig.add_argument(
+        "--accept-changed-draft",
+        action="append",
+        default=[],
+        help=f"an UNRELEASED migration ({_unreleased_range()}) whose file changed but whose database already matches it: record "
+        "the file's checksum; repeat for several",
+    )
+    mig.add_argument(
+        "--reset-draft",
+        help="an UNRELEASED migration: delete its ledger row and every later one, then apply again (drop what the "
+        "draft made first); refused for a released migration",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -233,6 +255,8 @@ def _main(argv: list[str] | None = None) -> int:
             caps_role=args.caps_role,
             no_roles=args.no_roles,
             accepted_admin_roles=tuple(args.accept_admin_role),
+            accept_changed_draft=tuple(args.accept_changed_draft),
+            reset_draft=args.reset_draft,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -490,6 +514,8 @@ def _migrate(
     no_roles: bool = False,
     accepted_admin_roles: tuple[str, ...] = (),
     caps_role: str | None = None,
+    accept_changed_draft: tuple[str, ...] = (),
+    reset_draft: str | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -537,6 +563,8 @@ def _migrate(
             caps_role=caps_role,
             no_roles=no_roles,
             accepted_admin_roles=accepted_admin_roles,
+            accept_changed_draft=accept_changed_draft,
+            reset_draft=reset_draft,
             iam_auth=store.iam_auth,
             region=store.region,
             sslmode=store.sslmode,

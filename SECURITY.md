@@ -72,4 +72,10 @@ Redaction is pattern based and treats the end of a value the way the redactor's 
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege).
 
-On PostgreSQL after migration 0011, the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). Only the caps login (`migrate --caps-role`, `backends.store.caps_credential_ref`) can set a cap (`limits set-cap`, `sync-caps`, `check-caps`); the reset login runs no money function, and `migrate` refuses a command that names a reset role and no caps role.
+## Spend limits (stated limits)
+
+Exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
+
+In force on PostgreSQL after migration 0011: money is exact decimal, and the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). The caps live in the table `hadavin_caps`; only the caps login (`migrate --caps-role`, `backends.store.caps_credential_ref`) can set a cap (`limits set-cap`, `sync-caps`, `check-caps`); the reset login runs no money function, and the command `hadavin-sdk migrate` refuses a reset role named without a caps role. The reserve and settle functions exist and are tested.
+
+The live loop's main model call reserves the worst case before the call and settles after: the reservation bounds the booked worst case per call; a reply costing more than the worst case is booked in full (an overshoot, audited); the kill switch is read before the reserve, not atomic with it. NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired. No text of this package may claim a hard spend cap beyond the main call of the live loop.

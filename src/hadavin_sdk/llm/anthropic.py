@@ -102,6 +102,8 @@ class AnthropicLLM(NetworkLLM):
     # Narrow unless the client is known to talk to the direct Claude API (`direct_api`): behind Vertex or Foundry
     # a 400, 413 or 422 can come from the gateway after the model started, and would settle at 0 (under-counted).
     refused_statuses = frozenset({401, 403, 404})
+    # A gateway's 429 can follow model work: only the direct API counts it as unbilled.
+    throttled_unbilled = False  # fail closed
 
     def __init__(
         self,
@@ -115,6 +117,7 @@ class AnthropicLLM(NetworkLLM):
         super().__init__(routes, max_attempts, sleep)
         if direct_api:
             self.refused_statuses = REFUSED_STATUSES
+            self.throttled_unbilled = True
         self._client, self._key = client, key
 
     def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:

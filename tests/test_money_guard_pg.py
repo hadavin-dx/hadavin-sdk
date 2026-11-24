@@ -42,7 +42,7 @@ def seed(w):
     rt = w.store(w.runtime)
     opened = _reserve(rt, "2.00")
     settled = _reserve(rt, "1.00")
-    rt.settle_spend(settled, D("0.40"))
+    rt.settle_spend(settled, D("0.40"), agent_id=AGENT)
     return opened, settled
 
 
@@ -100,6 +100,10 @@ def lowering_attacks(w, opened, settled, role=None):
                     went_through.append(f"{name}{'+guc' if guc else ''}")
                 except errors.InsufficientPrivilege:
                     pass
+                except errors.CheckViolation:
+                    # a guard that let the first round through leaves the counters at 0, so the repeat lowers
+                    # below zero and meets the range constraint: the guard still did not refuse it
+                    went_through.append(f"{name}{'+guc' if guc else ''}(check)")
         try:
             db.execute("SET ROLE " + w.release)
             went_through.append("set_role")
@@ -157,7 +161,9 @@ def test_the_runtime_login_can_still_raise_and_book_and_settle(w):
         db.execute("UPDATE spend SET usd = usd + 1 WHERE agent_id = %s", (AGENT,))
         db.execute("UPDATE spend SET usd = usd WHERE agent_id = %s", (AGENT,))  # equal is not lower
     assert _counters(w)[0] == D("3.40")
-    row, first = rt.settle_spend(opened, D("5.00"))  # NULL -> amount, and above the reserved amount
+    row, first = rt.settle_spend(
+        opened, D("5.00"), agent_id=AGENT
+    )  # NULL -> amount, and above the reserved amount
     assert first is True and row.settled_usd == D("5.00")
     _expire(w, _reserve(rt, "1.00"))  # open -> expired: settled_usd NULL -> reserved
 
@@ -167,7 +173,7 @@ def test_a_late_settle_of_an_expired_hold_still_works_through_the_guard(w):
     rid = _reserve(rt, "1.00")
     _expire(w, rid)
     row, first = rt.settle_spend(
-        rid, D("0.10")
+        rid, D("0.10"), agent_id=AGENT
     )  # delta 0: the booking stays at the reserved amount
     assert first is True and row.settled_usd == D("1.00")
     assert _counters(w) == (D("1.00"), D("1.00"))

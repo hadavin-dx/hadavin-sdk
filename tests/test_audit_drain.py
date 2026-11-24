@@ -29,6 +29,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick
 from hadavin_sdk.runtime.tick import run_tick
 from tests.conftest import qualify
+from tests.money_caps_seed import seed_registry_caps
 
 REPO = Path(__file__).resolve().parents[1]
 STEP = "audit_drain"
@@ -104,8 +105,8 @@ def test_n1_audit_drain_is_the_last_tick_step():
     names = [s.name for s in tick.STEPS]
     assert names.count(STEP) == 1  # first: without the row this fails here, not in the lookup below
     assert next(s for s in tick.STEPS if s.name == STEP).every_s == 0
-    # audit_drain comes before expire_reservations and check_caps, which is the last step
-    assert names[-3:] == [STEP, "expire_reservations", "check_caps"]
+    # audit_drain comes before expire_reservations, check_caps and check_expired_holds, which is the last step
+    assert names[-4:] == [STEP, "expire_reservations", "check_caps", "check_expired_holds"]
 
 
 def test_n2_one_tick_writes_a_parked_outcome_to_the_chain(app, monkeypatch, caplog):
@@ -443,7 +444,11 @@ class _Pg:
 
     def child(self, *argv):
         """A real child process: its own interpreter, its own connection, the runtime role's DSN."""
-        env = {**os.environ, **self.secrets, "PYTHONPATH": str(REPO)}
+        env = {
+            **os.environ,
+            **self.secrets,
+            "PYTHONPATH": os.pathsep.join([str(REPO), str(REPO / "src")]),
+        }
         env.pop("HADAVIN_CONFIG_DIR", None)
         return subprocess.run(  # noqa: S603 (fixed argv, no shell)
             [sys.executable, *argv],
@@ -474,8 +479,13 @@ def pg(cfg_dir):
                 "purge_dsn_secret_name": "pg-purge",
             },
         )
-        qualify(load_registry(load_config(cfg_dir)))
-        yield _Pg(cfg_dir, runtime_dsn, PURGE_DSN[runtime_dsn])
+        registry = load_registry(load_config(cfg_dir))
+        qualify(registry)
+        out = _Pg(cfg_dir, runtime_dsn, PURGE_DSN[runtime_dsn])
+        seed_registry_caps(
+            out.admin_dsn, None, registry
+        )  # the owner seeds the caps: check_caps finds no drift
+        yield out
 
 
 def _close(*apps):

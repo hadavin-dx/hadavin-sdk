@@ -62,6 +62,11 @@ class SpendCapExceeded(RuntimeError):
         self.which = which
 
 
+class BookingDayRefused(ValueError):
+    """The database refused the booking day (outside its UTC date +/- the window): a clock off by days. A dedicated
+    class, so a hint never depends on the text of a message a caller could shape."""
+
+
 MAX_RESERVATION_ID_CHARS = 200
 _RESERVATION_ID = re.compile(r"[A-Za-z0-9._:-]+")
 
@@ -99,9 +104,12 @@ def check_store_id(value: object, what: str) -> str:
 
 
 def check_spend_day(day: object) -> date:
-    """A booking day is a plain date: a datetime or a string would be kept under another key than the row."""
+    """A booking day is a plain date: a datetime or a string would be kept under another key than the row. A day
+    before 1970-01-01 is refused as the database does (0011); 9999-12-31 is the last date there is."""
     if type(day) is not date:
         raise ValueError("a spend day must be a date")
+    if day < date(1970, 1, 1):
+        raise ValueError("a spend day must not be before 1970-01-01")
     return day
 
 
@@ -173,6 +181,29 @@ class SpendReleaser(Protocol):
     def release_expired_spend(
         self, agent_id: str, day: date, actor: str, audit: Any
     ) -> SpendRelease: ...
+
+
+EXPIRED_HOLDS_MAX_ROWS = 1000  # groups (agent, day) one `expired_holds` call returns; the SQL function has the same bound
+
+
+@dataclass(frozen=True)
+class ExpiredHolds:
+    """The expired holds of one agent and one day that nobody has released or settled (`expired_holds`): how many
+    and their summed reserved amount, which is still booked. No hold id, no run id."""
+
+    agent_id: str
+    day: date
+    holds: int
+    usd: Decimal
+
+
+class ExpiredHoldsReader(Protocol):
+    """Optional, like `CapAdmin`: a read-only view of the expired holds still booked, for the tick alert
+    (`check_expired_holds`). The runtime login has no right on the table, so Postgres answers through the definer
+    function `hadavin_expired_holds` (migration 0011). Holds closed no longer than `older_than_s` seconds ago are
+    left out; at most `EXPIRED_HOLDS_MAX_ROWS` groups, ordered by agent and day. ValueError for a bad age."""
+
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]: ...
 
 
 class CapAdmin(Protocol):
@@ -325,9 +356,9 @@ class Store(Protocol):
         ...
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
-        """With `agent_id`, a reservation of another agent is NotFound (the same as an unknown id). The stored row and `applied` (true only for the call that changed it). The first call closes an open
+        """`agent_id` is required (there is no agent-less settle): a reservation of another agent is NotFound (the same as an unknown id); a missing or empty agent is a ValueError (TypeError when omitted). The stored row and `applied` (true only for the call that changed it). The first call closes an open
         or an expired row: the counters of the row's own day and month move by actual minus reserved (after
         expiry only upward), `settled_usd` becomes what stays booked (the actual amount; for a row that was
         expired the larger of actual and reserved) and the real actual amount is added to the run's cost when

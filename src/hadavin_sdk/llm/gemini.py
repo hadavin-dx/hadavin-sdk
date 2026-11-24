@@ -39,6 +39,9 @@ def make(settings: Any, deps: Any) -> GeminiLLM:
 
 class GeminiLLM(NetworkLLM):
     label = "gemini"
+    throttled_unbilled = (
+        True  # the direct Gemini API answers 429 before any model work (stated, not verified)
+    )
 
     def __init__(
         self,

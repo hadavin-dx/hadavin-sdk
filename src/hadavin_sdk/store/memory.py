@@ -28,6 +28,8 @@ from hadavin_sdk.models import (
     now,
 )
 from hadavin_sdk.store.protocol import (
+    EXPIRED_HOLDS_MAX_ROWS,
+    ExpiredHolds,
     NotFound,
     SpendCapExceeded,
     StaleState,
@@ -217,6 +219,8 @@ class MemoryStore:
             return [d.model_copy(deep=True) for d in self._dead.get(run_id, [])]
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+        check_store_id(agent_id, "agent_id")  # the same refusals as the definer function
+        check_spend_day(day)
         usd = clean_spend_amount(usd)  # a bad amount is a ValueError; -0 becomes 0
         with self._lock:
             with localcontext(defaults.money_context()):
@@ -347,7 +351,20 @@ class MemoryStore:
         check_spend_cap(day_cap)
         check_spend_cap(month_cap)
         with self._lock:
-            if reservation_id in self._reservations:
+            prior = self._reservations.get(reservation_id)
+            if prior is not None:
+                if prior.status == "open" and (
+                    prior.agent_id,
+                    prior.day,
+                    prior.reserved_usd,
+                    prior.run_id,
+                ) == (
+                    agent_id,
+                    day,
+                    usd,
+                    run_id,
+                ):
+                    return  # a retry of a committed reserve: the same row, nothing booked again
                 raise StaleState(f"spend reservation exists: {reservation_id}")
             booked = self._spend.get((agent_id, day), Decimal(0))
             with localcontext(defaults.money_context()):
@@ -373,15 +390,14 @@ class MemoryStore:
             self._reservations[reservation_id] = row
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
         actual_usd = clean_spend_amount(actual_usd)
-        if agent_id is not None:
-            check_store_id(agent_id, "agent_id")
+        check_store_id(agent_id, "agent_id")
         with self._lock:
             row = self._reservations.get(reservation_id)
-            if row is None or (agent_id is not None and row.agent_id != agent_id):
+            if row is None or row.agent_id != agent_id:
                 raise NotFound(reservation_id)
             if row.status == "settled":
                 return row, False
@@ -421,6 +437,20 @@ class MemoryStore:
                     update={"status": "expired", "settled_usd": r.reserved_usd, "closed_at": at}
                 )
             return len(old)
+
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]:
+        check_expiry_age(older_than_s)
+        with self._lock:
+            cutoff = now() - timedelta(seconds=older_than_s)
+            groups: dict[tuple[str, date], tuple[int, Decimal]] = {}
+            for r in self._reservations.values():
+                if r.status == "expired" and r.closed_at is not None and r.closed_at <= cutoff:
+                    n, usd = groups.get((r.agent_id, r.day), (0, Decimal(0)))
+                    groups[(r.agent_id, r.day)] = (n + 1, usd + r.reserved_usd)
+            return [
+                ExpiredHolds(agent, day, n, usd)
+                for (agent, day), (n, usd) in sorted(groups.items())[:EXPIRED_HOLDS_MAX_ROWS]
+            ]
 
     def purge_spend_reservations(self, before: datetime) -> int:
         check_purge_bound(before)

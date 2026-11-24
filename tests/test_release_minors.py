@@ -45,7 +45,7 @@ def test_settle_of_another_agents_reservation_is_not_found_and_changes_nothing()
 
 def test_settle_without_an_agent_keeps_working():
     store = MemoryStore()
-    assert store.settle_spend(_reserved(store), D("0.5"))[1] is True
+    assert store.settle_spend(_reserved(store), D("0.5"), agent_id="agent-a")[1] is True
 
 
 def test_limits_settle_for_passes_the_agent_on():
@@ -196,6 +196,7 @@ def test_the_agreed_settle_signature_is_unchanged():
             "self",
             "reservation_id",
             "actual_usd",
+            "agent_id",  # keyword-only and required: no agent-less settle
         ]
 
 
@@ -262,12 +263,12 @@ def test_the_outcome_failing_after_commit_exits_5_and_names_the_intent(monkeypat
     assert "evt-dangling-1" in capsys.readouterr().err
 
 
-def test_limits_settle_works_with_a_store_that_has_the_old_signature():
+def test_limits_settle_always_passes_the_agent_to_the_store():
     calls = []
 
-    class Old:
-        def settle_spend(self, reservation_id, actual_usd):
-            calls.append((reservation_id, actual_usd))
+    class Store:
+        def settle_spend(self, reservation_id, actual_usd, *, agent_id):
+            calls.append((reservation_id, actual_usd, agent_id))
             return (
                 SimpleNamespace(
                     settled_usd=actual_usd, reserved_usd=actual_usd, run_id=None, agent_id="a"
@@ -276,9 +277,12 @@ def test_limits_settle_works_with_a_store_that_has_the_old_signature():
             )
 
     limits = Limits.__new__(Limits)
-    limits.store = Old()
-    assert limits.settle("r1", Decimal(1)) == 0
-    assert calls == [("r1", Decimal(1))]
+    limits.store = Store()
+    assert limits.settle("r1", Decimal(1), agent_id="a") == 0
+    assert limits.settle_for("a", "r2", Decimal(1)) == 0
+    assert calls == [("r1", Decimal(1), "a"), ("r2", Decimal(1), "a")]
+    with pytest.raises(TypeError):
+        limits.settle("r1", Decimal(1))  # type: ignore[call-arg]  # no agent-less path
 
 
 def test_a_nan_stuck_age_after_the_first_agent_is_clamped(monkeypatch):

@@ -269,3 +269,17 @@ Move the class to S/limits.py (evals needs it too); loop.py imports it so `loop.
 
 ## 15. Size
 About 110 lines added and 100 removed in src (64 of the removals are extract.py). Tests: about 260 added, 60 removed or edited. Docs: about 10.
+
+## Builder B2 report
+- Code: `src/hadavin_sdk/runtime/agent_loop.py`: before `llm.chat` in the step loop, `worst_case_for(routes, llm)(...)` then `Limits.reserve(agent_id, worst, run_id=...)`; SpendRefused ends the run `NEEDS_PERSON limits.<reason>` (`kill_switch` -> `STOPPED`), any other failure `limits_unavailable`, before any model call. After the reply `_settle_model_call` calls `Limits.settle_for(agent_id, rid, cost)` once (one-line merge point for the gate). The store books the run cost on settle, so `add_cost` was dropped for the reply (kept only as fallback when the settle fails; a failed settle leaves the hold at the worst case). `ProviderError` / `ProviderExhausted` do not settle (hold stays at the worst case, expires via tick).
+- Tests: `tests/test_live_path_reserve_settle.py` xfails removed (18 pass, memory and PostgreSQL). Changed to the new contract: `tests/test_s5_runtime.py::test_budget_crossed_by_this_call_is_denied_at_the_gate` (now `..._is_refused_before_the_model`: NEEDS_PERSON `limits.daily_budget`, no model call; the old DENIED-at-gate assertion described the charge-after mechanism).
+- Mutants: `tests/b2_mutants.py`, 3 of 3 good (reserve removed, settle removed, settle on provider error).
+- Not gated: `_screen` llm_judge (`guard/judge.py`, charged after via `Limits.charge`; its worst case is not known to the loop), `k1b/loop.py` (own budget), `evals.py`. 
+- Merged cloud/core-b (I1, A3, price guard) into the branch; settle_for(agent_id, rid, cost) used.
+- Full suite: 13770 passed, 67 failed, 2 xfailed. The failures are in PostgreSQL role/store/audit-chain tests (test_stop_state_roles, warden_port/test_audit_chain, contracts/test_store_spend_ids_caps, test_p5p6_followups); a run of those four files on the unmodified cloud/core-b head also failed (40 failures there), so they are environment, not B2. Targeted set (live path, k5_tools, p7, limits, s5_runtime, refused_before_response, price_guard): 545 passed.
+
+### B2 review 1 follow-up
+- M2: `_settle_model_call` returns the ended run on a bad cost, books the run cost directly only on a definite refusal (ValueError, NotFound), and books nothing on an ambiguous failure. m2: one code `limits.limits_unavailable`. m4: NOT GATED and listed: `cards.render_shadow(detector=...)` (cost not charged at all), `guard/bedrock_guardrail.apply_guardrail`. m1: runbook says an operator must release expired holds. m6: 6 mutants in tests/b2_mutants.py (6 of 6 good). m3 (a transient reserve failure is permanent for that run) and m5 (max_attempts by getattr) are stated, not changed.
+
+### B2 review 2 follow-up
+- B2-M1: `_settle_model_call` treats exactly the connectivity errors (`store.protocol.is_connectivity_error`) as ambiguous (no direct run-cost booking; the run ends NEEDS_PERSON `limits.limits_unavailable`); every other failure rolled back and the run cost is booked directly. m1: the method never raises (a store that is down: logged, run returned). m2 docs reworded. Mutants 8 of 8 good.

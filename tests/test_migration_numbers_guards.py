@@ -560,3 +560,35 @@ def test_every_mutant_still_applies_to_the_source():
         test_path, _, test_id = m.pinned.partition("::")
         function = test_id.split("[")[0]
         assert f"def {function}(" in (ROOT / f"{test_path}.py").read_text(encoding="utf-8"), m.name
+
+
+# --- 10b. M6: nothing older than 0008 may change; 0008-0011 are added to the manifest at merge ------------------------------------
+# Procedure (docs/migration-checksums.md): at the merge that releases 0008-0011 the lead runs
+# adds the four hashes to tests/fixtures/migrations_released.json, empties migrate.UNRELEASED_MIGRATIONS, and sets
+# RELEASED_CUTOFF to 12 (and the manifest length in test 10 to 11).
+RELEASED_CUTOFF = 8  # migrations numbered below this are released today
+
+
+def test_a_change_to_any_migration_older_than_0008_fails(mn, tmp_path):
+    import shutil
+
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    older = sorted(p for p in mn.MIGRATIONS.glob("*.sql") if int(p.name[:4]) < RELEASED_CUTOFF)
+    assert [p.stem for p in older] == sorted(manifest), (
+        "every file below 0008 is in the manifest, and no other"
+    )
+    for victim in older:
+        shutil.rmtree(tmp_path / "m", ignore_errors=True)
+        shutil.copytree(mn.MIGRATIONS, tmp_path / "m")
+        f = tmp_path / "m" / victim.name
+        f.write_bytes(f.read_bytes() + b"\n-- mutant\n")
+        assert mn.released_problems(tmp_path / "m", manifest) == [
+            f"{victim.stem}: a released file was changed"
+        ]
+
+
+def test_the_manifest_has_no_row_for_the_unreleased_files_yet():
+    from hadavin_sdk.store.migrate import UNRELEASED_MIGRATIONS
+
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    assert not set(manifest) & UNRELEASED_MIGRATIONS

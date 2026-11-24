@@ -18,6 +18,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 import psycopg
 from psycopg import errors, sql
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
     MAX_SPEND_DECIMALS,
@@ -40,15 +41,22 @@ NEEDS_PG = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),
     reason="HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)",
 )
-MF = getattr(mig, "MONEY_FUNCTIONS", ("",) * 7)
-RESERVE, SETTLE, EXPIRE, PURGE, ADD, SET_CAP, CAP_MATCHES = MF
-LIMIT_NAMES = ("max_amount", "max_decimals", "max_id_chars", "max_expiry_age")
+MF = getattr(mig, "MONEY_FUNCTIONS", ("",) * 8)
+RESERVE, SETTLE, EXPIRE, PURGE, ADD, SET_CAP, CAP_MATCHES, EXPIRED_HOLDS = MF
+LIMIT_NAMES = (
+    "max_amount",
+    "max_decimals",
+    "max_id_chars",
+    "max_expiry_age",
+    "min_expiry_age",
+    "max_day_skew",
+)
 
 
 # --- the maps (no database) ---------------------------------------------------------------------------------
 
 
-def test_the_shared_function_list_is_exactly_the_seven_new_functions():
+def test_the_shared_function_list_is_exactly_the_eight_new_functions():
     assert mig.MONEY_FUNCTIONS == (
         "hadavin_reserve_spend(text, text, date, numeric, text)",
         "hadavin_settle_spend(text, numeric, text)",
@@ -57,6 +65,7 @@ def test_the_shared_function_list_is_exactly_the_seven_new_functions():
         "hadavin_add_spend(text, date, numeric)",
         "hadavin_set_cap(text, numeric, numeric, text)",
         "hadavin_cap_matches(text, numeric, numeric)",
+        "hadavin_expired_holds(integer)",
     )
 
 
@@ -68,6 +77,7 @@ def test_function_grants_name_the_roles_the_ticket_names():
         "hadavin_expire_spend_reservations",
         "hadavin_add_spend",
         "hadavin_cap_matches",
+        "hadavin_expired_holds",
     )
     for sig, g in who.items():
         name = sig.split("(")[0]
@@ -161,6 +171,8 @@ def test_the_limits_come_from_the_python_constants_and_nothing_else():
         "max_decimals": MAX_SPEND_DECIMALS,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
+        "max_day_skew": defaults.MAX_RESERVE_DAY_SKEW_DAYS,
+        "min_expiry_age": defaults.MIN_EXPIRY_AGE_S,
     }
     assert tuple(mig.money_limits()) == LIMIT_NAMES
 
@@ -246,7 +258,7 @@ def test_the_search_path_of_each_money_function_is_pinned_with_the_temp_schema_l
 
 
 @NEEDS_PG
-@pytest.mark.parametrize("index", range(7))
+@pytest.mark.parametrize("index", range(8))
 def test_migrate_again_re_pins_a_function_whose_pin_was_lost(w, index):
     sig = mig.MONEY_FUNCTIONS[index]
     w.do(f"ALTER FUNCTION {sig} SET search_path = pg_catalog, pg_temp")
@@ -298,7 +310,7 @@ def test_migrate_takes_a_hand_grant_of_execute_back_from_the_wrong_role(w, index
 
 
 @NEEDS_PG
-@pytest.mark.parametrize("index", range(7))
+@pytest.mark.parametrize("index", range(8))
 def test_migrate_refuses_when_public_can_run_a_money_function(w, index):
     sig = mig.MONEY_FUNCTIONS[index]
     w.do(f"GRANT EXECUTE ON FUNCTION {sig} TO PUBLIC")

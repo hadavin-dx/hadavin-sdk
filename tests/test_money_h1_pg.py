@@ -125,6 +125,44 @@ def check_b3_day_window(w):
     w.migrate()  # the next migrate seeds it again
 
 
+def check_m1_add_spend_window(w):
+    """Review m1: hadavin_add_spend has the booking-day window of reserve; a far day starts no counter row."""
+    rt = w.store(w.runtime)
+    today = today_utc()
+    for day in (today - timedelta(days=1), today, today + timedelta(days=1)):
+        rt.add_spend(AGENT, day, D(1))
+    before = (
+        w.run("SELECT count(*) FROM spend")[0][0],
+        w.run("SELECT count(*) FROM spend_month")[0][0],
+    )
+    for day in (
+        today + timedelta(days=2),
+        today - timedelta(days=2),
+        today.replace(year=today.year + 73),
+    ):
+        # the message names the argument (a fixed token), which is what the Limits clock hint keys on
+        with pytest.raises(ValueError, match=r"refused by the database \(p_day\)"):
+            rt.add_spend(AGENT, day, D(1))
+        assert (
+            _sqlstate_of_call(w, "SELECT * FROM hadavin_add_spend(%s, %s, 1)", (AGENT, day))
+            == "22023"
+        )
+    assert (
+        w.run("SELECT count(*) FROM spend")[0][0],
+        w.run("SELECT count(*) FROM spend_month")[0][0],
+    ) == before
+    _set_limit(w, "max_day_skew", 0)
+    with pytest.raises(ValueError, match="refused by the database"):
+        rt.add_spend(AGENT, today + timedelta(days=1), D(1))
+    rt.add_spend(AGENT, today, D(1))
+    w.run("DELETE FROM hadavin_limits WHERE name = 'max_day_skew' RETURNING 1")
+    assert (
+        _sqlstate_of_call(w, "SELECT * FROM hadavin_add_spend(%s, %s, 1)", (AGENT, today))
+        == "HD004"
+    )  # a missing row fails closed
+    w.migrate()
+
+
 def check_m1_min_expiry_age(w):
     rt = w.store(w.runtime)
     _seed(w)
@@ -236,6 +274,7 @@ def h1_battery(w):
     check_b3_day_window(w)
     check_m1_min_expiry_age(w)
     check_n1_counters_refuse_bad_usd(w)
+    check_m1_add_spend_window(w)
     # M2 (check_m2_settle_needs_an_agent) is deferred
 
 
@@ -247,7 +286,10 @@ def test_m1_a_young_hold_cannot_be_expired_nor_a_fresh_expiry_released(w):
     check_m1_min_expiry_age(w)
 
 
-@pytest.mark.xfail(reason="M2 deferred", strict=True)
+def test_m1_add_spend_has_the_day_window(w):
+    check_m1_add_spend_window(w)
+
+
 def test_m2_settle_without_an_agent_is_refused(w):
     check_m2_settle_needs_an_agent(w)
 
@@ -261,3 +303,10 @@ def test_the_limit_seed_has_the_new_rows(w):
     rows = dict(w.run("SELECT name, value FROM hadavin_limits"))
     assert rows["max_day_skew"] == D(defaults.MAX_RESERVE_DAY_SKEW_DAYS)
     assert rows["min_expiry_age"] == D(defaults.MIN_EXPIRY_AGE_S)
+
+
+def test_the_seeded_min_expiry_age_never_exceeds_what_the_tick_expire_step_asks_for():
+    """Review of H1 (minor): raising MIN_EXPIRY_AGE_S alone would make every tick's expire step fail (22023)."""
+    from hadavin_sdk import defaults
+
+    assert defaults.MIN_EXPIRY_AGE_S <= defaults.RESERVATION_EXPIRE_S

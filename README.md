@@ -41,6 +41,11 @@ What this release does and does not promise, in one place.
 - Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Tamper evidence of past rows holds only when the runtime login does not own the audit tables and has no UPDATE, DELETE or TRUNCATE on `audit_entries` (`migrate --runtime-role` grants it SELECT and INSERT there, and the append-only triggers refuse the rest even to a role that owned them; migrate does not yet refuse a runtime role that owns the tables); it is not proof of authenticity (a taken-over runtime can still append rows), and two runtime rights are wider than needed today (see SECURITY.md). Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
 
+## Spend limits: what is in force today
+Status, in one sentence: exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
+- In force: money is exact decimal (no floats); on PostgreSQL after migration 0011 the runtime login cannot lower a booked amount or change a cap; the caps live in the table `hadavin_caps`, written only under the reset login; `Limits.reserve` and `Limits.settle` exist and are tested.
+- The live loop's main model call reserves the worst case before the call and settles after: the reservation bounds the booked worst case per call; a reply costing more than the worst case is booked in full (an overshoot, audited); the kill switch is read before the reserve, not atomic with it. NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired.
+
 ## Running the tests
 
 Install with `uv sync --group test` (the parallel runner `pytest-xdist` is only in that group). Run

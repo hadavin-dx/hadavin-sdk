@@ -53,6 +53,8 @@ Not brought in from the branches: tests/pg_dsn.py, test_pg_dsn_guard.py, meter_s
 
 tests/contracts/test_store_spend_caps.py and tests/contracts/test_store_spend_model.py (added later by the test writers, 2026-11-20 06:00 and 06:30 UTC) belong to the T rows above. Reviewer finding 16 of the hostile re-read.
 
+Further test files added by fix round 3 and later rounds (they belong to the T rows too): tests/test_store_memory_atomic.py, tests/test_trigger_secret_reader.py, tests/test_trigger_secret_names.py, tests/test_worst_case_documents.py, tests/test_store_lock_timeout_pg.py, tests/test_store_money_errors_pg.py, tests/test_release_expired_spend_pg.py (status check of F-store-hostile-review-1, see F-store-hostile-review-1-status.md).
+
 ### R2. Who lands what (M1)
 F-store lands SpendRefused, the Meter Protocol, Limits.reserve and Limits.settle. F-install commit 3 lands only the k1b Budget changes.
 

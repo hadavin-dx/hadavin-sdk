@@ -68,7 +68,7 @@ def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
         _raw(
             rt,
             rt._money_call("hadavin_settle_spend", "%s::text, %s::numeric, %s::text"),
-            ("nope", D(1), None),
+            ("nope", D(1), AGENT),
         )
     assert caught.value.sqlstate == "HD002"
 
@@ -89,14 +89,14 @@ def test_a_duplicate_id_is_stale_state_an_unknown_id_is_not_found(w):
     rt = w.store(w.runtime)
     rid = _reserve(rt)
     with pytest.raises(StaleState, match=f"spend reservation exists: {rid}"):
-        _reserve(rt, rid=rid)
+        _reserve(rt, "2.00", rid=rid)
     with pytest.raises(NotFound):
-        rt.settle_spend("unknown-id", D("1.00"))
+        rt.settle_spend("unknown-id", D("1.00"), agent_id=AGENT)
     with pytest.raises(NotFound):
         rt.settle_spend(rid, D("1.00"), agent_id="another-agent")
-    row, applied = rt.settle_spend(rid, D("0.50"))
+    row, applied = rt.settle_spend(rid, D("0.50"), agent_id=AGENT)
     assert applied and row.settled_usd == D("0.50")
-    again, applied = rt.settle_spend(rid, D("0.10"))
+    again, applied = rt.settle_spend(rid, D("0.10"), agent_id=AGENT)
     assert not applied and again == row
 
 
@@ -105,7 +105,7 @@ def test_a_missing_counter_row_is_a_runtime_error_and_the_claim_rolls_back(w):
     rid = _reserve(rt)
     w.do("DELETE FROM spend")
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        rt.settle_spend(rid, D("0.50"))
+        rt.settle_spend(rid, D("0.50"), agent_id=AGENT)
     assert w.run("SELECT status FROM spend_reservations")[0][0] == "open"
 
 
@@ -116,7 +116,7 @@ def test_a_missing_limit_row_fails_closed_for_every_call(w, limit):
     w.run("DELETE FROM hadavin_limits WHERE name = %s RETURNING 1", (limit,))
     calls = (
         lambda: _reserve(rt),
-        lambda: rt.settle_spend(rid, D("0.50")),
+        lambda: rt.settle_spend(rid, D("0.50"), agent_id=AGENT),
         lambda: rt.add_spend(AGENT, DAY, D("1.00")),
     )
     for call in calls:
@@ -135,10 +135,8 @@ def test_a_missing_expiry_limit_row_fails_closed_for_expire(w):
 
 def test_an_argument_the_python_check_lets_through_is_a_value_error_from_the_function(w):
     rt = w.store(w.runtime)
-    with pytest.raises(ValueError, match="refused by the database"):
-        rt.add_spend(
-            "bad\x01agent", date(2024, 1, 31), D("1.00")
-        )  # add_spend checks the amount only
+    with pytest.raises(ValueError, match="agent_id"):
+        rt.add_spend("bad\x01agent", date(2024, 1, 31), D("1.00"))  # refused before any SQL
     assert w.count("spend") == 0
 
 

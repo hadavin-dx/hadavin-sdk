@@ -275,7 +275,7 @@ def test_the_edges_of_the_expiry_age_are_accepted(store, edge):
 
 def _closed_row(store):
     rid = _reserve(store)
-    store.settle_spend(rid, D("0.50"))
+    store.settle_spend(rid, D("0.50"), agent_id=AGENT)
     _closed_earlier(store, rid, 400)
     return rid
 
@@ -348,12 +348,12 @@ def test_settle_with_the_counter_row_missing_is_a_runtime_error_and_changes_noth
     before = _rows(store)[rid]
     _drop_day_counters(store)
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        store.settle_spend(rid, D("0.40"))
+        store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert _rows(store)[rid] == before
     assert before.status == "open"
     # and again: the refusal is repeatable, the row never became settled
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        store.settle_spend(rid, D("0.40"))
+        store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert _rows(store)[rid] == before
 
 
@@ -363,13 +363,15 @@ def test_settle_of_an_expired_row_with_the_counter_row_missing_is_also_refused(s
     before = _rows(store)[rid]
     _drop_day_counters(store)
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        store.settle_spend(rid, D("5.00"))  # a rise, so the counter would have to move
+        store.settle_spend(
+            rid, D("5.00"), agent_id=AGENT
+        )  # a rise, so the counter would have to move
     assert _rows(store)[rid] == before
 
 
 def test_settle_of_an_unknown_id_is_still_not_found(store):
     with pytest.raises(NotFound):
-        store.settle_spend(new_id("res"), D("1"))
+        store.settle_spend(new_id("res"), D("1"), agent_id=AGENT)
 
 
 # --- the day: a value the row model coerces must not be booked under another key -----------------------------
@@ -391,6 +393,6 @@ def test_a_day_that_is_not_a_date_is_refused_or_booked_on_the_counter_of_its_dat
         return
     assert _rows(store)[rid].day == DAY
     assert store.spend_totals(AGENT, DAY) == (ONE, ONE), "booked under another key"
-    row, applied = store.settle_spend(rid, D("0.25"))
+    row, applied = store.settle_spend(rid, D("0.25"), agent_id=AGENT)
     assert applied and row.settled_usd == D("0.25")
     assert store.spend_totals(AGENT, DAY) == (D("0.25"), D("0.25"))

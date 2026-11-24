@@ -21,6 +21,7 @@ from hadavin_sdk.store.protocol import SpendCapExceeded
 from tests.test_money_caps_reserve_pg import caps_battery
 from tests.test_money_h1_pg import (
     check_b3_day_window,
+    check_m1_add_spend_window,
     check_m1_min_expiry_age,
     check_n1_counters_refuse_bad_usd,
 )
@@ -149,7 +150,7 @@ def test_the_caps_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatc
     mutate, killed = MUTANTS[name]
     text = SQL_FILE.read_text(encoding="utf-8")
     mutated = mutate(text)
-    assert (mutated != text) or name == "control", "the mutation did not change the SQL"
+    assert (mutated != text) or name.startswith("control"), "the mutation did not change the SQL"
     folder = tmp_path / "migrations"
     shutil.copytree(mig.MIGRATIONS, folder)
     (folder / SQL_FILE.name).write_text(mutated, encoding="utf-8")
@@ -169,8 +170,32 @@ def test_the_caps_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatc
 
 # --- builder H1 (lead review xr-money-lead-1): the day window, the minimum expiry age, the counter CHECKs ------------
 B3_WINDOW = "IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN"
+
+
+def _last(t, old, new):
+    """Replace only the LAST occurrence (the window of hadavin_add_spend, which comes after reserve's)."""
+    head, _, tail = t.rpartition(old)
+    return head + new + tail
+
+
 H1_MUTANTS = {
     "control": (lambda t: t, check_b3_day_window, False),
+    "control add_spend window": (lambda t: t, check_m1_add_spend_window, False),
+    "M-m1a add_spend has no day window": (
+        lambda t: _last(t, B3_WINDOW, "IF false THEN"),
+        check_m1_add_spend_window,
+        True,
+    ),
+    "M-m1b add_spend refuses only a future day": (
+        lambda t: _last(t, B3_WINDOW, "IF p_day > v_today + v_skew::integer THEN"),
+        check_m1_add_spend_window,
+        True,
+    ),
+    "M-m1c add_spend window is a wide literal": (
+        lambda t: _last(t, B3_WINDOW, B3_WINDOW.replace("v_skew::integer", "100000")),
+        check_m1_add_spend_window,
+        True,
+    ),
     "M-B3a the day window check is removed": (
         lambda t: t.replace(B3_WINDOW, "IF false THEN"),
         check_b3_day_window,
@@ -268,7 +293,7 @@ def test_the_h1_checks_kill_every_mutant(name, scratch, tmp_path, monkeypatch):
     mutate, check, killed = H1_MUTANTS[name]
     text = SQL_FILE.read_text(encoding="utf-8")
     mutated = mutate(text)
-    assert (mutated != text) or name == "control", "the mutation did not change the SQL"
+    assert (mutated != text) or name.startswith("control"), "the mutation did not change the SQL"
     folder = tmp_path / "migrations"
     shutil.copytree(mig.MIGRATIONS, folder)
     (folder / SQL_FILE.name).write_text(mutated, encoding="utf-8")
@@ -276,7 +301,7 @@ def test_the_h1_checks_kill_every_mutant(name, scratch, tmp_path, monkeypatch):
     monkeypatch.setattr(mig, "_migration_files", lambda folder_=None: real(folder))
     scratch.migrate()
     if killed:
-        with pytest.raises((AssertionError, Exception, pytest.fail.Exception)):
+        with pytest.raises(BEHAVIOUR_FAILURES):
             check(scratch)
     else:
         check(scratch)

@@ -40,7 +40,7 @@ from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.migrate import GRANTS
 from hadavin_sdk.store.protocol import NotFound
 from tests.contracts.test_store_spend import _older, _rows
-from tests.money_caps_seed import seed_caps
+from tests.money_caps_seed import seed_caps, widen_day_window
 from tests.test_limits_reserve import Sink, _registry
 from tests.test_stop_state_roles import World
 
@@ -161,6 +161,9 @@ class Child:
 
     def __init__(self, w, rid, usd):
         seed_caps(w.scoped, w.schema, AGENT, BIG, BIG)  # the child's own store has no test hook
+        widen_day_window(
+            os.environ["HADAVIN_TEST_PG_DSN"], w.schema
+        )  # nor does it open the day window
         self.proc = subprocess.Popen(  # noqa: S603 - this interpreter, a fixed script
             [sys.executable, "-c", CHILD, rid, AGENT, DAY.isoformat(), usd],
             stdout=subprocess.PIPE,
@@ -298,7 +301,7 @@ def test_c4_a_fault_at_the_month_update_in_settle_changes_nothing(w, monkeypatch
             w.do("DELETE FROM spend_month")
             failure, message = RuntimeError, "spend counter row missing"
         with pytest.raises(failure, match=message):
-            rt.settle_spend(rid, D("0.40"))
+            rt.settle_spend(rid, D("0.40"), agent_id=AGENT)
         assert _table(w) == {rid: ("open", D("1.00"), None)}  # the claim was rolled back
         assert _counters(w)[0] == D("1.00")  # the day counter did not move
         assert rt.get_run(run_id).cost_usd == 0
@@ -307,7 +310,7 @@ def test_c4_a_fault_at_the_month_update_in_settle_changes_nothing(w, monkeypatch
     if (
         fault == "raised"
     ):  # the same connection settles once the fault is gone, and it is the first settle
-        row, applied = rt.settle_spend(rid, D("0.40"))
+        row, applied = rt.settle_spend(rid, D("0.40"), agent_id=AGENT)
         assert applied and row.settled_usd == D("0.40")
         assert _counters(w) == (D("0.40"), D("0.40")) and rt.get_run(run_id).cost_usd == D("0.40")
 
@@ -318,7 +321,7 @@ def test_c4_a_missing_day_counter_row_in_settle_raises_and_changes_nothing(w):
     rid = _reserve(rt, "1.00")
     w.do("DELETE FROM spend")
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        rt.settle_spend(rid, D("0.40"))
+        rt.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert _table(w) == {rid: ("open", D("1.00"), None)}
     assert _counters(w) == (None, D("1.00"))
 
@@ -334,7 +337,7 @@ def test_a_closed_connection_refuses_through_limits_with_nothing_booked(w):
     assert caught.value.reason == "limits_unavailable"
     assert set(_table(w)) == {kept}
     with pytest.raises(psycopg.Error):  # settle lets the store's failure through (contract point 6)
-        limits.settle(kept, D("0.10"))
+        limits.settle(kept, D("0.10"), agent_id=AGENT)
     assert _table(w)[kept] == ("open", D("0.50"), None)
 
 
@@ -347,11 +350,15 @@ def test_c5_a_late_settle_after_expiry_never_lowers_and_may_raise_the_booking(w)
         _age(w, rid, 4000)
     assert rt.expire_spend_reservations(3600) == 2
     assert _counters(w) == (D("2.00"), D("2.00"))
-    row, applied = rt.settle_spend(low, D("0.40"))  # lower: the row is settled, the counters stay
+    row, applied = rt.settle_spend(
+        low, D("0.40"), agent_id=AGENT
+    )  # lower: the row is settled, the counters stay
     assert applied and (row.status, row.settled_usd) == ("settled", D("1.00"))
     assert _counters(w) == (D("2.00"), D("2.00"))
     assert rt.get_run(run_id).cost_usd == D("0.40")  # the run gets the real amount
-    row, applied = rt.settle_spend(high, D("2.50"))  # higher: both counters rise to the actual
+    row, applied = rt.settle_spend(
+        high, D("2.50"), agent_id=AGENT
+    )  # higher: both counters rise to the actual
     assert applied and (row.status, row.settled_usd) == ("settled", D("2.50"))
     assert _counters(w) == (D("3.50"), D("3.50"))
     assert rt.get_run(run_id).cost_usd == D("2.90")
@@ -399,7 +406,7 @@ def test_settle_from_8_connections_with_different_amounts_books_exactly_one(w):
         amounts = [D(n) / 10 for n in range(1, 9)]
         results = _together(
             [
-                lambda s=s, a=a, r=rid: s.settle_spend(r, a)
+                lambda s=s, a=a, r=rid: s.settle_spend(r, a, agent_id=AGENT)
                 for s, a in zip(stores, amounts, strict=True)
             ]
         )
@@ -411,6 +418,24 @@ def test_settle_from_8_connections_with_different_amounts_books_exactly_one(w):
         assert _counters(w)[0] - before == winner.settled_usd  # one amount is booked, once
         assert stores[0].get_run(run_id).cost_usd - cost == winner.settled_usd
     assert _counters(w)[0] == _counters(w)[1]
+
+
+@pg
+def test_two_connections_reserving_the_same_id_and_arguments_both_succeed_and_book_once(w):
+    """Review M1 / core-a M5: the second insert waits on the first and then finds its own row (ON CONFLICT)."""
+    stores = [w.store(w.runtime) for _ in range(2)]
+    for n in range(10):
+        rid = new_id("res")
+        results = _together(
+            [
+                lambda s=s, r=rid: s.reserve_spend(
+                    r, AGENT, DAY, D("1.00"), day_cap=BIG, month_cap=BIG
+                )
+                for s in stores
+            ]
+        )
+        assert results == [None, None], results
+        assert _counters(w)[0] == D(n + 1)  # booked once per id
 
 
 @pg
@@ -429,7 +454,10 @@ def test_settle_racing_the_expire_step_never_lowers_a_booking(w, actual):
         run_id = run.run_id
         rid = _reserve(a, "1.00", agent=agent, run_id=run_id)
         settled, expired = _together(
-            [lambda r=rid: a.settle_spend(r, D(actual)), lambda: b.expire_spend_reservations(0)]
+            [
+                lambda r=rid, g=agent: a.settle_spend(r, D(actual), agent_id=g),
+                lambda: b.expire_spend_reservations(0),
+            ]
         )
         assert not isinstance(settled, Exception) and not isinstance(expired, Exception)
         row, applied = settled
@@ -453,7 +481,9 @@ def test_a_settle_that_waits_for_an_uncommitted_expiry_sees_the_row_as_expired(w
     a, b = w.store(w.runtime), w.store(w.runtime)
     rid = _reserve(a, "1.00")
     result = []
-    t = threading.Thread(target=lambda: result.append(a.settle_spend(rid, D(actual))))
+    t = threading.Thread(
+        target=lambda: result.append(a.settle_spend(rid, D(actual), agent_id=AGENT))
+    )
     with b._db.transaction():
         assert b.expire_spend_reservations(0) == 1
         t.start()
@@ -472,7 +502,7 @@ def test_an_expiry_that_waits_for_an_uncommitted_settle_expires_nothing(w):
     result = []
     t = threading.Thread(target=lambda: result.append(a.expire_spend_reservations(0)))
     with b._db.transaction():
-        assert b.settle_spend(rid, D("0.25"))[1] is True
+        assert b.settle_spend(rid, D("0.25"), agent_id=AGENT)[1] is True
         t.start()
         waited = _waits_on_a_lock(w, a._db.info.backend_pid)
     t.join(timeout=WAIT_S)
@@ -569,7 +599,7 @@ def _seeded(w):
     """One open and one settled reservation; returns what the owner sees."""
     rt = w.store(w.runtime)
     _reserve(rt, "1.00")
-    rt.settle_spend(_reserve(rt, "1.00"), D("0.40"))
+    rt.settle_spend(_reserve(rt, "1.00"), D("0.40"), agent_id=AGENT)
     return _table(w), _counters(w)
 
 
@@ -585,7 +615,7 @@ def test_the_purge_login_is_denied(w, relation, statement):
 def test_the_purge_login_can_run_the_purge_delete_and_removes_settled_rows_only(w):
     rt = w.store(w.runtime)
     opened, closed, expired = _reserve(rt), _reserve(rt), _reserve(rt)
-    rt.settle_spend(closed, D("0.40"))
+    rt.settle_spend(closed, D("0.40"), agent_id=AGENT)
     _age(w, expired, 4000)
     assert rt.expire_spend_reservations(3600) == 1
     # the purge login holds no table right: the direct statements are refused, the function is the only way
@@ -607,7 +637,7 @@ def test_the_purge_login_cannot_use_the_other_three_methods(w):
     with pytest.raises(DENIED):
         _reserve(purge)
     with pytest.raises(DENIED):
-        purge.settle_spend(rid, D("0.10"))
+        purge.settle_spend(rid, D("0.10"), agent_id=AGENT)
     with pytest.raises(DENIED):
         purge.expire_spend_reservations(0)
     assert _table(w) == {rid: ("open", D("1.00"), None)}
@@ -656,7 +686,7 @@ def test_the_portal_and_the_reset_login_cannot_use_any_of_the_four_methods(w, wh
     rid = _reserve(rt)
     for call in (
         lambda: _reserve(other),
-        lambda: other.settle_spend(rid, D("0.10")),
+        lambda: other.settle_spend(rid, D("0.10"), agent_id=AGENT),
         lambda: other.expire_spend_reservations(0),
         lambda: other.purge_spend_reservations(now() + timedelta(days=1)),
     ):
@@ -694,6 +724,12 @@ def test_a_runtime_role_that_inherits_delete_through_another_role_is_refused_by_
     ):
         w.migrate()
     w.grant("REVOKE {} FROM {}", extra, w.runtime)
+    # the DELETE stays with `extra`: any role other than the owner that can write a money table is refused too (step 4)
+    with pytest.raises(
+        ConfigError, match=r"can write a money table.*can DELETE spend_reservations"
+    ):
+        w.migrate()
+    w.grant("REVOKE DELETE ON spend_reservations FROM {}", extra)
     assert w.migrate() == []
 
 
@@ -771,6 +807,7 @@ def test_the_step_is_the_last_one_and_comes_after_audit_drain():
         "audit_drain",
         "expire_reservations",
         "check_caps",
+        "check_expired_holds",
     ], names
     assert names.index("audit_drain") < names.index("expire_reservations")
     last = _EXPIRE_STEP
@@ -867,7 +904,7 @@ def test_the_evidence_purge_also_purges_closed_reservations_before_the_hook():
     store = MemoryStore()
     opened, old, recent = (_reserve(store) for _ in range(3))
     for rid in (old, recent):
-        store.settle_spend(rid, D("0.40"))
+        store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     ceiling = Retention().held_tool_calls_max_days
     with store._lock:
         row = store._reservations[old]
@@ -886,7 +923,7 @@ def test_the_evidence_purge_also_purges_closed_reservations_before_the_hook():
         tick.purge_evidence(TickContext(app, now()))
     assert set(_rows(store)) == {opened, recent}
     with pytest.raises(NotFound):
-        store.settle_spend(old, D("0.10"))
+        store.settle_spend(old, D("0.10"), agent_id=AGENT)
 
 
 # --- the tick step on PostgreSQL, as the runtime login ---------------------------------------------------------------
