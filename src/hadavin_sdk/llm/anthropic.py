@@ -11,7 +11,12 @@ Three things this kind does to the whole process, for whoever runs it:
    ``httpcore2`` and ``google.auth``. Each is set to WARNING if its level is lower or not set, and every logger
    below them that has a level under WARNING is set to NOTSET, so that it inherits. DEBUG or INFO output of
    those three libraries cannot be switched on while this kind is in use, for other code in the process
-   either: a level set between two attempts is undone before the next attempt.
+   either: a level set between two attempts is undone before the next attempt. A filter on each of these
+   loggers also drops every record below WARNING logged on it, whatever its level is at that moment (another
+   thread may raise it between our check and the SDK's log call), so a handler attached to one of them
+   receives nothing below WARNING either. What this does not cover: a logger of these libraries that we do
+   not name, first created by another thread after our last check and set to DEBUG before it logs; and a
+   host that removes the filter from a logger.
 2. The HTTP client's logger (``httpx2``) is not held. Whenever it is at INFO or lower it writes one line per
    request: method, full URL, HTTP version, status. That is the case when the host's own logging set-up puts
    the root logger at INFO or DEBUG (an ordinary set-up), or when ``ANTHROPIC_LOG`` is ``debug`` or ``info``.
@@ -53,6 +58,31 @@ API_BASE_URL = "https://api.anthropic.com"
 # :47, :286 and _helpers.py:410-434. httpx2 logs only the request line (method, URL, version, status) and is
 # left alone.
 QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
+
+# The loggers below them that do the logging, made to exist by the first sweep so that they carry the filter
+# before they are first used. anthropic._base_client needs no entry: importing the SDK creates it
+# (__init__.py:18 imports _client, which imports _base_client at _client.py:31 in 2.1.0, :29 in 2.9.0). The
+# httpcore2 loggers appear only when an HTTP client is built and the google-auth one only at the first token
+# request, which is inside an attempt, after our sweep (checked by running both SDK versions, 2026-11-24).
+_LOGGING_CHILDREN = (
+    "httpcore2.connection",
+    "httpcore2.http11",
+    "httpcore2.http2",
+    "httpcore2.proxy",
+    "httpcore2.socks",
+    "google.auth.transport.requests",
+)
+
+
+class _BelowWarning(logging.Filter):
+    """Drops every record below WARNING logged on the logger it is attached to. A second net that does not
+    depend on levels: a level can be raised by another thread after the sweep; the filter is still there."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelno >= logging.WARNING
+
+
+BELOW_WARNING = _BelowWarning()  # one instance: Logger.addFilter adds the same object only once
 
 # Environment variables that reach the client whatever arguments we pass, refused on every platform:
 # ANTHROPIC_CUSTOM_HEADERS adds its headers to every request of the API and Foundry clients (_client.py:250 in
@@ -105,22 +135,26 @@ _NO_CONTENT_TRACES = {"propagation": False, "traces": {"content_mode": "metadata
 
 
 def _quiet() -> None:
-    """No quiet logger, and no logger below one, logs under WARNING (a level a host sets on a child, such as
-    anthropic._base_client, would win over the parent's). A level is written only where one below WARNING is
-    set: a host that made a library stricter (ERROR) keeps that. Children made later are caught by the next
-    run: this runs at import and before every attempt."""
+    """No quiet logger, and no logger below one, logs under WARNING. Two nets, at import and before every
+    attempt. Levels (no record is even built): a level a host sets on a child, such as anthropic._base_client,
+    would win over the parent's, so it is cleared; a level is written only where one below WARNING is set, so
+    a host that made a library stricter (ERROR) keeps that. The filter (the record is dropped whatever the
+    level is by then): on every quiet logger and every logger below one, because a filter sees only the
+    records logged on its own logger. Children made later are caught by the next run."""
+    for name in _LOGGING_CHILDREN:
+        logging.getLogger(name)
     below = tuple(f"{name}." for name in QUIET_LOGGERS)
     # The manager's table, not Logger.getChildren: that one returns immediate children only (and needs Python
     # 3.12), and the loggers that log are deeper (google.auth.transport.requests).
     for name, logger in list(logging.root.manager.loggerDict.items()):
-        if (
-            name.startswith(below)
-            and isinstance(logger, logging.Logger)
-            and logging.NOTSET < logger.level < logging.WARNING
-        ):
-            logger.setLevel(logging.NOTSET)
+        if name.startswith(below) and isinstance(logger, logging.Logger):
+            logger.addFilter(BELOW_WARNING)
+            if logging.NOTSET < logger.level < logging.WARNING:
+                logger.setLevel(logging.NOTSET)
     for name in QUIET_LOGGERS:
-        if (logger := logging.getLogger(name)).level < logging.WARNING:
+        logger = logging.getLogger(name)
+        logger.addFilter(BELOW_WARNING)
+        if logger.level < logging.WARNING:
             logger.setLevel(logging.WARNING)
 
 

@@ -1,5 +1,6 @@
 """Slice 2 P5: the llm kinds' wiring outside the contract suite (design 4.3, 12.10)."""
 
+import ast
 import json
 import logging
 import re
@@ -642,43 +643,141 @@ def test_a_level_stricter_than_warning_is_left_alone(name):
 def test_a_quiet_logger_with_no_level_of_its_own_is_held_under_a_root_at_debug(pinned, child):
     """The ordinary dangerous state: the host's root logger at DEBUG and the library's logger never touched."""
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
-    root, parent, kid = logging.getLogger(), logging.getLogger(pinned), logging.getLogger(child)
-    root_level = root.level
+    parts = child.split(".")
+    # The root and every logger on the way down to the child ("google" too, which is not held): a level a host
+    # or another test left on one of them would decide what the child inherits.
+    chain = [logging.getLogger()] + [
+        logging.getLogger(".".join(parts[:n])) for n in range(1, len(parts) + 1)
+    ]
+    levels = [logger.level for logger in chain]
+    parent, kid = logging.getLogger(pinned), chain[-1]
     try:
-        root.setLevel(logging.DEBUG)
-        parent.setLevel(logging.NOTSET)
-        kid.setLevel(logging.NOTSET)
-        assert (
-            kid.getEffectiveLevel() == logging.DEBUG
-        )  # the control: both inherit the root's level
+        chain[0].setLevel(logging.DEBUG)
+        for logger in chain[1:]:
+            logger.setLevel(logging.NOTSET)
+        assert kid.getEffectiveLevel() == logging.DEBUG  # the control: all inherit the root's level
         mod._guard()
         assert parent.getEffectiveLevel() >= logging.WARNING
         assert kid.getEffectiveLevel() >= logging.WARNING
     finally:
-        root.setLevel(root_level)
+        for logger, level in zip(chain, levels, strict=True):
+            logger.setLevel(level)
         mod._guard()
 
 
-@pytest.mark.parametrize(
-    "pinned, child", [(pinned, child) for pinned, children in QUIET.items() for child in children]
-)
-def test_a_debug_record_on_a_child_of_each_quiet_logger_is_dropped(pinned, child):
-    """Per library, with the handler on the logger itself: a level a host sets on the child must not win."""
+_CHILDREN = [(pinned, child) for pinned, children in QUIET.items() for child in children]
+
+
+@pytest.mark.parametrize("pinned, child", _CHILDREN)
+def test_a_debug_level_on_a_child_of_each_quiet_logger_is_undone(pinned, child):
+    """The first net, levels, per library: a level a host sets on the child must not win over the parent's."""
     mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
-    seen, logger = [], logging.getLogger(child)
+    logger = logging.getLogger(child)
+    try:
+        logger.setLevel(logging.DEBUG)
+        assert logger.isEnabledFor(logging.DEBUG)  # the control
+        mod._guard()
+        assert not logger.isEnabledFor(logging.INFO), f"{pinned} must be in QUIET_LOGGERS"
+    finally:
+        logger.setLevel(logging.NOTSET)
+
+
+def _collect(logger):
+    seen = []
     handler = logging.Handler(level=logging.DEBUG)
     handler.emit = seen.append
     logger.addHandler(handler)
+    return seen, handler
+
+
+@pytest.mark.parametrize("pinned, child", [*_CHILDREN, *((name, name) for name in QUIET)])
+def test_a_record_below_warning_is_dropped_whatever_the_level_is_after_the_guard(pinned, child):
+    """The second net, a filter on the logger itself, per library: the guard has run, THEN something (another
+    thread) sets the logger to DEBUG, and a record is logged. Handler on that logger: nothing below WARNING
+    arrives, a WARNING still does."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    logger = logging.getLogger(child)
+    seen, handler = _collect(logger)
     try:
-        logger.setLevel(logging.DEBUG)
-        logger.debug("a body, a header value or a token request")
-        assert len(seen) == 1  # the control: without the guard the record is written
         mod._guard()
+        logger.setLevel(logging.DEBUG)  # after the guard: the level net is beaten
         logger.debug("a body, a header value or a token request")
-        assert len(seen) == 1, f"{child} still logs at DEBUG: {pinned} must be in QUIET_LOGGERS"
+        logger.info("the same at INFO")
+        assert seen == [], (
+            f"{child} logs below WARNING after the guard: {pinned} must be in QUIET_LOGGERS"
+        )
+        logger.warning("a warning still passes")
+        assert [record.levelno for record in seen] == [logging.WARNING]
     finally:
         logger.removeHandler(handler)
         logger.setLevel(logging.NOTSET)
+        mod._guard()
+
+
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+def test_a_prompt_never_reaches_a_log_when_the_level_changes_after_the_guard(
+    caplog, monkeypatch, platform
+):
+    """The race of two calls: this call's guard has run, another thread then sets the SDK's body logger to
+    DEBUG, and this call builds its request. Handlers on the body logger itself and on the root."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    caplog.set_level(logging.DEBUG)
+    llm, guard = _anthropic_llm(platform), mod._guard
+    body_logger = logging.getLogger("anthropic._base_client")
+    seen, handler = _collect(body_logger)
+
+    def guard_then_the_other_thread():
+        guard()
+        body_logger.setLevel(logging.DEBUG)
+        logging.getLogger("anthropic").setLevel(logging.DEBUG)
+
+    monkeypatch.setattr(mod, "_guard", guard_then_the_other_thread)
+    try:
+        prompt = _prompt_call(llm, platform)
+        assert body_logger.isEnabledFor(logging.DEBUG)  # the control: the level net was beaten
+        on_the_logger = " ".join(r.getMessage() + repr(vars(r)) for r in seen)
+        assert prompt not in on_the_logger and KEY not in on_the_logger
+        assert prompt not in _logged(caplog) and KEY not in _logged(caplog)
+    finally:
+        body_logger.removeHandler(handler)
+        body_logger.setLevel(logging.NOTSET)
+        guard()
+
+
+def test_the_filter_is_attached_once_however_often_the_guard_runs():
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    names = [*QUIET, *(child for _, child in _CHILDREN)]
+    for name in names:
+        logging.getLogger(name)  # exists, as after a first request
+    for _ in range(3):
+        mod._guard()
+    for name in names:
+        assert logging.getLogger(name).filters.count(mod.BELOW_WARNING) == 1, name
+
+
+def test_the_loggers_that_log_exist_and_carry_the_filter_before_their_first_use():
+    """The HTTP library's loggers appear only when a client is built and google-auth's only at the first token
+    request, inside an attempt: the guard makes them exist first, so none is ever without the filter."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    mod._guard()
+    for name in (
+        "httpcore2.connection",
+        "httpcore2.http11",
+        "httpcore2.http2",
+        "httpcore2.proxy",
+        "httpcore2.socks",
+        "google.auth.transport.requests",
+    ):
+        logger = logging.root.manager.loggerDict.get(name)
+        assert isinstance(logger, logging.Logger), name
+        assert mod.BELOW_WARNING in logger.filters, name
+
+
+def test_the_body_logger_exists_as_soon_as_the_sdk_is_imported():
+    """So it carries the filter from the import of llm/anthropic.py on: no window for the SDK's body record."""
+    pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    held = logging.root.manager.loggerDict.get("anthropic._base_client")
+    assert isinstance(held, logging.Logger)
 
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
@@ -706,19 +805,54 @@ def test_the_sdks_own_log_switch_puts_no_prompt_in_a_log(caplog, monkeypatch, pl
         logging.getLogger("httpx2").setLevel(logging.NOTSET)
 
 
+def _env_names(source):
+    """Every ANTHROPIC_ name in a source text, and every name it reads from the environment: through os.getenv
+    or os.environ under any import alias, or held in an ENV_ constant."""
+    readers = {
+        "getenv",
+        "environ",
+    }  # also reached as os.getenv, o.environ: the prefix does not matter
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.ImportFrom) and node.module == "os":
+            readers |= {
+                a.asname for a in node.names if a.asname and a.name in ("getenv", "environ")
+            }
+    read = "|".join(sorted(map(re.escape, readers)))
+    patterns = [
+        r"\bANTHROPIC_[A-Z0-9_]*[A-Z0-9]\b",
+        rf"\b(?:{read})(?:\.get)?\s*[\(\[]\s*[\"'](\w+)[\"']",
+        r"\bENV_\w+\s*=\s*[\"'](\w+)[\"']",  # a name held in a constant and read through it
+    ]
+    return {name for pattern in patterns for name in re.findall(pattern, source)}
+
+
+def test_the_drift_scan_sees_environment_reads_under_an_import_alias():
+    source = """
+from os import getenv as read_env
+from os import environ as e
+import os as o
+read_env("CLOUD_NEW_REGION")
+e["ALIAS_SUBSCRIPT"]
+e.get("ALIAS_GET")
+o.getenv("MODULE_ALIAS_GETENV")
+o.environ["MODULE_ALIAS_ENVIRON"]
+not_a_reader("NOT_AN_ENV_NAME")
+"""
+    assert _env_names(source) == {
+        "CLOUD_NEW_REGION",
+        "ALIAS_SUBSCRIPT",
+        "ALIAS_GET",
+        "MODULE_ALIAS_GETENV",
+        "MODULE_ALIAS_ENVIRON",
+    }
+
+
 def test_the_sdk_names_no_variable_the_tables_do_not_know():
     """Drift, by source: every ANTHROPIC_ name, and every name read from the environment, in the installed SDK."""
     anthropic = pytest.importorskip("anthropic", reason="needs extra anthropic")
-    patterns = [
-        r"\bANTHROPIC_[A-Z0-9_]*[A-Z0-9]\b",
-        r"(?:environ(?:\.get)?|getenv)\s*[\(\[]\s*[\"'](\w+)[\"']",
-        r"\bENV_\w+\s*=\s*[\"'](\w+)[\"']",  # a name held in a constant and read through it
-    ]
     found = set()
     for path in Path(anthropic.__file__).parent.rglob("*.py"):
-        source = path.read_text(encoding="utf-8")
-        for pattern in patterns:
-            found.update(re.findall(pattern, source))
+        found |= _env_names(path.read_text(encoding="utf-8"))
     listed = {*REFUSED, *CONTENT_REFUSED, *_IGNORED_NAMES}
     assert listed <= found, f"listed here but named nowhere in the SDK: {sorted(listed - found)}"
     unknown = sorted(found - listed - set(_NOT_OURS))
