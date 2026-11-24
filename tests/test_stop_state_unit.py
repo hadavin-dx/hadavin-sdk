@@ -445,6 +445,7 @@ def test_cli_validate_constraints_runs_only_the_validate_step(cfg_dir, monkeypat
     "extra",
     [
         ["--runtime-role", "rt"],
+        ["--caps-role", "cp"],  # combined branch: the sixth role counts like the other five
         ["--no-roles"],
         ["--accept-admin-role", "x"],
         ["--accept-changed-draft", "0009_stop_state_hardening"],
