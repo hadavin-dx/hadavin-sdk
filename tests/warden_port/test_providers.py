@@ -165,10 +165,14 @@ def test_the_gemini_key_goes_only_to_google(monkeypatch):
     ],
 )
 def test_the_anthropic_key_goes_only_to_its_platform(monkeypatch, env, platform, extra):
-    """WARDEN AnthropicProvider: an explicit base URL, or the SDK reads one from the environment."""
+    """WARDEN AnthropicProvider: an explicit base URL, or the SDK reads one from the environment. A base URL in
+    the environment is refused at start by our own check (llm/anthropic.py ENDPOINT_ENV), not left to the SDK."""
     pytest.importorskip("anthropic", reason="needs extra anthropic")
     monkeypatch.setenv(env, "http://evil.example/")
     settings = AnthropicSettings(kind="anthropic", platform=platform, **extra)
+    with pytest.raises(ConfigError, match=env):
+        make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
+    monkeypatch.delenv(env)
     llm = make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
     host = str(llm._client.base_url)
     assert "evil" not in host and host.startswith("https://")

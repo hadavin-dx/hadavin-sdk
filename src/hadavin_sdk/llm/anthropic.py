@@ -9,6 +9,7 @@ Needs ``hadavin-sdk[anthropic]``.
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from collections.abc import Callable
@@ -33,7 +34,52 @@ def _vertex_base_url(region: str) -> str:
     return f"https://{region}-aiplatform.googleapis.com/v1"
 
 
+# Every environment variable the anthropic SDK reads for a client's endpoint or identity, per platform. The SDK's
+# rule for "our argument or the variable" moved between releases (2.9.0 stopped refusing ANTHROPIC_FOUNDRY_RESOURCE
+# beside a base URL and began to send ANTHROPIC_CUSTOM_HEADERS on Vertex), so the refusal is ours, not the SDK's.
+# Read from the installed source of anthropic 2.1.0, 2.4.0 and 2.9.0 on 2026-11-24: _client.py,
+# lib/credentials/_constants.py, lib/foundry.py, lib/vertex/_client.py, lib/_env.py. A newer SDK that reads a
+# name missing here fails tests/test_p5_llm.py (the drift tests). Vertex identity is the workload's own Google
+# identity (ADC, read by google-auth), which is the configured credential and is not listed.
+_API_ENV = (
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_CUSTOM_HEADERS",  # sent on every request, in every version read
+    "ANTHROPIC_PROFILE",
+    "ANTHROPIC_CONFIG_DIR",
+    "ANTHROPIC_IDENTITY_TOKEN",
+    "ANTHROPIC_IDENTITY_TOKEN_FILE",
+    "ANTHROPIC_FEDERATION_RULE_ID",
+    "ANTHROPIC_ORGANIZATION_ID",
+    "ANTHROPIC_SERVICE_ACCOUNT_ID",
+    "ANTHROPIC_WORKSPACE_ID",
+    "ANTHROPIC_SCOPE",
+)
+ENDPOINT_ENV: dict[str, tuple[str, ...]] = {
+    "api": _API_ENV,
+    "foundry": (  # the Foundry client is a subclass of the API client and runs its constructor too
+        *_API_ENV,
+        "ANTHROPIC_FOUNDRY_API_KEY",
+        "ANTHROPIC_FOUNDRY_RESOURCE",
+        "ANTHROPIC_FOUNDRY_BASE_URL",
+    ),
+    "vertex": (
+        "ANTHROPIC_VERTEX_BASE_URL",
+        "ANTHROPIC_VERTEX_PROJECT_ID",
+        "CLOUD_ML_REGION",
+        "ANTHROPIC_CUSTOM_HEADERS",  # read on Vertex from 2.9.0
+    ),
+}
+
+
 def client(settings: Any, key: str | None) -> Any:
+    # Set at all is refused, whatever the value: the name is reported, the value is never read.
+    if stray := [name for name in ENDPOINT_ENV[settings.platform] if name in os.environ]:
+        raise ConfigError(
+            f"backend llm 'anthropic' ({settings.platform}): unset the environment variable(s) "
+            f"{', '.join(stray)}: the endpoint and the credential come from the configuration only"
+        )
     common = {"timeout": settings.call_timeout_s, "max_retries": 0}
     try:
         if (
@@ -52,7 +98,9 @@ def client(settings: Any, key: str | None) -> Any:
                 **common,
             )
         return anthropic.Anthropic(api_key=key, base_url=API_BASE_URL, **common)
-    except ValueError as exc:  # e.g. ANTHROPIC_FOUNDRY_RESOURCE set beside our explicit base URL
+    except (
+        ValueError
+    ) as exc:  # second net: the SDK's own refusals (the first is ENDPOINT_ENV above)
         raise ConfigError(f"backend llm 'anthropic' ({settings.platform}): {exc}") from exc
 
 
