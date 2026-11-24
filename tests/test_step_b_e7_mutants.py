@@ -16,6 +16,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as migrate_mod
 from tests import test_step_b_e7_migration_0009 as real
+from tests import test_step_b_e7_round6 as r6
 from tests.test_step_b_e7_migration_0009 import (
     FILE_0009,
     drop_world,
@@ -235,22 +236,25 @@ def test_a_settle_step_that_validates_a_planted_row_too_is_killed(mw, monkeypatc
 
 def test_a_settle_step_without_timeouts_is_killed(mw, monkeypatch):
     @contextlib.contextmanager
-    def no_timeouts(db, lock_only=False):
+    def no_timeouts(db):
         yield
 
     mw.migrate()
     monkeypatch.setattr(migrate_mod, "_stop_timeouts", no_timeouts)
+    # Round 7: inside a plain `migrate` the lock limit of the whole transaction still ends such a wait (so the
+    # locked-table test of `migrate` no longer sees this mutant, on purpose); the step's OWN limits are seen where
+    # no other limit exists (`--validate-constraints`), and in the limits a real `migrate` sets for the step.
     with pytest.raises(
         pytest.fail.Exception
     ):  # it waits for the blocker instead of giving up: DID NOT RAISE
-        real.test_migrate_gives_up_on_a_locked_stop_table_as_a_retry_condition_and_applies_nothing(
-            mw
-        )
+        real.test_the_validate_step_gives_up_on_a_locked_table_as_a_retry_condition(mw)
+    with pytest.raises(AssertionError):  # the limits of the step are never set
+        r6.limits_inside_migrate_scenario(monkeypatch)
 
 
 def test_a_settle_step_that_leaves_its_timeouts_behind_is_killed(mw, monkeypatch):
     @contextlib.contextmanager
-    def leaky(db, lock_only=False):
+    def leaky(db):
         db.execute(
             "SELECT set_config('lock_timeout', '5s', true), set_config('statement_timeout', '60s', true)"
         )

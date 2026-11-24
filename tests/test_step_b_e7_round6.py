@@ -84,8 +84,9 @@ class Probe:
 
 def limits_inside_migrate_scenario(monkeypatch):
     """A fresh schema, a session statement_timeout of 77s (neither the default nor our 60s), the real `migrate()`:
-    every file and every grant step runs with lock_timeout 5s and the statement limit UNCHANGED, and the very last
-    statement of the transaction puts the session's own values back."""
+    every file and every grant step runs with lock_timeout 5s and the statement limit UNCHANGED. Round 7: the lock
+    limit is 0 for the advisory wait, 5s from then on (the settle step puts 5s back, not 0), and nothing is put
+    back before the commit (the commit ends the limit)."""
     up = make_world()
     try:
         files = {migrate_mod._read_migration(p)[0] for p in migrate_mod._migration_files()}
@@ -99,9 +100,18 @@ def limits_inside_migrate_scenario(monkeypatch):
         assert set(seen["file"]) == {("5s", "77s")}, seen["file"]
         assert len(seen["grant"]) == 4  # runtime, purge, reset, portal
         assert set(seen["grant"]) == {("5s", "77s")}, seen["grant"]
-        last_text, last_params = seen["calls"][-1]
-        assert "set_config('lock_timeout'" in last_text
-        assert list(last_params) == ["0", "77s"]
+        texts = [t for t, _ in seen["calls"]]
+        sets = [i for i, t in enumerate(texts) if "set_config('lock_timeout'" in t]
+        # 0 for the advisory wait, 5s after it, the settle step's own limits, and its restore to 5s and 77s
+        assert [list(seen["calls"][i][1]) for i in sets] == [
+            ["0"],
+            ["5s"],
+            ["5s", "60s"],
+            ["5s", "77s"],
+        ]
+        advisory = next(i for i, t in enumerate(texts) if "pg_advisory_xact_lock" in t)
+        assert sets[0] < advisory < sets[1]
+        assert "set_config" not in texts[-1]  # no restore before the commit
     finally:
         drop_world(up)
 
@@ -226,8 +236,8 @@ def test_the_runbook_states_the_span_of_the_lock_limit_and_the_real_exit_3_cases
     for sentence in (
         # item 2 and n2: where the lock limit applies, and to which locks
         (
-            "from the moment it holds its advisory lock until just before it commits: the ledger steps, the "
-            "migration files, and the grant, revoke, ALTER FUNCTION and check steps after them"
+            "from the moment it holds its advisory lock until it commits (the commit ends the limit): the ledger "
+            "steps, the migration files, and the grant, revoke, ALTER FUNCTION and check steps after them"
         ),
         "It covers every lock wait of every statement there, on any table or catalog row",
         "the statement limit does not apply outside the validation step",
@@ -239,8 +249,8 @@ def test_the_runbook_states_the_span_of_the_lock_limit_and_the_real_exit_3_cases
         ),
         # m2: exit 3, in the real order
         (
-            "lost outside the validation step (opening the connection, the file loop, the grants and checks, the "
-            "commit; for `--validate-constraints` the commit too)"
+            "lost outside the validation step (opening the connection, the ledger steps, the file loop, the grants "
+            "and checks, the commit; for `--validate-constraints` the commit too)"
         ),
         # n1: the limits are constants on purpose
         (
@@ -266,15 +276,15 @@ NO_LIMIT = "db.execute(\"SELECT set_config('lock_timeout', '0', true)\")\n"
 
 SPAN_MUTANTS = [
     (
-        "file loop and grants also get the 60s statement limit (lock_only dropped at the call site)",
+        "file loop and grants also get the 60s statement limit",
         r5.FILE_LOOP,
-        "with _stop_timeouts(db):",
+        r5.FILE_LOOP + "    db.execute(\"SELECT set_config('statement_timeout', '60s', true)\")\n",
         [limits_inside_migrate_scenario],
     ),
     (
         "no limit anywhere",
         r5.FILE_LOOP,
-        "with contextlib.nullcontext():",
+        "    pass\n",
         [limits_inside_migrate_scenario, busy_grant_scenario, busy_ledger_scenario],
     ),
     (

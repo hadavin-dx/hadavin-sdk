@@ -618,7 +618,6 @@ _TRANSACTION = re.compile(
     rf"(commit|end|begin|abort|rollback|savepoint|release|start{_W}transaction|prepare{_W}transaction)\b",
     re.IGNORECASE,
 )
-_SET_ALLOWED = re.compile(rf"set{_W}local{_W}(?:lock_timeout|statement_timeout)\b", re.IGNORECASE)
 _SET = re.compile(r"(set|reset)\b", re.IGNORECASE)
 _BLIND = re.compile(
     rf"(do|execute|load|discard|alter{_W}role|alter{_W}user|alter{_W}group|alter{_W}system|alter{_W}database"
@@ -632,7 +631,8 @@ _ROLE_MEMBERSHIP = re.compile(r"(grant|revoke)\b(?!.*?\bon\b)", re.IGNORECASE | 
 
 def refused_statements(text: str) -> list[str]:
     """Reasons a file must be refused, from `lex` (the emptied view) and the list: a lexer problem;
-    transaction control; every `SET` and `RESET` except `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout`;
+    transaction control; every `SET` and `RESET` (also `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout`:
+    `migrate` sets both limits itself, and a file's value would hold for every later file, the grants and the checks);
     `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
     `CREATE ROLE|USER|GROUP|EXTENSION`, `GRANT` and `REVOKE` without `ON` (role membership), `DROP OWNED`,
     `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
@@ -657,10 +657,10 @@ def refused_statements(text: str) -> list[str]:
                 f"{word}: transaction control is not allowed (the run is one transaction){hint}"
             )
         elif m := _SET.match(s):
-            if not _SET_ALLOWED.match(s):
-                reasons.append(
-                    f"{m.group(1).upper()}: a session or role setting may not be changed by a migration"
-                )
+            reasons.append(
+                f"{m.group(1).upper()}: a session or role setting may not be changed by a migration "
+                "(lock_timeout and statement_timeout included: migrate sets both limits itself)"
+            )
         elif m := _BLIND.match(s):
             word = " ".join(m.group(1).upper().split())
             reasons.append(f"{word}: the guard cannot read what this statement does or changes")

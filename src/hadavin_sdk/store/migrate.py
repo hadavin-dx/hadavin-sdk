@@ -682,7 +682,8 @@ def earlier_0009_leftovers(db) -> list[str]:
 
 class StopTablesBusy(Exception):
     """The validate step could not get its lock or ran out of time (table locked by a long transaction, or very
-    large), or any other step of `migrate` waited for a lock longer than the limit. A condition to retry, NOT a refusal: the CLI exits 75 for it, 2 for a `ConfigError`."""
+    large), or any other step of `migrate` waited for a lock longer than the limit. A condition to retry, NOT a
+    refusal: the CLI exits 75 for it, 2 for a `ConfigError`."""
 
 
 VALIDATE_LOCK_TIMEOUT = "5s"  # never queue behind a long writer and block the stop tables
@@ -700,20 +701,19 @@ def _validate_one(db, table: str, name: str) -> None:
 
 
 @contextlib.contextmanager
-def _stop_timeouts(db, lock_only: bool = False):
-    """Set the lock and statement timeouts for the validation step only (`set_config(..., true)`, the same effect
-    as `SET LOCAL`), and put the transaction's previous values back afterwards, also when the step raises
-    (`migrate` runs the step inside its one transaction: the grant and function steps after it must not inherit
-    the 60 second statement limit). `lock_only=True` sets the lock limit alone and leaves the statement limit as it
-    was: `migrate` holds it from its advisory lock to just before its commit. After a DATABASE error the transaction is aborted and refuses any statement: the restore
-    is skipped then (the caller rolls back) so the original error is never replaced by InFailedSqlTransaction."""
+def _stop_timeouts(db):
+    """Set the lock and statement timeouts for the validation step (`set_config(..., true)`, the same effect as
+    `SET LOCAL`), and put the transaction's previous values back afterwards, also when the step raises (`migrate`
+    runs the step inside its one transaction: the grant and function steps after it must not inherit the 60 second
+    statement limit, and get back the lock limit `migrate` holds for its whole transaction). After a DATABASE error
+    the transaction is aborted and refuses any statement: the restore is skipped then (the caller rolls back) so
+    the original error is never replaced by InFailedSqlTransaction."""
     names = ("lock_timeout", "statement_timeout")
     old = [db.execute("SELECT pg_catalog.current_setting(%s)", (n,)).fetchone()[0] for n in names]
-    new = (VALIDATE_LOCK_TIMEOUT, old[1] if lock_only else VALIDATE_STATEMENT_TIMEOUT)
     db.execute(
         "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
         "pg_catalog.set_config('statement_timeout', %s, true)",
-        new,
+        (VALIDATE_LOCK_TIMEOUT, VALIDATE_STATEMENT_TIMEOUT),
     )
     try:
         yield
@@ -1429,25 +1429,34 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
             )
 
 
+def _lock_limit(db, value: str) -> None:
+    """`lock_timeout` for the rest of this transaction (`migrate` owns it: no migration file may set it)."""
+    db.execute("SELECT pg_catalog.set_config('lock_timeout', %s, true)", (value,))
+
+
 @contextlib.contextmanager
 def _one_migrate_with_a_lock_limit(db):
     """Everything `migrate` does in its transaction runs inside this: first the advisory lock, waited for WITHOUT a
-    limit (a second `migrate` waits for the first; `lock_timeout` applies to advisory waits too, so a limit set
-    earlier would end that wait), then the lock limit alone (no statement limit: a file may build an index for
-    minutes) until just before the commit. One span, because the files take ACCESS EXCLUSIVE on the stop tables and
+    limit (a second `migrate` waits for the first; `lock_timeout` applies to advisory waits too, so it is set to 0
+    first: a default of the role, the database or the DSN would end that wait), then the lock limit alone (no
+    statement limit: a file may build an index for minutes) until the commit, which ends it (`set_config(...,
+    true)`; nothing is put back by hand). One span, because the files take ACCESS EXCLUSIVE on the stop tables and
     hold it to the commit: any later unlimited lock wait (a GRANT, REVOKE or ALTER FUNCTION behind another session's
     uncommitted change of the same catalog row, a check that reads a locked table) would hang while every stop read
     and write queues behind it. The ledger steps before the files hold no stop-table lock yet, but they can wait too
     (ALTER TABLE or a read of schema_migrations behind a long transaction) and nothing is gained by waiting, so the
-    limit covers them as well. A lock wait over the limit is `StopTablesBusy` (exit 75): the transaction is aborted,
-    the restore is skipped and the caller rolls everything back."""
+    limit covers them as well. A lock wait over the limit is `StopTablesBusy` (exit 75): the transaction is aborted
+    and the caller rolls everything back."""
+    _lock_limit(db, "0")
     db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+    _lock_limit(db, VALIDATE_LOCK_TIMEOUT)
     try:
-        with _stop_timeouts(db, lock_only=True):
-            yield
+        yield
     except errors.LockNotAvailable as exc:
-        raise _busy(
-            exc, "get a lock that the ledger, a migration file, a grant or a check step needs"
+        raise StopTablesBusy(
+            "could not get a lock that the ledger, a migration file, a grant or a check step needs "
+            f"({type(exc).__name__}): a table or catalog row is locked by a long transaction (waited "
+            f"{VALIDATE_LOCK_TIMEOUT}); nothing was applied, run it again later"
         ) from None
 
 
@@ -1477,7 +1486,8 @@ def migrate(
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
     role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
     clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
-    `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
+    `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning), both
+    after the commit only.
     `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
     character, no space at either end, compared as exact text)
     the operator vouches for (cannot grant the reset role to itself; for
@@ -1668,11 +1678,9 @@ def migrate(
                 + "; ".join(writers[:20])
             )
         note = ""
+        changes: list[str] = []
         if named:
-            for note in check_role_settings(db, named):
-                _log.warning("migrate changed a role setting: %s", note)
-                if on_role_change:
-                    on_role_change(note)
+            changes = list(check_role_settings(db, named))
             check_maintain(db, named)
         if accepted:
             names = ", ".join(accepted)
@@ -1697,4 +1705,9 @@ def migrate(
                 "vouch that it cannot grant the reset role to itself (see docs/stop-state-runbook.md)"
                 + (f". {note}" if note.startswith("accepted administrator") else "")
             )
+    # only here, after the commit: a run that is rolled back changed no role setting
+    for change in changes:
+        _log.warning("migrate changed a role setting: %s", change)
+        if on_role_change:
+            on_role_change(change)
     return applied

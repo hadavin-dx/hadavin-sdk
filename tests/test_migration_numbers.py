@@ -741,11 +741,25 @@ def test_each_set_form_is_refused(mn, stmt):
     assert len(got) == 1 and "may not be changed" in got[0], stmt
 
 
-@pytest.mark.parametrize(
-    "stmt", ["SET LOCAL lock_timeout = '10s'", "set  local  statement_timeout TO 0"]
-)
-def test_the_two_allowed_set_forms_pass(mn, stmt):
-    assert mn.refused_statements(f"{stmt};") == []
+LIMIT_SETS = ["SET LOCAL lock_timeout = '10s'", "set  local  statement_timeout TO 0"]
+
+
+def limits_refused_scenario():
+    """Round 7 (m2): `migrate` owns both limits, so the two SET forms a file could once use are refused like every
+    other SET, with a message that says why; the hand recipe refuses such an entry too."""
+    import hadavin_sdk.store.migration_numbers as mn
+
+    for stmt in LIMIT_SETS:
+        got = mn.refused_statements(f"SELECT 1; {stmt};")
+        assert len(got) == 1 and got[0].startswith("SET: "), (stmt, got)
+        assert "migrate sets both limits itself" in got[0]
+        assert mn._refuse_entry("0012_x", f"{stmt};") == got[0]
+        with pytest.raises(ValueError, match="may not be changed by a migration"):
+            mn.hand_recipe([("0012_x", f"{stmt};")], "app")
+
+
+def test_a_file_may_not_set_the_two_limits_migrate_owns():
+    limits_refused_scenario()
 
 
 @pytest.mark.parametrize(

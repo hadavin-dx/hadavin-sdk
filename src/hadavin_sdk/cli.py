@@ -592,7 +592,7 @@ def _migrate(
             on_role_change=lambda note: print(f"changed: {note}", file=sys.stderr),
         )
     except StopTablesBusy as exc:  # the whole run was rolled back: retry later, not a refusal
-        print(f"retry later: {exc} (nothing was applied)", file=sys.stderr)
+        print(f"retry later: {exc}", file=sys.stderr)  # the message says nothing was applied
         return 75
     finally:  # printed on a refusal too: the CI log is the record of who vouched
         for note in notes:

@@ -320,22 +320,27 @@ Timeouts and exit codes. The 5-second lock wait and 60-second statement limit (`
 `VALIDATE_STATEMENT_TIMEOUT` in `store/migrate.py`) apply to the validation step, in both places it runs:
 `migrate --validate-constraints`, and the settle step at the end of the file loop of every plain `migrate` (set with
 `set_config(..., true)`, the same effect as `SET LOCAL`, and put back after the step). The 5-second LOCK wait also
-applies to everything else a plain `migrate` does, from the moment it holds its advisory lock until just before it
-commits: the ledger steps, the migration files, and the grant, revoke, ALTER FUNCTION and check steps after them. It
+applies to everything else a plain `migrate` does, from the moment it holds its advisory lock until it commits (the
+commit ends the limit): the ledger steps, the migration files, and the grant, revoke, ALTER FUNCTION and check steps after them. It
 covers every lock wait of every statement there, on any table or catalog row (not only the ACCESS EXCLUSIVE locks of
 ADD CONSTRAINT and the index build); the statement limit does not apply outside the validation step. Before the
 advisory lock there is NO limit, on purpose: a second `migrate` waits for the first on a transaction-level advisory
-lock, and a lock limit (PostgreSQL applies `lock_timeout` to advisory-lock waits too) would kill that wait. Both
+lock, and a lock limit (PostgreSQL applies `lock_timeout` to advisory-lock waits too) would kill that wait. `migrate`
+sets `lock_timeout` to 0 for that wait itself, so a default of the role, the database or the DSN does not end it. A
+migration file may not set `lock_timeout` or `statement_timeout` (nor any other setting): `migrate` owns both limits,
+and the statement lexer refuses such a file (the check of every shipped file fails, and so does the hand recipe). Both
 limits are constants in the code on purpose (safety limits of an operator tool): there is no config key and no flag
-for them. Exit codes, the same in both places:
+for them. Exit codes (the same in both places, except where a line says otherwise):
 - 75 (retry later, not a refusal): a lock wait over 5 seconds (in the ledger steps, a migration file, the validation
   step, or the grant and check steps), a scan over 60 seconds in the validation step, or a connection lost anywhere
   INSIDE the validation step (its setup, its catalog read, the VALIDATE statement, its restore). A plain `migrate`
-  rolls back as a whole (nothing is applied, run it again).
-- 2 (refusal): a row outside the range, a login that is not the table owner (also when it only fails to read the stop
+  rolls back as a whole (nothing is applied, run it again); a role setting it would have changed is reported
+  (`changed: ...`) only after the commit, so never for a run that ends in 75 or 2.
+- 2 (refusal): a row outside the range (for `--validate-constraints` only: in a plain `migrate` such a row is the
+  warning above and the exit is 0), a login that is not the table owner (also when it only fails to read the stop
   tables), stop tables not found in the schema, or a flag combination that is not allowed.
 - 3 (any other error, as for every command): including a connection that cannot be opened or is lost outside the
-  validation step (opening the connection, the file loop, the grants and checks, the commit; for
+  validation step (opening the connection, the ledger steps, the file loop, the grants and checks, the commit; for
   `--validate-constraints` the commit too), and a statement cancel or a deadlock in a migration file. Nothing is kept
   of a failed `migrate`: it is one transaction. `migrate` has no
   connectivity code of its own (4 is the code of the commands that read or write the stop state, `limits stop`,

@@ -184,20 +184,6 @@ def test_a_second_migrate_waits_on_the_advisory_lock_longer_than_the_lock_limit(
     advisory_wait_scenario(w)
 
 
-def lock_only_scenario(w):
-    with psycopg.connect(w.scoped) as db, db.transaction():
-        before = db.execute(SHOW).fetchone()
-        with migrate_mod._stop_timeouts(db, lock_only=True):
-            lock, statement = db.execute(SHOW).fetchone()
-            assert lock == "5s"
-            assert statement == before[1]  # the files run under no statement limit
-        assert db.execute(SHOW).fetchone() == before
-
-
-def test_the_file_loop_limit_is_the_lock_wait_only(w):
-    lock_only_scenario(w)
-
-
 # --- C: a lost connection anywhere in the validation step is exit 75 -----------------------------------------------
 
 
@@ -263,19 +249,18 @@ def test_a_dead_connection_keeps_its_original_error_through_the_timeout_context(
 
 # --- D: source-level mutants of the REAL migrate.py ----------------------------------------------------------------
 
-SOURCE_PATH = Path(migrate_mod.__file__)
-
 
 @contextlib.contextmanager
-def mutated(old: str, new: str):
+def mutated(old: str, new: str, module=migrate_mod):
     """Edit the real source text (`old` must occur exactly once) and run it again inside the module's own namespace
     (every name is rebound; the functions called through `migrate_mod.` are then the mutants); put everything back."""
-    text = SOURCE_PATH.read_text(encoding="utf-8")
+    path = Path(module.__file__)
+    text = path.read_text(encoding="utf-8")
     assert text.count(old) == 1, old
-    namespace = vars(migrate_mod)
+    namespace = vars(module)
     snapshot = dict(namespace)
     try:
-        exec(compile(text.replace(old, new), str(SOURCE_PATH), "exec"), namespace)  # noqa: S102
+        exec(compile(text.replace(old, new), str(path), "exec"), namespace)  # noqa: S102
         yield
     finally:
         namespace.clear()
@@ -291,7 +276,9 @@ SETTLE_MAP = (
 VALIDATE_MAP = (
     '        raise _busy(exc, "validate the stop-year constraints") from None\n    return done'
 )
-FILE_LOOP = "with _stop_timeouts(db, lock_only=True):"
+FILE_LOOP = (
+    "    _lock_limit(db, VALIDATE_LOCK_TIMEOUT)\n"  # the one line that starts migrate's lock limit
+)
 LOCK_MAP = "except errors.LockNotAvailable as exc:"
 ADVISORY = '    db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))\n'
 EXCESS_TARGET = "target = _qualified("
@@ -347,13 +334,7 @@ TIMEOUT_MUTANTS = [
         '"90s"  # the check scans',
         [r4.test_the_runbook_states_the_numbers_the_code_uses],
     ),
-    (
-        "file loop also gets the statement limit",
-        "old[1] if lock_only else VALIDATE_STATEMENT_TIMEOUT",
-        "VALIDATE_STATEMENT_TIMEOUT",
-        [lock_only_scenario],
-    ),
-]
+]  # "file loop also gets the statement limit": first entry of SPAN_MUTANTS in the round 6 file (real migrate)
 
 
 @pytest.mark.parametrize(
@@ -379,7 +360,7 @@ def test_mutants_that_drop_the_exit_75_mapping_of_the_whole_step_are_killed(w):
 
 def test_mutants_of_the_file_loop_lock_limit_are_killed(monkeypatch):
     for old, new in (
-        (FILE_LOOP, "with contextlib.nullcontext():"),  # no limit at all: the upgrade queues
+        (FILE_LOOP, "    pass\n"),  # no limit at all: the upgrade queues
         (LOCK_MAP, "except KeyError as exc:"),  # no mapping: a raw LockNotAvailable
     ):
         with mutated(old, new), monkeypatch.context() as m:
