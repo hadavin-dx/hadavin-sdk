@@ -332,7 +332,13 @@ def test_a_database_that_applied_an_earlier_0009_text_still_settles_while_the_ch
     assert _validated(w) == STOP_YEAR_CONSTRAINTS
 
 
-def test_migrate_gives_up_on_a_locked_stop_table_as_a_retry_condition_and_applies_nothing(w):
+def test_migrate_gives_up_on_a_locked_stop_table_as_a_retry_condition_and_applies_nothing(
+    w, monkeypatch
+):
+    # An advisory key of its own, as in round 5 (`own_advisory_key`): every migrate on the server shares ONE key and
+    # waits for it without a limit, so under pytest-xdist another test's migrate can hold it until this blocker
+    # runs into its idle timeout (seen on the combined branch, 8 workers on a loaded machine: DID NOT RAISE).
+    monkeypatch.setattr(migrate_mod, "_LOCK", uuid.uuid4().int >> 66)
     make_not_valid(w, tables=("kill_switch_stops",))
     before = w.run("SELECT count(*) FROM schema_migrations")[0][0]
     with w.admin() as blocker:
