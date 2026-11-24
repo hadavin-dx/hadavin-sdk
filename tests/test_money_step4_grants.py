@@ -192,10 +192,8 @@ def test_a_hand_grant_of_a_write_right_is_repaired_by_the_next_migrate(w):
 
 def _fresh(w, **roles):
     """A second schema migrated with only the named roles."""
-    scoped = w.new_schema("fr")
-    schema = scoped.split("search_path=")[1]
-    with psycopg.connect(w.dsn, autocommit=True) as db:
-        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+    scoped = w.new_schema("fr")  # creates the schema and records it for the fixture's DROP
+    schema = w.schemas[-1]
     from hadavin_sdk.store.migrate import migrate
 
     migrate(scoped, **roles)

@@ -640,9 +640,10 @@ def check_limits_are_read_not_hardcoded(w):
     put("max_amount", 10**9)
     put("max_decimals", 2)
     assert refused(w, "add", "ag", DAY, D("0.001"))[0] == "22023"
-    # the caps are not arguments of reserve any more: the scale limit is enforced by hadavin_set_cap (reset login)
-    with w.as_(w.reset) as rdb:
-        state, _ = refused(w, "set_cap", "ag", D("5.001"), D(1), "op", db=rdb)
+    # the caps are not arguments of reserve any more: the scale limit is enforced by hadavin_set_cap, which only the
+    # caps login may run (the reset login is refused before the function body: 42501, which would prove nothing here)
+    with w.as_(w.caps) as cdb:
+        state, _ = refused(w, "set_cap", "ag", D("5.001"), D(1), "op", db=cdb)
     assert state == "22023"
     assert call(w, "add", "ag", DAY, D("0.01"))
     put("max_decimals", 12)

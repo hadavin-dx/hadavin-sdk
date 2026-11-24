@@ -120,15 +120,33 @@ def test_runtime_cannot_change_audit_entries(w, statement):
     assert w.run("SELECT COUNT(*) FROM audit_entries WHERE event_id = 'seed-e1'")[0][0] == 1
 
 
-@pytest.mark.xfail(reason=LATER, strict=False)
+class KnownGap(Exception):
+    """The ONE right a pin below is waiting to lose. Any other failure of a pin is a real failure."""
+
+
+def _only_the_known_gap(w, table: str, target: set[str], gap: str) -> None:
+    """The runtime holds on `table` exactly `target`, or `target` plus the one known right `gap` (then KnownGap).
+    Anything beyond that (a new right on an audit table) is an AssertionError: the pin FAILS, it does not xfail."""
+    held = w.rights(w.runtime).get(table, set())
+    assert held - target <= {gap}, (
+        f"the runtime holds more than the known gap on {table}: {sorted(held)}"
+    )
+    assert target <= held, f"the runtime lost a right it needs on {table}: {sorted(held)}"
+    if gap in held:
+        raise KnownGap(f"{gap} on {table}")
+
+
+@pytest.mark.xfail(reason=LATER, strict=True, raises=KnownGap)
 def test_runtime_has_no_delete_on_audit_outbox(w):
+    _only_the_known_gap(w, "audit_outbox", {"SELECT", "INSERT"}, "DELETE")
     assert not _has(w, "audit_outbox", "DELETE")
     with pytest.raises(errors.InsufficientPrivilege):
         _attempt(w, "DELETE FROM audit_outbox WHERE event_id = 'seed-o1'")
 
 
-@pytest.mark.xfail(reason=LATER, strict=False)
+@pytest.mark.xfail(reason=LATER, strict=True, raises=KnownGap)
 def test_runtime_has_no_insert_on_audit_checkpoints(w):
+    _only_the_known_gap(w, "audit_checkpoints", {"SELECT"}, "INSERT")
     assert not _has(w, "audit_checkpoints", "INSERT")
     with pytest.raises(errors.InsufficientPrivilege):
         _attempt(

@@ -6,6 +6,13 @@
                                                          reset logs in as the reset role (the secret named by
                                                          backends.store.reset_credential_ref); pilot and prod
                                                          without it: exit 2
+  hadavin-sdk [--config DIR] limits set-cap AGENT --day X --month Y --by WHO [--yes]
+  hadavin-sdk [--config DIR] limits sync-caps --by WHO [--yes]
+  hadavin-sdk [--config DIR] limits check-caps           the per-agent spend caps (table hadavin_caps): write one,
+                                                         write the registry's, compare; all three log in as the
+                                                         caps role (the secret named by
+                                                         backends.store.caps_credential_ref), never as the reset
+                                                         role; check-caps exits 1 on a difference
   hadavin-sdk [--config DIR] release-expired AGENT --day YYYY-MM-DD --by WHO
                                                          lower the EXPIRED spend holds of one agent and day (audited
                                                          first); logs in as the release role (the secret named by
@@ -16,7 +23,8 @@
                                                          audit drain; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P] [--purge-role U] [--reset-role X]
-                                                         [--release-role Y] [--accept-admin-role A ...] [--no-roles]
+                                                         [--release-role Y] [--caps-role C]
+                                                         [--accept-admin-role A ...] [--no-roles]
                                                          apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
@@ -140,7 +148,7 @@ def _main(argv: list[str] | None = None) -> int:
             "--by", required=True
         )
     sc_p = lim_sub.add_parser(
-        "set-cap", help="write the day and month spend cap of one agent (reset login, audited)"
+        "set-cap", help="write the day and month spend cap of one agent (caps login, audited)"
     )
     sc_p.add_argument("agent")
     sc_p.add_argument("--day", required=True, type=_cap, help="the daily cap in USD, 0 or more")
@@ -151,7 +159,7 @@ def _main(argv: list[str] | None = None) -> int:
     )
     sy_p = lim_sub.add_parser(
         "sync-caps",
-        help="write the registry caps of every live and draft agent into the caps table (reset login, audited)",
+        help="write the registry caps of every live and draft agent into the caps table (caps login, audited)",
     )
     sy_p.add_argument("--by", required=True)
     sy_p.add_argument(
@@ -262,7 +270,7 @@ def _main(argv: list[str] | None = None) -> int:
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
     if (
         args.cmd == "limits" and args.action in _CAP_ACTIONS
-    ):  # reset login only, never the kill switch
+    ):  # caps login only, never the kill switch
         return caps_cmd(cfg, args)
     reg = load_registry(cfg)
     if args.cmd in (

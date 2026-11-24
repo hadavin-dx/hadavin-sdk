@@ -296,7 +296,7 @@ def check_caps(ctx: TickContext) -> None:
     the runtime has no table right, so a RAISED registry cap (the safe direction) is reported like a lowered one;
     this is a decided divergence from ticket T13 (sync after every registry edit). A database error for one agent
     is reported as `agent:error` and the other agents are still checked. Retired agents are not checked. A store without a cap table
-    (memory) has nothing to check. The fix is `hadavin-sdk limits sync-caps` under the reset login."""
+    (memory) has nothing to check. The fix is `hadavin-sdk limits sync-caps` under the caps login."""
     matches = getattr(ctx.app.store, "cap_matches", None)
     if matches is None:
         return
@@ -316,7 +316,7 @@ def check_caps(ctx: TickContext) -> None:
         raise CapsDrift(
             "the caps table differs from the registry for "
             + ", ".join(bad)
-            + ": run hadavin-sdk limits sync-caps under the reset login (until then the table caps apply)"
+            + ": run hadavin-sdk limits sync-caps under the caps login (until then the table caps apply)"
         )
 
 

@@ -188,9 +188,11 @@ def build(
             extra_secret_names,
             executor_names,
             *(platform_secrets.secret_names(s) for _, s in b.entries()),
-            # The reset login is never read by this process; a sender must not carry its name all the same.
+            # The reset, release and caps logins are never read by this process; a sender must not carry one of their
+            # names all the same, and is refused here BEFORE any sender secret is read.
             {getattr(b.store, "reset_credential_ref", None)} - {None},
             {getattr(b.store, "release_credential_ref", None)} - {None},
+            {getattr(b.store, "caps_credential_ref", None)} - {None},
         ),
         file_backed=file_backed,
     )

@@ -1201,29 +1201,33 @@ def test_s1_a_search_path_that_names_no_schema_is_refused_at_connect(w):
 
 
 _STOP_REFUSAL = "roles other than the reset role could clear a stop"
-_MONEY_REFUSAL = "roles not named in this command can run the money functions"
 
 
-def _refused_naming(w, role, call=None, reset=None):
-    """`migrate` raises the who-else ConfigError naming `role`, and its transaction rolled back: a marker right the
-    owner gave the runtime role by hand (a migrate that committed would have revoked it) is still there.
+def _not_executors(w, *roles):
+    """Take EXECUTE on the money functions from roles of the fixture's migrate that the next call leaves UNNAMED. Else
+    that call is refused by the money check (an unnamed role can run a money function), which runs before the stop
+    check, and the test would never reach the refusal it is about."""
+    for role in roles:
+        w.grant("REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA {} FROM {}", w.schema, role)
 
-    Two true refusals can apply and the money one runs first: a role that inherits the execute right of a named role,
-    or any role when a role of an earlier call is left unnamed, is refused as an unnamed money executor. Then `role`
-    must still be what the stop check lists (`_who(..., reset)`), and the return is None (no stop-check names)."""
+
+def _refused_naming(w, role, call=None):
+    """`migrate` raises the WHO-ELSE ConfigError (the stop check itself: no other refusal counts) naming `role`, and
+    its transaction rolled back: a marker right the owner gave the runtime role by hand (a migrate that committed
+    would have revoked it) is still there. Returns the names the refusal lists.
+
+    The money check (an unnamed role can run a money function) runs before the stop check. A test whose call leaves a
+    role of the fixture unnamed takes that role's EXECUTE away first (`_not_executors`), so that the stop check is the
+    one that refuses."""
     w.grant("GRANT DELETE ON kill_switch_stops TO {}", w.runtime)
     before = {r: w.rights(r) for r in w.roles[:4]}
     assert "DELETE" in before[w.runtime]["kill_switch_stops"]
-    with pytest.raises(ConfigError, match=f"{_STOP_REFUSAL}|{_MONEY_REFUSAL}") as e:
+    with pytest.raises(ConfigError, match=_STOP_REFUSAL) as e:
         (call or w.migrate)()
-    text = str(e.value)
     assert {r: w.rights(r) for r in w.roles[:4]} == before
-    if _STOP_REFUSAL in text:
-        names = text.split("could clear a stop", 1)[1].split(". Name the runtime")[0]
-        assert role in names, f"{role} is not named in: {e.value}"
-        return names
-    assert role in text or role in _who(w.scoped, reset), f"{role} is not named in: {e.value}"
-    return None
+    names = str(e.value).split("could clear a stop", 1)[1].split(". Name the runtime")[0]
+    assert role in names, f"{role} is not named in: {e.value}"
+    return names
 
 
 S2_STRAY = {
@@ -1338,10 +1342,10 @@ def test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_t
     assert _who(two, rs2) == sorted([stray, member])
     assert _who(w.scoped, w.reset) == []  # the other schema's roles are not this schema's business
     assert w.migrate() == []
-    with pytest.raises(
-        ConfigError, match=f"{_STOP_REFUSAL}|{_MONEY_REFUSAL}"
-    ):  # the member inherits rs2's rights
+    # the stop check itself: the reset role runs no money function, so its member is not a money executor
+    with pytest.raises(ConfigError, match=_STOP_REFUSAL) as refusal:
         migrate(two, runtime_role=rt2, reset_role=rs2)
+    assert stray in str(refusal.value) and member in str(refusal.value)
     here = w.new_role("x6", "NOLOGIN")
     w.grant("GRANT INSERT ON kill_switch_clears TO {}", here)
     assert _who(w.scoped, w.reset) == [here]
@@ -1360,11 +1364,9 @@ def test_s2_a_member_of_an_owner_that_is_not_a_superuser_is_not_listed(w):
 def test_s2_a_grant_to_public_is_listed_as_public(w):
     w.do("GRANT INSERT ON kill_switch_clears TO PUBLIC")
     assert _who(w.scoped, w.reset) == ["PUBLIC"]
-    names = _refused_naming(
-        w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset), reset=w.reset
-    )
-    if names is not None:  # (the unnamed runtime role is refused first as a money executor)
-        assert w.runtime not in names  # one name, not every role of the server
+    _not_executors(w, w.runtime, w.portal, w.purge, w.caps)  # unnamed below
+    names = _refused_naming(w, "PUBLIC", lambda: migrate(w.scoped, reset_role=w.reset))
+    assert w.runtime not in names  # one name, not every role of the server
     w.do("REVOKE INSERT ON kill_switch_clears FROM PUBLIC")
     w.do('GRANT UPDATE ("on") ON kill_switch TO PUBLIC')
     assert _who(w.scoped, w.reset) == ["PUBLIC"]
@@ -1795,6 +1797,7 @@ def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
     assert cli.main(argv) == 2
     err = capsys.readouterr().err
     assert "refused:" in err and third in err
+    assert _STOP_REFUSAL in err  # every role is named: the stop check is the one that refuses
 
 
 def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
@@ -1822,6 +1825,9 @@ def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
     assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
     captured = capsys.readouterr()
     assert vouched in captured.out and third in captured.err
+    assert (
+        _STOP_REFUSAL in captured.err
+    )  # every role is named: the stop check is the one that refuses
 
 
 def test_the_server_gate_holds_every_migrate_while_another_session_holds_it_exclusively():
@@ -1968,14 +1974,10 @@ def test_s2_members_of_the_reset_role_are_listed_even_when_it_holds_no_right_yet
 
 
 def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
-    for role in (
-        w.reset,
-        w.portal,
-        w.purge,
-    ):  # else the money check (an unnamed executor) refuses first
-        w.grant("REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA {} FROM {}", w.schema, role)
+    _not_executors(
+        w, w.reset, w.portal, w.purge, w.caps
+    )  # every role this call leaves unnamed (the caps role too)
     names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))
-    assert names is not None, "the stop check itself must be the refusal"
     assert w.runtime not in names
     assert w.rights(w.reset)["kill_switch_clears"] == {"SELECT", "INSERT"}
 
@@ -1985,10 +1987,9 @@ def test_s2_migrate_naming_one_other_role_runs_the_same_check(w, only):
     third = w.new_role("x4", "NOLOGIN")
     w.grant("GRANT UPDATE ON kill_switch TO {}", third)
     role = {"portal_role": w.portal, "purge_role": w.purge}[only]
+    _not_executors(w, *(r for r in (w.runtime, w.portal, w.purge, w.reset, w.caps) if r != role))
     names = _refused_naming(w, third, lambda: migrate(w.scoped, **{only: role}))
-    assert w.reset in (
-        names or _who(w.scoped, None)
-    )  # no reset role named: nobody but the owner is excluded
+    assert w.reset in names  # no reset role named: nobody but the owner is excluded
 
 
 def test_s2_the_four_roles_named_in_one_command_with_no_stray_right_pass(w):

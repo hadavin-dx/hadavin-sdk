@@ -370,7 +370,7 @@ def own_stop_rights_problems(conn: psycopg.Connection, schema: str) -> list[str]
 _MONEY_TABLES = ("spend", "spend_month", "spend_reservations", "hadavin_caps", "hadavin_limits")
 _MONEY_WRITE_RIGHTS = ("INSERT", "UPDATE", "DELETE", "TRUNCATE", "TRIGGER")
 _RUNTIME_MARK_FUNCTION = "hadavin_reserve_spend(text, text, date, numeric, text)"
-# The functions the runtime login must NOT run: the cap setter (reset role) and the two the release / purge roles run.
+# The functions the runtime login must NOT run: the cap setter (caps role) and the two the release / purge roles run.
 _MONEY_FORBIDDEN_FUNCTIONS = (
     "hadavin_set_cap(text, numeric, numeric, text)",
     "hadavin_release_expired_spend(text, date)",

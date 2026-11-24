@@ -135,8 +135,37 @@ def test_a_secret_the_runtime_reads_that_folds_to_the_caps_ref_stops_the_start(
     _with_ref(monkeypatch, cfg, field="caps_credential_ref")
     with pytest.raises(ConfigError) as caught:
         _build(cfg)
-    # the one loop of app.build names the field, senders included
-    assert "caps_credential_ref" in str(caught.value)
+    # a sender is refused by the sender step (before any read, see the test below); every other reader by the loop
+    assert ("senders" if setup is _sender else "caps_credential_ref") in str(caught.value)
+    assert REF not in str(caught.value) and ALIAS not in str(caught.value)
+
+
+class Recording:
+    def __init__(self):
+        self.read: list[str] = []
+
+    def get(self, name):
+        self.read.append(name)
+        return "v" * 40
+
+
+@pytest.mark.parametrize(
+    "field", ["reset_credential_ref", "release_credential_ref", "caps_credential_ref"]
+)
+def test_a_sender_secret_that_folds_to_a_login_ref_is_refused_before_any_secret_is_read(
+    tmp_path, monkeypatch, field
+):
+    """MINOR-5: the caps ref is refused in the same step, with the same text, as the reset and release refs: the
+    sender step, which runs before the first read. The sender's secret (the caps login itself, if the names fold) is
+    never fetched."""
+    cfg = _sender(make_cfg(tmp_path))
+    _with_ref(monkeypatch, cfg, field=field)
+    qualify(load_registry(load_config(cfg)))
+    provider = Recording()
+    with pytest.raises(ConfigError) as caught:
+        app_mod.build(cfg, ["test-agent"], secrets=provider)
+    assert "give the sender its own secret" in str(caught.value)
+    assert provider.read == []
     assert REF not in str(caught.value) and ALIAS not in str(caught.value)
 
 

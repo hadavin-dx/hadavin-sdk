@@ -1,6 +1,6 @@
 """F-money-definer step 6, the operator commands `limits set-cap`, `limits sync-caps` and `limits check-caps`, end to
 end through `cli.main` against a real PostgreSQL 16: a throwaway schema and real non-superuser logins with unique
-names, dropped after. The commands run under the reset login only, intent first, audited per agent.
+names, dropped after. The commands run under the caps login only, intent first, audited per agent.
 
 Exit codes: 0 done; 1 (`check-caps` only) a cap differs or a row is missing; 2 refused (config, missing reset
 ref, bad argument, no `--yes` when not interactive, the login lacks the right); 3 the audit store is unavailable

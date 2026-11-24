@@ -438,7 +438,7 @@ CREATE TABLE hadavin_caps (
 );
 REVOKE ALL ON hadavin_caps FROM PUBLIC;
 
--- hadavin_set_cap: upsert the caps of one agent (the reset login runs it; the runtime cannot). Arguments are validated
+-- hadavin_set_cap: upsert the caps of one agent (the caps login runs it; the runtime and the reset login cannot). Arguments are validated
 -- inside: the agent id as in the other functions, both caps by the cap rule, p_by non-empty without control characters.
 CREATE OR REPLACE FUNCTION hadavin_set_cap(p_agent TEXT, p_day_cap NUMERIC, p_month_cap NUMERIC, p_by TEXT)
 RETURNS void

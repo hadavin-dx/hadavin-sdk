@@ -532,7 +532,7 @@ WITH RECURSIVE want(relname, priv) AS (
     -- unlisted (`listed` FALSE); a member that is not vouched, or any member of a LISTED role, is listed.
     SELECT r.oid FROM pg_catalog.pg_roles r WHERE {vouched} AND r.oid NOT IN (SELECT oid FROM outside)
 ), can(oid, listed) AS (
-    SELECT s.oid, TRUE FROM (SELECT grantee AS oid FROM acl
+    SELECT s.oid, TRUE FROM (SELECT grantee AS oid FROM acl WHERE {grants}
                        UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = %(reset)s
                        UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE {creators}) s
     WHERE s.oid NOT IN (SELECT oid FROM outside)
@@ -544,7 +544,7 @@ WITH RECURSIVE want(relname, priv) AS (
     WHERE m.member NOT IN (SELECT oid FROM outside) AND {usable}
 )
 SELECT name FROM (
-    SELECT 'PUBLIC' AS name, 0 AS pos WHERE EXISTS (SELECT 1 FROM acl WHERE grantee = 0)
+    SELECT 'PUBLIC' AS name, 0 AS pos WHERE EXISTS (SELECT 1 FROM acl WHERE grantee = 0) AND {grants}
     UNION ALL
     SELECT r.rolname, 1 FROM pg_catalog.pg_roles r
     WHERE r.oid IN (SELECT oid FROM can WHERE listed) AND r.rolname IS DISTINCT FROM %(reset)s
@@ -651,15 +651,49 @@ def who_else_can_clear(
     can write every table of the server). Whoever hands out those memberships owns that risk;
     `effective_problems` still refuses the NAMED roles for them."""
     _check_stop_relations(db)
+    return _can_become(db, reset_role, accepted_admin_roles, stop_grants=True)
+
+
+def _can_become(
+    db, role: str | None, accepted_admin_roles: tuple[str, ...] = (), *, stop_grants: bool
+) -> list[str]:
+    """The ONE membership walk (`_CAN_CLEAR`): every role that can become `role` through `pg_auth_members`, directly
+    or through other roles, with or without inheritance. With `stop_grants` the roles that hold a clearing right on the
+    stop tables (and, below PostgreSQL 16, the CREATEROLE logins) are seeds too: that is `who_else_can_clear`. Without
+    it the only seed is `role`: that is `_unnamed_members`. Superusers and the owner of the stop tables are outside in
+    both (never listed, their members never followed)."""
     # pg_auth_members has the option columns from PostgreSQL 16; before that every membership can SET ROLE and a
     # CREATEROLE login can grant any role to itself.
     new = _server_is_16_or_later(db)
     usable = "(m.inherit_option OR m.set_option OR m.admin_option)" if new else "TRUE"
     creators = "FALSE" if new else _CREATORS
     vouched = "FALSE" if new else _VOUCHED
-    query = _CAN_CLEAR.format(usable=usable, creators=creators, vouched=vouched)
-    params = {"reset": reset_role, "accepted": list(accepted_admin_roles)}
+    # who_else_can_clear lists (or vouches for) the CREATEROLE logins once, for every named role
+    if not stop_grants:
+        creators = vouched = "FALSE"
+    query = _CAN_CLEAR.format(
+        usable=usable, creators=creators, vouched=vouched, grants="TRUE" if stop_grants else "FALSE"
+    )
+    params = {"reset": role, "accepted": list(accepted_admin_roles)}
     return [r[0] for r in db.execute(query, params).fetchall()]
+
+
+def _unnamed_members(db, roles: dict[str, str | None]) -> list[str]:
+    """Roles NOT named in this run that can become a named role (`roles`: kind -> name) through a membership: an
+    INHERIT member holds its rights, a NOINHERIT or SET-only member can SET ROLE to it, the holder of the ADMIN option
+    can grant it to itself, and a member of such a role reaches it through the chain. The per-role checks
+    (`effective_problems`, `has_function_privilege`) follow inherited rights only and see none of the last three, so
+    such a role would hold the money or stop rights of a named role and never be looked at. Same walk as the reset
+    role's (`_can_become`). The reset role is not walked a second time here: `who_else_can_clear` lists its members
+    with this walk, runs first and keeps its own refusal text. Names only."""
+    named = {r for r in roles.values() if r}
+    return [
+        f"role {other} (not named in this command) can become the {kind} role {role}"
+        for kind, role in roles.items()
+        if role and kind != "reset"
+        for other in _can_become(db, role, stop_grants=False)
+        if other not in named
+    ]
 
 
 def _paths(config_value: str) -> list[str]:
@@ -746,38 +780,6 @@ def check_role_settings(db, named: list[str]) -> list[str]:
             + ", ".join(f"{r[1]}: {r[3]}" for r in left)
         )
     return changes
-
-
-def check_isolation_settings(db, named: list[str]) -> list[str]:
-    """Role, database and server defaults of `default_transaction_isolation` that reach the named logins
-    (`pg_db_role_setting`), reported when they are not `read committed`. The connection pins READ COMMITTED itself
-    (`postgres.py` `_SESSION_PINS`, read back), so such a default changes nothing for the store; it is reported, not
-    erased, because the audit chain and every conditional UPDATE rely on that level and a default that says otherwise
-    is a sign someone tried to weaken the session. One line per row (role or `every role`, scope, value). The
-    server-wide `postgresql.conf` value is not in this catalog; the pin covers it."""
-    rows = db.execute(
-        "SELECT pg_catalog.pg_get_userbyid(s.setrole), s.setrole, d.datname, c "
-        "FROM pg_catalog.pg_db_role_setting s CROSS JOIN LATERAL unnest(s.setconfig) c "
-        "LEFT JOIN pg_catalog.pg_database d ON d.oid = s.setdatabase "
-        "WHERE c LIKE 'default\\_transaction\\_isolation=%%' "
-        "AND (s.setdatabase = 0 OR d.datname = current_database()) "
-        "AND (s.setrole = 0 OR s.setrole IN (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = ANY(%s))) "
-        "ORDER BY 1, 3, 4",
-        (named,),
-    ).fetchall()
-    notes = []
-    for role, setrole, dbname, config in rows:
-        value = config.split("=", 1)[1].strip().strip("'\"").lower()
-        # PostgreSQL runs `read uncommitted` as `read committed`: the same level, nothing to report
-        if value in ("read committed", "read uncommitted"):
-            continue
-        who = f"role {role}" if setrole else "every role"
-        where = f"in database {dbname}" if dbname else "in every database"
-        notes.append(
-            f"{who} {where}: default_transaction_isolation = {value} (not read committed). Not changed: the "
-            "store's connection pins read committed itself; remove the default so nobody relies on it"
-        )
-    return notes
 
 
 def _maintainers(db, schema: str):
@@ -941,6 +943,16 @@ def _owner_problems(db, named: list[str]) -> list[str]:
     return problems
 
 
+# A bare name resolves through the search path: a temporary relation (searched first) or an earlier schema would
+# stand in for ours. These resolve the name in `current_schema()`, the schema the sibling checks read.
+_OUR_PROCEDURE = (
+    "pg_catalog.to_regprocedure(pg_catalog.quote_ident(pg_catalog.current_schema()) || '.' || %s)"
+)
+_OUR_RELATION = (
+    "pg_catalog.to_regclass(pg_catalog.quote_ident(pg_catalog.current_schema()) || '.' || %s)"
+)
+
+
 def _unmapped_functions(db) -> list[str]:
     """hadavin_* functions of the schema in neither map, by FULL signature (an overload of a mapped name is
     unmapped: it would be unpinned and open to PUBLIC)."""
@@ -968,7 +980,7 @@ def _unnamed_money_executors(db, named: list[str]) -> list[str]:
     problems: list[str] = []
     sigs = list(FUNCTION_GRANTS)
     for sig in sigs:
-        oid = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        oid = db.execute(f"SELECT {_OUR_PROCEDURE}::oid", (sig,)).fetchone()[0]
         if oid is None:
             continue
         if db.execute(
@@ -1005,7 +1017,7 @@ def _money_table_writers(db) -> list[str]:
     the definer functions (run as the owner) may write them. Names only."""
     problems: list[str] = []
     for table in ("spend", "spend_month", "spend_reservations"):
-        oid = db.execute("SELECT to_regclass(%s)::oid", (table,)).fetchone()[0]
+        oid = db.execute(f"SELECT {_OUR_RELATION}::oid", (table,)).fetchone()[0]
         if oid is None:
             continue
         if db.execute(
@@ -1044,7 +1056,7 @@ def _seed_limits(db) -> None:
 def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
     """EXECUTE on the money functions: pin first, then each named role gets what `FUNCTION_GRANTS` says and loses
     the rest; a named role that can still run one (PUBLIC, a membership) is refused. `roles` maps the Grant field
-    name (runtime, purge, release, reset, portal) to the named role or None. The release function has its own
+    name (runtime, purge, release, reset, portal, caps) to the named role or None. The release function has its own
     apply (`_apply_release_function`); it is checked here too."""
     _pin_money_functions(db)
     for signature, grant in FUNCTION_GRANTS.items():
@@ -1265,7 +1277,13 @@ def migrate(
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
-    old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
+    old flag off, append the reset to the audit chain, and nothing else (the reset role runs NO money function). With
+    `caps_role`, what `Grant.caps` lists (append to the audit, read the checkpoints) and EXECUTE on `hadavin_set_cap`
+    and `hadavin_cap_matches`: it is the only named role that can set a spend cap. This function ACCEPTS a
+    `reset_role` without a `caps_role` (the command line refuses that pair; the library does not): the result is
+    closed, not open, because then no named role can set a cap, only the owner can, and every run is refused
+    (`limits_unavailable`) until caps exist. An unnamed role that can become a named role through a role membership
+    (inherited or not, SET or ADMIN option, directly or through other roles) is refused by name. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
     role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
     clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
@@ -1419,17 +1437,15 @@ def migrate(
                 )
         _pin_money_guard(db)
         _apply_release_function(db, release_role, [r for r in named if r != release_role])
-        _apply_money_functions(
-            db,
-            {
-                "runtime": runtime_role,
-                "purge": purge_role,
-                "release": release_role,
-                "reset": reset_role,
-                "portal": portal_role,
-                "caps": caps_role,
-            },
-        )
+        by_kind = {
+            "runtime": runtime_role,
+            "purge": purge_role,
+            "release": release_role,
+            "reset": reset_role,
+            "portal": portal_role,
+            "caps": caps_role,
+        }
+        _apply_money_functions(db, by_kind)
         if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
             raise ConfigError(
                 "roles not named in this command can run the money functions, or will for future functions: "
@@ -1446,29 +1462,25 @@ def migrate(
                 "a role other than the owner can write a money table (only the definer functions may): "
                 + "; ".join(writers[:20])
             )
-        note = ""
         if named:
-            for note in check_role_settings(db, named):
-                _log.warning("migrate changed a role setting: %s", note)
+            for change in check_role_settings(db, named):
+                _log.warning("migrate changed a role setting: %s", change)
                 if on_role_change:
-                    on_role_change(note)
-            for note in check_isolation_settings(db, named):
-                _log.warning("migrate: %s", note)
-                if notes is not None:
-                    notes.append(note)
+                    on_role_change(change)
             check_maintain(db, named)
+        accepted_note = ""
         if accepted:
             names = ", ".join(accepted)
             if _server_is_16_or_later(db):
-                note = f"accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: {names})"
+                accepted_note = f"accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: {names})"
             else:
-                note = (
+                accepted_note = (
                     "accepted administrator roles (you vouch for them; not checked as able to clear a stop, but "
                     f"their members and any grant on the stop tables still are): {names}"
                 )
-            _LOG.warning("migrate: %s", note)
+            _LOG.warning("migrate: %s", accepted_note)
             if notes is not None:
-                notes.append(note)
+                notes.append(accepted_note)
         if named and (others := who_else_can_clear(db, reset_role, accepted)):
             raise ConfigError(
                 "roles other than the reset role could clear a stop (a right on kill_switch or "
@@ -1478,6 +1490,20 @@ def migrate(
                 "right or the membership of any other role. Below PostgreSQL 16 a role listed only because it holds "
                 "CREATEROLE can be named with accepted_admin_roles (command line: --accept-admin-role) when you "
                 "vouch that it cannot grant the reset role to itself (see docs/stop-state-runbook.md)"
-                + (f". {note}" if note.startswith("accepted administrator") else "")
+                + (
+                    f". {accepted_note}"
+                    if accepted_note.startswith("accepted administrator")
+                    else ""
+                )
+            )
+        # Last, so the refusals above keep their own text: a member of the reset role is named by the stop check.
+        if named and (members := _unnamed_members(db, by_kind)):
+            raise ConfigError(
+                "roles not named in this command can become a named role through a role membership (with or without "
+                "inheritance, with the SET or the ADMIN option, directly or through other roles), so they hold its "
+                "rights on the money, cap and stop state without being checked: "
+                + "; ".join(members[:20])
+                + ". Revoke the membership (REVOKE <named role> FROM <role>; for the ADMIN option of the login that "
+                "created the role: REVOKE ADMIN OPTION FOR <named role> FROM <role>), then run migrate again"
             )
     return applied

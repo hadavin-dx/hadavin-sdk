@@ -96,6 +96,16 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   conservative: it can name a role that holds only DELETE or TRUNCATE on `kill_switch`, or only a column INSERT
   that leaves out `stop_id`, which alone cannot clear a stop, and it judges each membership on its own, not along
   the whole chain. These are harmless refusals: revoke the right.
+- What migrate refuses as able to become a named role: any role NOT named in the command that is a member of a
+  named role (runtime, portal, purge, reset, release or caps), directly or through other roles, with or without
+  inheritance (below PostgreSQL 16 every membership; from 16 a membership whose INHERIT, SET or ADMIN option is
+  true). Such a role holds, or can take with `SET ROLE`, the rights of the named role (for the caps role: set every
+  spend cap) without ever being checked. The message names each one and the named role it reaches. Fix: `REVOKE
+  <named role> FROM <role>`. From PostgreSQL 16 the login that created a named role holds the ADMIN option on it
+  when it is neither a superuser nor the owner of the tables, so it is refused for EVERY named role it created, not
+  only the reset role: create the roles as a superuser or as the owner, or run `REVOKE ADMIN OPTION FOR <named
+  role> FROM <creator>` as a role that may. Superusers and the owner of the tables are outside this check, and a
+  role whose only path is membership in one of those two is not followed (same limits as the stop listing above).
 - A server that holds other administrators (below PostgreSQL 16, or a managed service): the CREATEROLE listing
   looks at the whole server, not this schema. If a listed role is not a person or process that can use CREATEROLE to
   grant the reset role to itself (for example a managed service's own administrator login), you may name it with
