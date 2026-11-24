@@ -49,6 +49,8 @@ def _role_flags(up) -> list[str]:
         up.purge,
         "--reset-role",
         up.reset,
+        "--caps-role",  # combined branch: the command line refuses a reset role without a caps role
+        up.caps,
     ]
 
 

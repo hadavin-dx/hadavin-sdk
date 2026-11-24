@@ -25,8 +25,13 @@
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P] [--purge-role U] [--reset-role X]
                                                          [--release-role Y] [--caps-role C]
                                                          [--accept-admin-role A ...] [--no-roles]
+                                                         [--accept-changed-draft V ...] [--reset-draft V]
+                                                         [--validate-constraints]
                                                          apply the postgres schema; the migration role's DSN
-                                                         comes from the HADAVIN_MIGRATE_DSN environment variable
+                                                         comes from the HADAVIN_MIGRATE_DSN environment variable;
+                                                         the two draft flags are for an UNRELEASED migration whose
+                                                         file changed (docs/migration-checksums.md); exit 0 done,
+                                                         2 refused, 3 failure, 75 a lock wait: run it again later
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
   hadavin-sdk [--config DIR] replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]
                                                          K1b-lite: run recorded incidents through the agent;
@@ -211,7 +216,7 @@ def _main(argv: list[str] | None = None) -> int:
         "--accept-admin-role",
         action="append",
         default=[],
-        help="below PostgreSQL 16: a CREATEROLE role you vouch for (it cannot grant the reset role to itself); "
+        help="below PostgreSQL 16: a CREATEROLE role you vouch for (it cannot grant any named role to itself); "
         "repeat for several; named in the output and logged; never excuses a grant on the stop tables",
     )
     mig.add_argument(
@@ -560,7 +565,8 @@ def _migrate(
     if not (validate_constraints or no_roles or any(named)):
         print(
             "refused: no role is named, so the check of who could clear a stop would be skipped; name the "
-            "roles (--runtime-role ... --reset-role) in ONE command, or pass --no-roles to apply the schema only",
+            "roles (--runtime-role, --portal-role, --purge-role, --reset-role, --release-role, --caps-role) in ONE "
+            "command, or pass --no-roles to apply the schema only",
             file=sys.stderr,
         )
         return 2

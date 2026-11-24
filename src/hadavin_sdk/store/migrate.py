@@ -130,7 +130,8 @@ TRIPWIRE_FUNCTIONS = (
     "hadavin_audit_checkpoint_guard()",
     MONEY_GUARD_FUNCTION,
 )
-# 0011: the SECURITY DEFINER money functions (five bookings, set_cap, cap_matches). Each is re-pinned on every migrate run (`_pin_money_functions`).
+# 0011: the SECURITY DEFINER money functions (`MONEY_FUNCTIONS`: the bookings, the purge, the two cap
+# functions and the read of expired holds). Each is re-pinned on every migrate run (`_pin_money_functions`).
 MONEY_FUNCTIONS = (
     "hadavin_reserve_spend(text, text, date, numeric, text)",
     "hadavin_settle_spend(text, numeric, text)",
@@ -623,6 +624,40 @@ def _check_stop_relations(db) -> None:
         )
 
 
+def _check_our_names(db) -> None:
+    """The ONE early refusal of `migrate` for names that lead elsewhere (same idea as `_check_stop_relations`, for every
+    object `migrate` knows: the ledger, the relations of `GRANTS`, the functions of `FUNCTION_GRANTS` and
+    `EXCLUDED_FUNCTIONS`). The migration files and a few reads use bare names, and a bare name follows the whole
+    search_path: when our schema (`current_schema()`, the first existing schema of the path) lacks an object and
+    another schema of the path has one of that name, the bare name finds the OTHER schema's object, and a file, a
+    grant or a check would read or change it. So: a known name that resolves at all must resolve into
+    `current_schema()`. A fresh install (nothing resolves) passes."""
+    relations = ["schema_migrations", *GRANTS]
+    functions = [*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS]
+    elsewhere = [
+        r[0]
+        for r in db.execute(
+            "SELECT n FROM pg_catalog.unnest(%s::text[]) AS n WHERE pg_catalog.to_regclass(n) IS DISTINCT FROM "
+            "pg_catalog.to_regclass(pg_catalog.quote_ident(pg_catalog.current_schema()) || '.' || n) "
+            "UNION ALL "
+            "SELECT n FROM pg_catalog.unnest(%s::text[]) AS n WHERE pg_catalog.to_regprocedure(n) IS DISTINCT FROM "
+            "pg_catalog.to_regprocedure(pg_catalog.quote_ident(pg_catalog.current_schema()) || '.' || n)",
+            (relations, functions),
+        ).fetchall()
+    ]
+    if elsewhere:
+        schema, path = db.execute(
+            "SELECT pg_catalog.current_schema(), pg_catalog.current_setting('search_path')"
+        ).fetchone()
+        raise ConfigError(
+            f"names of the store resolve outside the schema this connection uses ({schema!r}, search_path {path!r}): "
+            f"{', '.join(elsewhere[:20])}. Another schema of the search_path holds an object of that name and this "
+            "schema does not (or something hides it), so migrate would read or change the other one. Run migrate "
+            "with a search_path that names only the schema of the store (HADAVIN_MIGRATE_DSN, options=-c "
+            "search_path=<schema>). Nothing was changed"
+        )
+
+
 def _current_schema(db) -> str:
     """`current_schema()`, or a ConfigError when it is NULL (a search_path with no existing schema: nothing of ours
     can be found there, and `None.replace` / `Identifier(None)` would be a crash with exit 3)."""
@@ -857,7 +892,10 @@ def _can_become(
     or through other roles, with or without inheritance. With `stop_grants` the roles that hold a clearing right on the
     stop tables (and, below PostgreSQL 16, the CREATEROLE logins) are seeds too: that is `who_else_can_clear`. Without
     it the only seed is `role`: that is `_unnamed_members`. Superusers and the owner of the stop tables are outside in
-    both (never listed, their members never followed)."""
+    both (never listed, their members never followed). "The owner" is read from the STOP tables only: `_owner_problems`
+    ties the function owner to the money tables (`_OWNED_RELATIONS`), not to the stop tables, so if someone (it takes a
+    superuser or the owner) hands the stop tables to another role, that role and its members are skipped by this walk.
+    The owner of the stop tables can drop them anyway and is outside the guarantee (see `who_else_can_clear`)."""
     # pg_auth_members has the option columns from PostgreSQL 16; before that every membership can SET ROLE and a
     # CREATEROLE login can grant any role to itself.
     new = _server_is_16_or_later(db)
@@ -1098,7 +1136,7 @@ def _pin_money_guard(db) -> None:
 
 
 def _pin_money_functions(db) -> None:
-    """The five money functions of 0011, pinned like the tripwire functions on EVERY run (also when 0011 is already
+    """Every function of `MONEY_FUNCTIONS` (0011), pinned like the tripwire functions on EVERY run (also when 0011 is already
     applied). A database from before 0011 has none, and nothing is done for it."""
     for signature in MONEY_FUNCTIONS:
         if (
@@ -1380,7 +1418,11 @@ def _ensure_ledger(db) -> None:
     if has:
         return
     try:
-        db.execute("ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT")
+        db.execute(
+            sql.SQL("ALTER TABLE {} ADD COLUMN IF NOT EXISTS checksum TEXT").format(
+                _in_schema(db, "schema_migrations")
+            )
+        )
     except errors.InsufficientPrivilege as exc:
         raise ConfigError(
             "the schema_migrations ledger has no checksum column and this login may not add it: run migrate once "
@@ -1410,20 +1452,30 @@ def _reset_draft(db, version: str, files: list[Path]) -> None:
             f"({', '.join(sorted(_draft_versions())) or 'none now'})"
         )
     later = [v for v in stems if v >= version]
-    db.execute("DELETE FROM schema_migrations WHERE version = ANY(%s)", (later,))
+    db.execute(
+        sql.SQL("DELETE FROM {} WHERE version = ANY(%s)").format(
+            _in_schema(db, "schema_migrations")
+        ),
+        (later,),
+    )
     _log.warning(
         "migrate: ledger rows deleted for %s; they are applied again now", ", ".join(later)
     )
 
 
-def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None:
+def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> list[str]:
     """Compare every applied file with the checksum recorded when it was applied (`files` maps path to its current
     checksum). A released file must also match the shipped manifest (a NULL checksum, from before checksums existed,
     is filled only from a file that does). A changed file that is not in UNRELEASED_MIGRATIONS is refused. For an
     unreleased file the ledger KEEPS the checksum of what was applied and migrate warns on every run while the file
     differs; nothing of the changed file reaches the database. A NULL checksum on an unreleased file is trusted on
-    first use (logged). `accept` names unreleased versions whose recorded checksum is set to the file's now."""
+    first use (logged). `accept` names unreleased versions whose recorded checksum is set to the file's now. Returns the unreleased
+    versions whose warning is still open after this call (the database holds an earlier draft of them)."""
     rows = dict(db.execute("SELECT version, checksum FROM schema_migrations").fetchall())
+    set_checksum = sql.SQL("UPDATE {} SET checksum = %s WHERE version = %s").format(
+        _in_schema(db, "schema_migrations")
+    )
+    open_drafts: list[str] = []
     for bad in sorted(set(accept) - _draft_versions()):
         raise ConfigError(
             f"accept_changed_draft {bad!r}: only an unreleased migration can be accepted"
@@ -1433,9 +1485,7 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
         if old is False:
             continue
         if path.stem in accept:
-            db.execute(
-                "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
-            )
+            db.execute(set_checksum, (new, path.stem))
             continue
         if old == new:
             continue
@@ -1445,10 +1495,9 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
                     "migrate: %s was applied before checksums were recorded; trusting the current file",
                     path.name,
                 )
-            db.execute(
-                "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
-            )
+            db.execute(set_checksum, (new, path.stem))
         elif path.stem in UNRELEASED_MIGRATIONS:
+            open_drafts.append(path.stem)
             _log.warning(
                 "migrate: UNRELEASED migration %s differs from what this database applied (applied %s, file now "
                 "%s). NOTHING of the changed file reaches this database: the file is not run again, and its tables, "
@@ -1469,6 +1518,18 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
                 f"file now {new[:12]}). A released migration never changes: restore the file, and put the change in "
                 "a new numbered migration"
             )
+    return open_drafts
+
+
+def _missing_functions(db) -> list[str]:
+    """The signatures of `FUNCTION_GRANTS` that do not exist in `current_schema()`. After every file is applied each
+    one must exist: a missing one means the database holds an earlier draft of the file that creates it, and the
+    grant step would silently skip it (the runtime then calls a function that is not there)."""
+    return [
+        sig
+        for sig in FUNCTION_GRANTS
+        if db.execute("SELECT to_regprocedure(%s)", (_qualified(db, sig),)).fetchone()[0] is None
+    ]
 
 
 def _lock_limit(db, value: str) -> None:
@@ -1539,7 +1600,7 @@ def migrate(
     after the commit only.
     `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
     character, no space at either end, compared as exact text)
-    the operator vouches for (cannot grant the reset role to itself; for
+    the operator vouches for (cannot grant any named role to itself, the reset and the caps role included; for
     example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
     nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
     them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
@@ -1584,7 +1645,7 @@ def migrate(
     if not named and not no_roles:
         raise ConfigError(
             "no role is named, so the stop-state check (who could clear a stop) would be skipped. Name the "
-            "runtime, portal, purge and reset roles in ONE migrate command, or pass --no-roles to apply the "
+            "runtime, portal, purge, reset, release and caps roles in ONE migrate command, or pass --no-roles to apply the "
             "schema without checking any role (the first install, before the roles exist)"
         )
     applied = []
@@ -1595,6 +1656,7 @@ def migrate(
         db.transaction(),
         _one_migrate_with_a_lock_limit(db),
     ):
+        _check_our_names(db)
         _ensure_ledger(db)
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
@@ -1620,17 +1682,42 @@ def migrate(
         if reset_draft is not None:
             _reset_draft(db, reset_draft, files)
             done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
-        _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+        open_drafts = _verify_applied(
+            db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft)
+        )
         for path in files:
             if path.stem in done:
                 continue
             text, digest = texts[path]
             db.execute(text)  # a file shipped in this package
             db.execute(
-                "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                sql.SQL("INSERT INTO {} (version, checksum) VALUES (%s, %s)").format(
+                    _in_schema(db, "schema_migrations")
+                ),
                 (path.stem, digest),
             )
             applied.append(path.stem)
+        if absent := _missing_functions(db):
+            listing = ", ".join(absent)
+            if not open_drafts:
+                raise ConfigError(
+                    f"every migration is recorded as applied, but these functions do not exist: {listing}. The "
+                    "database holds an earlier draft of the migration that creates them (0011_money_definer for the "
+                    "money functions) whose changed file was accepted or never recorded. Drop what that migration "
+                    "and every later one made, then run migrate with --reset-draft <that migration> (see "
+                    "docs/migration-checksums.md). Nothing was changed"
+                )
+            drafts = ", ".join(open_drafts)
+            fix = " or ".join(f"--reset-draft {d}" for d in open_drafts)
+            missing_note = (
+                f"these functions do NOT exist in this database: {listing}. It holds an earlier draft of {drafts} "
+                "(warning above); no role gets a grant on a missing function and every caller of it fails. Drop "
+                f"what the draft and every later migration made, then run migrate with {fix} (see "
+                "docs/migration-checksums.md)"
+            )
+            _LOG.warning("migrate: %s", missing_note)
+            if notes is not None:
+                notes.append(missing_note)
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
         for a in named:
             for b in named:
@@ -1753,10 +1840,11 @@ def migrate(
                 "roles other than the reset role could clear a stop (a right on kill_switch or "
                 "kill_switch_clears, or membership in a role that holds one): "
                 + ", ".join(others[:20])
-                + ". Name the runtime, portal, purge and reset roles in ONE migrate command, and revoke the "
+                + ". Name the runtime, portal, purge, reset, release and caps roles in ONE migrate command, and revoke the "
                 "right or the membership of any other role. Below PostgreSQL 16 a role listed only because it holds "
                 "CREATEROLE can be named with accepted_admin_roles (command line: --accept-admin-role) when you "
-                "vouch that it cannot grant the reset role to itself (see docs/stop-state-runbook.md)"
+                "vouch that it cannot grant ANY named role to itself (the reset role, the caps role and the others: "
+                "below 16 a CREATEROLE login can grant itself each of them; see docs/stop-state-runbook.md)"
                 + (
                     f". {accepted_note}"
                     if accepted_note.startswith("accepted administrator")
@@ -1770,8 +1858,11 @@ def migrate(
                 "inheritance, with the SET or the ADMIN option, directly or through other roles), so they hold its "
                 "rights on the money, cap and stop state without being checked: "
                 + "; ".join(members[:20])
-                + ". Revoke the membership (REVOKE <named role> FROM <role>; for the ADMIN option of the login that "
-                "created the role: REVOKE ADMIN OPTION FOR <named role> FROM <role>), then run migrate again"
+                + ". Revoke the membership (REVOKE <named role> FROM <role>), then run migrate again. A login that "
+                "CREATED a named role holds the ADMIN option on it from PostgreSQL 16 on, granted by the bootstrap "
+                "superuser: only a superuser can take it away (REVOKE ADMIN OPTION FOR <named role> FROM <role>; the "
+                "creating login's own REVOKE changes nothing). On a managed database service, which has no "
+                "superuser login, drop the named roles and create them again as the login that owns the tables"
             )
     # only here, after the commit: a run that is rolled back changed no role setting
     for change in changes:

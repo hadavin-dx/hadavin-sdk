@@ -139,3 +139,76 @@ def test_readme_and_security_say_plainly_that_two_audit_rights_are_still_too_wid
     assert (
         "It does not enforce (1)" not in SECURITY
     )  # migrate refuses an owning or owner-member login now
+
+
+# --- review round 3 of lead-b-migrate (combined branch) -----------------------------------------------------------
+
+
+def test_no_repo_doc_points_into_the_handover_folder():
+    """MINOR 4: a reader of the shipped docs is never sent to a working file of the build."""
+    docs = [ROOT / n for n in ("README.md", "SECURITY.md", "CHANGELOG.md")] + sorted(
+        (ROOT / "docs").glob("*.md")
+    )
+    for path in docs:
+        assert "handover/" not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_the_changelog_says_which_migrations_are_unreleased_and_what_to_do_about_the_0011_draft():
+    """MINOR 4 and MINOR 3: 0008 to 0011 (0007 is released: migrate refuses a changed 0007), and the two commands."""
+    assert (
+        "0008 to 0011 are unreleased" in CHANGELOG
+        and "0007 to 0011 are unreleased" not in CHANGELOG
+    )
+    line = CHANGELOG[CHANGELOG.index("0008 to 0011 are unreleased") :][:900]
+    assert "docs/migration-checksums.md" in line and "hadavin_expired_holds(integer)" in line
+    assert (
+        "--reset-draft 0011_money_definer" in line
+        and "--accept-changed-draft 0011_money_definer" in line
+    )
+
+
+def test_every_doc_says_only_a_superuser_revokes_a_creators_admin_option():
+    """MINOR 1: the fix that works on a managed database service is named in all four."""
+    for doc in (RUNBOOK, CHANGELOG, README, SECURITY):
+        assert re.search(r"only a superuser can (take it away|revoke)", doc, re.IGNORECASE)
+        assert "login that owns the tables" in doc
+    assert "FROM <creator>` as a role that may" not in RUNBOOK
+
+
+def test_the_role_lists_name_all_six_roles_and_the_command_text_lists_the_draft_flags():
+    """NIT 1, 2, 3, 5 of review round 3."""
+    pytest.importorskip("psycopg", reason="store/migrate.py needs hadavin-sdk[pg]")
+    import inspect
+
+    from hadavin_sdk import cli
+    from hadavin_sdk.store import migrate as migrate_mod
+
+    src = " ".join(inspect.getsource(migrate_mod).split())
+    assert "purge and reset roles in ONE" not in src
+    assert (
+        src.count("runtime, portal, purge, reset, release and caps roles in ONE migrate command")
+        == 2
+    )
+    cli_src = inspect.getsource(cli)
+    for flag in (
+        "--runtime-role",
+        "--portal-role",
+        "--purge-role",
+        "--reset-role",
+        "--release-role",
+        "--caps-role",
+    ):
+        assert flag in cli_src[cli_src.index("refused: no role is named") :][:400], flag
+    usage = cli.__doc__
+    assert (
+        "[--accept-changed-draft V ...] [--reset-draft V]" in usage
+        and "[--validate-constraints]" in usage
+    )
+    assert (
+        "the reset, release or caps ref" in RUNBOOK
+    )  # NIT 2: the start refusal covers the caps ref too
+    assert "grant the reset role to itself (for example" not in RUNBOOK  # NIT 5: any named role
+    assert (
+        "grant ANY named role to itself" in RUNBOOK
+        and "cannot grant ANY named role to itself" in src
+    )

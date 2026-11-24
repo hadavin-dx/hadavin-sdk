@@ -46,6 +46,10 @@ class World:
             f"e7_{n}_{self.sfx}" for n in ("rt", "po", "pu", "rs")
         )
         self.roles = [self.runtime, self.portal, self.purge, self.reset]
+        # Combined branch: the command line refuses a reset role without a caps role, so the CLI calls of the lock
+        # tests name this one too (`_role_flags` of round 6). `World.migrate` (the library call) stays as it was.
+        self.caps = f"e7_cp_{self.sfx}"
+        self.roles.append(self.caps)
         self.scoped = make_conninfo(self.dsn, options=f"-c search_path={self.schema}")
 
     def migrate(self, **kw):

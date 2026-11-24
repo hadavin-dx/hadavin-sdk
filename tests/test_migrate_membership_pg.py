@@ -18,6 +18,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 
 import psycopg
 from psycopg import errors, sql
+from psycopg.conninfo import make_conninfo
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as mig
@@ -170,9 +171,8 @@ def test_a_temporary_table_does_not_hide_a_writer_of_a_money_table(w):
 
 
 def test_the_executor_check_reads_the_function_of_the_stores_schema(w):
-    """NIT-2, the function half. A bare function name cannot be shadowed while `current_schema()` is the store's schema
-    (a function is never looked up in the temporary schema), so this cannot fail on the unqualified lookup: it guards
-    the qualified one (an unnamed executor is still found, with temporary objects and a later schema in the path)."""
+    """NIT-2, the function half, the positive side: an unnamed executor of OUR function is still found with
+    temporary objects and a later schema in the path. The unqualified lookup is caught by the next test."""
     runner = w.new_role("tx", "NOLOGIN")
     set_cap = "hadavin_set_cap(text, numeric, numeric, text)"
     w.grant(f"GRANT EXECUTE ON FUNCTION {set_cap} TO {{}}", runner)
@@ -182,3 +182,88 @@ def test_the_executor_check_reads_the_function_of_the_stores_schema(w):
         db.execute("CREATE TEMP TABLE hadavin_set_cap (x int)")
         found = mig._unnamed_money_executors(db, [w.runtime, w.portal, w.purge, w.reset, w.caps])
     assert f"role {runner} (not named in this command) can run {set_cap}" in found
+
+
+HOLDS = "hadavin_expired_holds(integer)"
+
+
+def test_the_executor_check_skips_a_function_this_schema_lacks_and_a_later_schema_has(w):
+    """Review round 3, MINOR 2: the function is missing in the store's schema (a database that holds an earlier 0011
+    draft) and a later schema of the search_path holds one with the same signature, runnable by PUBLIC like every new
+    function. A bare lookup resolves to THAT function and reports its executors (a false refusal that names another
+    application's function); the qualified lookup finds nothing and skips."""
+    w.new_schema("lf")
+    decoy = f"sb_lf_{w.sfx}"
+    w.do(f"CREATE FUNCTION {decoy}.{HOLDS} RETURNS integer LANGUAGE sql AS 'SELECT 1'")
+    w.do(f"DROP FUNCTION {w.schema}.{HOLDS}")
+    both = make_conninfo(w.dsn, options=f"-c search_path={w.schema},{decoy}")
+    with psycopg.connect(both, autocommit=True) as db:
+        found_in = db.execute(
+            "SELECT n.nspname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+            "WHERE p.oid = to_regprocedure(%s)",
+            (HOLDS,),
+        ).fetchone()[0]
+        assert found_in == decoy  # the premise: the bare name leads to the other schema
+        found = mig._unnamed_money_executors(db, [w.runtime, w.portal, w.purge, w.reset, w.caps])
+    assert not [line for line in found if "hadavin_expired_holds" in line], found
+
+
+def creator_scenario(w):
+    """Review round 3, MINOR 1. From PostgreSQL 16 a login with CREATEROLE that is not a superuser gets the ADMIN
+    option on every role it creates, granted by the bootstrap superuser. migrate refuses it and says what to do; the
+    creating login cannot end the refusal itself; a superuser can."""
+    creator = w.new_role("mk", "LOGIN CREATEROLE")
+    made = f"sb_mr_{w.sfx}"
+    as_creator = w.dsn_of(creator, w.dsn)
+    with psycopg.connect(as_creator, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(made)))
+    w.roles.insert(0, made)  # dropped before its creator
+    text = _refusal(w, release_role=made)
+    assert _line(creator, "release", made) in text
+    assert "only a superuser can take it away" in text
+    assert "create them again as the login that owns the tables" in text
+    superuser = w.run("SELECT current_user")[0][0]
+    revoke = sql.SQL("REVOKE ADMIN OPTION FOR {} FROM {}").format(
+        sql.Identifier(made), sql.Identifier(creator)
+    )
+    with psycopg.connect(as_creator, autocommit=True) as db:
+        db.execute(revoke)  # no error and no effect: the grant is not the creator's
+        with pytest.raises(errors.InsufficientPrivilege):
+            db.execute(revoke + sql.SQL(" GRANTED BY {}").format(sql.Identifier(superuser)))
+    assert _line(creator, "release", made) in _refusal(w, release_role=made)
+    w.grant("REVOKE ADMIN OPTION FOR {} FROM {}", made, creator)  # the superuser's REVOKE
+    assert w.migrate(release_role=made) == []
+
+
+def test_a_named_role_made_by_a_createrole_login_is_refused_and_only_a_superuser_can_end_it(w):
+    if not _v16(w):
+        pytest.skip(
+            "from PostgreSQL 16 the creating login holds the ADMIN option on the role it made; below 16 no such grant exists"
+        )
+    creator_scenario(w)
+
+
+def test_named_roles_made_by_the_login_that_owns_the_tables_pass_without_a_superuser(w):
+    """The documented way on a managed database service: one login without superuser rights owns the schema and the
+    tables and creates the six named roles. It holds the ADMIN option on each and is not refused: the owner of the
+    tables is outside the membership walk."""
+    if not _v16(w):
+        pytest.skip(
+            "from PostgreSQL 16 the creating login holds the ADMIN option on the role it made; below 16 no such grant exists"
+        )
+    owner = w.new_role("ow", "LOGIN CREATEROLE")
+    schema = f"sb_ow_{w.sfx}"
+    w.do(f"CREATE SCHEMA {schema} AUTHORIZATION {owner}")
+    w.schemas.append(schema)
+    kinds = ("runtime", "portal", "purge", "reset", "release", "caps")
+    names = {f"{k}_role": f"sb_o{k[:3]}_{w.sfx}" for k in kinds}
+    with psycopg.connect(w.dsn_of(owner, w.dsn), autocommit=True) as db:
+        for name in names.values():
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(name)))
+            w.roles.insert(0, name)  # dropped before the owner
+        assert not db.execute(
+            "SELECT rolsuper FROM pg_roles WHERE rolname = current_user"
+        ).fetchone()[0]
+    as_owner = make_conninfo(w.dsn, user=owner, options=f"-c search_path={schema}")
+    assert "0011_money_definer" in mig.migrate(as_owner, **names)
+    assert mig.migrate(as_owner, **names) == []

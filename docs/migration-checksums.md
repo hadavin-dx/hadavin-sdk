@@ -28,6 +28,12 @@ operator acts. Two ways:
 
 A NULL checksum on an unreleased file is trusted once (warning) and recorded.
 
+A missing function is named. After the files, `migrate` looks for every function of its grant map
+(`FUNCTION_GRANTS`). While a draft warning is open, a second warning names each missing function (for example
+`hadavin_expired_holds(integer)`, which earlier 0011 drafts did not have) and the `--reset-draft` command. When no
+draft warning is open (the changed file was accepted with `--accept-changed-draft` although the database does not
+match it), `migrate` refuses with a `ConfigError` that names the function, and nothing is changed.
+
 ## What the lead does at the merge that releases 0008 to 0011
 
 1. Add the four rows to BOTH `src/hadavin_sdk/store/migrations_released.json` and

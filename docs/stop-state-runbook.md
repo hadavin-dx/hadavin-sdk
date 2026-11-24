@@ -28,7 +28,8 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
    in `backends.store.reset_credential_ref`. Do not give this secret to the runtime process: the secrets policy
    (IAM or the store's access rules) of the runtime's identity must NOT list the reset secret, because nothing in the
    code can stop a secrets provider from handing it over. The runtime start refuses when ANY secret name it reads (a
-   backend, tool, source, action executor, sender or the restored-hash key) is, or folds to, the reset or release ref.
+   backend, tool, source, action executor, sender or the restored-hash key) is, or folds to, the reset, release or caps ref
+   (`backends.store.reset_credential_ref`, `release_credential_ref`, `caps_credential_ref`).
 
 ## Stop
 `hadavin-sdk limits stop --by <who>` adds one stop. It works even when the audit log is down (the audit row is written afterwards).
@@ -91,7 +92,8 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   reset role to itself); from PostgreSQL 16 every holder of the ADMIN option on such a role or on the reset role
   (ADMIN on the owner role is not followed: the owner is outside the guarantee). The login that created the reset
   role holds the ADMIN option (when it is not a superuser), so it is listed: either create the reset role as a
-  superuser or the owner, or run `REVOKE ADMIN OPTION FOR <reset role> FROM <creator>`. The listing is
+  superuser or the owner, or have a superuser run `REVOKE ADMIN OPTION FOR <reset role> FROM <creator>` (only a
+  superuser can: see the next point). The listing is
   conservative: it can name a role that holds only DELETE or TRUNCATE on `kill_switch`, or only a column INSERT
   that leaves out `stop_id`, which alone cannot clear a stop, and it judges each membership on its own, not along
   the whole chain. These are harmless refusals: revoke the right.
@@ -102,12 +104,12 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   spend cap) without ever being checked. The message names each one and the named role it reaches. Fix: `REVOKE
   <named role> FROM <role>`. From PostgreSQL 16 the login that created a named role holds the ADMIN option on it
   when it is neither a superuser nor the owner of the tables, so it is refused for EVERY named role it created, not
-  only the reset role: create the roles as a superuser or as the owner, or run `REVOKE ADMIN OPTION FOR <named
-  role> FROM <creator>` as a role that may. Superusers and the owner of the tables are outside this check, and a
+  only the reset role: create the roles as a superuser or as the owner. From PostgreSQL 16 that ADMIN option is granted by the bootstrap superuser, so ONLY A SUPERUSER can take it away (`REVOKE ADMIN OPTION FOR <named role> FROM <creator>`; the creator's own REVOKE changes nothing, measured on PostgreSQL 16 and 17). On a managed database service (no superuser login) the named roles must be created by the login that owns the tables: drop them and create them again as that login. Superusers and the owner of the tables are outside this check, and a
   role whose only path is membership in one of those two is not followed (same limits as the stop listing above).
 - A server that holds other administrators (below PostgreSQL 16, or a managed service): the CREATEROLE listing
   looks at the whole server, not this schema. If a listed role is not a person or process that can use CREATEROLE to
-  grant the reset role to itself (for example a managed service's own administrator login), you may name it with
+  grant ANY named role to itself (below 16 a CREATEROLE login can grant itself the reset role, the caps role and
+  every other named role, and the membership walk of the named roles does not list creators) (for example a managed service's own administrator login), you may name it with
   `--accept-admin-role <role>` (repeat the flag for several; in code `accepted_admin_roles`). Rules: you vouch for it;
   a name is any text of 1 to 63 bytes with no control, format (zero-width, bidirectional) or line-separator
   character and no space at either end (`Admin`, `my-admin`, `user@server` are fine), compared as exact text, never
