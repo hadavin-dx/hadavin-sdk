@@ -8,7 +8,10 @@ from hadavin_sdk.models import Reply
 
 
 class ProviderError(RuntimeError):
-    """The provider refused the request (a bad key, a malformed request): retrying would fail the same way."""
+    """The provider refused the request (a bad key, a malformed request), or the kind itself refused to send
+    it (the refused attempt sends nothing, though an earlier attempt of the same call may already have
+    reached the transport; the text says why, for example the name of an environment variable to unset):
+    retrying would fail the same way."""
 
 
 class ProviderExhausted(ProviderError):

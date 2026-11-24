@@ -37,6 +37,7 @@ class Pending:
 
 BASE_OK = {"pydantic", "pydantic_settings", "yaml"}  # base dependencies, allowed anywhere
 _AWS = {
+    f"{PKG}.aws_client",  # the one botocore Config of every AWS client (no endpoint from the environment)
     f"{PKG}.llm.bedrock",
     f"{PKG}.actions.secrets_aws",
     f"{PKG}.audit.anchor_s3",
@@ -83,7 +84,7 @@ DYNAMIC_IMPORT_OK = {
     f"{PKG}.tools",
 }  # table factories; contract hooks; the tool manifest's `function` (resolved from tool_modules only)
 # Vendor modules that are helpers of a kind, not TABLE factories themselves.
-VENDOR_HELPERS = {f"{PKG}.store.auth_aws"}
+VENDOR_HELPERS = {f"{PKG}.store.auth_aws", f"{PKG}.aws_client"}
 
 
 def module_name(src: Path, path: Path) -> str:
@@ -753,7 +754,7 @@ def test_the_test_environment_holds_no_cloud_credential_variables():
     from tests.conftest import _ISOLATED, _ISOLATED_PREFIXES
 
     assert {"AWS_WEB_IDENTITY_TOKEN_FILE", "AWS_PROFILE"} <= set(_ISOLATED)
-    assert {"AWS_ENDPOINT_URL", "AZURE_", "GOOGLE_APPLICATION_CREDENTIALS"} <= set(
+    assert {"AWS_ENDPOINT_URL", "AZURE_", "GOOGLE_APPLICATION_CREDENTIALS", "ANTHROPIC_"} <= set(
         _ISOLATED_PREFIXES
     )
     leaked = [n for n in os.environ if n in _ISOLATED or n.startswith(_ISOLATED_PREFIXES)]

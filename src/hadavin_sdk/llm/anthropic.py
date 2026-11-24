@@ -4,11 +4,37 @@ Ports WARDEN ``AnthropicProvider`` (design 4.3): SDK retries off (``llm/retry.py
 (``call_timeout_s``, per socket operation, not a wall clock), an explicit base URL on every platform, the key read
 on every call (a rotated key is picked up), and ``output_schema`` forced through one tool.
 Needs ``hadavin-sdk[anthropic]``.
+
+Three things this kind does to the whole process, for whoever runs it:
+
+1. It holds three loggers, and only these three: ``anthropic``, ``httpcore2`` and ``google.auth``. From the
+   import of this module, and again before every attempt of every call, each is set to WARNING if its level is
+   lower or not set, and every logger below them that has a level under WARNING is set to NOTSET, so that it
+   inherits. DEBUG or INFO output of those three libraries cannot be switched on while this kind is in use,
+   for other code in the process either: a level set between two attempts is undone before the next attempt.
+   A filter, attached from the import of this module for the life of the process, also drops every record
+   below WARNING logged on each of these loggers, whatever its level is at that moment (another thread may
+   raise it between our check and the SDK's log call), so a handler attached to one of them receives nothing
+   below WARNING either. The loggers we name are created early for this; a host logging configuration loaded
+   later with ``disable_existing_loggers`` therefore disables them (they then log nothing at all). What this
+   does not cover: a logger of these libraries that we do not name, first created after our last check by any
+   thread (the calling thread included): it has no filter until the next check and follows its parent's
+   level; and a host that removes the filter from a logger (it is attached again at the next check).
+2. The HTTP client's logger (``httpx2``) is not held. Whenever it is at INFO or lower it writes one line per
+   request: method, full URL, HTTP version, status. That is the case when the host's own logging set-up puts
+   the root logger at INFO or DEBUG (an ordinary set-up), or when ``ANTHROPIC_LOG`` is ``debug`` or ``info``.
+   The line holds no key, header or body; on Vertex the URL holds the project id, the region and the model
+   id, on Foundry the resource name.
+3. Tracing by the SDK is fixed: spans carry no request or response content and the SDK adds no trace header to
+   the request, so the host's trace context is not sent to the model provider. Neither can be changed by an
+   environment variable.
 """
 
 from __future__ import annotations
 
 import json
+import logging
+import os
 import re
 import time
 from collections.abc import Callable
@@ -22,6 +48,146 @@ from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
 
+# Loggers that can carry a request body, a header value or a credential at DEBUG, held at WARNING together with
+# every logger below them, whatever level the host's root, the host's logging config or ANTHROPIC_LOG gives them
+# (read in the installed sources on 2026-11-24). The logging is done by child loggers:
+#   anthropic     anthropic._base_client (_base_client.py:133 in 2.1.0, :134 in 2.9.0) logs "Request options",
+#                 body included (:598-613 in 2.1.0, :603-618 in 2.9.0); every SDK logger is below this name
+#   httpcore2     httpcore2.http11 logs the response's header values (httpcore2 2.16.2 _sync/http11.py:27,
+#                 :90-103); httpcore2.proxy and the other children are held with it
+#   google.auth   google.auth.transport.requests logs the Vertex token request with its body and headers
+#                 (google-auth 2.62.0 transport/requests.py:47, :272; _helpers.py:410-443)
+# The google-auth lines are those of 2.62.0, the version in the lock; in 2.63.1 they are transport/requests.py
+# :47, :286 and _helpers.py:410-434. httpx2 logs only the request line (method, URL, version, status) and is
+# left alone.
+QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
+
+# The loggers below them that do the logging, made to exist by the first sweep so that they carry the filter
+# before they are first used: every logger name in the installed httpcore2 (2.16.2) and in google-auth's
+# transport package (2.62.0), kept complete by a drift test in tests/test_p5_llm.py. The transports log the
+# full request and response through one helper (_helpers.py:410); the SDK uses requests, a host may use the
+# others. anthropic._base_client needs no entry: importing the SDK creates it (__init__.py:18 imports _client,
+# which imports _base_client at _client.py:31 in 2.1.0, :29 in 2.9.0). The httpcore2 loggers appear only when
+# an HTTP client is built, and google-auth is imported by the SDK only inside the first attempt, which is why
+# client() imports it at build time on Vertex (checked by running both SDK versions, 2026-11-24).
+_LOGGING_CHILDREN = (
+    "httpcore2.connection",
+    "httpcore2.http11",
+    "httpcore2.http2",
+    "httpcore2.proxy",
+    "httpcore2.socks",
+    "google.auth.transport._aiohttp_requests",
+    "google.auth.transport._custom_tls_signer",
+    "google.auth.transport._http_client",
+    "google.auth.transport._mtls_helper",
+    "google.auth.transport.grpc",
+    "google.auth.transport.mtls",
+    "google.auth.transport.requests",
+    "google.auth.transport.urllib3",
+)
+
+
+class _BelowWarning(logging.Filter):
+    """Drops every record below WARNING logged on the logger it is attached to. A second net that does not
+    depend on levels: a level can be raised by another thread after the sweep; the filter is still there."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelno >= logging.WARNING
+
+
+# One instance: Logger.addFilter skips an object that is already attached. Two threads sweeping at the same
+# moment could attach it twice, which is harmless: it only drops.
+BELOW_WARNING = _BelowWarning()
+
+# Environment variables that reach the client whatever arguments we pass, refused on every platform:
+# ANTHROPIC_CUSTOM_HEADERS adds its headers to every request of the API and Foundry clients (_client.py:250 in
+# 2.1.0 and 2.9.0) and of the Vertex client from SDK 2.7.0 (lib/_env.py:9 in 2.9.0), and is read again on every
+# call. Read in the installed sources of anthropic 2.1.0, 2.4.0 and 2.9.0 on 2026-11-24.
+REFUSED_ENV = ("ANTHROPIC_CUSTOM_HEADERS",)
+
+# Second net behind the explicit tracing option: the variable that makes the SDK add request and response
+# content to trace spans (_tracing.py:111 in 2.1.0, :205 in 2.9.0). Any set value is refused (fail closed).
+# ANTHROPIC_LOG is not refused. At import the SDK calls logging.basicConfig and sets the level of its own
+# logger and of the HTTP client's, httpx2 (_utils/_logs.py:8-25). The guard undoes the first before every
+# attempt; the second stays on (see the module docstring, point 2).
+CONTENT_ENV = ("ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE",)
+
+# Environment variables the SDK reads for a client's endpoint or identity and that MUST NOT REACH THE CLIENT:
+# every one loses to the argument we pass, in 2.1.0, 2.4.0 and 2.9.0. They are not refused (cloud run-times and
+# other clients in the same process set them); tests/test_p5_llm.py sets each to a marker on each platform, makes
+# one call and fails if the request differs from the configured one, which is what stops an SDK upgrade that
+# changes the precedence. The SDK itself refuses ANTHROPIC_FOUNDRY_RESOURCE beside a base URL before 2.7.0.
+_API_ENV = (
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_PROFILE",
+    "ANTHROPIC_CONFIG_DIR",
+    "ANTHROPIC_IDENTITY_TOKEN",
+    "ANTHROPIC_IDENTITY_TOKEN_FILE",
+    "ANTHROPIC_FEDERATION_RULE_ID",
+    "ANTHROPIC_ORGANIZATION_ID",
+    "ANTHROPIC_SERVICE_ACCOUNT_ID",
+    "ANTHROPIC_WORKSPACE_ID",
+    "ANTHROPIC_SCOPE",
+)
+IGNORED_ENV: dict[str, tuple[str, ...]] = {
+    "api": _API_ENV,
+    "foundry": (  # the Foundry client is a subclass of the API client and runs its constructor too
+        *_API_ENV,
+        "ANTHROPIC_FOUNDRY_API_KEY",
+        "ANTHROPIC_FOUNDRY_RESOURCE",
+        "ANTHROPIC_FOUNDRY_BASE_URL",
+    ),
+    "vertex": ("ANTHROPIC_VERTEX_BASE_URL", "ANTHROPIC_VERTEX_PROJECT_ID", "CLOUD_ML_REGION"),
+}
+
+# Given explicitly, so the SDK reads none of its tracing variables (_tracing.py:74-79 in 2.1.0, :168-173 in
+# 2.9.0): spans, if the host has set tracing up, carry no request or response content, and the SDK adds no
+# trace header to the request (propagation off: _base_client.py:1222, :1417-1419 in 2.1.0; :1227, :1239,
+# :1428-1430 in 2.9.0). The host cannot change either by environment.
+_NO_CONTENT_TRACES = {"propagation": False, "traces": {"content_mode": "metadata_only"}}
+
+
+def _quiet() -> None:
+    """No quiet logger, and no logger below one, logs under WARNING. Two nets, at import and before every
+    attempt. Levels (no record is even built): a level a host sets on a child, such as anthropic._base_client,
+    would win over the parent's, so it is cleared; a level is written only where one below WARNING is set, so
+    a host that made a library stricter (ERROR) keeps that. The filter (the record is dropped whatever the
+    level is by then): on every quiet logger and every logger below one, because a filter sees only the
+    records logged on its own logger. Children made later are caught by the next run."""
+    for name in _LOGGING_CHILDREN:
+        logging.getLogger(name)
+    below = tuple(f"{name}." for name in QUIET_LOGGERS)
+    # The manager's table, not Logger.getChildren: that one returns immediate children only (and needs Python
+    # 3.12), and the loggers that log are deeper (google.auth.transport.requests).
+    for name, logger in list(logging.root.manager.loggerDict.items()):
+        if name.startswith(below) and isinstance(logger, logging.Logger):
+            logger.addFilter(BELOW_WARNING)
+            if logging.NOTSET < logger.level < logging.WARNING:
+                logger.setLevel(logging.NOTSET)
+    for name in QUIET_LOGGERS:
+        logger = logging.getLogger(name)
+        logger.addFilter(BELOW_WARNING)
+        if logger.level < logging.WARNING:
+            logger.setLevel(logging.WARNING)
+
+
+_quiet()  # at import: the loggers are quiet before anything can be sent
+
+
+def _guard() -> None:
+    """Before a client is built and before every attempt of every call (the SDK rebuilds its client, and re-reads
+    the environment, on each one). Names only: a variable's value is never read."""
+    _quiet()
+    if stray := [name for name in (*REFUSED_ENV, *CONTENT_ENV) if name in os.environ]:
+        raise ConfigError(
+            f"backend llm 'anthropic': unset the environment variable(s) {', '.join(stray)}: they add headers "
+            "to every request or write request and response content to traces. The endpoint, and on api and "
+            "foundry the key, come from the configuration, except the host's proxy and certificate settings; "
+            "on vertex the host's Google identity signs the request"
+        )
+
 
 def _vertex_base_url(region: str) -> str:
     """As the SDK derives it. Passed explicitly because, given none, the SDK reads ANTHROPIC_VERTEX_BASE_URL
@@ -34,11 +200,34 @@ def _vertex_base_url(region: str) -> str:
 
 
 def client(settings: Any, key: str | None) -> Any:
-    common = {"timeout": settings.call_timeout_s, "max_retries": 0}
+    """The SDK client for ``settings.platform``, with every endpoint and credential argument given explicitly.
+
+    What stays with the host by design: its proxy and certificate settings (HTTPS_PROXY, SSL_CERT_FILE and the
+    like, as for every model client of this package), and on Vertex the identity: Google's application default
+    credentials are chosen by the host environment (the file GOOGLE_APPLICATION_CREDENTIALS names, else the
+    gcloud user's file, else the machine's metadata server, which GCE_METADATA_HOST can point elsewhere), so
+    whoever sets those variables chooses as whom the request is signed. The project, the region and the host it
+    is sent to still come from the configuration.
+    """
+    _guard()
+    if settings.platform not in IGNORED_ENV:
+        raise ConfigError(f"backend llm 'anthropic': unknown platform {settings.platform!r}")
+    common = {
+        "timeout": settings.call_timeout_s,
+        "max_retries": 0,
+        "open_telemetry": _NO_CONTENT_TRACES,
+    }
     try:
-        if (
-            settings.platform == "vertex"
-        ):  # Google credentials from the workload's identity (ADC), no key
+        if settings.platform == "vertex":
+            # google-auth now, not inside the first attempt where the SDK would import it: its loggers exist
+            # and carry the filter before anything is sent. Missing: the SDK names the extra to install.
+            try:
+                import google.auth
+                import google.auth.transport.requests  # noqa: F401 - imported for its loggers
+            except ImportError:
+                pass
+            _quiet()
+            # No key: the workload's Google identity (see the docstring).
             return anthropic.AnthropicVertex(
                 region=settings.region,
                 project_id=settings.project_id,
@@ -52,7 +241,8 @@ def client(settings: Any, key: str | None) -> Any:
                 **common,
             )
         return anthropic.Anthropic(api_key=key, base_url=API_BASE_URL, **common)
-    except ValueError as exc:  # e.g. ANTHROPIC_FOUNDRY_RESOURCE set beside our explicit base URL
+    except ValueError as exc:
+        # Second net: the SDK's own refusals (before 2.7.0, ANTHROPIC_FOUNDRY_RESOURCE beside our base URL).
         raise ConfigError(f"backend llm 'anthropic' ({settings.platform}): {exc}") from exc
 
 
@@ -77,6 +267,13 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+def detail(exc: BaseException) -> str:
+    """The text of a ConfigError of this package raised inside an attempt, passed on in the ProviderError (today
+    only the guard's refusal, which names variables and never values: keep any other ConfigError raised in an
+    attempt free of values too). An SDK message is never passed on: it can quote the request."""
+    return str(exc) if isinstance(exc, ConfigError) else ""
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
@@ -91,6 +288,7 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    detail = staticmethod(detail)
 
     def __init__(
         self,
@@ -128,8 +326,13 @@ class AnthropicLLM(NetworkLLM):
         )
 
     def _current(self) -> Any:
-        """The client with today's key: the platform secret is read per call, so rotation needs no restart."""
-        return self._client.with_options(api_key=self._key()) if self._key else self._client
+        """The client with today's key: the platform secret is read per call, so rotation needs no restart.
+        Called inside every retried attempt. The key is fetched first, then the guard runs, then the copy is
+        built and used: nothing the fetch does to a log level survives to the request. A refusal by the guard
+        reaches the caller as ProviderError (not retried), the one class the run loops catch."""
+        key = self._key() if self._key else None
+        _guard()
+        return self._client.with_options(api_key=key) if self._key else self._client
 
     @staticmethod
     def _parse(resp: Any) -> Answer:

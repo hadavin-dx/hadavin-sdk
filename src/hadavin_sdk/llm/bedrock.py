@@ -14,8 +14,8 @@ from typing import Any
 
 import boto3  # the extra: a missing install fails at start-up with the hint (backends.make)
 import botocore.exceptions
-from botocore.config import Config
 
+from hadavin_sdk import aws_client
 from hadavin_sdk.llm.common import (
     ANSWER_TOOL,
     Answer,
@@ -43,14 +43,13 @@ def make(settings: Any, deps: Any) -> BedrockLLM:
     client = boto3.client(
         "bedrock-runtime",
         region_name=settings.region,
-        config=Config(
+        # aws_client.config: AWS_ENDPOINT_URL(_BEDROCK_RUNTIME) would send the signed prompt to another host.
+        config=aws_client.config(
             read_timeout=settings.call_timeout_s,
             connect_timeout=min(10.0, settings.call_timeout_s),
             # One request per attempt: llm/retry.py decides. total_max_attempts counts the first request;
             # WARDEN's `max_attempts: 1` meant one retry.
             retries={"total_max_attempts": 1, "mode": "standard"},
-            # AWS_ENDPOINT_URL(_BEDROCK_RUNTIME) would send the signed prompt to another host.
-            ignore_configured_endpoint_urls=True,
         ),
     )
     return BedrockLLM(client, pinned(dict(deps.routes), floating), settings.max_attempts)

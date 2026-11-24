@@ -11,9 +11,11 @@ from collections.abc import Callable
 
 import boto3  # the extra: a missing install is turned into the install hint by store.postgres
 
+from hadavin_sdk import aws_client
+
 
 def rds_iam(region: str | None) -> Callable[[str, int, str], str]:
-    client = boto3.client("rds", region_name=region)
+    client = boto3.client("rds", region_name=region, config=aws_client.config())
 
     def password(host: str, port: int, user: str) -> str:
         return client.generate_db_auth_token(DBHostname=host, Port=port, DBUsername=user)
