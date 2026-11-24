@@ -100,3 +100,20 @@ def test_the_endpoint_never_comes_from_the_environment(monkeypatch, built, servi
 def test_the_s3_kinds_own_endpoint_setting_still_works(built):
     _s3("https://minio.example:9000")
     assert built[0].meta.endpoint_url == "https://minio.example:9000"
+
+
+def test_an_endpoint_in_the_shared_aws_config_file_is_ignored(monkeypatch, tmp_path):
+    """The flag covers the config file too, not only the two environment variables."""
+    config = tmp_path / "config"
+    config.write_text(f"[default]\nendpoint_url = {EVIL}\n", encoding="utf-8")
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(config))
+    monkeypatch.setattr(
+        boto3, "DEFAULT_SESSION", None
+    )  # the session reads the file when it is made
+    assert boto3.client("kms", region_name=REGION).meta.endpoint_url == EVIL  # the control
+    monkeypatch.setattr(signer_aws, "probe", lambda signer, label: signer)
+    made, real = [], boto3.client
+    monkeypatch.setattr(boto3, "client", lambda *a, **kw: made.append(real(*a, **kw)) or made[-1])
+    signer_aws.build(SimpleNamespace(region=REGION, key_id="k"), None)
+    assert made[0].meta.endpoint_url == f"https://kms.{REGION}.amazonaws.com"
+    monkeypatch.setattr(boto3, "DEFAULT_SESSION", None)  # no session of this test for the next one

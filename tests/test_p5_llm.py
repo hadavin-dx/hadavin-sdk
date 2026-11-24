@@ -362,7 +362,8 @@ _NOT_OURS = {
     "ANTHROPIC_API_VERSION": "a constant in the SDK, not an environment variable",
     "ANTHROPIC_WEBHOOK_SIGNING_KEY": "checks webhooks we do not receive; sent nowhere",
     "DEFER_PYDANTIC_BUILD": "model build timing",
-    "ANTHROPIC_LOG": "the SDK log switch: not refused, the loggers it turns on are held quiet (tested)",
+    "ANTHROPIC_LOG": "the SDK log switch, not refused: the SDK loggers it turns on are held quiet; the HTTP "
+    "client logger it turns on writes one line per request (method, URL, version, status), tested below",
     "APPDATA": "where a profile file is looked for; a profile is never used when a credential is passed",
     **dict.fromkeys(
         [
@@ -453,16 +454,15 @@ def test_the_lists_are_the_tables():
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
 @pytest.mark.parametrize("name", [*REFUSED, *CONTENT_REFUSED])
-@pytest.mark.parametrize("value", [_STRAY, "debug", "content", ""])
+@pytest.mark.parametrize("value", [_STRAY, "debug", "info", "content", ""])
 def test_a_variable_that_reaches_the_client_or_the_logs_is_refused(
     monkeypatch, platform, name, value
 ):
     monkeypatch.setenv(name, value)
     with pytest.raises(ConfigError) as refused:
         _anthropic_llm(platform)
-    assert name in str(refused.value) and "stray" not in str(
-        refused.value
-    )  # the name, never the value
+    message = str(refused.value)  # the name, never the value
+    assert name in message and "stray" not in message
 
 
 def test_one_error_names_every_refused_variable_and_what_stays_with_the_host(monkeypatch):
@@ -482,8 +482,10 @@ def test_a_headers_variable_set_after_start_is_refused_on_the_next_call(monkeypa
     llm, sent = _anthropic_llm(platform), []
     _call(llm, platform, sent=sent)
     monkeypatch.setenv("ANTHROPIC_CUSTOM_HEADERS", _STRAY)
-    with pytest.raises(ConfigError, match="ANTHROPIC_CUSTOM_HEADERS"):
+    with pytest.raises(ProviderError, match="ANTHROPIC_CUSTOM_HEADERS") as refused:
         llm.chat(**CALL)
+    # One error class for a refusal during a call, the one the run loops catch; not "exhausted": no retry.
+    assert type(refused.value) is ProviderError and "stray" not in str(refused.value)
     assert len(sent) == 1  # the second call sent nothing
 
 
@@ -493,9 +495,8 @@ def test_a_headers_variable_set_during_a_call_stops_the_next_attempt(monkeypatch
     httpx2 = pytest.importorskip("httpx2", reason="needs extra anthropic")
     llm, sent = _anthropic_llm(platform), []
 
-    def drop(
-        request,
-    ):  # the first attempt fails in a retryable way, and the variable appears meanwhile
+    def drop(request):
+        # The first attempt fails in a retryable way, and the variable appears meanwhile.
         sent.append(request)
         monkeypatch.setenv("ANTHROPIC_CUSTOM_HEADERS", _STRAY)
         raise httpx2.ConnectError("connection dropped", request=request)
@@ -506,8 +507,9 @@ def test_a_headers_variable_set_during_a_call_stops_the_next_attempt(monkeypatch
         llm._client.access_token = KEY
     llm._sleep = lambda seconds: None
     assert llm.max_attempts > 1
-    with pytest.raises((ConfigError, ProviderError), match="ANTHROPIC_CUSTOM_HEADERS") as refused:
+    with pytest.raises(ProviderError, match="ANTHROPIC_CUSTOM_HEADERS") as refused:
         llm.chat(**CALL)
+    assert type(refused.value) is ProviderError  # refused, not "exhausted after N attempts"
     assert len(sent) == 1 and "stray" not in str(refused.value)  # no second attempt was sent
 
 
@@ -561,6 +563,25 @@ def test_traces_carry_no_content_and_no_trace_header_whatever_the_environment_sa
         assert built._open_telemetry["propagation"] is False
 
 
+@pytest.mark.parametrize("platform", list(_PLATFORMS))
+def test_the_hosts_trace_context_is_not_sent_to_the_provider(platform):
+    """On the wire: a host with a current, sampled span makes a call, and the request carries no trace header."""
+    trace = pytest.importorskip("opentelemetry.trace", reason="needs extra anthropic")
+    host_span = trace.NonRecordingSpan(
+        trace.SpanContext(
+            trace_id=0x0AF7651916CD43DD8448EB211C80319C,
+            span_id=0x00F067AA0BA902B7,
+            is_remote=False,
+            trace_flags=trace.TraceFlags(trace.TraceFlags.SAMPLED),
+        )
+    )
+    llm = _anthropic_llm(platform)
+    with trace.use_span(host_span):
+        sent = _call(llm, platform)
+    assert not {"traceparent", "tracestate", "baggage"} & set(sent.headers)
+    assert "0af7651916cd43dd8448eb211c80319c" not in repr(_wire(sent))
+
+
 def _logged(caplog):
     return " ".join(r.getMessage() + repr(vars(r)) for r in caplog.records)
 
@@ -583,6 +604,38 @@ def test_a_prompt_or_a_key_never_reaches_a_log_at_debug(caplog, platform):
     prompt = _prompt_call(llm, platform)
     assert prompt not in _logged(caplog) and KEY not in _logged(caplog)
     assert all(logging.getLogger(n).getEffectiveLevel() >= logging.WARNING for n in names)
+
+
+@pytest.mark.parametrize("platform", ["api", "foundry"])  # the platforms with a key to fetch
+def test_a_level_set_while_the_key_is_fetched_is_undone_before_the_request(caplog, platform):
+    """The key is fetched first, then the loggers are quietened, then the request is built and logged about."""
+    caplog.set_level(logging.DEBUG)
+    llm = _anthropic_llm(platform)
+    fetch = llm._key
+
+    def noisy_fetch():  # a secrets backend, or anything it calls, that turns logging up
+        logging.getLogger("anthropic._base_client").setLevel(logging.DEBUG)
+        return fetch()
+
+    llm._key = noisy_fetch
+    prompt = _prompt_call(llm, platform)
+    assert prompt not in _logged(caplog) and KEY not in _logged(caplog)
+
+
+@pytest.mark.parametrize(
+    "name", ["anthropic", "anthropic._base_client", "google.auth", "httpcore2.http11"]
+)
+def test_a_level_stricter_than_warning_is_left_alone(name):
+    """A host that silences a library further (ERROR) keeps its level: only levels below WARNING are written."""
+    mod = pytest.importorskip("hadavin_sdk.llm.anthropic", reason="needs extra anthropic")
+    logger = logging.getLogger(name)
+    try:
+        logger.setLevel(logging.ERROR)
+        mod._guard()
+        assert logger.level == logging.ERROR
+    finally:
+        logger.setLevel(logging.NOTSET)
+        mod._guard()
 
 
 @pytest.mark.parametrize(
@@ -608,17 +661,26 @@ def test_a_debug_record_on_a_child_of_each_quiet_logger_is_dropped(pinned, child
 
 
 @pytest.mark.parametrize("platform", list(_PLATFORMS))
-def test_the_sdks_own_log_switch_puts_no_prompt_in_a_log(caplog, monkeypatch, platform):
-    """ANTHROPIC_LOG=debug is not refused: what the SDK does with it at import is undone by the guard."""
+@pytest.mark.parametrize("value", ["debug", "info"])
+def test_the_sdks_own_log_switch_puts_no_prompt_in_a_log(caplog, monkeypatch, platform, value):
+    """ANTHROPIC_LOG is not refused. At import the SDK calls basicConfig and sets the level of its own logger
+    and of the HTTP client's (httpx2). Ours undoes the first; the second stays on and writes one line per
+    request: method, URL, HTTP version, status. No key, no header, no body."""
     anthropic_logs = pytest.importorskip("anthropic._utils._logs", reason="needs extra anthropic")
     caplog.set_level(logging.DEBUG)
-    monkeypatch.setenv("ANTHROPIC_LOG", "debug")
+    monkeypatch.setenv("ANTHROPIC_LOG", value)
     try:
         anthropic_logs.setup_logging()  # what importing the SDK does with the variable
-        assert logging.getLogger("anthropic").level == logging.DEBUG  # the control
+        assert logging.getLogger("anthropic").level == getattr(
+            logging, value.upper()
+        )  # the control
         llm = _anthropic_llm(platform)  # not refused
         prompt = _prompt_call(llm, platform)
         assert prompt not in _logged(caplog) and KEY not in _logged(caplog)
+        lines = [r.getMessage() for r in caplog.records if r.name == "httpx2"]
+        assert len(lines) == 1 and lines[0].startswith(
+            "HTTP Request: POST https://"
+        )  # the line that stays
     finally:
         logging.getLogger("httpx2").setLevel(logging.NOTSET)
 

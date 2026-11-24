@@ -4,6 +4,18 @@ Ports WARDEN ``AnthropicProvider`` (design 4.3): SDK retries off (``llm/retry.py
 (``call_timeout_s``, per socket operation, not a wall clock), an explicit base URL on every platform, the key read
 on every call (a rotated key is picked up), and ``output_schema`` forced through one tool.
 Needs ``hadavin-sdk[anthropic]``.
+
+Three things this kind does to the whole process, for whoever runs it:
+
+1. Before every attempt of every call it sets the loggers ``anthropic``, ``httpcore2`` and ``google.auth``, and
+   every logger below them, to WARNING wherever a level below WARNING is set. DEBUG or INFO output of those three
+   libraries cannot be switched on while this kind is in use, for other code in the process either.
+2. With ``ANTHROPIC_LOG`` set to ``debug`` or ``info``, the HTTP client's logger (``httpx2``) writes one line
+   per request: method, full URL, HTTP version, status. No key, header or body; on Vertex the URL holds the
+   project id, the region and the model id, on Foundry the resource name.
+3. Tracing by the SDK is fixed: spans carry no request or response content and the SDK adds no trace header to
+   the request, so the host's trace context is not sent to the model provider. Neither can be changed by an
+   environment variable.
 """
 
 from __future__ import annotations
@@ -33,7 +45,9 @@ API_BASE_URL = "https://api.anthropic.com"
 #                 :90-103); httpcore2.proxy and the other children are held with it
 #   google.auth   google.auth.transport.requests logs the Vertex token request with its body and headers
 #                 (google-auth 2.62.0 transport/requests.py:47, :272; _helpers.py:410-443)
-# httpx2 logs only the request line (method, URL, status) and is left alone.
+# The google-auth lines are those of 2.62.0, the version in the lock; in 2.63.1 they are transport/requests.py
+# :47, :286 and _helpers.py:410-434. httpx2 logs only the request line (method, URL, version, status) and is
+# left alone.
 QUIET_LOGGERS = ("anthropic", "httpcore2", "google.auth")
 
 # Environment variables that reach the client whatever arguments we pass, refused on every platform:
@@ -44,8 +58,9 @@ REFUSED_ENV = ("ANTHROPIC_CUSTOM_HEADERS",)
 
 # Second net behind the explicit tracing option: the variable that makes the SDK add request and response
 # content to trace spans (_tracing.py:111 in 2.1.0, :205 in 2.9.0). Any set value is refused (fail closed).
-# ANTHROPIC_LOG is not refused: all it does is set log levels at import (_utils/_logs.py:17-22), which the guard
-# undoes before every attempt.
+# ANTHROPIC_LOG is not refused. At import the SDK calls logging.basicConfig and sets the level of its own
+# logger and of the HTTP client's, httpx2 (_utils/_logs.py:8-25). The guard undoes the first before every
+# attempt; the second stays on (see the module docstring, point 2).
 CONTENT_ENV = ("ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE",)
 
 # Environment variables the SDK reads for a client's endpoint or identity and that MUST NOT REACH THE CLIENT:
@@ -79,21 +94,30 @@ IGNORED_ENV: dict[str, tuple[str, ...]] = {
 }
 
 # Given explicitly, so the SDK reads none of its tracing variables (_tracing.py:74-79 in 2.1.0, :168-173 in
-# 2.9.0): spans, if the host has set tracing up, carry no request or response content, and the host's trace
-# context is not sent to the model provider (propagation off). The host cannot change either by environment.
+# 2.9.0): spans, if the host has set tracing up, carry no request or response content, and the SDK adds no
+# trace header to the request (propagation off: _base_client.py:1222, :1417-1419 in 2.1.0; :1227, :1239,
+# :1428-1430 in 2.9.0). The host cannot change either by environment.
 _NO_CONTENT_TRACES = {"propagation": False, "traces": {"content_mode": "metadata_only"}}
 
 
 def _quiet() -> None:
-    """The quiet loggers at WARNING, and no level of its own on any logger below them (a level a host sets on a
-    child, such as anthropic._base_client, would win over the parent's). Children made later are caught by the
-    next run: this runs at import and before every attempt."""
+    """No quiet logger, and no logger below one, logs under WARNING (a level a host sets on a child, such as
+    anthropic._base_client, would win over the parent's). A level is written only where one below WARNING is
+    set: a host that made a library stricter (ERROR) keeps that. Children made later are caught by the next
+    run: this runs at import and before every attempt."""
     below = tuple(f"{name}." for name in QUIET_LOGGERS)
+    # The manager's table, not Logger.getChildren: that one returns immediate children only (and needs Python
+    # 3.12), and the loggers that log are deeper (google.auth.transport.requests).
     for name, logger in list(logging.root.manager.loggerDict.items()):
-        if name.startswith(below) and isinstance(logger, logging.Logger):
+        if (
+            name.startswith(below)
+            and isinstance(logger, logging.Logger)
+            and logging.NOTSET < logger.level < logging.WARNING
+        ):
             logger.setLevel(logging.NOTSET)
     for name in QUIET_LOGGERS:
-        logging.getLogger(name).setLevel(logging.WARNING)
+        if (logger := logging.getLogger(name)).level < logging.WARNING:
+            logger.setLevel(logging.WARNING)
 
 
 _quiet()  # at import: the loggers are quiet before anything can be sent
@@ -183,8 +207,9 @@ def retryable(exc: BaseException) -> bool | None:
 
 
 def detail(exc: BaseException) -> str:
-    """The guard's own refusal inside a retried attempt keeps its text (it names variables, never values); an
-    SDK message is never passed on (it can quote the request)."""
+    """The text of a ConfigError of this package raised inside an attempt, passed on in the ProviderError (today
+    only the guard's refusal, which names variables and never values: keep any other ConfigError raised in an
+    attempt free of values too). An SDK message is never passed on: it can quote the request."""
     return str(exc) if isinstance(exc, ConfigError) else ""
 
 
@@ -230,7 +255,6 @@ class AnthropicLLM(NetworkLLM):
             request["tools"] = specs
         if forced:
             request["tool_choice"] = {"type": "tool", "name": forced}
-        _guard()
         started = time.monotonic()
         got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
         return reply(
@@ -242,9 +266,12 @@ class AnthropicLLM(NetworkLLM):
 
     def _current(self) -> Any:
         """The client with today's key: the platform secret is read per call, so rotation needs no restart.
-        Called inside every retried attempt, so the guard runs before each one."""
+        Called inside every retried attempt. The key is fetched first, then the guard runs, then the copy is
+        built and used: nothing the fetch does to a log level survives to the request. A refusal by the guard
+        reaches the caller as ProviderError (not retried), the one class the run loops catch."""
+        key = self._key() if self._key else None
         _guard()
-        return self._client.with_options(api_key=self._key()) if self._key else self._client
+        return self._client.with_options(api_key=key) if self._key else self._client
 
     @staticmethod
     def _parse(resp: Any) -> Answer:

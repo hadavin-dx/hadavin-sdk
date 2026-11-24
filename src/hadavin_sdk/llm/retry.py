@@ -7,7 +7,8 @@ at once.
 
 Vendor-neutral (lock-in audit 2026-10-31, row 2): this module knows HTTP statuses, the standard library's network
 errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``retryable(exc) -> bool | None``
-(None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
+(None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (text safe to log: an error code,
+or the kind's own refusal, never an SDK message).
 """
 
 from __future__ import annotations
@@ -75,7 +76,8 @@ def retry_after(exc: BaseException) -> float:
 
 
 def describe(exc: BaseException, detail: Callable[[BaseException], str] | None = None) -> str:
-    """Class, status and the kind's error code only: an SDK message can quote the request."""
+    """Class, status and the kind's ``detail`` only (an error code or the kind's own refusal text): an SDK
+    message can quote the request."""
     parts = [type(exc).__name__, str(status(exc) or ""), detail(exc) if detail else ""]
     return " ".join(p for p in parts if p)
 
