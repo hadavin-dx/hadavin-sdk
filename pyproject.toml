@@ -30,7 +30,7 @@ askdata = ["sqlglot==30.26.0", "psycopg[binary]==3.3.6"]
 # Cloud-neutral backends: secret stores (P4b; `vault` and `mounted_file` need no extra), audit signers and
 # anchors (P3b).
 azure = [
-    "azure-identity==1.26.0",
+    "azure-identity==1.27.0",
     "azure-keyvault-keys==4.11.3",
     "azure-keyvault-secrets==4.12.0",
     "azure-storage-blob==12.31.1",
