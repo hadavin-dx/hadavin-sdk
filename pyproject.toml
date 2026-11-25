@@ -13,7 +13,7 @@ classifiers = ["Private :: Do Not Upload"]
 # when a build needs it. Pins are at least 7 days old (Dependabot cooldown).
 dependencies = [
     "markdown-it-py==4.2.0",
-    "pydantic==2.14.1",
+    "pydantic==2.14.3",
     "pydantic-settings==2.16.3",
     "pyyaml==6.0.3",
 ]
